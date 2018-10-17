@@ -1,0 +1,1 @@
+java -jar mini-java-compiler/build/libs/mini-java-compiler-1.0-SNAPSHOT.jar $1 $2 

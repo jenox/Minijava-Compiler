@@ -1,0 +1,3 @@
+sudo apt install gradle
+cd mini-java-compiler
+gradle build 
