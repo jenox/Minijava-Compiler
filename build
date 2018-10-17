@@ -1,2 +1,2 @@
-# building project
-./mini-java-compiler/gradlew build 
+cd mini-java-compiler
+./gradlew build 
