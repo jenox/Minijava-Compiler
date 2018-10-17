@@ -1,0 +1,2 @@
+# Execute jar with 2 possible arguments, don't know how to do a variable amount, yet
+java -jar mini-java-compiler/build/libs/mini-java-compiler-1.0-SNAPSHOT.jar $1 $2 

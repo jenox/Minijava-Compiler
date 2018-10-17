@@ -1,0 +1,2 @@
+cd mini-java-compiler
+./gradlew build 
