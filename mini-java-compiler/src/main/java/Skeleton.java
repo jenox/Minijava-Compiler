@@ -1,37 +1,41 @@
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.io.*;
+import java.util.*;
 
+import edu.kit.minijava.lexer.*;
 
 public class Skeleton {
 
     public static void main (String[] args) {
-        ArrayList arguments = new ArrayList(Arrays.asList(args));
+        final ArrayList<String> arguments = new ArrayList<String>(Arrays.asList(args));
 
-        if (arguments.contains(new String("--echo"))) {
-            final int index              = arguments.indexOf(new String("--echo"));
-            final String fileName        = arguments.get(index + 1).toString();
-            final FileInputStream in     = null;
-            final Charset ENCODING       = StandardCharsets.UTF_8;
-            final Path path              = Paths.get(fileName);
+        // TODO: https://commons.apache.org/proper/commons-cli/introduction.html ?
 
+        if (arguments.get(0).equals("--echo")) {
             try {
-                final List<String> lines = Files.readAllLines(path, ENCODING);
+                final Lexer lexer = new Lexer(arguments.get(1));
+                System.out.println(lexer.text);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }  else if (arguments.get(0).equals("--lex")) {
+            try {
+                final Lexer lexer = new Lexer(arguments.get(1));
 
-                lines.forEach(line -> System.out.println(line));
+                while (true) {
+                    final Token token = lexer.nextToken();
+
+                    if (token != null) {
+                        System.out.println(token);
+                    }  else {
+                        break;
+                    }
+                }
             } catch (IOException e) {
                 e.printStackTrace();
             }
         } else {
             System.out.println("Please run with \"--echo <file-name>\".");
+            System.out.println(arguments);
         }
-
     }
 }
