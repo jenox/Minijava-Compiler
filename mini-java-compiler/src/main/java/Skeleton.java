@@ -5,7 +5,7 @@ import edu.kit.minijava.lexer.*;
 
 public class Skeleton {
 
-    public static void main (String[] args) {
+    public static void main(String[] args) {
         final ArrayList<String> arguments = new ArrayList<String>(Arrays.asList(args));
 
         // TODO: https://commons.apache.org/proper/commons-cli/introduction.html ?
@@ -17,7 +17,7 @@ public class Skeleton {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-        }  else if (arguments.get(0).equals("--lex")) {
+        } else if (arguments.get(0).equals("--lex")) {
             try {
                 final Lexer lexer = new Lexer(arguments.get(1));
 
@@ -26,7 +26,7 @@ public class Skeleton {
 
                     if (token != null) {
                         System.out.println(token);
-                    }  else {
+                    } else {
                         break;
                     }
                 }

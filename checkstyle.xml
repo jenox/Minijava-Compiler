@@ -14,8 +14,6 @@ Einige Coding-Standards für das Compiler-Praktikum
   <module name="TreeWalker">
     <module name="ConstantName"/>
     <module name="MemberName"/>
-    <module name="Indentation"/>
-    <module name="LineLength"/>
     <module name="WhitespaceAround">
       <property name="tokens" value="ASSIGN,BAND,BAND_ASSIGN,BOR,BOR_ASSIGN,BSR,BSR_ASSIGN,BXOR,BXOR_ASSIGN,COLON,DIV,DIV_ASSIGN,DO_WHILE,EQUAL,GE,GT,LAMBDA,LAND,LCURLY,LE,LITERAL_ASSERT,LITERAL_CATCH,LITERAL_DO,LITERAL_ELSE,LITERAL_FINALLY,LITERAL_FOR,LITERAL_IF,LITERAL_RETURN,LITERAL_SWITCH,LITERAL_SYNCHRONIZED,LITERAL_TRY,LITERAL_WHILE,LOR,LT,MINUS,MINUS_ASSIGN,MOD,MOD_ASSIGN,NOT_EQUAL,PLUS,PLUS_ASSIGN,QUESTION,RCURLY,SL,SLIST,SL_ASSIGN,SR,SR_ASSIGN,STAR,STAR_ASSIGN,TYPE_EXTENSION_AND"/>
       <property name="allowEmptyConstructors" value="true"/>
@@ -26,15 +24,16 @@ Einige Coding-Standards für das Compiler-Praktikum
       <property name="allowEmptyCatches" value="true"/>
     </module>
     <module name="DefaultComesLast"/>
-    <module name="RightCurly">
-      <property name="tokens" value="LITERAL_TRY,LITERAL_CATCH,LITERAL_FINALLY,LITERAL_IF,LITERAL_ELSE,CLASS_DEF,METHOD_DEF,CTOR_DEF,LITERAL_FOR,LITERAL_WHILE,LITERAL_DO,STATIC_INIT,INSTANCE_INIT"/>
-    </module>
     <module name="NeedBraces">
       <property name="tokens" value="LITERAL_DO,LITERAL_ELSE,LITERAL_IF,LITERAL_FOR,LITERAL_WHILE"/>
     </module>
     <module name="LeftCurly"/>
     <module name="ParameterAssignment"/>
     <module name="ArrayTypeStyle"/>
+    <module name="RightCurly">
+      <property name="option" value="alone"/>
+      <property name="tokens" value="LITERAL_CATCH,LITERAL_FINALLY,LITERAL_ELSE,CLASS_DEF,METHOD_DEF,CTOR_DEF,LITERAL_FOR,LITERAL_WHILE,LITERAL_DO,STATIC_INIT,INSTANCE_INIT"/>
+    </module>
   </module>
   <module name="FileTabCharacter">
     <property name="eachLine" value="true"/>

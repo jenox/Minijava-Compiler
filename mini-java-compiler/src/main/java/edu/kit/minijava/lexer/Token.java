@@ -9,7 +9,8 @@ public class Token {
     public final TokenType type;
     public final String text;
 
-    @Override public String toString() {
+    @Override
+    public String toString() {
         switch (this.type) {
             case IDENTIFIER:
             case INTEGER_LITERAL:

@@ -15,10 +15,9 @@ public class Lexer {
 
     public final String text;
 
-
     // MARK: - Fetching Tokens
 
     public Token nextToken() {
-        throw new UnsupportedOperationException();
+        return null;
     }
 }
