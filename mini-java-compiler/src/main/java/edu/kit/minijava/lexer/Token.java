@@ -2,9 +2,9 @@ package edu.kit.minijava.lexer;
 
 public class Token {
     public Token(TokenType type, String text) {
-        if (type == null) { throw new IllegalArgumentException(); }
-        if (text == null) { throw new IllegalArgumentException(); }
-        if (text.isEmpty()) { throw new IllegalArgumentException(); }
+        if (type == null) throw new IllegalArgumentException();
+        if (text == null) throw new IllegalArgumentException();
+        if (text.isEmpty()) throw new IllegalArgumentException();
 
         this.type = type;
         this.text = text;

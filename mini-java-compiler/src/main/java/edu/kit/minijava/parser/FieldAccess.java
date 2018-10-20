@@ -2,7 +2,7 @@ package edu.kit.minijava.parser;
 
 public final class FieldAccess extends PostfixOperation {
     public FieldAccess(String fieldName) {
-        if (fieldName == null) { throw new IllegalArgumentException(); }
+        if (fieldName == null) throw new IllegalArgumentException();
 
         this.fieldName = fieldName;
     }

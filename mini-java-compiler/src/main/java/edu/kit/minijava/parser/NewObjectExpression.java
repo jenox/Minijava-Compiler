@@ -2,7 +2,7 @@ package edu.kit.minijava.parser;
 
 public final class NewObjectExpression extends Expression {
     public NewObjectExpression(String className) {
-        if (className == null) { throw new IllegalArgumentException(); }
+        if (className == null) throw new IllegalArgumentException();
 
         this.className = className;
     }

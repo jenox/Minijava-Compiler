@@ -4,7 +4,7 @@ import java.util.*;
 
 public final class Program {
     public Program(List<ClassDeclaration> classDeclarations) {
-        if (classDeclarations == null) { throw new IllegalArgumentException(); }
+        if (classDeclarations == null) throw new IllegalArgumentException();
 
         this.classDeclarations = Collections.unmodifiableList(classDeclarations);
     }

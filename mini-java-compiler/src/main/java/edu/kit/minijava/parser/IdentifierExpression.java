@@ -2,7 +2,7 @@ package edu.kit.minijava.parser;
 
 public final class IdentifierExpression extends Expression {
     public IdentifierExpression(String identifier) {
-        if (identifier == null) { throw new IllegalArgumentException(); }
+        if (identifier == null) throw new IllegalArgumentException();
 
         this.identifier = identifier;
     }

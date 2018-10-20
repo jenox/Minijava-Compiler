@@ -4,8 +4,8 @@ import java.util.*;
 
 public final class IdentifierAndArgumentsExpression extends Expression {
     public IdentifierAndArgumentsExpression(String identifier, List<Expression> arguments) {
-        if (identifier == null) { throw new IllegalArgumentException(); }
-        if (arguments == null) { throw new IllegalArgumentException(); }
+        if (identifier == null) throw new IllegalArgumentException();
+        if (arguments == null) throw new IllegalArgumentException();
 
         this.identifier = identifier;
         this.arguments = Collections.unmodifiableList(arguments);

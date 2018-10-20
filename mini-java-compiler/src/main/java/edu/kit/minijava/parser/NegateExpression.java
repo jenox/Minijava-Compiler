@@ -2,7 +2,7 @@ package edu.kit.minijava.parser;
 
 public final class NegateExpression extends Expression {
     public NegateExpression(Expression other) {
-        if (other == null) { throw new IllegalArgumentException(); }
+        if (other == null) throw new IllegalArgumentException();
 
         this.other = other;
     }

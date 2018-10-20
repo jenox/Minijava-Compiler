@@ -2,7 +2,7 @@ package edu.kit.minijava.parser;
 
 public final class ReturnValueStatement extends Statement {
     public ReturnValueStatement(Expression returnValue) {
-        if (returnValue == null) { throw new IllegalArgumentException(); }
+        if (returnValue == null) throw new IllegalArgumentException();
 
         this.returnValue = returnValue;
     }

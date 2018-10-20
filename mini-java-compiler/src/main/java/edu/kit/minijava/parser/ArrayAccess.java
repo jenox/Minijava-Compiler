@@ -2,7 +2,7 @@ package edu.kit.minijava.parser;
 
 public final class ArrayAccess extends PostfixOperation {
     public ArrayAccess(Expression index) {
-        if (index == null) { throw new IllegalArgumentException(); }
+        if (index == null) throw new IllegalArgumentException();
 
         this.index = index;
     }

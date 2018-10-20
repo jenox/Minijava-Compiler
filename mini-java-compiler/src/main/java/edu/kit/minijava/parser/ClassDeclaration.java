@@ -4,8 +4,8 @@ import java.util.*;
 
 public final class ClassDeclaration {
     public ClassDeclaration(String className, List<ClassMember> members) {
-        if (className == null) { throw new IllegalArgumentException(); }
-        if (members == null) { throw new IllegalArgumentException(); }
+        if (className == null) throw new IllegalArgumentException();
+        if (members == null) throw new IllegalArgumentException();
 
         this.className = className;
         this.members = Collections.unmodifiableList(members);

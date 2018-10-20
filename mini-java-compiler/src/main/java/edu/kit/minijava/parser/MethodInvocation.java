@@ -4,8 +4,8 @@ import java.util.*;
 
 public final class MethodInvocation extends PostfixOperation {
     public MethodInvocation(String methodName, List<Expression> arguments) {
-        if (methodName == null) { throw new IllegalArgumentException(); }
-        if (arguments == null) { throw new IllegalArgumentException(); }
+        if (methodName == null) throw new IllegalArgumentException();
+        if (arguments == null) throw new IllegalArgumentException();
 
         this.methodName = methodName;
         this.arguments = Collections.unmodifiableList(arguments);

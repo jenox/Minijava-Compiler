@@ -2,7 +2,7 @@ package edu.kit.minijava.parser;
 
 public final class UserDefinedType extends BasicType {
     public UserDefinedType(String name) {
-        if (name == null) { throw new IllegalArgumentException(); }
+        if (name == null) throw new IllegalArgumentException();
 
         this.name = name;
     }

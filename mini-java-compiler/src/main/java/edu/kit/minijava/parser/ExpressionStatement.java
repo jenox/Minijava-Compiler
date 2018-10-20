@@ -2,7 +2,7 @@ package edu.kit.minijava.parser;
 
 public final class ExpressionStatement extends Statement {
     public ExpressionStatement(Expression expression) {
-        if (expression == null) { throw new IllegalArgumentException(); }
+        if (expression == null) throw new IllegalArgumentException();
 
         this.expression = expression;
     }
