@@ -108,10 +108,10 @@ public class Lexer {
             token_text += advanceWhile(this::isNumeric);
             token_type = TokenType.INTEGER_LITERAL;
 
-            if (token_text.startsWith("0") && (token_text.length() > 1)){
+            if (token_text.startsWith("0") && (token_text.length() > 1)) {
                 throw new RuntimeException("Not a valid INTEGER_LITERAL: " + token_text);
             }
-            if (isAlphanumeric(this.getCurrentCharacter())) {
+            else if (!this.hasReachedEndOfFile() && isAlphanumeric(this.getCurrentCharacter())) {
                 throw new RuntimeException("INTEGER_LITERAL followed by [a-zA-Z]");
             }
 
