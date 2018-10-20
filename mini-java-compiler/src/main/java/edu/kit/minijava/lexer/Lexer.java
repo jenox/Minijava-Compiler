@@ -2,7 +2,6 @@ package edu.kit.minijava.lexer;
 
 import java.io.*;
 import java.nio.file.*;
-import java.util.*;
 import java.util.function.Predicate;
 
 public class Lexer {
@@ -182,6 +181,7 @@ public class Lexer {
             case "else": return TokenType.ELSE;
             case "enum": return TokenType.ENUM;
             case "extends": return TokenType.EXTENDS;
+            case "false": return TokenType.FALSE;
             case "finally": return TokenType.FINALLY;
             case "final": return TokenType.FINAL;
             case "float": return TokenType.FLOAT;
@@ -196,6 +196,7 @@ public class Lexer {
             case "long": return TokenType.LONG;
             case "native": return TokenType.NATIVE;
             case "new": return TokenType.NEW;
+            case "null": return TokenType.NULL;
             case "package": return TokenType.PACKAGE;
             case "private": return TokenType.PRIVATE;
             case "protected": return TokenType.PROTECTED;
@@ -211,6 +212,7 @@ public class Lexer {
             case "throws": return TokenType.THROWS;
             case "throw": return TokenType.THROW;
             case "transient": return TokenType.TRANSIENT;
+            case "true": return TokenType.TRUE;
             case "try": return TokenType.TRY;
             case "void": return TokenType.VOID;
             case "volatile": return TokenType.VOLATILE;
