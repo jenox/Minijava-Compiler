@@ -58,9 +58,26 @@ public final class Parser {
         throw new UnsupportedOperationException();
     }
 
-    // MARK: - Parsing Types
 
-    public Type parseType() {
+    // MARK: - Parsing Parameters & Types
+
+    private List<Parameter> parseParameters() {
+        List<Parameter> parameter_list = new ArrayList<>();
+        parameter_list.add(this.parseParameter());
+        while (this.check(TokenType.COMMA)) {
+            this.consume(TokenType.COMMA);
+            parameter_list.add(this.parseParameter());
+        }
+        return parameter_list;
+    }
+
+    private Parameter parseParameter() {
+        Type type = this.parseType();
+        Token token = this.consume(TokenType.IDENTIFIER);
+        return new Parameter(type, token.text);
+    }
+
+    private Type parseType() {
         BasicType basicType = this.parseBasicType();
 
         int numberOfDimensions = this.parseOpeningAndClosingBrackets();
@@ -68,7 +85,7 @@ public final class Parser {
         return new Type(basicType, numberOfDimensions);
     }
 
-    public BasicType parseBasicType() {
+    private BasicType parseBasicType() {
         switch (this.currentToken.type) {
             case INT:
                 this.consume(TokenType.INT);
@@ -85,22 +102,6 @@ public final class Parser {
             default:
                 throw new RuntimeException("Bad BasicType");
         }
-    }
-
-    public Parameter parseParameter() {
-        Type type = this.parseType();
-        Token token = this.consume(TokenType.IDENTIFIER);
-        return new Parameter(type, token.text);
-    }
-
-    public List<Parameter> parseParameters() {
-        List<Parameter> parameter_list = new ArrayList<Parameter>();
-        parameter_list.add(this.parseParameter());
-        while (this.check(TokenType.COMMA)) {
-            this.consume(TokenType.COMMA);
-            parameter_list.add(this.parseParameter());
-        }
-        return parameter_list;
     }
 
     // MARK: - Parsing Expressions
