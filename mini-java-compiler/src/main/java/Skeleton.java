@@ -41,8 +41,8 @@ public class Skeleton {
                 final Lexer lexer = new Lexer(arguments.get(1));
                 final Parser parser = new Parser(lexer);
 
-                Expression expression = parser.parseExpression();
-                System.out.println(expression);
+                Statement statement = parser.parseStatement();
+                System.out.println(statement);
             } catch (IOException e) {
                 e.printStackTrace();
             }

@@ -37,8 +37,10 @@ public final class Parser {
     private Token consume(TokenType type) {
         Token token = this.currentToken;
 
-        if (token.type != type) {
-            throw new RuntimeException();
+        if (token == null) {
+            throw new RuntimeException("Expected to read " + type +  ", but found end of file");
+        } else if (token.type != type) {
+            throw new RuntimeException("Expected to read " + type +  ", but found " + token.type);
         }
 
         this.advance();
@@ -55,9 +57,187 @@ public final class Parser {
     // MARK: - Parsing Statements
 
     public Statement parseStatement() {
-        throw new UnsupportedOperationException();
+        if (this.currentToken != null) {
+            switch (this.currentToken.type) {
+                case OPENING_BRACE:
+                    return this.parseBlock();
+                case SEMICOLON:
+                    return this.parseEmptyStatement();
+                case IF:
+                    return this.parseIfStatement();
+                case WHILE:
+                    return this.parseWhileStatement();
+                case RETURN:
+                    return this.parseReturnStatement();
+                case LOGICAL_NEGATION:
+                case MINUS:
+                case FALSE:
+                case TRUE:
+                case INTEGER_LITERAL:
+                case IDENTIFIER:
+                case THIS:
+                case OPENING_PARENTHESIS:
+                case NEW:
+                    return this.parseExpressionStatement();
+                default:
+                    throw new RuntimeException();
+            }
+        } else {
+            throw new RuntimeException();
+        }
     }
 
+    private Block parseBlock() {
+        this.consume(TokenType.OPENING_BRACE);
+
+        List<BlockStatement> statements = new ArrayList<>();
+
+        while (this.currentCharacterIsInFirstOfBlockStatement()) {
+            statements.add(this.parseBlockStatement());
+        }
+
+        this.consume(TokenType.CLOSING_BRACE);
+
+        return new Block(statements);
+    }
+
+    private BlockStatement parseBlockStatement() {
+        if (this.currentToken != null) {
+            switch (this.currentToken.type) {
+                case INT:
+                case BOOLEAN:
+                case VOID:
+                    return this.parseLocalVariableDeclarationStatement();
+                case OPENING_BRACE:
+                case SEMICOLON:
+                case IF:
+                case WHILE:
+                case RETURN:
+                case LOGICAL_NEGATION:
+                case MINUS:
+                case NULL:
+                case FALSE:
+                case TRUE:
+                case INTEGER_LITERAL:
+                case THIS:
+                case OPENING_PARENTHESIS:
+                case NEW:
+                    return this.parseStatement();
+                case IDENTIFIER:
+                    // identifier is in both first(Statement) and first(LocalVariableDeclaration)
+                    // TODO: how do we solve this?
+                    throw new RuntimeException("this is actually valid");
+                default:
+                    throw new RuntimeException();
+            }
+        } else {
+            throw new RuntimeException();
+        }
+    }
+
+    private BlockStatement parseLocalVariableDeclarationStatement() {
+        Type type = this.parseType();
+        String name = consume(TokenType.IDENTIFIER).text;
+
+        if (this.check(TokenType.ASSIGN)) {
+            this.consume(TokenType.ASSIGN);
+            Expression value = this.parseExpression();
+            this.consume(TokenType.SEMICOLON);
+
+            return new LocalVariableInitializationStatement(type, name, value);
+        } else {
+            this.consume(TokenType.SEMICOLON);
+
+            return new LocalVariableDeclarationStatement(type, name);
+        }
+    }
+
+    private Statement parseEmptyStatement() {
+        this.consume(TokenType.SEMICOLON);
+
+        return new EmptyStatement();
+    }
+
+    private Statement parseWhileStatement() {
+        this.consume(TokenType.WHILE);
+        this.consume(TokenType.OPENING_PARENTHESIS);
+        Expression condition = this.parseExpression();
+        this.consume(TokenType.CLOSING_PARENTHESIS);
+        Statement statementWhileTrue = this.parseStatement();
+
+        return new WhileStatement(condition, statementWhileTrue);
+    }
+
+    private Statement parseIfStatement() {
+        this.consume(TokenType.IF);
+        this.consume(TokenType.OPENING_PARENTHESIS);
+        Expression condition = this.parseExpression();
+        this.consume(TokenType.CLOSING_PARENTHESIS);
+        Statement statementIfTrue = this.parseStatement();
+
+        if (this.check(TokenType.ELSE)) {
+            this.consume(TokenType.ELSE);
+
+            Statement statementIfFalse = this.parseStatement();
+
+            return new IfElseStatement(condition, statementIfTrue, statementIfFalse);
+        }  else {
+            return new IfStatement(condition, statementIfTrue);
+        }
+    }
+
+    private Statement parseExpressionStatement() {
+        Expression expression = parseExpression();
+
+        this.consume(TokenType.SEMICOLON);
+
+        return new ExpressionStatement(expression);
+    }
+
+    private Statement parseReturnStatement() {
+        this.consume(TokenType.RETURN);
+
+        if (this.currentCharacterIsInFirstOfExpression()) {
+            Expression expression = parseExpression();
+            this.consume(TokenType.SEMICOLON);
+
+            return new ReturnValueStatement(expression);
+        } else {
+            this.consume(TokenType.SEMICOLON);
+
+            return new ReturnNoValueStatement();
+        }
+    }
+
+    private boolean currentCharacterIsInFirstOfBlockStatement() {
+        if (this.currentToken != null) {
+            switch (this.currentToken.type) {
+                case OPENING_BRACE:
+                case SEMICOLON:
+                case IF:
+                case WHILE:
+                case RETURN:
+                case INT:
+                case BOOLEAN:
+                case VOID:
+                case IDENTIFIER:
+                case LOGICAL_NEGATION:
+                case MINUS:
+                case NULL:
+                case FALSE:
+                case TRUE:
+                case INTEGER_LITERAL:
+                case THIS:
+                case OPENING_PARENTHESIS:
+                case NEW:
+                    return true;
+                default:
+                    return false;
+            }
+        }  else {
+            return false;
+        }
+    }
 
     // MARK: - Parsing Parameters & Types
 
@@ -316,16 +496,9 @@ public final class Parser {
     }
 
     private List<Expression> parseArguments() {
-        TokenType[] first = { TokenType.LOGICAL_NEGATION, TokenType.MINUS,  TokenType.NULL, TokenType.TRUE,
-                TokenType.FALSE, TokenType.INTEGER_LITERAL, TokenType.IDENTIFIER, TokenType.THIS,
-                TokenType.OPENING_PARENTHESIS, TokenType.NEW };
         List<Expression> exp_list = new ArrayList<>();
 
-        if (this.currentToken == null) {
-            throw new RuntimeException();
-        }
-
-        if (Arrays.asList(first).contains(this.currentToken.type)) {
+        if (this.currentCharacterIsInFirstOfExpression()) {
             exp_list.add(this.parseExpression());
             while (this.check(TokenType.COMMA)) {
                 this.consume(TokenType.COMMA);
@@ -414,6 +587,28 @@ public final class Parser {
             }
             default:
                 throw new RuntimeException("parsePrimary");
+        }
+    }
+
+    private boolean currentCharacterIsInFirstOfExpression() {
+        if (this.currentToken != null) {
+            switch (this.currentToken.type) {
+                case LOGICAL_NEGATION:
+                case MINUS:
+                case NULL:
+                case FALSE:
+                case TRUE:
+                case INTEGER_LITERAL:
+                case IDENTIFIER:
+                case THIS:
+                case OPENING_PARENTHESIS:
+                case NEW:
+                    return true;
+                default:
+                    return false;
+            }
+        }  else {
+            return false;
         }
     }
 
