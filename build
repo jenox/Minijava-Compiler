@@ -3,4 +3,4 @@ sudo apt install -y openjdk-8-jdk
 apt install -y openjdk-8-jdk
 
 SCRIPT_PATH=$(dirname `which $0`)
-$SCRIPT_PATH/mini-java-compiler/gradlew -b $SCRIPT_PATH/mini-java-compiler/build.gradle build 
+$SCRIPT_PATH/mini-java-compiler/gradlew -b $SCRIPT_PATH/mini-java-compiler/build.gradle build

@@ -6,7 +6,7 @@
 -->
 <!--
     Checkstyle-Configuration: checkstyle
-    Description: 
+    Description:
 Einige Coding-Standards für das Compiler-Praktikum
 -->
 <module name="Checker">
@@ -33,6 +33,9 @@ Einige Coding-Standards für das Compiler-Praktikum
     <module name="RightCurly">
       <property name="option" value="alone"/>
       <property name="tokens" value="LITERAL_CATCH,LITERAL_FINALLY,LITERAL_ELSE,CLASS_DEF,METHOD_DEF,CTOR_DEF,LITERAL_FOR,LITERAL_WHILE,LITERAL_DO,STATIC_INIT,INSTANCE_INIT"/>
+    </module>
+    <module name="LineLength">
+      <property name="max" value="120"/>
     </module>
   </module>
   <module name="FileTabCharacter">
