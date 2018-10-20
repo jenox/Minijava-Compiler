@@ -63,15 +63,9 @@ public final class Parser {
     public Type parseType() {
         BasicType basicType = this.parseBasicType();
 
-        int dim = 0;
+        int numberOfDimensions = this.parseOpeningAndClosingBrackets();
 
-        while (this.check(TokenType.OPENING_BRACKET)) {
-            this.consume(TokenType.OPENING_BRACKET);
-            this.consume(TokenType.CLOSING_BRACKET);
-            dim += 1;
-        }
-
-        return new Type(basicType, dim);
+        return new Type(basicType, numberOfDimensions);
     }
 
     public BasicType parseBasicType() {
@@ -374,12 +368,13 @@ public final class Parser {
             case THIS:
                 this.consume(TokenType.THIS);
                 return new ThisExpression();
-            case OPENING_PARENTHESIS:
+            case OPENING_PARENTHESIS: {
                 this.consume(TokenType.OPENING_PARENTHESIS);
                 Expression expression = this.parseExpression();
                 this.consume(TokenType.CLOSING_PARENTHESIS);
                 return expression;
-            case NEW:
+            }
+            case NEW: {
                 this.consume(TokenType.NEW);
 
                 if (this.currentToken == null) {
@@ -389,37 +384,50 @@ public final class Parser {
                 BasicType basicType = null;
 
                 switch (this.currentToken.type) {
-                    case IDENTIFIER:
-                        Token token2 = this.consume(TokenType.IDENTIFIER);
+                    case IDENTIFIER: {
+                        String identifier = this.consume(TokenType.IDENTIFIER).text;
                         if (this.check(TokenType.OPENING_PARENTHESIS)) {
                             this.consume(TokenType.OPENING_PARENTHESIS);
                             this.consume(TokenType.CLOSING_PARENTHESIS);
-                            return new NewObjectExpression(token2.text);
+                            return new NewObjectExpression(identifier);
                         } else if (this.check(TokenType.OPENING_BRACKET)) {
                             this.consume(TokenType.OPENING_BRACKET);
-                            basicType = new UserDefinedType(token2.text);
+                            basicType = new UserDefinedType(identifier);
                         }
+                    }
                     case INT:
                     case BOOLEAN:
-                    case VOID:
+                    case VOID: {
                         if (basicType == null) {
                             basicType = this.parseBasicType();
                             this.consume(TokenType.OPENING_BRACKET);
                         }
-                        Expression expression2 = this.parseExpression();
+                        Expression expression = this.parseExpression();
                         this.consume(TokenType.CLOSING_BRACKET);
-                        int dim = 1;
-                        while (this.check(TokenType.OPENING_BRACKET)) {
-                            this.consume(TokenType.OPENING_BRACKET);
-                            this.consume(TokenType.CLOSING_BRACKET);
-                            dim += 1;
-                        }
-                        return new NewArrayExpression(basicType, expression2, dim);
+                        int numberOfDimensions = 1 + this.parseOpeningAndClosingBrackets();
+                        return new NewArrayExpression(basicType, expression, numberOfDimensions);
+                    }
                     default:
                         throw new RuntimeException("PrimaryExpression not valid");
                 }
+            }
             default:
                 throw new RuntimeException("parsePrimary");
         }
+    }
+
+    // MARK: - Miscellaneous
+
+    private int parseOpeningAndClosingBrackets() {
+        int count = 0;
+
+        while (this.check(TokenType.OPENING_BRACKET)) {
+            this.consume(TokenType.OPENING_BRACKET);
+            this.consume(TokenType.CLOSING_BRACKET);
+
+            count += 1;
+        }
+
+        return count;
     }
 }
