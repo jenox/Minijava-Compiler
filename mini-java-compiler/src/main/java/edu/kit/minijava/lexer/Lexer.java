@@ -135,7 +135,6 @@ public class Lexer {
         } else if (isOperatorSymbol(literal)) {
             token_text = advanceWhile(this::isOperatorSymbol, s -> !s.contains("/*"));
 
-
             if (token_text.startsWith("/*")) {
                String comment = advanceWhile(c -> true, s -> !s.contains("*/"));
                if (!comment.endsWith("*/")) {

@@ -25,7 +25,15 @@ public final class Parser {
         this.currentToken = this.lexer.nextToken();
     }
 
-    private Token expect(TokenType type) {
+    private boolean check(TokenType type){
+        if(currentToken == null){
+            return false;
+        } else {
+            return currentToken.type == type;
+        }
+    }
+
+    private Token consume(TokenType type) {
         Token token = this.currentToken;
 
         if (token.type != type) {
@@ -58,6 +66,35 @@ public final class Parser {
     // MARK: - Parsing Types
 
     public Type parseType() {
-        throw new UnsupportedOperationException();
+        BasicType basicType = parseBasicType();
+
+        int dim = 0;
+
+        while(this.check(TokenType.OPENING_BRACKET)){
+            this.consume(TokenType.OPENING_BRACKET);
+            this.consume(TokenType.CLOSING_BRACKET);
+            dim += 1;
+        }
+
+        return new Type(basicType, dim);
+    }
+
+    public BasicType parseBasicType(){
+        switch(this.currentToken.type){
+            case INT:
+                this.consume(TokenType.INT);
+                return new IntegerType();
+            case BOOLEAN:
+                this.consume(TokenType.INT);
+                return new BooleanType();
+            case VOID:
+                this.consume(TokenType.INT);
+                return new VoidType();
+            case IDENTIFIER:
+                Token token = this.consume(TokenType.INT);
+                return new UserDefinedType(token.text);
+            default:
+                throw new RuntimeException("Bad BasicType");
+        }
     }
 }
