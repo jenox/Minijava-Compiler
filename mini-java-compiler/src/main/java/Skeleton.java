@@ -10,14 +10,14 @@ public class Skeleton {
 
         // TODO: https://commons.apache.org/proper/commons-cli/introduction.html ?
 
-        if (arguments.get(0).equals("--echo")) {
+        if (arguments.size() > 0 && arguments.get(0).equals("--echo")) {
             try {
                 final Lexer lexer = new Lexer(arguments.get(1));
                 System.out.println(lexer.text);
             } catch (IOException e) {
                 e.printStackTrace();
             }
-        } else if (arguments.get(0).equals("--lex")) {
+        } else if (arguments.size() > 0 && arguments.get(0).equals("--lex")) {
             try {
                 final Lexer lexer = new Lexer(arguments.get(1));
 
@@ -35,7 +35,6 @@ public class Skeleton {
             }
         } else {
             System.out.println("Please run with \"--echo <file-name>\".");
-            System.out.println(arguments);
         }
     }
 }
