@@ -66,7 +66,6 @@ public class Lexer {
     // MARK: - Helpers
 
     private boolean isNumeric(char character) {
-        System.out.println("testing " + character + ": " + "0123456789".indexOf(character));
         return "0123456789".indexOf(character) != -1;
     }
 
@@ -75,9 +74,13 @@ public class Lexer {
     }
 
     private boolean isWhitespace(char character) {
-        char[] characters = {' ', '\t', '\r', '\n'};
-
-        return Arrays.asList(characters).contains(character);
+        switch (character) {
+            case ' ': return true;
+            case '\t': return true;
+            case '\r': return true;
+            case '\n': return true;
+            default: return false;
+        }
     }
 
     private boolean isSeparator(char character) {
