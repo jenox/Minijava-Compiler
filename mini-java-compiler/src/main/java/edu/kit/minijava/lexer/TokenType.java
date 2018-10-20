@@ -29,6 +29,6 @@ public enum TokenType {
 
     // MARK: - OTHER
 
-    IDENTIFIER, // [A-ZA-Z_][A-ZA-Z0-9_]*
+    IDENTIFIER, // [a-zA-Z_][a-zA-Z0-9_]*
     INTEGER_LITERAL, // 0 | [1-9][0-9]*
 }
