@@ -109,60 +109,215 @@ public final class Parser {
         return parameter_list;
     }
 
-    public Expression parseExpression(){
-        return null;
+    // MARK: - Parsing Expressions
+
+    public Expression parseExpression() {
+        return this.parseAssignmentExpression();
     }
 
-    public Expression parseAssignmentExpression(){
-        return null;
+    private Expression parseAssignmentExpression() {
+        Expression expression = this.parseLogicalOrExpression();
+
+        if (this.check(TokenType.ASSIGN)) {
+            return new AssignmentExpression(expression, this.parseAssignmentExpression());
+        } else {
+            return expression;
+        }
     }
 
-    public Expression parseLogicalOrExpression(){
-        return null;
+    private Expression parseLogicalOrExpression() {
+        Expression expression = this.parseLogicalAndExpression();
+
+        while (this.currentToken != null) {
+            switch (this.currentToken.type) {
+                case LOGICAL_OR:
+                    this.consume(TokenType.LOGICAL_OR);
+                    expression = new LogicalOrExpression(expression, this.parseLogicalAndExpression());
+                    break;
+                default:
+                    return expression;
+            }
+        }
+
+        return expression;
     }
 
-    public Expression parseLogicalAndExpression(){
-        return null;
+    private Expression parseLogicalAndExpression() {
+        Expression expression = this.parseEqualityExpression();
+
+        while (this.currentToken != null) {
+            switch (this.currentToken.type) {
+                case LOGICAL_AND:
+                    this.consume(TokenType.LOGICAL_AND);
+                    expression = new LogicalAndExpression(expression, this.parseEqualityExpression());
+                    break;
+                default:
+                    return expression;
+            }
+        }
+
+        return expression;
     }
 
-    public Expression parseEqualityExpression(){
-        return null;
+    private Expression parseEqualityExpression() {
+        Expression expression = this.parseRelationalExpression();
+
+        while (this.currentToken != null) {
+            switch (this.currentToken.type) {
+                case EQUAL_TO:
+                    this.consume(TokenType.EQUAL_TO);
+                    expression = new EqualToExpression(expression, this.parseRelationalExpression());
+                    break;
+                case NOT_EQUAL_TO:
+                    this.consume(TokenType.NOT_EQUAL_TO);
+                    expression = new NotEqualToExpression(expression, this.parseRelationalExpression());
+                    break;
+                default:
+                    return expression;
+            }
+        }
+
+        return expression;
     }
 
-    public Expression parseRelationalExpression(){
-        return null;
+    private Expression parseRelationalExpression() {
+        Expression expression = this.parseAdditiveExpression();
+
+        while (this.currentToken != null) {
+            switch (this.currentToken.type) {
+                case LESS_THAN:
+                    this.consume(TokenType.LESS_THAN);
+                    expression = new LessThanExpression(expression, this.parseAdditiveExpression());
+                    break;
+                case LESS_THAN_OR_EQUAL_TO:
+                    this.consume(TokenType.LESS_THAN_OR_EQUAL_TO);
+                    expression = new LessThanOrEqualToExpression(expression, this.parseAdditiveExpression());
+                    break;
+                case GREATER_THAN:
+                    this.consume(TokenType.GREATER_THAN);
+                    expression = new GreaterThanExpression(expression, this.parseAdditiveExpression());
+                    break;
+                case GREATER_THAN_OR_EQUAL_TO:
+                    this.consume(TokenType.GREATER_THAN_OR_EQUAL_TO);
+                    expression = new GreaterThanOrEqualToExpression(expression, this.parseAdditiveExpression());
+                    break;
+                default:
+                    return expression;
+            }
+        }
+
+        return expression;
     }
 
-    public Expression parseAdditiveExpression(){
-        return null;
+    private Expression parseAdditiveExpression() {
+        Expression expression = this.parseMultiplicativeExpression();
+
+        while (this.currentToken != null) {
+            switch (this.currentToken.type) {
+                case PLUS:
+                    this.consume(TokenType.PLUS);
+                    expression = new AddExpression(expression, this.parseMultiplicativeExpression());
+                    break;
+                case MINUS:
+                    this.consume(TokenType.MINUS);
+                    expression = new SubtractExpression(expression, this.parseMultiplicativeExpression());
+                    break;
+                default:
+                    return expression;
+            }
+        }
+
+        return expression;
     }
 
-    public Expression parseMultiplicativeExpression(){
-        return null;
+    private Expression parseMultiplicativeExpression() {
+        Expression expression = this.parseUnaryExpression();
+
+        while (this.currentToken != null) {
+            switch (this.currentToken.type) {
+                case MULTIPLY:
+                    this.consume(TokenType.MULTIPLY);
+                    expression = new MultiplyExpression(expression, this.parseUnaryExpression());
+                    break;
+                case DIVIDE:
+                    this.consume(TokenType.DIVIDE);
+                    expression = new DivideExpression(expression, this.parseUnaryExpression());
+                    break;
+                case MODULO:
+                    this.consume(TokenType.MODULO);
+                    expression = new ModuloExpression(expression, this.parseUnaryExpression());
+                    break;
+                default:
+                    return expression;
+            }
+        }
+
+        return expression;
     }
 
-    public Expression parseUnaryExpression(){
-        return null;
+    private Expression parseUnaryExpression() {
+        if (this.currentToken == null) {
+            throw new RuntimeException();
+        }
+
+        switch (this.currentToken.type) {
+            case NULL:
+            case TRUE:
+            case FALSE:
+            case INTEGER_LITERAL:
+            case IDENTIFIER:
+            case THIS:
+            case OPENING_PARENTHESIS:
+            case NEW:
+                return this.parsePostfixExpression();
+            case LOGICAL_NEGATION:
+                return new LogicalNotExpression(this.parseUnaryExpression());
+            case MINUS:
+                return new NegateExpression(this.parseUnaryExpression());
+            default:
+                throw new RuntimeException();
+        }
     }
 
-    public PostfixExpression parsePostfixExpression(){
-        return null;
+    private Expression parsePostfixExpression() {
+        Expression expression = this.parsePrimaryExpression();
+
+        if (this.currentToken == null) {
+            return expression;
+        }
+
+        switch (this.currentToken.type) {
+            case PERIOD:
+            case OPENING_BRACKET:
+                return new PostfixExpression(expression, this.parsePostfixOperation());
+            default:
+                return expression;
+        }
     }
 
-    public PostfixOperation parsePostfixOperation(){
-        return null;
-    }
+    private PostfixOperation parsePostfixOperation() {
+        if (this.check(TokenType.PERIOD)) {
+            this.consume(TokenType.PERIOD);
+            String identifier = this.consume(TokenType.IDENTIFIER).text;
 
-    public MethodInvocation parseMethodInvocation(){
-        return null;
-    }
+            if (this.check(TokenType.OPENING_PARENTHESIS)) {
+                this.consume(TokenType.OPENING_PARENTHESIS);
+                List<Expression> arguments = this.parseArguments();
+                this.consume(TokenType.CLOSING_PARENTHESIS);
 
-    public FieldAccess parseFieldAccess(){
-        return null;
-    }
+                return new MethodInvocation(identifier, arguments);
+            } else {
+                return new FieldAccess(identifier);
+            }
+        } else if (this.check(TokenType.OPENING_BRACKET)) {
+            this.consume(TokenType.OPENING_BRACKET);
+            Expression expression = this.parseExpression();
+            this.consume(TokenType.CLOSING_BRACKET);
 
-    public ArrayAccess parseArrayAccess(){
-        return null;
+            return new ArrayAccess(expression);
+        } else {
+            throw new RuntimeException();
+        }
     }
 
     private List<Expression> parseArguments() {
