@@ -19,7 +19,6 @@ public class Skeleton {
             }
         } else if (arguments.size() > 0 && arguments.get(0).equals("--lex")) {
             try {
-                System.out.println("starting");
                 final Lexer lexer = new Lexer(arguments.get(1));
 
                 while (true) {
@@ -28,7 +27,6 @@ public class Skeleton {
                     if (token != null) {
                         System.out.println(token);
                     } else {
-                        System.out.println("done");
                         break;
                     }
                 }
