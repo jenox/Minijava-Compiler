@@ -34,5 +34,5 @@ jar {
 apply plugin: 'checkstyle'
 
 checkstyle {
-    configFile = new File(rootDir, 'checkstyle.xml')
+    configFile = rootProject.file('../checkstyle.xml')
 }
