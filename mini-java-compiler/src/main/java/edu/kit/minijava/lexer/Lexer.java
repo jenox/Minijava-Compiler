@@ -89,7 +89,36 @@ public class Lexer {
     // MARK: - Fetching Tokens
 
     public Token nextToken() {
-        return null;
+        advanceWhile(isWhitespace());
+
+        char literal = this.getCurrentCharacter();
+        String token_text = '';
+        TokenType token_type;
+
+        if(literal == null){
+            return null;
+        }
+
+        if(isNumeric(literal)){
+            token_text += this.advance();
+            token_text += advanceWhile(isNumeric());
+            token_type = TokenType.INTEGER_LITERAL;
+
+            assert (token_text.startsWith("0") && (token_text.length() > 1)) : ("Not a valid INTEGER_LITERAL: " + token_text);
+            assert (isAlphanumeric(this.getCurrentCharacter())) : "INTEGER_LITERAL followed by [a-zA-Z]";
+
+        } else if(isAlphanumeric(literal)) {
+            assert false;
+        } else if(isSeparator(literal)) {
+            assert false;
+        } else if(isOperatorSymbol(literal)) {
+            assert false;
+        } else {
+            assert false : "Not a valid char"
+        }
+
+
+        return new Token(token_type, token_text);
     }
 
     private TokenType keywordFromString(String string) {
