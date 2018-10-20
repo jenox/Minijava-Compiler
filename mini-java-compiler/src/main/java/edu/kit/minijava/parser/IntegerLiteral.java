@@ -6,4 +6,9 @@ public final class IntegerLiteral extends Expression {
     }
 
     public final int value;
+
+    @Override
+    public String toString() {
+        return "IntegerLiteral(" + this.value + ")";
+    }
 }

@@ -128,7 +128,7 @@ public class Lexer {
            token_text = this.advance();
            token_type = separatorFromString(token_text);
            //Should not happen
-           if (token_type == null){
+           if (token_type == null) {
                throw new RuntimeException("Not a valid Seperator: " + token_text);
            }
 
@@ -141,9 +141,9 @@ public class Lexer {
                    throw new RuntimeException("Comment not terminated");
                }
                return nextToken();
-            } else if(token_text.contains("/*")){
+            } else if (token_text.contains("/*")) {
                 String comment = advanceWhile(c -> true, s -> !s.contains("*/"));
-                token_text = token_text.substring(0, token_text.length()-2);
+                token_text = token_text.substring(0, token_text.length() - 2);
                 if (!comment.endsWith("*/")) {
                     throw new RuntimeException("Comment not terminated");
                 }

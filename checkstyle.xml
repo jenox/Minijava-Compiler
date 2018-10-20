@@ -25,7 +25,7 @@ Einige Coding-Standards für das Compiler-Praktikum
     </module>
     <module name="DefaultComesLast"/>
     <module name="NeedBraces">
-      <property name="tokens" value="LITERAL_DO,LITERAL_ELSE,LITERAL_IF,LITERAL_FOR,LITERAL_WHILE"/>
+      <property name="tokens" value="LITERAL_DO,LITERAL_ELSE,LITERAL_FOR,LITERAL_WHILE"/>
     </module>
     <module name="LeftCurly"/>
     <module name="ParameterAssignment"/>
