@@ -46,14 +46,14 @@ public class Lexer {
     }
 
     private String advanceWhile(Predicate<Character> whilePredicate) {
-        return this.advanceWhile(whilePredicate, s -> false);
+        return this.advanceWhile(whilePredicate, s -> true);
     }
 
-    private String advanceWhile(Predicate<Character> whilePredicate, Predicate<Character> untilPredicate) {
+    private String advanceWhile(Predicate<Character> characterPredicate, Predicate<String> stringPredicate) {
         String string = "";
         Character character = this.getCurrentCharacter();
 
-        while (!this.hasReachedEndOfFile() && whilePredicate.test(character) && !untilPredicate.test(character)) {
+        while (!this.hasReachedEndOfFile() && characterPredicate.test(character) && stringPredicate.test(string)) {
             string += this.getCurrentCharacter();
             this.increaseCurrentIndex();
 
@@ -94,7 +94,7 @@ public class Lexer {
     // MARK: - Fetching Tokens
 
     public Token nextToken() {
-        advanceWhile(c -> isWhitespace(c));
+        advanceWhile(this::isWhitespace);
 
         if (hasReachedEndOfFile()) {
             return null;
@@ -105,19 +105,57 @@ public class Lexer {
         TokenType token_type = null;
 
         if (isNumeric(literal)) {
-            token_text += this.advance();
-            token_text += advanceWhile(c -> isNumeric(c));
+            token_text = this.advance();
+            token_text += advanceWhile(this::isNumeric);
             token_type = TokenType.INTEGER_LITERAL;
 
-            assert (token_text.startsWith("0") && (token_text.length() > 1)) : ("Not a valid INTEGER_LITERAL: " + token_text);
-            assert (isAlphanumeric(this.getCurrentCharacter())) : "INTEGER_LITERAL followed by [a-zA-Z]";
+            if (token_text.startsWith("0") && (token_text.length() > 1)){
+                throw new RuntimeException("Not a valid INTEGER_LITERAL: " + token_text);
+            }
+            if (isAlphanumeric(this.getCurrentCharacter())) {
+                throw new RuntimeException("INTEGER_LITERAL followed by [a-zA-Z]");
+            }
 
         } else if (isAlphanumeric(literal)) {
-            assert false;
+            token_text = this.advance();
+            token_text += advanceWhile(this::isAlphanumeric);
+
+            token_type = keywordFromString(token_text);
+            if (token_type == null) {
+                token_type = TokenType.IDENTIFIER;
+            }
+
         } else if (isSeparator(literal)) {
-            assert false;
+           token_text = this.advance();
+           token_type = separatorFromString(token_text);
+           //Should not happen
+           if (token_type == null){
+               throw new RuntimeException("Not a valid Seperator: " + token_text);
+           }
+
         } else if (isOperatorSymbol(literal)) {
-            assert false;
+            token_text = advanceWhile(this::isOperatorSymbol, s -> !s.contains("/*"));
+
+
+            if (token_text.startsWith("/*")) {
+               String comment = advanceWhile(c -> true, s -> !s.contains("*/"));
+               if (!comment.endsWith("*/")) {
+                   throw new RuntimeException("Comment not terminated");
+               }
+               return nextToken();
+            } else if(token_text.contains("/*")){
+                String comment = advanceWhile(c -> true, s -> !s.contains("*/"));
+                token_text = token_text.substring(0, token_text.length()-2);
+                if (!comment.endsWith("*/")) {
+                    throw new RuntimeException("Comment not terminated");
+                }
+            }
+
+           token_type = operatorFromString(token_text);
+           if (token_type == null) {
+               throw new RuntimeException("Not a valid Operator: " + token_text);
+           }
+
         } else {
             assert false : "Not a valid char";
         }
