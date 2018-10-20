@@ -26,8 +26,8 @@ public final class Parser {
         this.currentToken = this.lexer.nextToken();
     }
 
-    private boolean check(TokenType type){
-        if(currentToken == null){
+    private boolean check(TokenType type) {
+        if (this.currentToken == null) {
             return false;
         } else {
             return currentToken.type == type;
@@ -61,11 +61,11 @@ public final class Parser {
     // MARK: - Parsing Types
 
     public Type parseType() {
-        BasicType basicType = parseBasicType();
+        BasicType basicType = this.parseBasicType();
 
         int dim = 0;
 
-        while(this.check(TokenType.OPENING_BRACKET)){
+        while (this.check(TokenType.OPENING_BRACKET)) {
             this.consume(TokenType.OPENING_BRACKET);
             this.consume(TokenType.CLOSING_BRACKET);
             dim += 1;
@@ -74,8 +74,8 @@ public final class Parser {
         return new Type(basicType, dim);
     }
 
-    public BasicType parseBasicType(){
-        switch(this.currentToken.type){
+    public BasicType parseBasicType() {
+        switch (this.currentToken.type) {
             case INT:
                 this.consume(TokenType.INT);
                 return new IntegerType();
@@ -93,16 +93,16 @@ public final class Parser {
         }
     }
 
-    public Parameter parseParameter(){
-        Type type = parseType();
+    public Parameter parseParameter() {
+        Type type = this.parseType();
         Token token = this.consume(TokenType.IDENTIFIER);
         return new Parameter(type, token.text);
     }
 
-    public List<Parameter> parseParameters(){
+    public List<Parameter> parseParameters() {
         List<Parameter> parameter_list = new ArrayList<Parameter>();
         parameter_list.add(this.parseParameter());
-        while(this.check(TokenType.COMMA)){
+        while (this.check(TokenType.COMMA)) {
             this.consume(TokenType.COMMA);
             parameter_list.add(this.parseParameter());
         }
@@ -165,29 +165,29 @@ public final class Parser {
         return null;
     }
 
-    public List<Expression> parseArguments(){
-        TokenType[] first = {TokenType.LOGICAL_NEGATION, TokenType.MINUS,
-                TokenType.NULL, TokenType.TRUE, TokenType.FALSE,
-                TokenType.INTEGER_LITERAL, TokenType.IDENTIFIER,
-                TokenType.THIS, TokenType.OPENING_PARENTHESIS, TokenType.NEW};
-        List<Expression> exp_list= new ArrayList<>();
+    private List<Expression> parseArguments() {
+        TokenType[] first = { TokenType.LOGICAL_NEGATION, TokenType.MINUS,  TokenType.NULL, TokenType.TRUE,
+                TokenType.FALSE, TokenType.INTEGER_LITERAL, TokenType.IDENTIFIER, TokenType.THIS,
+                TokenType.OPENING_PARENTHESIS, TokenType.NEW };
+        List<Expression> exp_list = new ArrayList<>();
 
-        if(currentToken == null){
+        if (this.currentToken == null) {
             throw new RuntimeException();
         }
-        if(Arrays.asList(first).contains(currentToken.type)){
-            exp_list.add(parseExpression());
-            while (this.check(TokenType.COMMA)){
+
+        if (Arrays.asList(first).contains(this.currentToken.type)) {
+            exp_list.add(this.parseExpression());
+            while (this.check(TokenType.COMMA)) {
                 this.consume(TokenType.COMMA);
-                exp_list.add(parseExpression());
+                exp_list.add(this.parseExpression());
             }
         }
 
         return exp_list;
     }
 
-    public Expression parsePrimaryExpression(){
-        switch(this.currentToken.type) {
+    private Expression parsePrimaryExpression() {
+        switch (this.currentToken.type) {
             case NULL:
                 return new NullLiteral();
             case FALSE:
@@ -195,11 +195,14 @@ public final class Parser {
             case TRUE:
                 return new BooleanLiteral(true);
             case INTEGER_LITERAL:
-                //Java interne Funktion parseInt
-                return new IntegerLiteral(Integer.parseInt(this.currentToken.text));
+                try {
+                    return new IntegerLiteral(Integer.parseInt(this.currentToken.text));
+                } catch (NumberFormatException exception) {
+                    throw new RuntimeException();
+                }
             case IDENTIFIER:
                 Token token = this.consume(TokenType.IDENTIFIER);
-                if(this.check(TokenType.OPENING_PARENTHESIS)) {
+                if (this.check(TokenType.OPENING_PARENTHESIS)) {
                     this.consume(TokenType.OPENING_PARENTHESIS);
                     List<Expression> arguments = this.parseArguments();
                     this.consume(TokenType.CLOSING_PARENTHESIS);
@@ -210,24 +213,26 @@ public final class Parser {
             case THIS:
                 return new ThisExpression();
             case OPENING_PARENTHESIS:
-                Expression expression = parseExpression();
+                Expression expression = this.parseExpression();
                 this.consume(TokenType.CLOSING_PARENTHESIS);
                 return expression;
             case NEW:
                 this.consume(TokenType.NEW);
 
-                //TODO: Fix Nullpointer Exception
+                if (this.currentToken == null) {
+                    throw new RuntimeException();
+                }
 
                 BasicType basicType = null;
 
-                switch(currentToken.type) {
+                switch (this.currentToken.type) {
                     case IDENTIFIER:
                         Token token2 = this.consume(TokenType.IDENTIFIER);
                         if (this.check(TokenType.OPENING_PARENTHESIS)) {
                             this.consume(TokenType.OPENING_PARENTHESIS);
                             this.consume(TokenType.CLOSING_PARENTHESIS);
                             return new NewObjectExpression(token2.text);
-                        } else if(this.check(TokenType.OPENING_BRACKET)) {
+                        } else if (this.check(TokenType.OPENING_BRACKET)) {
                             this.consume(TokenType.OPENING_BRACKET);
                             basicType = new UserDefinedType(token2.text);
                         }
@@ -235,7 +240,7 @@ public final class Parser {
                     case BOOLEAN:
                     case VOID:
                         if (basicType == null) {
-                            basicType = parseBasicType();
+                            basicType = this.parseBasicType();
                             this.consume(TokenType.OPENING_BRACKET);
                         }
                         Expression expression2 = this.parseExpression();
@@ -250,11 +255,8 @@ public final class Parser {
                     default:
                         throw new RuntimeException("PrimaryExpression not valid");
                 }
-
             default:
                 throw new RuntimeException("parsePrimary");
         }
-
-
     }
 }
