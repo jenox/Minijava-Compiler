@@ -1,6 +1,6 @@
 {
     "in": "foo = bar",
-    "out": 
+    "out":
     [
         "IDENTIFIER(foo)",
         "ASSIGN",

@@ -22,7 +22,7 @@ public class LexerTest {
     public static File[] data() {
         File dir = new File(TEST_DIR);
         File[] files = dir.listFiles(new FileFilter() {
-            
+
             @Override
             public boolean accept(File pathname) {
                 return pathname.toString().endsWith(".json");
@@ -31,14 +31,14 @@ public class LexerTest {
         System.out.println(files.length);
         return files;
     }
-    
+
 
     /**
      * current file under test
      */
     @Parameter
     public static File file;
-    
+
 
     /**
      * runs all testcases in testcases folder
