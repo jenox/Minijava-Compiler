@@ -7,15 +7,13 @@ public final class LocalVariableDeclarationStatement extends BlockStatement {
 
         this.type = type;
         this.name = name;
-        this.value = value;
     }
 
     public final Type type;
     public final String name;
-    public final Expression value; // optional
 
     @Override
     public String toString() {
-        return "LocalVariableDeclarationStatement(" + this.type + ", " + this.name + ", " + this.value + ")";
+        return "LocalVariableDeclarationStatement(" + this.type + ", " + this.name + ")";
     }
 }
