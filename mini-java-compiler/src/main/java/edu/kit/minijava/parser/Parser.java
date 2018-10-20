@@ -344,30 +344,38 @@ public final class Parser {
     private Expression parsePrimaryExpression() {
         switch (this.currentToken.type) {
             case NULL:
+                this.consume(TokenType.NULL);
                 return new NullLiteral();
             case FALSE:
+                this.consume(TokenType.FALSE);
                 return new BooleanLiteral(false);
             case TRUE:
+                this.consume(TokenType.TRUE);
                 return new BooleanLiteral(true);
-            case INTEGER_LITERAL:
+            case INTEGER_LITERAL: {
+                String value = this.consume(TokenType.INTEGER_LITERAL).text;
                 try {
-                    return new IntegerLiteral(Integer.parseInt(this.currentToken.text));
+                    return new IntegerLiteral(Integer.parseInt(value));
                 } catch (NumberFormatException exception) {
                     throw new RuntimeException();
                 }
-            case IDENTIFIER:
-                Token token = this.consume(TokenType.IDENTIFIER);
+            }
+            case IDENTIFIER: {
+                String identifier = this.consume(TokenType.IDENTIFIER).text;
                 if (this.check(TokenType.OPENING_PARENTHESIS)) {
                     this.consume(TokenType.OPENING_PARENTHESIS);
                     List<Expression> arguments = this.parseArguments();
                     this.consume(TokenType.CLOSING_PARENTHESIS);
-                    return new IdentifierAndArgumentsExpression(token.text, arguments);
+                    return new IdentifierAndArgumentsExpression(identifier, arguments);
                 } else {
-                    return new IdentifierExpression(token.text);
+                    return new IdentifierExpression(identifier);
                 }
+            }
             case THIS:
+                this.consume(TokenType.THIS);
                 return new ThisExpression();
             case OPENING_PARENTHESIS:
+                this.consume(TokenType.OPENING_PARENTHESIS);
                 Expression expression = this.parseExpression();
                 this.consume(TokenType.CLOSING_PARENTHESIS);
                 return expression;
