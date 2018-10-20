@@ -28,6 +28,10 @@ public final class Parser {
     private Token expect(TokenType type) {
         Token token = this.currentToken;
 
+        if (token.type != type) {
+            throw new RuntimeException();
+        }
+
         this.advance();
 
         return token;
