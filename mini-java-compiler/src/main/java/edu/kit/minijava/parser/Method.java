@@ -16,4 +16,9 @@ public final class Method extends ClassMember {
     public final List<Parameter> parameters;
     public final MethodRest rest; // nullable
     public final Block body;
+
+    @Override
+    public String toString() {
+        return "Method(" + this.returnType + ", " + this.name + ", " + this.parameters + ", " + this.body + ")";
+    }
 }

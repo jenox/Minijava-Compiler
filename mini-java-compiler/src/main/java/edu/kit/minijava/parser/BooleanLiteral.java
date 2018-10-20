@@ -6,4 +6,9 @@ public final class BooleanLiteral extends Expression {
     }
 
     public final boolean value;
+
+    @Override
+    public String toString() {
+        return "BooleanLiteral(" + this.value + ")";
+    }
 }
