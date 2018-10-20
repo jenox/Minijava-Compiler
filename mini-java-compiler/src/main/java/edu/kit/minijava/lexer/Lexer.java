@@ -22,7 +22,7 @@ public class Lexer {
     private int currentIndex = 0;
 
     private boolean hasReachedEndOfFile() {
-        return this.currentIndex < this.text.length();
+        return this.currentIndex >= this.text.length();
     }
 
     private void increaseCurrentIndex() {
@@ -51,12 +51,13 @@ public class Lexer {
 
     private String advanceWhile(Predicate<Character> whilePredicate, Predicate<Character> untilPredicate) {
         String string = "";
-
         Character character = this.getCurrentCharacter();
 
         while (!this.hasReachedEndOfFile() && whilePredicate.test(character) && !untilPredicate.test(character)) {
             string += this.getCurrentCharacter();
             this.increaseCurrentIndex();
+
+            character = this.getCurrentCharacter();
         }
 
         return string;
@@ -65,6 +66,7 @@ public class Lexer {
     // MARK: - Helpers
 
     private boolean isNumeric(char character) {
+        System.out.println("testing " + character + ": " + "0123456789".indexOf(character));
         return "0123456789".indexOf(character) != -1;
     }
 
@@ -99,7 +101,7 @@ public class Lexer {
         String token_text = "";
         TokenType token_type = null;
 
-        if (isNumeric(literal)){
+        if (isNumeric(literal)) {
             token_text += this.advance();
             token_text += advanceWhile(c -> isNumeric(c));
             token_type = TokenType.INTEGER_LITERAL;
