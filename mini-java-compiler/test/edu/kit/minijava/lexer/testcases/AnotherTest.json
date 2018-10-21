@@ -1,9 +1,10 @@
 {
-    "in": "foo = bar",
+    "in": "foo = bar;",
     "out":
     [
         "IDENTIFIER(foo)",
         "ASSIGN",
-        "IDENTIFIER(bar)"
+        "IDENTIFIER(bar)",
+        "SEMICOLON"
     ]
 }

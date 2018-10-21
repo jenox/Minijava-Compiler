@@ -1,17 +1,13 @@
 package edu.kit.minijava.lexer;
 
-import java.io.*;
-import java.nio.file.*;
-import java.util.function.Predicate;
+import java.util.function.*;
 
 public class Lexer {
 
     // MARK: - Initialization
 
-    public Lexer(String filename) throws IOException {
-        final Path path = Paths.get(filename);
-
-        this.text = new String(Files.readAllBytes(path));
+    public Lexer(String text) {
+        this.text = text;
     }
 
     public final String text;
@@ -19,44 +15,58 @@ public class Lexer {
     // MARK: - State
 
     private int currentIndex = 0;
+    private int currentRow = 0;
+    private int currentColumn = 0;
+    private boolean lastCharacterWasCarriageReturn = false;
 
-    private boolean hasReachedEndOfFile() {
+    private boolean hasReachedEndOfInput() {
         return this.currentIndex >= this.text.length();
     }
 
-    private void increaseCurrentIndex() {
-        this.currentIndex += 1;
-    }
-
-    private Character getCurrentCharacter() {
-        if (this.hasReachedEndOfFile()) {
-            return null;
-        } else {
-            return this.text.charAt(this.currentIndex);
+    private char getCurrentCharacter() {
+        if (this.hasReachedEndOfInput()) {
+            throw new IllegalStateException();
         }
+
+        return this.text.charAt(this.currentIndex);
     }
 
     private String advance() {
+        if (this.hasReachedEndOfInput()) {
+            throw new IllegalStateException();
+        }
+
         String string = String.valueOf(this.getCurrentCharacter());
 
-        this.increaseCurrentIndex();
+        if (string.equals("\r")) {
+            this.currentRow += 1;
+            this.currentColumn = 0;
+            this.lastCharacterWasCarriageReturn = true;
+        } else if (string.equals("\n")) {
+            if (!this.lastCharacterWasCarriageReturn) {
+                this.currentRow += 1;
+                this.currentColumn = 0;
+                this.lastCharacterWasCarriageReturn = false;
+            }
+        } else {
+            this.currentColumn += 1;
+            this.lastCharacterWasCarriageReturn = false;
+        }
+
+        this.currentIndex += 1;
 
         return string;
     }
 
-    private String advanceWhile(Predicate<Character> whilePredicate) {
-        return this.advanceWhile(whilePredicate, s -> true);
+    private String advanceWhile(BooleanSupplier predicate) {
+        return this.advanceWhile(predicate, s -> true);
     }
 
-    private String advanceWhile(Predicate<Character> characterPredicate, Predicate<String> stringPredicate) {
+    private String advanceWhile(BooleanSupplier predicate, Predicate<String> stringPredicate) {
         String string = "";
-        Character character = this.getCurrentCharacter();
 
-        while (!this.hasReachedEndOfFile() && characterPredicate.test(character) && stringPredicate.test(string)) {
-            string += this.getCurrentCharacter();
-            this.increaseCurrentIndex();
-
-            character = this.getCurrentCharacter();
+        while (!this.hasReachedEndOfInput() && predicate.getAsBoolean() && stringPredicate.test(string)) {
+            string += this.advance();
         }
 
         return string;
@@ -64,16 +74,26 @@ public class Lexer {
 
     // MARK: - Helpers
 
-    private boolean isNumeric(char character) {
+    private boolean isCurrentCharacterNumeric() {
+        if (this.hasReachedEndOfInput()) return false;
+
+        char character = this.getCurrentCharacter();
+
         return "0123456789".indexOf(character) != -1;
     }
 
-    private boolean isAlphanumeric(char character) {
+    private boolean isCurrentCharacterAlphanumeric() {
+        if (this.hasReachedEndOfInput()) return false;
+
+        char character = this.getCurrentCharacter();
+
         return "_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVXYZ0123456789".indexOf(character) != -1;
     }
 
-    private boolean isWhitespace(char character) {
-        switch (character) {
+    private boolean isCurrentCharacterWhitespace() {
+        if (this.hasReachedEndOfInput()) return false;
+
+        switch (this.getCurrentCharacter()) {
             case ' ': return true;
             case '\t': return true;
             case '\r': return true;
@@ -82,85 +102,112 @@ public class Lexer {
         }
     }
 
-    private boolean isSeparator(char character) {
+    private boolean isCurrentCharacterSeparator() {
+        if (this.hasReachedEndOfInput()) return false;
+
+        char character = this.getCurrentCharacter();
+
         return "(){}[];,.".indexOf(character) != -1;
     }
 
-    private boolean isOperatorSymbol(char character) {
+    private boolean isCurrentCharacterOperatorSymbol() {
+        if (this.hasReachedEndOfInput()) return false;
+
+        char character = this.getCurrentCharacter();
+
         return "!=*+-/:<>?%&^~|".indexOf(character) != -1;
     }
 
     // MARK: - Fetching Tokens
 
-    public Token nextToken() {
-        advanceWhile(this::isWhitespace);
+    public Token nextToken() throws LexerException {
+        this.ensureNoPreviousExceptionsWereThrown();
+        this.advanceWhile(this::isCurrentCharacterWhitespace);
 
-        if (hasReachedEndOfFile()) {
+        if (this.hasReachedEndOfInput()) {
             return null;
         }
 
-        char literal = this.getCurrentCharacter();
-        String token_text = "";
-        TokenType token_type = null;
+        TokenLocation location = new TokenLocation(this.currentRow, this.currentColumn);
 
-        if (isNumeric(literal)) {
-            token_text = this.advance();
-            token_text += advanceWhile(this::isNumeric);
-            token_type = TokenType.INTEGER_LITERAL;
+        if (this.isCurrentCharacterNumeric()) {
+            String text = this.advanceWhile(this::isCurrentCharacterNumeric);
 
-            if (token_text.startsWith("0") && (token_text.length() > 1)) {
-                throw new RuntimeException("Not a valid INTEGER_LITERAL: " + token_text);
-            }
-            else if (!this.hasReachedEndOfFile() && isAlphanumeric(this.getCurrentCharacter())) {
-                throw new RuntimeException("INTEGER_LITERAL followed by [a-zA-Z]");
+            if (text.startsWith("0") && !text.equals("0")) {
+                throw this.fail("Integer literals may only start with 0 if they are zero");
+            } else if (this.isCurrentCharacterAlphanumeric()) {
+                throw this.fail("Integer literals must not be followed by alphanumeric characters");
             }
 
-        } else if (isAlphanumeric(literal)) {
-            token_text = this.advance();
-            token_text += advanceWhile(this::isAlphanumeric);
+            return new Token(TokenType.INTEGER_LITERAL, text, location);
+        } else if (this.isCurrentCharacterAlphanumeric()) {
+            String text = this.advanceWhile(this::isCurrentCharacterAlphanumeric);
+            TokenType type = this.keywordFromString(text);
 
-            token_type = keywordFromString(token_text);
-            if (token_type == null) {
-                token_type = TokenType.IDENTIFIER;
+            if (type != null) {
+                return new Token(type, text, location);
+            } else {
+                return new Token(TokenType.IDENTIFIER, text, location);
             }
+        } else if (this.isCurrentCharacterSeparator()) {
+           String text = this.advance();
+           TokenType separator = this.separatorFromString(text);
 
-        } else if (isSeparator(literal)) {
-           token_text = this.advance();
-           token_type = separatorFromString(token_text);
-           //Should not happen
-           if (token_type == null){
-               throw new RuntimeException("Not a valid Seperator: " + token_text);
+           if (separator != null) {
+               return new Token(separator, text, location);
+           } else {
+               throw this.fail("Invalid separator '" + text + "'");
            }
+        } else if (this.isCurrentCharacterOperatorSymbol()) {
+            String text = this.advanceWhile(this::isCurrentCharacterOperatorSymbol, s -> !s.contains("/*"));
 
-        } else if (isOperatorSymbol(literal)) {
-            token_text = advanceWhile(this::isOperatorSymbol, s -> !s.contains("/*"));
+            if (text.endsWith("/*")) {
+                text = text.substring(0, text.length() - 2);
 
+                String comment = this.advanceWhile(() -> true, s -> !s.contains("*/"));
 
-            if (token_text.startsWith("/*")) {
-               String comment = advanceWhile(c -> true, s -> !s.contains("*/"));
-               if (!comment.endsWith("*/")) {
-                   throw new RuntimeException("Comment not terminated");
-               }
-               return nextToken();
-            } else if(token_text.contains("/*")){
-                String comment = advanceWhile(c -> true, s -> !s.contains("*/"));
-                token_text = token_text.substring(0, token_text.length()-2);
                 if (!comment.endsWith("*/")) {
-                    throw new RuntimeException("Comment not terminated");
+                    throw this.fail("Encountered unterminated comment");
+                }
+
+                if (text.isEmpty()) {
+                    return this.nextToken();
                 }
             }
 
-           token_type = operatorFromString(token_text);
-           if (token_type == null) {
-               throw new RuntimeException("Not a valid Operator: " + token_text);
-           }
+            TokenType operator = this.operatorFromString(text);
 
+            if (operator != null) {
+                return new Token(operator, text, location);
+            } else {
+                throw this.fail("Invalid operator '" + text + "'");
+            }
         } else {
-            assert false : "Not a valid char";
-        }
+            String name = Character.getName(this.getCurrentCharacter());
 
-        return new Token(token_type, token_text);
+            throw this.fail("Forbidden character '" + name + "' in input");
+        }
     }
+
+    // MARK: - Exception Management
+
+    private LexerException previousException = null;
+
+    private LexerException fail(String message) {
+        LexerException exception = new LexerException(message);
+
+        this.previousException = exception;
+
+        return exception;
+    }
+
+    private void ensureNoPreviousExceptionsWereThrown() {
+        if (this.previousException != null) {
+            throw new IllegalStateException("Lexer has thrown exception before");
+        }
+    }
+
+    // MARK: - Token Type Helpers
 
     private TokenType keywordFromString(String string) {
         switch (string) {
