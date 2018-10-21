@@ -9,33 +9,72 @@ public final class Parser {
 
     public Parser(Lexer lexer) {
         this.lexer = lexer;
-        this.currentToken = lexer.nextToken();
     }
 
     private final Lexer lexer;
 
     // MARK: - Parsing
 
-    private Token currentToken; // nullable
+    /// A buffer of tokens returned by the lexer that have not yet been consumed.
+    /// Do not access directly.
+    private final List<Token> tokens = new ArrayList<>();
 
-    private void advance() {
-        if (this.currentToken == null) {
-            throw new IllegalStateException();
+    /// Do not access directly.
+    private boolean hasReceivedEndOfInputFromLexer = false;
+
+    private Token getCurrentToken() {
+        return this.getTokenAtOffset(0);
+    }
+
+    private Token getTokenAtOffset(int offset) {
+        while (this.tokens.size() <= offset && !this.hasReceivedEndOfInputFromLexer) {
+            Token token = this.lexer.nextToken();
+
+            if (token != null) {
+                this.tokens.add(token);
+            } else {
+                this.hasReceivedEndOfInputFromLexer = true;
+                break;
+            }
         }
 
-        this.currentToken = this.lexer.nextToken();
+        if (offset < this.tokens.size()) {
+            return this.tokens.get(offset);
+        } else {
+            return null;
+        }
+    }
+
+    private boolean hasReachedEndOfInput() {
+        return this.getCurrentToken() == null;
     }
 
     private boolean check(TokenType type) {
-        if (this.currentToken == null) {
+        Token token = this.getCurrentToken();
+
+        if (token == null) {
             return false;
         } else {
-            return currentToken.type == type;
+            return token.type == type;
         }
     }
 
+    private boolean lookahead(TokenType first, TokenType... others) {
+        if (!first.matches(this.getCurrentToken())) {
+            return false;
+        }
+
+        for (int index = 0; index < others.length; index += 1) {
+            if (!others[index].matches(this.getTokenAtOffset(index + 1))) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     private Token consume(TokenType type) {
-        Token token = this.currentToken;
+        Token token = this.getCurrentToken();
 
         if (token == null) {
             throw new RuntimeException("Expected to read " + type +  ", but found end of file");
@@ -43,7 +82,7 @@ public final class Parser {
             throw new RuntimeException("Expected to read " + type +  ", but found " + token.type);
         }
 
-        this.advance();
+        this.tokens.remove(0);
 
         return token;
     }
@@ -57,33 +96,33 @@ public final class Parser {
     // MARK: - Parsing Statements
 
     public Statement parseStatement() {
-        if (this.currentToken != null) {
-            switch (this.currentToken.type) {
-                case OPENING_BRACE:
-                    return this.parseBlock();
-                case SEMICOLON:
-                    return this.parseEmptyStatement();
-                case IF:
-                    return this.parseIfStatement();
-                case WHILE:
-                    return this.parseWhileStatement();
-                case RETURN:
-                    return this.parseReturnStatement();
-                case LOGICAL_NEGATION:
-                case MINUS:
-                case FALSE:
-                case TRUE:
-                case INTEGER_LITERAL:
-                case IDENTIFIER:
-                case THIS:
-                case OPENING_PARENTHESIS:
-                case NEW:
-                    return this.parseExpressionStatement();
-                default:
-                    throw new RuntimeException();
-            }
-        } else {
+        if (this.hasReachedEndOfInput()) {
             throw new RuntimeException();
+        }
+
+        switch (this.getCurrentToken().type) {
+            case OPENING_BRACE:
+                return this.parseBlock();
+            case SEMICOLON:
+                return this.parseEmptyStatement();
+            case IF:
+                return this.parseIfStatement();
+            case WHILE:
+                return this.parseWhileStatement();
+            case RETURN:
+                return this.parseReturnStatement();
+            case LOGICAL_NEGATION:
+            case MINUS:
+            case FALSE:
+            case TRUE:
+            case INTEGER_LITERAL:
+            case IDENTIFIER:
+            case THIS:
+            case OPENING_PARENTHESIS:
+            case NEW:
+                return this.parseExpressionStatement();
+            default:
+                throw new RuntimeException();
         }
     }
 
@@ -102,36 +141,35 @@ public final class Parser {
     }
 
     private BlockStatement parseBlockStatement() {
-        if (this.currentToken != null) {
-            switch (this.currentToken.type) {
-                case INT:
-                case BOOLEAN:
-                case VOID:
-                    return this.parseLocalVariableDeclarationStatement();
-                case OPENING_BRACE:
-                case SEMICOLON:
-                case IF:
-                case WHILE:
-                case RETURN:
-                case LOGICAL_NEGATION:
-                case MINUS:
-                case NULL:
-                case FALSE:
-                case TRUE:
-                case INTEGER_LITERAL:
-                case THIS:
-                case OPENING_PARENTHESIS:
-                case NEW:
-                    return this.parseStatement();
-                case IDENTIFIER:
-                    // identifier is in both first(Statement) and first(LocalVariableDeclaration)
-                    // TODO: how do we solve this?
-                    throw new RuntimeException("this is actually valid");
-                default:
-                    throw new RuntimeException();
-            }
-        } else {
+        if (this.hasReachedEndOfInput()) {
             throw new RuntimeException();
+        }
+
+        switch (this.getCurrentToken().type) {
+            case INT:
+            case BOOLEAN:
+            case VOID:
+                return this.parseLocalVariableDeclarationStatement();
+            case OPENING_BRACE:
+            case SEMICOLON:
+            case IF:
+            case WHILE:
+            case RETURN:
+            case LOGICAL_NEGATION:
+            case MINUS:
+            case NULL:
+            case FALSE:
+            case TRUE:
+            case INTEGER_LITERAL:
+            case THIS:
+            case OPENING_PARENTHESIS:
+            case NEW:
+                return this.parseStatement();
+            case IDENTIFIER: // IDENTIFIER is in both first(Statement) and first(LocalVariableDeclaration)
+                // TODO: how do we solve this?
+                throw new RuntimeException("this is actually valid");
+            default:
+                throw new RuntimeException();
         }
     }
 
@@ -210,32 +248,32 @@ public final class Parser {
     }
 
     private boolean currentCharacterIsInFirstOfBlockStatement() {
-        if (this.currentToken != null) {
-            switch (this.currentToken.type) {
-                case OPENING_BRACE:
-                case SEMICOLON:
-                case IF:
-                case WHILE:
-                case RETURN:
-                case INT:
-                case BOOLEAN:
-                case VOID:
-                case IDENTIFIER:
-                case LOGICAL_NEGATION:
-                case MINUS:
-                case NULL:
-                case FALSE:
-                case TRUE:
-                case INTEGER_LITERAL:
-                case THIS:
-                case OPENING_PARENTHESIS:
-                case NEW:
-                    return true;
-                default:
-                    return false;
-            }
-        }  else {
+        if (this.hasReachedEndOfInput()) {
             return false;
+        }
+
+        switch (this.getCurrentToken().type) {
+            case OPENING_BRACE:
+            case SEMICOLON:
+            case IF:
+            case WHILE:
+            case RETURN:
+            case INT:
+            case BOOLEAN:
+            case VOID:
+            case IDENTIFIER:
+            case LOGICAL_NEGATION:
+            case MINUS:
+            case NULL:
+            case FALSE:
+            case TRUE:
+            case INTEGER_LITERAL:
+            case THIS:
+            case OPENING_PARENTHESIS:
+            case NEW:
+                return true;
+            default:
+                return false;
         }
     }
 
@@ -254,19 +292,23 @@ public final class Parser {
     private Parameter parseParameter() {
         Type type = this.parseType();
         Token token = this.consume(TokenType.IDENTIFIER);
+
         return new Parameter(type, token.text);
     }
 
     private Type parseType() {
         BasicType basicType = this.parseBasicType();
-
         int numberOfDimensions = this.parseOpeningAndClosingBrackets();
 
         return new Type(basicType, numberOfDimensions);
     }
 
     private BasicType parseBasicType() {
-        switch (this.currentToken.type) {
+        if (this.hasReachedEndOfInput()) {
+            throw new RuntimeException();
+        }
+
+        switch (this.getCurrentToken().type) {
             case INT:
                 this.consume(TokenType.INT);
                 return new IntegerType();
@@ -303,8 +345,8 @@ public final class Parser {
     private Expression parseLogicalOrExpression() {
         Expression expression = this.parseLogicalAndExpression();
 
-        while (this.currentToken != null) {
-            switch (this.currentToken.type) {
+        while (!this.hasReachedEndOfInput()) {
+            switch (this.getCurrentToken().type) {
                 case LOGICAL_OR:
                     this.consume(TokenType.LOGICAL_OR);
                     expression = new LogicalOrExpression(expression, this.parseLogicalAndExpression());
@@ -320,8 +362,8 @@ public final class Parser {
     private Expression parseLogicalAndExpression() {
         Expression expression = this.parseEqualityExpression();
 
-        while (this.currentToken != null) {
-            switch (this.currentToken.type) {
+        while (!this.hasReachedEndOfInput()) {
+            switch (this.getCurrentToken().type) {
                 case LOGICAL_AND:
                     this.consume(TokenType.LOGICAL_AND);
                     expression = new LogicalAndExpression(expression, this.parseEqualityExpression());
@@ -337,8 +379,8 @@ public final class Parser {
     private Expression parseEqualityExpression() {
         Expression expression = this.parseRelationalExpression();
 
-        while (this.currentToken != null) {
-            switch (this.currentToken.type) {
+        while (!this.hasReachedEndOfInput()) {
+            switch (this.getCurrentToken().type) {
                 case EQUAL_TO:
                     this.consume(TokenType.EQUAL_TO);
                     expression = new EqualToExpression(expression, this.parseRelationalExpression());
@@ -358,8 +400,8 @@ public final class Parser {
     private Expression parseRelationalExpression() {
         Expression expression = this.parseAdditiveExpression();
 
-        while (this.currentToken != null) {
-            switch (this.currentToken.type) {
+        while (!this.hasReachedEndOfInput()) {
+            switch (this.getCurrentToken().type) {
                 case LESS_THAN:
                     this.consume(TokenType.LESS_THAN);
                     expression = new LessThanExpression(expression, this.parseAdditiveExpression());
@@ -387,8 +429,8 @@ public final class Parser {
     private Expression parseAdditiveExpression() {
         Expression expression = this.parseMultiplicativeExpression();
 
-        while (this.currentToken != null) {
-            switch (this.currentToken.type) {
+        while (!this.hasReachedEndOfInput()) {
+            switch (this.getCurrentToken().type) {
                 case PLUS:
                     this.consume(TokenType.PLUS);
                     expression = new AddExpression(expression, this.parseMultiplicativeExpression());
@@ -408,8 +450,8 @@ public final class Parser {
     private Expression parseMultiplicativeExpression() {
         Expression expression = this.parseUnaryExpression();
 
-        while (this.currentToken != null) {
-            switch (this.currentToken.type) {
+        while (!this.hasReachedEndOfInput()) {
+            switch (this.getCurrentToken().type) {
                 case MULTIPLY:
                     this.consume(TokenType.MULTIPLY);
                     expression = new MultiplyExpression(expression, this.parseUnaryExpression());
@@ -431,11 +473,11 @@ public final class Parser {
     }
 
     private Expression parseUnaryExpression() {
-        if (this.currentToken == null) {
+        if (this.hasReachedEndOfInput()) {
             throw new RuntimeException();
         }
 
-        switch (this.currentToken.type) {
+        switch (this.getCurrentToken().type) {
             case NULL:
             case TRUE:
             case FALSE:
@@ -457,11 +499,11 @@ public final class Parser {
     private Expression parsePostfixExpression() {
         Expression expression = this.parsePrimaryExpression();
 
-        if (this.currentToken == null) {
+        if (this.hasReachedEndOfInput()) {
             return expression;
         }
 
-        switch (this.currentToken.type) {
+        switch (this.getCurrentToken().type) {
             case PERIOD:
             case OPENING_BRACKET:
                 return new PostfixExpression(expression, this.parsePostfixOperation());
@@ -510,7 +552,7 @@ public final class Parser {
     }
 
     private Expression parsePrimaryExpression() {
-        switch (this.currentToken.type) {
+        switch (this.getCurrentToken().type) {
             case NULL:
                 this.consume(TokenType.NULL);
                 return new NullLiteral();
@@ -551,13 +593,13 @@ public final class Parser {
             case NEW: {
                 this.consume(TokenType.NEW);
 
-                if (this.currentToken == null) {
+                if (this.hasReachedEndOfInput()) {
                     throw new RuntimeException();
                 }
 
                 BasicType basicType = null;
 
-                switch (this.currentToken.type) {
+                switch (this.getCurrentToken().type) {
                     case IDENTIFIER: {
                         String identifier = this.consume(TokenType.IDENTIFIER).text;
                         if (this.check(TokenType.OPENING_PARENTHESIS)) {
@@ -591,24 +633,24 @@ public final class Parser {
     }
 
     private boolean currentCharacterIsInFirstOfExpression() {
-        if (this.currentToken != null) {
-            switch (this.currentToken.type) {
-                case LOGICAL_NEGATION:
-                case MINUS:
-                case NULL:
-                case FALSE:
-                case TRUE:
-                case INTEGER_LITERAL:
-                case IDENTIFIER:
-                case THIS:
-                case OPENING_PARENTHESIS:
-                case NEW:
-                    return true;
-                default:
-                    return false;
-            }
-        }  else {
+        if (this.hasReachedEndOfInput()) {
             return false;
+        }
+
+        switch (this.getCurrentToken().type) {
+            case LOGICAL_NEGATION:
+            case MINUS:
+            case NULL:
+            case FALSE:
+            case TRUE:
+            case INTEGER_LITERAL:
+            case IDENTIFIER:
+            case THIS:
+            case OPENING_PARENTHESIS:
+            case NEW:
+                return true;
+            default:
+                return false;
         }
     }
 

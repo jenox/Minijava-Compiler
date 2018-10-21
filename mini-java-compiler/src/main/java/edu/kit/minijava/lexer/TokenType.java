@@ -30,5 +30,15 @@ public enum TokenType {
     // MARK: - OTHER
 
     IDENTIFIER, // [a-zA-Z_][a-zA-Z0-9_]*
-    INTEGER_LITERAL, // 0 | [1-9][0-9]*
+    INTEGER_LITERAL; // 0 | [1-9][0-9]*
+
+    // MARK: - Helpers
+
+    public boolean matches(Token token) {
+        if (token != null) {
+            return token.type == this;
+        } else {
+            return false;
+        }
+    }
 }
