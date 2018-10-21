@@ -8,7 +8,7 @@ jobs:
     - stage: build
       name: Build
       script: ./build
-    - name: Stylecheck
+    - name: Style Check
       script: ./mini-java-compiler/gradlew -b ./mini-java-compiler/build.gradle checkstyleMain checkstyleTest
-    - stage: test
+    - name: Tests
       script: ./mini-java-compiler/gradlew -b ./mini-java-compiler/build.gradle test
