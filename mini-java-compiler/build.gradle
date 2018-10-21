@@ -37,4 +37,5 @@ checkstyle {
     configFile = rootProject.file('../checkstyle.xml')
     toolVersion '8.11'
     sourceSets = []
+    maxWarnings = 0
 }
