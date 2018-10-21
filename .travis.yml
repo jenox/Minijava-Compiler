@@ -5,4 +5,4 @@ jdk:
 
 script:
   - ./build
-  - ./mini-java-compiler/gradlew checkstyleMain
+  - ./mini-java-compiler/gradlew -b ./mini-java-compiler/build.gradle checkstyleMain
