@@ -28,7 +28,7 @@ public class Skeleton {
                     final Token token = lexer.nextToken();
 
                     if (token != null) {
-                        System.out.println(token);
+                        System.out.println(token + " " + token.location);
                     } else {
                         break;
                     }
