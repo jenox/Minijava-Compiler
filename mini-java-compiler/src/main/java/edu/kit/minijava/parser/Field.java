@@ -1,19 +1,19 @@
 package edu.kit.minijava.parser;
 
 public final class Field extends ClassMember {
-    public Field(String attributeName, Type type) {
-        if (attributeName == null) throw new IllegalArgumentException();
+    public Field(Type type, String name) {
         if (type == null) throw new IllegalArgumentException();
+        if (name == null) throw new IllegalArgumentException();
 
-        this.attributeName = attributeName;
         this.type = type;
+        this.name = name;
     }
 
-    public final String attributeName;
     public final Type type;
+    public final String name;
 
     @Override
     public String toString() {
-        return "Field(" + this.attributeName + ", " + this.type + ")";
+        return "Field(" + this.type + ", " + this.name + ")";
     }
 }

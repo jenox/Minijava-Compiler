@@ -90,7 +90,172 @@ public final class Parser {
     // MARK: - Parsing MiniJava Files
 
     public Program parseProgram() {
-        throw new UnsupportedOperationException();
+        List<ClassDeclaration> classes = new ArrayList<>();
+
+        while (!this.hasReachedEndOfInput()) {
+            classes.add(this.parseClassDeclaration());
+        }
+
+        return new Program(classes);
+    }
+
+    private ClassDeclaration parseClassDeclaration() {
+        this.consume(TokenType.CLASS);
+
+        String name = this.consume(TokenType.IDENTIFIER).text;
+        List<ClassMember> members = new ArrayList<>();
+
+        this.consume(TokenType.OPENING_BRACE);
+
+        while (this.lookahead(TokenType.PUBLIC)) {
+            members.add(this.parseClassMember());
+        }
+
+        this.consume(TokenType.CLOSING_BRACE);
+
+        return new ClassDeclaration(name, members);
+    }
+
+    private ClassMember parseClassMember() {
+        if (this.hasReachedEndOfInput()) {
+            throw new RuntimeException();
+        }
+
+        this.consume(TokenType.PUBLIC);
+
+        switch (this.getCurrentToken().type) {
+            case STATIC: {
+                this.consume(TokenType.STATIC);
+                this.consume(TokenType.VOID);
+
+                String methodName = this.consume(TokenType.IDENTIFIER).text;
+
+                this.consume(TokenType.OPENING_PARENTHESIS);
+
+                // TODO: String appears to be keyword on sheet?
+                String parameterType = this.consume(TokenType.IDENTIFIER).text;
+                if (!parameterType.equals("String")) {
+                    throw new RuntimeException();
+                }
+
+                this.consume(TokenType.OPENING_BRACKET);
+                this.consume(TokenType.CLOSING_BRACKET);
+
+                String parameterName = this.consume(TokenType.IDENTIFIER).text;
+
+                this.consume(TokenType.CLOSING_PARENTHESIS);
+
+                if (this.lookahead(TokenType.THROWS)) {
+                    this.consume(TokenType.THROWS);
+                    this.consume(TokenType.IDENTIFIER);
+                }
+
+                Block body = this.parseBlock();
+
+                return new MainMethod(methodName, parameterName, body);
+            }
+            case INT:
+            case BOOLEAN:
+            case VOID:
+            case IDENTIFIER: {
+                Type type = this.parseType();
+                String name = this.consume(TokenType.IDENTIFIER).text;
+
+                if (this.lookahead(TokenType.SEMICOLON)) {
+                    this.consume(TokenType.SEMICOLON);
+
+                    return new Field(type, name);
+                } else {
+                    this.consume(TokenType.OPENING_PARENTHESIS);
+
+                    List<Parameter> parameters = this.parseParameters();
+
+                    this.consume(TokenType.CLOSING_PARENTHESIS);
+
+                    if (this.lookahead(TokenType.THROWS)) {
+                        this.consume(TokenType.THROWS);
+                        this.consume(TokenType.IDENTIFIER);
+                    }
+
+                    Block body = this.parseBlock();
+
+                    return new Method(type, name, parameters, body);
+                }
+            }
+            default:
+                throw new RuntimeException();
+        }
+    }
+
+    // MARK: - Parsing Parameters & Types
+
+    private List<Parameter> parseParameters() {
+        List<Parameter> parameters = new ArrayList<>();
+
+        if (this.currentTokenIsInFirstOfParameter()) {
+            parameters.add(this.parseParameter());
+        }
+
+        while (this.lookahead(TokenType.COMMA)) {
+            this.consume(TokenType.COMMA);
+
+            parameters.add(this.parseParameter());
+        }
+
+        return parameters;
+    }
+
+    private Parameter parseParameter() {
+        Type type = this.parseType();
+        String name = this.consume(TokenType.IDENTIFIER).text;
+
+        return new Parameter(type, name);
+    }
+
+    private Type parseType() {
+        BasicType basicType = this.parseBasicType();
+        int numberOfDimensions = this.parseOpeningAndClosingBrackets();
+
+        return new Type(basicType, numberOfDimensions);
+    }
+
+    private BasicType parseBasicType() {
+        if (this.hasReachedEndOfInput()) {
+            throw new RuntimeException();
+        }
+
+        switch (this.getCurrentToken().type) {
+            case INT:
+                this.consume(TokenType.INT);
+                return new IntegerType();
+            case BOOLEAN:
+                this.consume(TokenType.BOOLEAN);
+                return new BooleanType();
+            case VOID:
+                this.consume(TokenType.VOID);
+                return new VoidType();
+            case IDENTIFIER:
+                Token token = this.consume(TokenType.IDENTIFIER);
+                return new UserDefinedType(token.text);
+            default:
+                throw new RuntimeException("Bad BasicType");
+        }
+    }
+
+    private boolean currentTokenIsInFirstOfParameter() {
+        if (this.hasReachedEndOfInput()) {
+            return false;
+        }
+
+        switch (this.getCurrentToken().type) {
+            case INT:
+            case BOOLEAN:
+            case VOID:
+            case IDENTIFIER:
+                return true;
+            default:
+                return false;
+        }
     }
 
     // MARK: - Parsing Statements
@@ -280,55 +445,6 @@ public final class Parser {
                 return true;
             default:
                 return false;
-        }
-    }
-
-    // MARK: - Parsing Parameters & Types
-
-    private List<Parameter> parseParameters() {
-        List<Parameter> parameter_list = new ArrayList<>();
-        parameter_list.add(this.parseParameter());
-        while (this.check(TokenType.COMMA)) {
-            this.consume(TokenType.COMMA);
-            parameter_list.add(this.parseParameter());
-        }
-        return parameter_list;
-    }
-
-    private Parameter parseParameter() {
-        Type type = this.parseType();
-        Token token = this.consume(TokenType.IDENTIFIER);
-
-        return new Parameter(type, token.text);
-    }
-
-    private Type parseType() {
-        BasicType basicType = this.parseBasicType();
-        int numberOfDimensions = this.parseOpeningAndClosingBrackets();
-
-        return new Type(basicType, numberOfDimensions);
-    }
-
-    private BasicType parseBasicType() {
-        if (this.hasReachedEndOfInput()) {
-            throw new RuntimeException();
-        }
-
-        switch (this.getCurrentToken().type) {
-            case INT:
-                this.consume(TokenType.INT);
-                return new IntegerType();
-            case BOOLEAN:
-                this.consume(TokenType.BOOLEAN);
-                return new BooleanType();
-            case VOID:
-                this.consume(TokenType.VOID);
-                return new VoidType();
-            case IDENTIFIER:
-                Token token = this.consume(TokenType.IDENTIFIER);
-                return new UserDefinedType(token.text);
-            default:
-                throw new RuntimeException("Bad BasicType");
         }
     }
 
