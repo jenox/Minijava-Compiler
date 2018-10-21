@@ -3,6 +3,11 @@ language: java
 jdk:
   - oraclejdk8
 
-script:
-  - ./build
-  - ./mini-java-compiler/gradlew -b ./mini-java-compiler/build.gradle check
+jobs:
+  include:
+    - stage: check
+      script: ./mini-java-compiler/gradlew -b ./mini-java-compiler/build.gradle check
+    - stage: build
+      script: ./build
+    - stage: test
+      script: ./mini-java-compiler/gradlew -b ./mini-java-compiler/build.gradle test
