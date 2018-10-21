@@ -165,9 +165,15 @@ public final class Parser {
             case OPENING_PARENTHESIS:
             case NEW:
                 return this.parseStatement();
-            case IDENTIFIER: // IDENTIFIER is in both first(Statement) and first(LocalVariableDeclaration)
-                // TODO: how do we solve this?
-                throw new RuntimeException("this is actually valid");
+            case IDENTIFIER:
+                // IDENTIFIER is in both first(Statement) and first(LocalVariableDeclaration)
+                if (this.lookahead(TokenType.IDENTIFIER, TokenType.IDENTIFIER)) {
+                    return this.parseLocalVariableDeclarationStatement();
+                } else if (this.lookahead(TokenType.IDENTIFIER, TokenType.OPENING_BRACKET, TokenType.CLOSING_BRACKET)) {
+                    return this.parseLocalVariableDeclarationStatement();
+                } else {
+                    return this.parseStatement();
+                }
             default:
                 throw new RuntimeException();
         }
