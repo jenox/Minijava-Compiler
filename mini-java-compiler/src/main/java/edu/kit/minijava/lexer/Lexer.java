@@ -79,18 +79,24 @@ public class Lexer {
     // MARK: - Helpers
 
     private boolean isCurrentCharacterNumeric() {
+        if (this.hasReachedEndOfInput()) return false;
+
         char character = this.getCurrentCharacter();
 
         return "0123456789".indexOf(character) != -1;
     }
 
     private boolean isCurrentCharacterAlphanumeric() {
+        if (this.hasReachedEndOfInput()) return false;
+
         char character = this.getCurrentCharacter();
 
         return "_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVXYZ0123456789".indexOf(character) != -1;
     }
 
     private boolean isCurrentCharacterWhitespace() {
+        if (this.hasReachedEndOfInput()) return false;
+
         switch (this.getCurrentCharacter()) {
             case ' ': return true;
             case '\t': return true;
@@ -101,12 +107,16 @@ public class Lexer {
     }
 
     private boolean isCurrentCharacterSeparator() {
+        if (this.hasReachedEndOfInput()) return false;
+
         char character = this.getCurrentCharacter();
 
         return "(){}[];,.".indexOf(character) != -1;
     }
 
     private boolean isCurrentCharacterOperatorSymbol() {
+        if (this.hasReachedEndOfInput()) return false;
+
         char character = this.getCurrentCharacter();
 
         return "!=*+-/:<>?%&^~|".indexOf(character) != -1;
@@ -114,7 +124,8 @@ public class Lexer {
 
     // MARK: - Fetching Tokens
 
-    public Token nextToken() {
+    public Token nextToken() throws LexerException {
+        this.ensureNoPreviousExceptionsWereThrown();
         this.advanceWhile(this::isCurrentCharacterWhitespace);
 
         if (this.hasReachedEndOfInput()) {
@@ -127,9 +138,9 @@ public class Lexer {
             String text = this.advanceWhile(this::isCurrentCharacterNumeric);
 
             if (text.startsWith("0") && !text.equals("0")) {
-                throw new RuntimeException("Integer literals may only start with 0 if they are zero");
-            } else if (!this.hasReachedEndOfInput() && this.isCurrentCharacterAlphanumeric()) {
-                throw new RuntimeException("Integer literals must not be followed by alphanumeric characters");
+                throw this.fail("Integer literals may only start with 0 if they are zero");
+            } else if (this.isCurrentCharacterAlphanumeric()) {
+                throw this.fail("Integer literals must not be followed by alphanumeric characters");
             }
 
             return new Token(TokenType.INTEGER_LITERAL, text, location);
@@ -149,7 +160,7 @@ public class Lexer {
            if (separator != null) {
                return new Token(separator, text, location);
            } else {
-               throw new RuntimeException("Invalid separator '" + text + "'");
+               throw this.fail("Invalid separator '" + text + "'");
            }
         } else if (this.isCurrentCharacterOperatorSymbol()) {
             String text = this.advanceWhile(this::isCurrentCharacterOperatorSymbol, s -> !s.contains("/*"));
@@ -160,7 +171,7 @@ public class Lexer {
                 String comment = this.advanceWhile(() -> true, s -> !s.contains("*/"));
 
                 if (!comment.endsWith("*/")) {
-                    throw new RuntimeException("Encountered unterminated comment");
+                    throw this.fail("Encountered unterminated comment");
                 }
 
                 if (text.isEmpty()) {
@@ -173,14 +184,34 @@ public class Lexer {
             if (operator != null) {
                 return new Token(operator, text, location);
             } else {
-                throw new RuntimeException("Invalid operator '" + text + "'");
+                throw this.fail("Invalid operator '" + text + "'");
             }
         } else {
             String name = Character.getName(this.getCurrentCharacter());
 
-            throw new RuntimeException("Forbidden character '" + name + "' in input");
+            throw this.fail("Forbidden character '" + name + "' in input");
         }
     }
+
+    // MARK: - Exception Management
+
+    private LexerException previousException = null;
+
+    private LexerException fail(String message) {
+        LexerException exception = new LexerException(message);
+
+        this.previousException = exception;
+
+        return exception;
+    }
+
+    private void ensureNoPreviousExceptionsWereThrown() {
+        if (this.previousException != null) {
+            throw new IllegalStateException("Lexer has thrown exception before");
+        }
+    }
+
+    // MARK: - Token Type Helpers
 
     private TokenType keywordFromString(String string) {
         switch (string) {

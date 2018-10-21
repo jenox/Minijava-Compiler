@@ -33,7 +33,7 @@ public class Skeleton {
                         break;
                     }
                 }
-            } catch (IOException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         } else if (arguments.get(0).equals("--parse")) {

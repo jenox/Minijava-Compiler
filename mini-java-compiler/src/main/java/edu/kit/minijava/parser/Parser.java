@@ -27,15 +27,19 @@ public final class Parser {
     }
 
     private Token getTokenAtOffset(int offset) {
-        while (this.tokens.size() <= offset && !this.hasReceivedEndOfInputFromLexer) {
-            Token token = this.lexer.nextToken();
+        try {
+            while (this.tokens.size() <= offset && !this.hasReceivedEndOfInputFromLexer) {
+                Token token = this.lexer.nextToken();
 
-            if (token != null) {
-                this.tokens.add(token);
-            } else {
-                this.hasReceivedEndOfInputFromLexer = true;
-                break;
+                if (token != null) {
+                    this.tokens.add(token);
+                } else {
+                    this.hasReceivedEndOfInputFromLexer = true;
+                    break;
+                }
             }
+        } catch (LexerException exception) {
+            throw new RuntimeException(exception);
         }
 
         if (offset < this.tokens.size()) {
