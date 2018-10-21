@@ -5,8 +5,8 @@ jdk:
 
 jobs:
   include:
-    - stage: check
-      script: ./mini-java-compiler/gradlew -b ./mini-java-compiler/build.gradle check
+    - stage: stylecheck
+      script: ./mini-java-compiler/gradlew -b ./mini-java-compiler/build.gradle checkstyleMain checkstyleTest
     - stage: build
       script: ./build
     - stage: test
