@@ -15,4 +15,4 @@ jobs:
       script:
         - ./build
         - git clone --recursive https://git.scc.kit.edu/IPDSnelting/mjtest.git
-        - MJ_RUN="./run"./mjt.py all --ci_testing --parallel
+        - MJ_RUN="./run" ./mjtest/mjt.py all --ci_testing --parallel
