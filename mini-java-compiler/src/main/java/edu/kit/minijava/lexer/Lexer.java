@@ -1,26 +1,28 @@
 package edu.kit.minijava.lexer;
 
+import java.io.*;
 import java.util.function.*;
 
 public class Lexer {
 
     // MARK: - Initialization
 
-    public Lexer(String text) {
-        this.text = text;
+    public Lexer(InputStreamReader reader) throws IOException {
+        this.reader = reader;
+        this.currentCharacter = this.reader.read();
     }
-
-    public final String text;
 
     // MARK: - State
 
-    private int currentIndex = 0;
+    private final InputStreamReader reader;
+    private int currentCharacter;
+
     private int currentRow = 0;
     private int currentColumn = 0;
     private boolean lastCharacterWasCarriageReturn = false;
 
     private boolean hasReachedEndOfInput() {
-        return this.currentIndex >= this.text.length();
+        return this.currentCharacter == -1;
     }
 
     private char getCurrentCharacter() {
@@ -28,10 +30,10 @@ public class Lexer {
             throw new IllegalStateException();
         }
 
-        return this.text.charAt(this.currentIndex);
+        return (char)this.currentCharacter;
     }
 
-    private String advance() {
+    private String advance() throws IOException {
         if (this.hasReachedEndOfInput()) {
             throw new IllegalStateException();
         }
@@ -53,16 +55,16 @@ public class Lexer {
             this.lastCharacterWasCarriageReturn = false;
         }
 
-        this.currentIndex += 1;
+        this.currentCharacter = this.reader.read();
 
         return string;
     }
 
-    private String advanceWhile(BooleanSupplier predicate) {
+    private String advanceWhile(BooleanSupplier predicate) throws IOException {
         return this.advanceWhile(predicate, s -> true);
     }
 
-    private String advanceWhile(BooleanSupplier predicate, Predicate<String> stringPredicate) {
+    private String advanceWhile(BooleanSupplier predicate, Predicate<String> stringPredicate) throws IOException {
         String string = "";
 
         while (!this.hasReachedEndOfInput() && predicate.getAsBoolean() && stringPredicate.test(string)) {
@@ -120,7 +122,7 @@ public class Lexer {
 
     // MARK: - Fetching Tokens
 
-    public Token nextToken() throws LexerException {
+    public Token nextToken() throws IOException, LexerException {
         this.ensureNoPreviousExceptionsWereThrown();
         this.advanceWhile(this::isCurrentCharacterWhitespace);
 
