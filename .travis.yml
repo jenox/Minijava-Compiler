@@ -10,4 +10,4 @@ jobs:
     - name: Style Check
       script: ./mini-java-compiler/gradlew -b ./mini-java-compiler/build.gradle checkstyleMain checkstyleTest
     - name: Tests
-      script: ./mini-java-compiler/gradlew -b ./mini-java-compiler/build.gradle test
+      script: ./test
