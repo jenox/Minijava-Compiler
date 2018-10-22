@@ -1,6 +1,8 @@
 package edu.kit.minijava.parser;
 
 import edu.kit.minijava.lexer.*;
+
+import java.io.*;
 import java.util.*;
 
 public final class Parser {
@@ -38,7 +40,11 @@ public final class Parser {
                     break;
                 }
             }
-        } catch (LexerException exception) {
+        }
+        catch (LexerException exception) {
+            throw new RuntimeException(exception);
+        }
+        catch (IOException exception) {
             throw new RuntimeException(exception);
         }
 

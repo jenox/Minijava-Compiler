@@ -27,6 +27,6 @@ sourceSets {
 
 jar {
     manifest {
-        attributes 'Main-Class': 'Skeleton'
+        attributes 'Main-Class': 'edu.kit.minijava.cli.CommandLineInterface'
     }
 }
