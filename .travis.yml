@@ -14,5 +14,5 @@ jobs:
     - name: MJTest Tests
       script:
         - ./build
-        - git clone --recursive git@git.scc.kit.edu:IPDSnelting/mjtest.git
+        - git clone --recursive https://git.scc.kit.edu/IPDSnelting/mjtest.git
         - MJ_RUN="./run"./mjt.py lexer --ci_testing --parallel
