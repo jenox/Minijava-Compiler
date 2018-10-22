@@ -1,17 +1,17 @@
 package edu.kit.minijava.lexer;
 
-import java.io.File;
-import java.io.FileFilter;
-import java.io.IOException;
-import java.nio.file.Files;
+import java.io.*;
+import java.nio.file.*;
+import java.util.*;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
-import org.junit.Test;
+import org.json.*;
+import org.junit.*;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
+
+import static junit.framework.TestCase.*;
 
 @RunWith(Parameterized.class)
 public class LexerTest {
@@ -39,29 +39,61 @@ public class LexerTest {
     @Parameter
     public static File file;
 
-
     /**
      * runs all testcases in testcases folder
      */
     @Test
     public void test() {
-        System.out.println(file.exists());
-        String input = null;
-        Lexer lexer = null;
-        try {
-            input = new String(Files.readAllBytes(file.toPath()));
-            lexer = new Lexer(file.getAbsolutePath());
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        JSONObject object = new JSONObject(input);
-        String in = (String) object.get("in");
-        JSONArray out = (JSONArray) object.get("out");
-        // System.out.println(in);
-        // System.out.println(out);
+        assertTrue(this.file.exists());
 
-        //TODO: invoke lexer and compare results
+        try {
+            String text = new String(Files.readAllBytes(this.file.toPath()));
+            JSONObject object = new JSONObject(text);
+
+            assertNotNull(text);
+            assertNotNull(object);
+            assertTrue(object.get("in") instanceof String);
+            assertTrue(object.get("out") instanceof JSONArray);
+
+            List<String> receivedTokens = this.receivedTokensWhenLexing(object.getString("in"));
+            List<String> expectedTokens = this.expectedTokensInArray(object.getJSONArray("out"));
+
+            assertEquals(receivedTokens, expectedTokens);
+        } catch (Exception e) {
+            fail();
+        }
     }
 
+    private List<String> receivedTokensWhenLexing(String text) {
+        Lexer lexer = new Lexer(text);
+        List<String> receivedTokens = new ArrayList<>();
+
+        try {
+            while (true) {
+                Token token = lexer.nextToken();
+
+                if (token != null) {
+                    receivedTokens.add(token.toString());
+                } else {
+                    break;
+                }
+            }
+        } catch (LexerException exception) {
+            receivedTokens.add("ERROR");
+        }
+
+        return receivedTokens;
+    }
+
+    private List<String> expectedTokensInArray(JSONArray array) {
+        List<String> expectedTokens = new ArrayList<>();
+
+        for (Object element : array) {
+            assertTrue(element instanceof String);
+
+            expectedTokens.add((String)element);
+        }
+
+        return expectedTokens;
+    }
 }

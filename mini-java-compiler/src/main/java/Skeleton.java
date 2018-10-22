@@ -1,4 +1,5 @@
 import java.io.*;
+import java.nio.file.*;
 import java.util.*;
 
 import edu.kit.minijava.lexer.*;
@@ -15,14 +16,19 @@ public class Skeleton {
             System.out.println("Please run with \"--echo <file-name>\".");
         } else if (arguments.get(0).equals("--echo")) {
             try {
-                final Lexer lexer = new Lexer(arguments.get(1));
+                final Path path = Paths.get(arguments.get(1));
+                final String text = new String(Files.readAllBytes(path));
+                final Lexer lexer = new Lexer(text);
+
                 System.out.println(lexer.text);
             } catch (IOException e) {
                 e.printStackTrace();
             }
         } else if (arguments.get(0).equals("--lex")) {
             try {
-                final Lexer lexer = new Lexer(arguments.get(1));
+                final Path path = Paths.get(arguments.get(1));
+                final String text = new String(Files.readAllBytes(path));
+                final Lexer lexer = new Lexer(text);
 
                 while (true) {
                     final Token token = lexer.nextToken();
@@ -38,10 +44,13 @@ public class Skeleton {
             }
         } else if (arguments.get(0).equals("--parse")) {
             try {
-                final Lexer lexer = new Lexer(arguments.get(1));
+                final Path path = Paths.get(arguments.get(1));
+                final String text = new String(Files.readAllBytes(path));
+                final Lexer lexer = new Lexer(text);
                 final Parser parser = new Parser(lexer);
 
                 Program program = parser.parseProgram();
+
                 System.out.println(program);
             } catch (IOException e) {
                 e.printStackTrace();

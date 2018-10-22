@@ -1,17 +1,13 @@
 package edu.kit.minijava.lexer;
 
-import java.io.*;
-import java.nio.file.*;
 import java.util.function.*;
 
 public class Lexer {
 
     // MARK: - Initialization
 
-    public Lexer(String filename) throws IOException {
-        final Path path = Paths.get(filename);
-
-        this.text = new String(Files.readAllBytes(path));
+    public Lexer(String text) {
+        this.text = text;
     }
 
     public final String text;
