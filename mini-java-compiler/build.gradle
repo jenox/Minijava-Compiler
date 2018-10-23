@@ -27,6 +27,15 @@ sourceSets {
 
 jar {
     manifest {
-        attributes 'Main-Class': 'Skeleton'
+        attributes 'Main-Class': 'edu.kit.minijava.cli.CommandLineInterface'
     }
+}
+
+apply plugin: 'checkstyle'
+
+checkstyle {
+    configFile = rootProject.file('../checkstyle.xml')
+    toolVersion '8.11'
+    sourceSets = []
+    maxWarnings = 0
 }
