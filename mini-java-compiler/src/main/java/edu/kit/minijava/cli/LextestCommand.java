@@ -20,7 +20,7 @@ class LextestCommand {
                 token = lexer.nextToken();
             }
 
-            System.out.println("eof");
+            System.out.println("EOF");
 
             return 0;
         }
