@@ -1,2 +1,4 @@
+#!/bin/bash
+
 SCRIPT_PATH=$(dirname `which $0`)
 $SCRIPT_PATH/mini-java-compiler/gradlew -b $SCRIPT_PATH/mini-java-compiler/build.gradle build
