@@ -3,11 +3,6 @@ language: java
 jdk:
   - oraclejdk8
 
-addons:
-  apt:
-    packages:
-      - python3
-
 jobs:
   include:
     - name: Build
@@ -16,9 +11,15 @@ jobs:
       script: ./mini-java-compiler/gradlew -b ./mini-java-compiler/build.gradle checkstyleMain checkstyleTest
     - name: Custom Tests
       script: ./test
-    - name: MJTest Shared Lexer Tests
+    - name: Shared MJTest Lexer Tests
       script:
         - source ~/virtualenv/python3.6/bin/activate
         - ./build
         - git clone --recursive https://git.scc.kit.edu/IPDSnelting/mjtest.git
+        - MJ_RUN="./run" ./mjtest/mjt.py lexer --ci_testing --parallel
+    - name: Custom MJTest Lexer Tests
+      script:
+        - source ~/virtualenv/python3.6/bin/activate
+        - ./build
+        - git clone --recursive https://git.scc.kit.edu/ubduq/mjtest.git
         - MJ_RUN="./run" ./mjtest/mjt.py lexer --ci_testing --parallel
