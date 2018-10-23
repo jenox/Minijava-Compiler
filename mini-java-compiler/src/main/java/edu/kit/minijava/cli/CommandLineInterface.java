@@ -14,7 +14,7 @@ public class CommandLineInterface {
 
                 System.exit(status);
             } else {
-                System.err.println("Error, invalid command and/or number of arguments!");
+                System.err.println("error, invalid command and/or number of arguments!");
                 System.err.println("Usage: --echo <path>");
 
                 System.exit(1);
@@ -23,9 +23,9 @@ public class CommandLineInterface {
             String message = exception.getLocalizedMessage();
 
             if (message == null || message.isEmpty()) {
-                System.err.println("Error: something went terribly wrong!");
+                System.err.println("error: something went terribly wrong!");
             } else {
-                System.err.println("Error: " + message);
+                System.err.println("error: " + message);
             }
 
             System.exit(255);

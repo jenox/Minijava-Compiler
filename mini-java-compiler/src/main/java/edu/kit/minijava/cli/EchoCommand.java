@@ -21,12 +21,12 @@ class EchoCommand {
             return 0;
         }
         catch (FileNotFoundException exception) {
-            System.err.println("Error: File '" + path + "' was not found!");
+            System.err.println("error: File '" + path + "' was not found!");
 
             return 1;
         }
         catch (IOException exception) {
-            System.err.println("Error: File '" + path + "' could not be read!");
+            System.err.println("error: File '" + path + "' could not be read!");
 
             return 1;
         }
