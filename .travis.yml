@@ -5,11 +5,11 @@ jdk:
 
 jobs:
   include:
-    - name: Build
+    - stage: build
+      name: Build
       script: ./build
-    - name: Style Check
-      script: ./mini-java-compiler/gradlew -b ./mini-java-compiler/build.gradle checkstyleMain checkstyleTest
-    - name: Shared mjtest Lexer Tests
+    - stage: test
+      name: Shared mjtest Lexer Tests
       script:
         - source ~/virtualenv/python3.6/bin/activate
         - ./build
@@ -21,3 +21,5 @@ jobs:
         - ./build
         - git clone --recursive https://git.scc.kit.edu/ubduq/mjtest.git
         - MJ_RUN="./run" ./mjtest/mjt.py lexer --ci_testing --parallel
+    - name: Style Check
+      script: ./mini-java-compiler/gradlew -b ./mini-java-compiler/build.gradle checkstyleMain checkstyleTest
