@@ -11,8 +11,8 @@ jobs:
       script: ./mini-java-compiler/gradlew -b ./mini-java-compiler/build.gradle checkstyleMain checkstyleTest
     - name: Custom Tests
       script: ./test
-    - name: MJTest Shared Tests
+    - name: MJTest Shared Lexer Tests
       script:
         - ./build
         - git clone --recursive https://git.scc.kit.edu/IPDSnelting/mjtest.git
-        - MJ_RUN="./run" ./mjtest/mjt.py all --ci_testing --parallel
+        - MJ_RUN="./run" ./mjtest/mjt.py lexer --ci_testing --parallel
