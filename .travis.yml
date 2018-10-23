@@ -9,13 +9,13 @@ jobs:
       script: ./build
     - name: Style Check
       script: ./mini-java-compiler/gradlew -b ./mini-java-compiler/build.gradle checkstyleMain checkstyleTest
-    - name: Shared MJTest Lexer Tests
+    - name: Shared mjtest Lexer Tests
       script:
         - source ~/virtualenv/python3.6/bin/activate
         - ./build
         - git clone --recursive https://git.scc.kit.edu/IPDSnelting/mjtest.git
         - MJ_RUN="./run" ./mjtest/mjt.py lexer --ci_testing --parallel
-    - name: Custom MJTest Lexer Tests
+    - name: Custom mjtest Lexer Tests
       script:
         - source ~/virtualenv/python3.6/bin/activate
         - ./build
