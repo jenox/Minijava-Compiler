@@ -18,6 +18,7 @@ jobs:
       script: ./test
     - name: MJTest Shared Lexer Tests
       script:
+        - source ~/virtualenv/python3.6/bin/activate
         - ./build
         - git clone --recursive https://git.scc.kit.edu/IPDSnelting/mjtest.git
         - MJ_RUN="./run" ./mjtest/mjt.py lexer --ci_testing --parallel
