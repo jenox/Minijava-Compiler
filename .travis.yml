@@ -14,6 +14,9 @@ jobs:
         - source ~/virtualenv/python3.6/bin/activate
         - ./build
         - git clone --recursive https://git.scc.kit.edu/IPDSnelting/mjtest.git
+        - cd mjtest/tests
+        - git checkout master
+        - cd ../..
         - MJ_RUN="./run" ./mjtest/mjt.py lexer --ci_testing --parallel
     - name: Custom mjtest Lexer Tests
       script:
