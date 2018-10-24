@@ -20,9 +20,9 @@ jobs:
         - source ~/virtualenv/python3.6/bin/activate
         - ./build
         - git clone --recursive https://git.scc.kit.edu/ubduq/mjtest.git
-        - cd mjtest
-        - git submodule update --remote --merge
-        - cd ..
+        - cd mjtest/tests
+        - git checkout dev
+        - cd ../..
         - MJ_RUN="./run" ./mjtest/mjt.py lexer --ci_testing --parallel
     - name: Style Check
       script: ./mini-java-compiler/gradlew -b ./mini-java-compiler/build.gradle checkstyleMain checkstyleTest
