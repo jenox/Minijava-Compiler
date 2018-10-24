@@ -1,9 +1,0 @@
-{
-    "in": "foo = bar",
-    "out":
-    [
-        "IDENTIFIER(foo)",
-        "ASSIGN",
-        "IDENTIFIER(bar)"
-    ]
-}
