@@ -84,7 +84,7 @@ public final class Parser {
         return true;
     }
 
-    private Token consume(TokenType type) throws ParserException{
+    private Token consume(TokenType type) throws ParserException {
         Token token = this.getCurrentToken();
 
         if (token == null) {
@@ -101,7 +101,7 @@ public final class Parser {
 
     // MARK: - Parsing MiniJava Files
 
-    public Program parseProgram() throws ParserException{
+    public Program parseProgram() throws ParserException {
         try {
             List<ClassDeclaration> classes = new ArrayList<>();
 
@@ -116,7 +116,7 @@ public final class Parser {
         }
     }
 
-    private ClassDeclaration parseClassDeclaration() throws ParserException{
+    private ClassDeclaration parseClassDeclaration() throws ParserException {
         try {
 
             this.consume(TokenType.CLASS);
@@ -139,7 +139,7 @@ public final class Parser {
         }
     }
 
-    private ClassMember parseClassMember() throws ParserException{
+    private ClassMember parseClassMember() throws ParserException {
         try {
             if (this.hasReachedEndOfInput()) {
                 throw new ParserException("Cannot parse ClassMember because End of Input has been reached");
@@ -223,7 +223,7 @@ public final class Parser {
 
     // MARK: - Parsing Parameters & Types
 
-    private List<Parameter> parseParameters() throws ParserException{
+    private List<Parameter> parseParameters() throws ParserException {
         try {
             List<Parameter> parameters = new ArrayList<>();
 
@@ -239,12 +239,12 @@ public final class Parser {
 
             return parameters;
         }
-        catch (ParserException exception){
+        catch (ParserException exception) {
             throw exception;
         }
     }
 
-    private Parameter parseParameter() throws ParserException{
+    private Parameter parseParameter() throws ParserException {
         try {
             Type type = this.parseType();
             String name = this.consume(TokenType.IDENTIFIER).text;
@@ -256,7 +256,7 @@ public final class Parser {
         }
     }
 
-    private Type parseType() throws ParserException{
+    private Type parseType() throws ParserException {
         try {
             BasicType basicType = this.parseBasicType();
             int numberOfDimensions = this.parseOpeningAndClosingBrackets();
@@ -268,7 +268,7 @@ public final class Parser {
         }
     }
 
-    private BasicType parseBasicType() throws ParserException{
+    private BasicType parseBasicType() throws ParserException {
         try {
             if (this.hasReachedEndOfInput()) {
                 throw new ParserException("Cannot parse BasicType because End of Input has been reached");
@@ -292,7 +292,7 @@ public final class Parser {
                             + "'. Cannot parse BasicType");
             }
         }
-        catch (ParserException exception){
+        catch (ParserException exception) {
             throw exception;
         }
     }
@@ -315,7 +315,7 @@ public final class Parser {
 
     // MARK: - Parsing Statements
 
-    public Statement parseStatement() throws ParserException{
+    public Statement parseStatement() throws ParserException {
         if (this.hasReachedEndOfInput()) {
             throw new ParserException("Cannot parse Statement because End of Input has been reached");
         }
@@ -347,7 +347,7 @@ public final class Parser {
         }
     }
 
-    private Block parseBlock() throws ParserException{
+    private Block parseBlock() throws ParserException {
         try {
             this.consume(TokenType.OPENING_BRACE);
 
@@ -406,7 +406,7 @@ public final class Parser {
         }
     }
 
-    private BlockStatement parseLocalVariableDeclarationStatement() throws ParserException{
+    private BlockStatement parseLocalVariableDeclarationStatement() throws ParserException {
         try {
             Type type = this.parseType();
             String name = consume(TokenType.IDENTIFIER).text;
@@ -423,12 +423,12 @@ public final class Parser {
                 return new LocalVariableDeclarationStatement(type, name);
             }
         }
-        catch (ParserException exception){
+        catch (ParserException exception) {
             throw exception;
         }
     }
 
-    private Statement parseEmptyStatement() throws ParserException{
+    private Statement parseEmptyStatement() throws ParserException {
         try {
             this.consume(TokenType.SEMICOLON);
 
@@ -439,7 +439,7 @@ public final class Parser {
         }
     }
 
-    private Statement parseWhileStatement() throws ParserException{
+    private Statement parseWhileStatement() throws ParserException {
         try {
             this.consume(TokenType.WHILE);
             this.consume(TokenType.OPENING_PARENTHESIS);
@@ -454,7 +454,7 @@ public final class Parser {
         }
     }
 
-    private Statement parseIfStatement() throws ParserException{
+    private Statement parseIfStatement() throws ParserException {
         try {
             this.consume(TokenType.IF);
             this.consume(TokenType.OPENING_PARENTHESIS);
@@ -477,7 +477,7 @@ public final class Parser {
         }
     }
 
-    private Statement parseExpressionStatement() throws ParserException{
+    private Statement parseExpressionStatement() throws ParserException {
         try {
             Expression expression = parseExpression();
 
@@ -490,7 +490,7 @@ public final class Parser {
         }
     }
 
-    private Statement parseReturnStatement() throws ParserException{
+    private Statement parseReturnStatement() throws ParserException {
         try {
             this.consume(TokenType.RETURN);
 
@@ -542,7 +542,7 @@ public final class Parser {
 
     // MARK: - Parsing Expressions
 
-    public Expression parseExpression() throws ParserException{
+    public Expression parseExpression() throws ParserException {
         try {
             return this.parseAssignmentExpression();
         }
@@ -551,7 +551,7 @@ public final class Parser {
         }
     }
 
-    private Expression parseAssignmentExpression() throws ParserException{
+    private Expression parseAssignmentExpression() throws ParserException {
         try {
             Expression expression = this.parseLogicalOrExpression();
 
@@ -566,7 +566,7 @@ public final class Parser {
         }
     }
 
-    private Expression parseLogicalOrExpression() throws ParserException{
+    private Expression parseLogicalOrExpression() throws ParserException {
         try {
             Expression expression = this.parseLogicalAndExpression();
 
@@ -588,7 +588,7 @@ public final class Parser {
         }
     }
 
-    private Expression parseLogicalAndExpression() throws ParserException{
+    private Expression parseLogicalAndExpression() throws ParserException {
         try {
             Expression expression = this.parseEqualityExpression();
 
@@ -610,7 +610,7 @@ public final class Parser {
         }
     }
 
-    private Expression parseEqualityExpression() throws ParserException{
+    private Expression parseEqualityExpression() throws ParserException {
         try {
             Expression expression = this.parseRelationalExpression();
 
@@ -636,7 +636,7 @@ public final class Parser {
         }
     }
 
-    private Expression parseRelationalExpression() throws ParserException{
+    private Expression parseRelationalExpression() throws ParserException {
         try {
             Expression expression = this.parseAdditiveExpression();
 
@@ -670,7 +670,7 @@ public final class Parser {
         }
     }
 
-    private Expression parseAdditiveExpression() throws ParserException{
+    private Expression parseAdditiveExpression() throws ParserException {
         try {
             Expression expression = this.parseMultiplicativeExpression();
 
@@ -696,7 +696,7 @@ public final class Parser {
         }
     }
 
-    private Expression parseMultiplicativeExpression() throws ParserException{
+    private Expression parseMultiplicativeExpression() throws ParserException {
         try {
             Expression expression = this.parseUnaryExpression();
 
@@ -726,7 +726,7 @@ public final class Parser {
         }
     }
 
-    private Expression parseUnaryExpression() throws ParserException{
+    private Expression parseUnaryExpression() throws ParserException {
         if (this.hasReachedEndOfInput()) {
             throw new ParserException("Cannot parse UnaryExpression because End of Input has been reached");
         }
@@ -751,7 +751,7 @@ public final class Parser {
         }
     }
 
-    private Expression parsePostfixExpression() throws ParserException{
+    private Expression parsePostfixExpression() throws ParserException {
         try {
             Expression expression = this.parsePrimaryExpression();
 
@@ -803,7 +803,7 @@ public final class Parser {
         }
     }
 
-    private List<Expression> parseArguments() throws ParserException{
+    private List<Expression> parseArguments() throws ParserException {
         try {
             List<Expression> exp_list = new ArrayList<>();
 
@@ -866,7 +866,8 @@ public final class Parser {
                     this.consume(TokenType.NEW);
 
                     if (this.hasReachedEndOfInput()) {
-                        throw new ParserException("Cannot parse PrimaryExpression because End of Input has been reached");
+                        throw new ParserException("Cannot parse PrimaryExpression "
+                                + "because End of Input has been reached");
                     }
 
                     BasicType basicType = null;
@@ -896,7 +897,8 @@ public final class Parser {
                             return new NewArrayExpression(basicType, expression, numberOfDimensions);
                         }
                         default:
-                            throw new ParserException("Unexpected TokenType of Token '" + this.getCurrentToken().toString()
+                            throw new ParserException("Unexpected TokenType of Token '"
+                                    + this.getCurrentToken().toString()
                                     + "'. Cannot parse PrimaryExpression");
                     }
                 }
@@ -937,7 +939,7 @@ public final class Parser {
 
     // MARK: - Miscellaneous
 
-    private int parseOpeningAndClosingBrackets() throws ParserException{
+    private int parseOpeningAndClosingBrackets() throws ParserException {
         try {
             int count = 0;
 
