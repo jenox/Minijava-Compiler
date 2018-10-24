@@ -4,6 +4,9 @@ jdk:
   - oraclejdk8
 
 jobs:
+  allow_failures:
+    - name: Shared mjtest Lexer Tests
+
   include:
     - stage: build
       name: Build
