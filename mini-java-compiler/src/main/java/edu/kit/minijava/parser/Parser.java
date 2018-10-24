@@ -145,7 +145,8 @@ public final class Parser {
                 // TODO: String appears to be keyword on sheet?
                 String parameterType = this.consume(TokenType.IDENTIFIER).text;
                 if (!parameterType.equals("String")) {
-                    throw new RuntimeException("Main method does not have the right argument: " + parameterType.toString());
+                    throw new RuntimeException("Main method does not have the right argument: "
+                            + parameterType.toString());
                 }
 
                 this.consume(TokenType.OPENING_BRACKET);
@@ -193,7 +194,8 @@ public final class Parser {
                 }
             }
             default:
-                throw new RuntimeException("Unexpected TokenType of Token '" + this.getCurrentToken().toString() + "'. Cannot parse Classmember");
+                throw new RuntimeException("Unexpected TokenType of Token '" + this.getCurrentToken().toString()
+                        + "'. Cannot parse Classmember");
         }
     }
 
@@ -248,7 +250,8 @@ public final class Parser {
                 Token token = this.consume(TokenType.IDENTIFIER);
                 return new UserDefinedType(token.text);
             default:
-                throw new RuntimeException("Unexpected TokenType of Token '" + this.getCurrentToken().toString() + "'. Cannot parse BasicType");
+                throw new RuntimeException("Unexpected TokenType of Token '" + this.getCurrentToken().toString()
+                        + "'. Cannot parse BasicType");
         }
     }
 
@@ -297,7 +300,8 @@ public final class Parser {
             case NEW:
                 return this.parseExpressionStatement();
             default:
-                throw new RuntimeException("Unexpected TokenType of Token '" + this.getCurrentToken().toString() + "'. Cannot parse Statement");
+                throw new RuntimeException("Unexpected TokenType of Token '" + this.getCurrentToken().toString()
+                        + "'. Cannot parse Statement");
         }
     }
 
@@ -350,7 +354,8 @@ public final class Parser {
                     return this.parseStatement();
                 }
             default:
-                throw new RuntimeException("Unexpected TokenType of Token '" + this.getCurrentToken().toString() + "'. Cannot parse BlockStatement");
+                throw new RuntimeException("Unexpected TokenType of Token '" + this.getCurrentToken().toString()
+                        + "'. Cannot parse BlockStatement");
         }
     }
 
@@ -624,7 +629,8 @@ public final class Parser {
             case MINUS:
                 return new NegateExpression(this.parseUnaryExpression());
             default:
-                throw new RuntimeException("Unexpected TokenType of Token '" + this.getCurrentToken().toString() + "'. Cannot parse UnaryExpression");
+                throw new RuntimeException("Unexpected TokenType of Token '" + this.getCurrentToken().toString()
+                        + "'. Cannot parse UnaryExpression");
         }
     }
 
@@ -665,7 +671,8 @@ public final class Parser {
 
             return new ArrayAccess(expression);
         } else {
-            throw new RuntimeException("Unexpected TokenType of Token '" + this.getCurrentToken().toString() + "'. Cannot parse PostfixOperation");
+            throw new RuntimeException("Unexpected TokenType of Token '" + this.getCurrentToken().toString()
+                    + "'. Cannot parse PostfixOperation");
         }
     }
 
@@ -756,11 +763,13 @@ public final class Parser {
                         return new NewArrayExpression(basicType, expression, numberOfDimensions);
                     }
                     default:
-                        throw new RuntimeException("Unexpected TokenType of Token '" + this.getCurrentToken().toString() + "'. Cannot parse PrimaryExpression");
+                        throw new RuntimeException("Unexpected TokenType of Token '" + this.getCurrentToken().toString()
+                                + "'. Cannot parse PrimaryExpression");
                 }
             }
             default:
-                throw new RuntimeException("Unexpected TokenType of Token '" + this.getCurrentToken().toString() + "'. Cannot parse PrimaryExpression");
+                throw new RuntimeException("Unexpected TokenType of Token '" + this.getCurrentToken().toString()
+                        + "'. Cannot parse PrimaryExpression");
         }
     }
 
