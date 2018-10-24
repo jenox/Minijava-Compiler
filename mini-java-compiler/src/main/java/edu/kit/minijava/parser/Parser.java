@@ -128,7 +128,7 @@ public final class Parser {
 
     private ClassMember parseClassMember() {
         if (this.hasReachedEndOfInput()) {
-            throw new RuntimeException();
+            throw new RuntimeException("Cannot parse ClassMember because End of Input has been reached");
         }
 
         this.consume(TokenType.PUBLIC);
@@ -145,7 +145,7 @@ public final class Parser {
                 // TODO: String appears to be keyword on sheet?
                 String parameterType = this.consume(TokenType.IDENTIFIER).text;
                 if (!parameterType.equals("String")) {
-                    throw new RuntimeException();
+                    throw new RuntimeException("Main method does not have the right argument: " + parameterType.toString());
                 }
 
                 this.consume(TokenType.OPENING_BRACKET);
@@ -193,7 +193,7 @@ public final class Parser {
                 }
             }
             default:
-                throw new RuntimeException();
+                throw new RuntimeException("Unexpected TokenType of Token '" + this.getCurrentToken().toString() + "'. Cannot parse Classmember");
         }
     }
 
@@ -231,7 +231,7 @@ public final class Parser {
 
     private BasicType parseBasicType() {
         if (this.hasReachedEndOfInput()) {
-            throw new RuntimeException();
+            throw new RuntimeException("Cannot parse BasicType because End of Input has been reached");
         }
 
         switch (this.getCurrentToken().type) {
@@ -248,7 +248,7 @@ public final class Parser {
                 Token token = this.consume(TokenType.IDENTIFIER);
                 return new UserDefinedType(token.text);
             default:
-                throw new RuntimeException("Bad BasicType");
+                throw new RuntimeException("Unexpected TokenType of Token '" + this.getCurrentToken().toString() + "'. Cannot parse BasicType");
         }
     }
 
@@ -272,7 +272,7 @@ public final class Parser {
 
     public Statement parseStatement() {
         if (this.hasReachedEndOfInput()) {
-            throw new RuntimeException();
+            throw new RuntimeException("Cannot parse Statement because End of Input has been reached");
         }
 
         switch (this.getCurrentToken().type) {
@@ -297,7 +297,7 @@ public final class Parser {
             case NEW:
                 return this.parseExpressionStatement();
             default:
-                throw new RuntimeException();
+                throw new RuntimeException("Unexpected TokenType of Token '" + this.getCurrentToken().toString() + "'. Cannot parse Statement");
         }
     }
 
@@ -317,7 +317,7 @@ public final class Parser {
 
     private BlockStatement parseBlockStatement() {
         if (this.hasReachedEndOfInput()) {
-            throw new RuntimeException();
+            throw new RuntimeException("Cannot parse BlockStatement because End of Input has been reached");
         }
 
         switch (this.getCurrentToken().type) {
@@ -350,7 +350,7 @@ public final class Parser {
                     return this.parseStatement();
                 }
             default:
-                throw new RuntimeException();
+                throw new RuntimeException("Unexpected TokenType of Token '" + this.getCurrentToken().toString() + "'. Cannot parse BlockStatement");
         }
     }
 
@@ -606,7 +606,7 @@ public final class Parser {
 
     private Expression parseUnaryExpression() {
         if (this.hasReachedEndOfInput()) {
-            throw new RuntimeException();
+            throw new RuntimeException("Cannot parse UnaryExpression because End of Input has been reached");
         }
 
         switch (this.getCurrentToken().type) {
@@ -624,7 +624,7 @@ public final class Parser {
             case MINUS:
                 return new NegateExpression(this.parseUnaryExpression());
             default:
-                throw new RuntimeException();
+                throw new RuntimeException("Unexpected TokenType of Token '" + this.getCurrentToken().toString() + "'. Cannot parse UnaryExpression");
         }
     }
 
@@ -665,7 +665,7 @@ public final class Parser {
 
             return new ArrayAccess(expression);
         } else {
-            throw new RuntimeException();
+            throw new RuntimeException("Unexpected TokenType of Token '" + this.getCurrentToken().toString() + "'. Cannot parse PostfixOperation");
         }
     }
 
@@ -699,7 +699,7 @@ public final class Parser {
                 try {
                     return new IntegerLiteral(Integer.parseInt(value));
                 } catch (NumberFormatException exception) {
-                    throw new RuntimeException();
+                    throw new NumberFormatException("Illegal INTEGER_LITERAL value: " + value);
                 }
             }
             case IDENTIFIER: {
@@ -726,7 +726,7 @@ public final class Parser {
                 this.consume(TokenType.NEW);
 
                 if (this.hasReachedEndOfInput()) {
-                    throw new RuntimeException();
+                    throw new RuntimeException("Cannot parse PrimaryExpression because End of Input has been reached");
                 }
 
                 BasicType basicType = null;
@@ -756,11 +756,11 @@ public final class Parser {
                         return new NewArrayExpression(basicType, expression, numberOfDimensions);
                     }
                     default:
-                        throw new RuntimeException("PrimaryExpression not valid");
+                        throw new RuntimeException("Unexpected TokenType of Token '" + this.getCurrentToken().toString() + "'. Cannot parse PrimaryExpression");
                 }
             }
             default:
-                throw new RuntimeException("parsePrimary");
+                throw new RuntimeException("Unexpected TokenType of Token '" + this.getCurrentToken().toString() + "'. Cannot parse PrimaryExpression");
         }
     }
 

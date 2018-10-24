@@ -21,9 +21,9 @@ public class Token {
         switch (this.type) {
             case IDENTIFIER:
             case INTEGER_LITERAL:
-                return this.type.toString() + "(" + this.text + ")";
+                return this.type.toString() + "(" + this.text + ")" + " at " + this.location.toString();
             default:
-                return this.type.toString();
+                return this.type.toString() + " at " + this.location.toString();
         }
     }
 }
