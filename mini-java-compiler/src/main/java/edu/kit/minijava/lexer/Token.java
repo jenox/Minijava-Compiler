@@ -8,7 +8,7 @@ public class Token {
         if (location == null) throw new IllegalArgumentException();
 
         this.type = type;
-        this.text = text;
+        this.text = text.intern();
         this.location = location;
     }
 
