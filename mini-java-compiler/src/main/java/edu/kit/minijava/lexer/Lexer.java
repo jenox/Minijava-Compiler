@@ -161,8 +161,20 @@ public class Lexer {
                throw this.fail("Invalid separator '" + text + "'");
            }
         } else if (this.isCurrentCharacterOperatorSymbol()) {
-            String text = this.advanceWhile(this::isCurrentCharacterOperatorSymbol, s -> !s.contains("/*"));
+            String text = this.advance();
 
+            // Append as long as result is valid prefix or start of comment.
+            while (!this.hasReachedEndOfInput() && !text.endsWith("/*")) {
+                if (!(text + this.getCurrentCharacter()).endsWith("/*")) {
+                    if (!this.isPrefixOfValidOperator(text + this.getCurrentCharacter())) {
+                        break;
+                    }
+                }
+
+                text += this.advance();
+            }
+
+            // If comment was started, read till end of comment.
             if (text.endsWith("/*")) {
                 text = text.substring(0, text.length() - 2);
 
@@ -172,6 +184,7 @@ public class Lexer {
                     throw this.fail("Encountered unterminated comment");
                 }
 
+                // If there was an operator before start of comment, fallthrough to return operator as token.
                 if (text.isEmpty()) {
                     return this.nextToken();
                 }
@@ -189,6 +202,23 @@ public class Lexer {
 
             throw this.fail("Forbidden character '" + name + "' in input");
         }
+    }
+
+    private boolean isPrefixOfValidOperator(String text) {
+        String[] operators = {
+                "=", "==", "!=", "<", "<=", ">", ">=",
+                "+", "+=", "-", "-=", "*", "*=", "/", "/=", "%", "%=", "++", "--",
+                "!", "||", "&&", "?", ":",
+                "~", "&", "&=", "|", "|=", "^", "^=", "<<", "<<=", ">>", ">>=", ">>>", ">>>="
+        };
+
+        for (String operator : operators) {
+            if (operator.startsWith(text)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     // MARK: - Exception Management
