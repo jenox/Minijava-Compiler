@@ -133,15 +133,15 @@ public class Lexer {
         TokenLocation location = new TokenLocation(this.currentRow, this.currentColumn);
 
         if (this.isCurrentCharacterNumeric()) {
-            String text = this.advanceWhile(this::isCurrentCharacterNumeric);
+            if (this.getCurrentCharacter() == '0') {
+                String text = String.valueOf(this.advance());
 
-            if (text.startsWith("0") && !text.equals("0")) {
-                throw this.fail("Integer literals may only start with 0 if they are zero");
-            } else if (this.isCurrentCharacterAlphanumeric()) {
-                throw this.fail("Integer literals must not be followed by alphanumeric characters");
+                return new Token(TokenType.INTEGER_LITERAL, text, location);
+            } else {
+                String text = this.advanceWhile(this::isCurrentCharacterNumeric);
+
+                return new Token(TokenType.INTEGER_LITERAL, text, location);
             }
-
-            return new Token(TokenType.INTEGER_LITERAL, text, location);
         } else if (this.isCurrentCharacterAlphanumeric()) {
             String text = this.advanceWhile(this::isCurrentCharacterAlphanumeric);
             TokenType type = this.keywordFromString(text);
