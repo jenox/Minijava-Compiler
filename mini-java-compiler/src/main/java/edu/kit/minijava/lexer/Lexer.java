@@ -33,18 +33,18 @@ public class Lexer {
         return (char)this.currentCharacter;
     }
 
-    private String advance() throws IOException {
+    private char advance() throws IOException {
         if (this.hasReachedEndOfInput()) {
             throw new IllegalStateException();
         }
 
-        String string = String.valueOf(this.getCurrentCharacter());
+        char character = this.getCurrentCharacter();
 
-        if (string.equals("\r")) {
+        if (character == '\r') {
             this.currentRow += 1;
             this.currentColumn = 0;
             this.lastCharacterWasCarriageReturn = true;
-        } else if (string.equals("\n")) {
+        } else if (character == '\n') {
             if (!this.lastCharacterWasCarriageReturn) {
                 this.currentRow += 1;
                 this.currentColumn = 0;
@@ -57,21 +57,21 @@ public class Lexer {
 
         this.currentCharacter = this.reader.read();
 
-        return string;
+        return character;
     }
 
     private String advanceWhile(BooleanSupplier predicate) throws IOException {
         return this.advanceWhile(predicate, s -> true);
     }
 
-    private String advanceWhile(BooleanSupplier predicate, Predicate<String> stringPredicate) throws IOException {
-        String string = "";
+    private String advanceWhile(BooleanSupplier predicate, Predicate<StringBuffer> stringPredicate) throws IOException {
+        StringBuffer buffer = new StringBuffer();
 
-        while (!this.hasReachedEndOfInput() && predicate.getAsBoolean() && stringPredicate.test(string)) {
-            string += this.advance();
+        while (!this.hasReachedEndOfInput() && predicate.getAsBoolean() && stringPredicate.test(buffer)) {
+            buffer.append(this.advance());
         }
 
-        return string;
+        return buffer.toString();
     }
 
     // MARK: - Helpers
@@ -89,7 +89,7 @@ public class Lexer {
 
         char character = this.getCurrentCharacter();
 
-        return "_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVXYZ0123456789".indexOf(character) != -1;
+        return "_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".indexOf(character) != -1;
     }
 
     private boolean isCurrentCharacterWhitespace() {
@@ -152,7 +152,7 @@ public class Lexer {
                 return new Token(TokenType.IDENTIFIER, text, location);
             }
         } else if (this.isCurrentCharacterSeparator()) {
-           String text = this.advance();
+           String text = String.valueOf(this.advance());
            TokenType separator = this.separatorFromString(text);
 
            if (separator != null) {
@@ -161,7 +161,7 @@ public class Lexer {
                throw this.fail("Invalid separator '" + text + "'");
            }
         } else if (this.isCurrentCharacterOperatorSymbol()) {
-            String text = this.advance();
+            String text = String.valueOf(this.advance());
 
             // Append as long as result is valid prefix or start of comment.
             while (!this.hasReachedEndOfInput() && !text.endsWith("/*")) {
@@ -178,7 +178,7 @@ public class Lexer {
             if (text.endsWith("/*")) {
                 text = text.substring(0, text.length() - 2);
 
-                String comment = this.advanceWhile(() -> true, s -> !s.contains("*/"));
+                String comment = this.advanceWhile(() -> true, s -> !this.stringBufferEndsWithEndOfCommentSequence(s));
 
                 if (!comment.endsWith("*/")) {
                     throw this.fail("Encountered unterminated comment");
@@ -201,6 +201,20 @@ public class Lexer {
             String name = Character.getName(this.getCurrentCharacter());
 
             throw this.fail("Forbidden character '" + name + "' in input");
+        }
+    }
+
+    private boolean stringBufferEndsWithEndOfCommentSequence(StringBuffer buffer) {
+
+        // Building an explicit string object and calling `endsWith(_)` is too slow.
+        if (buffer.length() < 2) {
+            return false;
+        } else if (buffer.charAt(buffer.length() - 2) != '*') {
+            return false;
+        } else if (buffer.charAt(buffer.length() - 1) != '/') {
+            return false;
+        }  else {
+            return true;
         }
     }
 
