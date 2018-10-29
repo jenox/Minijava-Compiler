@@ -124,6 +124,17 @@ public class Lexer {
 
     public Token nextToken() throws IOException, LexerException {
         this.ensureNoPreviousExceptionsWereThrown();
+
+        Token token = this.nextNullableToken();
+
+        while (token == null && !this.hasReachedEndOfInput()) {
+            token = this.nextNullableToken();
+        }
+
+        return token;
+    }
+
+    private Token nextNullableToken() throws IOException, LexerException {
         this.advanceWhile(this::isCurrentCharacterWhitespace);
 
         if (this.hasReachedEndOfInput()) {
@@ -186,7 +197,7 @@ public class Lexer {
 
                 // If there was an operator before start of comment, fallthrough to return operator as token.
                 if (text.isEmpty()) {
-                    return this.nextToken();
+                    return null;
                 }
             }
 
