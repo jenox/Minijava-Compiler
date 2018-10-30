@@ -1,6 +1,7 @@
 package edu.kit.minijava.parser;
 
 import edu.kit.minijava.lexer.*;
+import edu.kit.minijava.parser.exceptions.ParserException;
 
 import java.io.*;
 import java.util.*;
@@ -99,7 +100,7 @@ public final class Parser {
 
     // MARK: - Parsing MiniJava Files
 
-    public Program parseProgram() {
+    public Program parseProgram() throws ParserException {
         List<ClassDeclaration> classes = new ArrayList<>();
 
         while (!this.hasReachedEndOfInput()) {
