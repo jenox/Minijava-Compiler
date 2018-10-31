@@ -1,11 +1,11 @@
 package edu.kit.minijava.parser;
 
 public final class IntegerLiteral extends Expression {
-    public IntegerLiteral(int value) {
+    public IntegerLiteral(String value) {
         this.value = value;
     }
 
-    public final int value;
+    public final String value;
 
     @Override
     public String toString() {
