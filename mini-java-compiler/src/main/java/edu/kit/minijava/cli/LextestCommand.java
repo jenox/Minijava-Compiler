@@ -4,7 +4,7 @@ import java.io.*;
 
 import edu.kit.minijava.lexer.*;
 
-class LextestCommand {
+class LextestCommand extends Command {
     public int execute(String path) {
         try {
             FileInputStream stream = new FileInputStream(path);

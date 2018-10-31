@@ -2,33 +2,50 @@ package edu.kit.minijava.cli;
 
 public class CommandLineInterface {
     public static void main(String[] arguments) {
+       
+        if (arguments.length != 2) {
+            printErrorAndExit();
+        }
+
+        Command command = null;
+        
+        switch (arguments[0]) {
+            case "--echo":
+                command = new EchoCommand();
+                break;
+            case "--lextest":
+                command = new LextestCommand();
+                break;
+            case "--parsetest":
+                command = new ParserCommand();
+                break;
+            default:
+                printErrorAndExit();
+        }
+        
+        int status = 0;
         try {
-            if (arguments.length == 2 && arguments[0].equals("--echo")) {
-                EchoCommand command = new EchoCommand();
-                int status = command.execute(arguments[1]);
-
-                System.exit(status);
-            } else if (arguments.length == 2 && arguments[0].equals("--lextest")) {
-                LextestCommand command = new LextestCommand();
-                int status = command.execute(arguments[1]);
-
-                System.exit(status);
-            } else {
-                System.err.println("error, invalid command and/or number of arguments!");
-                System.err.println("Usage: --echo <path>");
-
-                System.exit(1);
-            }
+            status = command.execute(arguments[1]);
         } catch (Exception exception) {
             String message = exception.getLocalizedMessage();
-
+            
             if (message == null || message.isEmpty()) {
                 System.err.println("error: something went terribly wrong!");
             } else {
                 System.err.println("error: " + message);
             }
-
-            System.exit(255);
+            
+            status = 255;
+        } 
+        finally {
+            System.exit(status);
         }
+    }
+
+    private static void printErrorAndExit() {
+        System.err.println("error, invalid command and/or number of arguments!");
+        System.err.println("Usage: --echo <path>");
+
+        System.exit(1);
     }
 }

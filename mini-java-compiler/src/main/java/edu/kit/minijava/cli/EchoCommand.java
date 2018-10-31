@@ -2,8 +2,9 @@ package edu.kit.minijava.cli;
 
 import java.io.*;
 
-class EchoCommand {
-    int execute(String path) {
+class EchoCommand extends Command {
+    
+    public int execute(String path) {
         try {
             FileInputStream stream = new FileInputStream(path);
             InputStreamReader reader = new InputStreamReader(stream, "US-ASCII");
