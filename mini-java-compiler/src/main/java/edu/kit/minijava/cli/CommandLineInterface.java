@@ -2,13 +2,13 @@ package edu.kit.minijava.cli;
 
 public class CommandLineInterface {
     public static void main(String[] arguments) {
-       
+
         if (arguments.length != 2) {
             printErrorAndExit();
         }
 
         Command command = null;
-        
+
         switch (arguments[0]) {
             case "--echo":
                 command = new EchoCommand();
@@ -22,21 +22,22 @@ public class CommandLineInterface {
             default:
                 printErrorAndExit();
         }
-        
+
         int status = 0;
         try {
             status = command.execute(arguments[1]);
-        } catch (Exception exception) {
+        }
+        catch (Throwable exception) {
             String message = exception.getLocalizedMessage();
-            
+
             if (message == null || message.isEmpty()) {
                 System.err.println("error: something went terribly wrong!");
             } else {
                 System.err.println("error: " + message);
             }
-            
+
             status = 255;
-        } 
+        }
         finally {
             System.exit(status);
         }
