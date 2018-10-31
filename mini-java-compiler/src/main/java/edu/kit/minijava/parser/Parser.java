@@ -1,7 +1,6 @@
 package edu.kit.minijava.parser;
 
 import edu.kit.minijava.lexer.*;
-import edu.kit.minijava.parser.exceptions.ParserException;
 
 import java.io.*;
 import java.util.*;
@@ -25,11 +24,11 @@ public final class Parser {
     /// Do not access directly.
     private boolean hasReceivedEndOfInputFromLexer = false;
 
-    private Token getCurrentToken() {
+    private Token getCurrentToken() throws ParserException {
         return this.getTokenAtOffset(0);
     }
 
-    private Token getTokenAtOffset(int offset) {
+    private Token getTokenAtOffset(int offset) throws ParserException {
         try {
             while (this.tokens.size() <= offset && !this.hasReceivedEndOfInputFromLexer) {
                 Token token = this.lexer.nextToken();
@@ -42,11 +41,8 @@ public final class Parser {
                 }
             }
         }
-        catch (LexerException exception) {
-            throw new RuntimeException(exception);
-        }
-        catch (IOException exception) {
-            throw new RuntimeException(exception);
+        catch (LexerException | IOException exception) {
+            throw new PropagatedException(exception);
         }
 
         if (offset < this.tokens.size()) {
@@ -56,21 +52,11 @@ public final class Parser {
         }
     }
 
-    private boolean hasReachedEndOfInput() {
+    private boolean hasReachedEndOfInput() throws ParserException {
         return this.getCurrentToken() == null;
     }
 
-    private boolean check(TokenType type) {
-        Token token = this.getCurrentToken();
-
-        if (token == null) {
-            return false;
-        } else {
-            return token.type == type;
-        }
-    }
-
-    private boolean lookahead(TokenType first, TokenType... others) {
+    private boolean lookahead(TokenType first, TokenType... others) throws ParserException {
         if (!first.matches(this.getCurrentToken())) {
             return false;
         }
@@ -84,13 +70,11 @@ public final class Parser {
         return true;
     }
 
-    private Token consume(TokenType type) {
+    private Token consume(TokenType type, String context) throws ParserException {
         Token token = this.getCurrentToken();
 
-        if (token == null) {
-            throw new RuntimeException("Expected to read " + type +  ", but found end of file");
-        } else if (token.type != type) {
-            throw new RuntimeException("Expected to read " + type +  ", but found " + token.type);
+        if (token == null || token.type != type) {
+            throw new UnexpectedTokenException(token, context, type);
         }
 
         this.tokens.remove(0);
@@ -110,691 +94,690 @@ public final class Parser {
         return new Program(classes);
     }
 
-    private ClassDeclaration parseClassDeclaration() {
-        this.consume(TokenType.CLASS);
+    private ClassDeclaration parseClassDeclaration() throws ParserException {
+        this.consume(TokenType.CLASS, "ClassDeclaration");
 
-        String name = this.consume(TokenType.IDENTIFIER).text;
+        String name = this.consume(TokenType.IDENTIFIER, "ClassDeclaration").text;
         List<ClassMember> members = new ArrayList<>();
 
-        this.consume(TokenType.OPENING_BRACE);
+        this.consume(TokenType.OPENING_BRACE, "ClassDeclaration");
 
-        while (this.lookahead(TokenType.PUBLIC)) {
+        while (!this.lookahead(TokenType.CLOSING_BRACE)) {
             members.add(this.parseClassMember());
         }
 
-        this.consume(TokenType.CLOSING_BRACE);
+        this.consume(TokenType.CLOSING_BRACE, "ClassDeclaration");
 
         return new ClassDeclaration(name, members);
     }
 
-    private ClassMember parseClassMember() {
-        if (this.hasReachedEndOfInput()) {
-            throw new RuntimeException();
+    private ClassMember parseClassMember() throws ParserException {
+        this.consume(TokenType.PUBLIC, "Class Member");
+
+        // ClassMember -> MainMethod
+        if (this.lookahead(TokenType.STATIC)) {
+            this.consume(TokenType.STATIC, "MainMethod");
+            this.consume(TokenType.VOID, "MainMethod");
+
+            String methodName = this.consume(TokenType.IDENTIFIER, "MainMethod").text;
+
+            this.consume(TokenType.OPENING_PARENTHESIS, "MainMethod");
+
+            Token parameterTypeToken = this.consume(TokenType.IDENTIFIER, "MainMethod");
+            if (!parameterTypeToken.text.equals("String")) {
+                throw new UnexpectedTokenException(parameterTypeToken, "MainMethod", TokenType.IDENTIFIER);
+            }
+
+            this.consume(TokenType.OPENING_BRACKET, "MainMethod");
+            this.consume(TokenType.CLOSING_BRACKET, "MainMethod");
+
+            String parameterName = this.consume(TokenType.IDENTIFIER, "MainMethod").text;
+
+            this.consume(TokenType.CLOSING_PARENTHESIS, "MainMethod");
+
+            if (this.lookahead(TokenType.THROWS)) {
+                this.consume(TokenType.THROWS, "MainMethod");
+                this.consume(TokenType.IDENTIFIER, "MainMethod");
+            }
+
+            Block body = this.parseBlock();
+
+            return new MainMethod(methodName, parameterName, body);
         }
 
-        this.consume(TokenType.PUBLIC);
+        // ClassMember -> Method | Field
+        else {
+            Type type = this.parseType();
+            String name = this.consume(TokenType.IDENTIFIER, "ClassMember").text;
 
-        switch (this.getCurrentToken().type) {
-            case STATIC: {
-                this.consume(TokenType.STATIC);
-                this.consume(TokenType.VOID);
+            // ClassMember -> Field
+            if (this.lookahead(TokenType.SEMICOLON)) {
+                this.consume(TokenType.SEMICOLON, "Field");
 
-                String methodName = this.consume(TokenType.IDENTIFIER).text;
+                return new Field(type, name);
+            }
 
-                this.consume(TokenType.OPENING_PARENTHESIS);
+            // ClassMember -> Method
+            else {
+                this.consume(TokenType.OPENING_PARENTHESIS, "Method");
 
-                // TODO: String appears to be keyword on sheet?
-                String parameterType = this.consume(TokenType.IDENTIFIER).text;
-                if (!parameterType.equals("String")) {
-                    throw new RuntimeException();
-                }
+                List<Parameter> parameters = this.parseParameters();
 
-                this.consume(TokenType.OPENING_BRACKET);
-                this.consume(TokenType.CLOSING_BRACKET);
-
-                String parameterName = this.consume(TokenType.IDENTIFIER).text;
-
-                this.consume(TokenType.CLOSING_PARENTHESIS);
+                this.consume(TokenType.CLOSING_PARENTHESIS, "Method");
 
                 if (this.lookahead(TokenType.THROWS)) {
-                    this.consume(TokenType.THROWS);
-                    this.consume(TokenType.IDENTIFIER);
+                    this.consume(TokenType.THROWS, "Method");
+                    this.consume(TokenType.IDENTIFIER, "Method");
                 }
 
                 Block body = this.parseBlock();
 
-                return new MainMethod(methodName, parameterName, body);
+                return new Method(type, name, parameters, body);
             }
-            case INT:
-            case BOOLEAN:
-            case VOID:
-            case IDENTIFIER: {
-                Type type = this.parseType();
-                String name = this.consume(TokenType.IDENTIFIER).text;
-
-                if (this.lookahead(TokenType.SEMICOLON)) {
-                    this.consume(TokenType.SEMICOLON);
-
-                    return new Field(type, name);
-                } else {
-                    this.consume(TokenType.OPENING_PARENTHESIS);
-
-                    List<Parameter> parameters = this.parseParameters();
-
-                    this.consume(TokenType.CLOSING_PARENTHESIS);
-
-                    if (this.lookahead(TokenType.THROWS)) {
-                        this.consume(TokenType.THROWS);
-                        this.consume(TokenType.IDENTIFIER);
-                    }
-
-                    Block body = this.parseBlock();
-
-                    return new Method(type, name, parameters, body);
-                }
-            }
-            default:
-                throw new RuntimeException();
         }
     }
 
-    // MARK: - Parsing Parameters & Types
-
-    private List<Parameter> parseParameters() {
-        List<Parameter> parameters = new ArrayList<>();
-
-        if (this.currentTokenIsInFirstOfParameter()) {
-            parameters.add(this.parseParameter());
+    private List<Parameter> parseParameters() throws ParserException {
+        if (this.lookahead(TokenType.CLOSING_PARENTHESIS)) {
+            return Collections.emptyList();
         }
 
-        while (this.lookahead(TokenType.COMMA)) {
-            this.consume(TokenType.COMMA);
-
+        // Parameters -> Parameter { "," Parameter }
+        else {
+            List<Parameter> parameters = new ArrayList<>();
             parameters.add(this.parseParameter());
-        }
 
-        return parameters;
+            while (this.lookahead(TokenType.COMMA)) {
+                this.consume(TokenType.COMMA, null);
+                parameters.add(this.parseParameter());
+            }
+
+            return parameters;
+        }
     }
 
-    private Parameter parseParameter() {
+    private Parameter parseParameter() throws ParserException {
         Type type = this.parseType();
-        String name = this.consume(TokenType.IDENTIFIER).text;
+        String name = this.consume(TokenType.IDENTIFIER, "Parameter").text;
 
         return new Parameter(type, name);
     }
 
-    private Type parseType() {
+    // MARK: - Parsing Statements
+
+    private Statement parseStatement() throws ParserException {
+        if (this.lookahead(TokenType.IF)) {
+            return this.parseIfStatement();
+        }
+        else if (this.lookahead(TokenType.WHILE)) {
+            return this.parseWhileStatement();
+        }
+        else if (this.lookahead(TokenType.RETURN)) {
+            return this.parseReturnStatement();
+        }
+        else if (this.lookahead(TokenType.OPENING_BRACE)) {
+            return this.parseBlock();
+        }
+        else if (this.lookahead(TokenType.SEMICOLON)) {
+            return this.parseEmptyStatement();
+        }
+        else {
+            return this.parseExpressionStatement();
+        }
+    }
+
+    private Block parseBlock() throws ParserException {
+        this.consume(TokenType.OPENING_BRACE, "Block");
+
+        List<BlockStatement> statements = new ArrayList<>();
+
+        while (!this.lookahead(TokenType.CLOSING_BRACE)) {
+            statements.add(this.parseBlockStatement());
+        }
+
+        this.consume(TokenType.CLOSING_BRACE, "Block");
+
+        return new Block(statements);
+    }
+
+    private BlockStatement parseBlockStatement() throws ParserException {
+
+        // BlockStatement -> LocalVariableDeclarationStatement
+        if (this.lookahead(TokenType.IDENTIFIER, TokenType.OPENING_BRACKET, TokenType.CLOSING_BRACKET)) {
+            return this.parseLocalVariableDeclarationStatement();
+        }
+
+        // BlockStatement -> LocalVariableDeclarationStatement
+        else if (this.lookahead(TokenType.IDENTIFIER, TokenType.IDENTIFIER)) {
+            return this.parseLocalVariableDeclarationStatement();
+        }
+
+        // BlockStatement -> LocalVariableDeclarationStatement
+        else if (this.lookahead(TokenType.INT)) {
+            return this.parseLocalVariableDeclarationStatement();
+        }
+
+        // BlockStatement -> LocalVariableDeclarationStatement
+        else if (this.lookahead(TokenType.BOOLEAN)) {
+            return this.parseLocalVariableDeclarationStatement();
+        }
+
+        // BlockStatement -> LocalVariableDeclarationStatement
+        else if (this.lookahead(TokenType.VOID)) {
+            return this.parseLocalVariableDeclarationStatement();
+        }
+
+        // BlockStatement -> Statement
+        else {
+            return this.parseStatement();
+        }
+    }
+
+    private BlockStatement parseLocalVariableDeclarationStatement() throws ParserException {
+        Type type = this.parseType();
+        String name = this.consume(TokenType.IDENTIFIER, "LocalVariableDeclarationStatement").text;
+
+        // LocalVariableDeclarationStatement -> Type "IDENTIFIER" "=" Expression ";"
+        if (this.lookahead(TokenType.ASSIGN)) {
+            this.consume(TokenType.ASSIGN, "LocalVariableDeclarationStatement");
+            Expression value = this.parseExpression();
+            this.consume(TokenType.SEMICOLON, "LocalVariableDeclarationStatement");
+
+            return new LocalVariableInitializationStatement(type, name, value);
+        }
+
+        // LocalVariableDeclarationStatement -> Type "IDENTIFIER"  ";"
+        else {
+            this.consume(TokenType.SEMICOLON, "LocalVariableDeclarationStatement");
+
+            return new LocalVariableDeclarationStatement(type, name);
+        }
+    }
+
+    private Statement parseEmptyStatement() throws ParserException {
+        this.consume(TokenType.SEMICOLON, "EmptyStatement");
+
+        return new EmptyStatement();
+    }
+
+    private Statement parseWhileStatement() throws ParserException {
+        this.consume(TokenType.WHILE, "WhileStatement");
+        this.consume(TokenType.OPENING_PARENTHESIS, "WhileStatement");
+        Expression condition = this.parseExpression();
+        this.consume(TokenType.CLOSING_PARENTHESIS, "WhileStatement");
+        Statement statementWhileTrue = this.parseStatement();
+
+        return new WhileStatement(condition, statementWhileTrue);
+    }
+
+    private Statement parseIfStatement() throws ParserException {
+        this.consume(TokenType.IF, "IfStatement");
+        this.consume(TokenType.OPENING_PARENTHESIS, "IfStatement");
+        Expression condition = this.parseExpression();
+        this.consume(TokenType.CLOSING_PARENTHESIS, "IfStatement");
+        Statement statementIfTrue = this.parseStatement();
+
+        // IfStatement -> "if" "(" Expression ")" Statement "else" Statement
+        if (this.lookahead(TokenType.ELSE)) {
+            this.consume(TokenType.ELSE, "IfStatement");
+
+            Statement statementIfFalse = this.parseStatement();
+
+            return new IfElseStatement(condition, statementIfTrue, statementIfFalse);
+        }
+
+        // IfStatement -> "if" "(" Expression ")" Statement
+        else {
+            return new IfStatement(condition, statementIfTrue);
+        }
+    }
+
+    private Statement parseExpressionStatement() throws ParserException {
+        Expression expression = this.parseExpression();
+
+        this.consume(TokenType.SEMICOLON, "ExpressionStatement");
+
+        return new ExpressionStatement(expression);
+    }
+
+    private Statement parseReturnStatement() throws ParserException {
+        this.consume(TokenType.RETURN, "ReturnStatement");
+
+        // ReturnStatement -> "return" ";"
+        if (this.lookahead(TokenType.SEMICOLON)) {
+            this.consume(TokenType.SEMICOLON, "ReturnStatement");
+
+            return new ReturnNoValueStatement();
+        }
+
+        // ReturnStatement -> "return" Expression ";"
+        else {
+            Expression expression = this.parseExpression();
+            this.consume(TokenType.SEMICOLON, "ReturnStatement");
+
+            return new ReturnValueStatement(expression);
+        }
+    }
+
+    // MARK: - Parsing Expressions
+
+    private Expression parseExpression() throws ParserException {
+        return this.parseAssignmentExpression();
+    }
+
+    private Expression parseAssignmentExpression() throws ParserException {
+        Expression expression = this.parseLogicalOrExpression();
+
+        // AssignmentExpression -> LogicalOrExpression "=" AssignmentExpression
+        if (this.lookahead(TokenType.ASSIGN)) {
+            Stack<Expression> expressions = new Stack<>();
+            expressions.push(expression);
+
+            while (this.lookahead(TokenType.ASSIGN)) {
+                this.consume(TokenType.ASSIGN, null);
+                expressions.push(this.parseAssignmentExpression());
+            }
+
+            while (expressions.size() >= 2) {
+                Expression last = expressions.pop();
+                Expression secondToLast = expressions.pop();
+
+                expressions.push(new AssignmentExpression(secondToLast, last));
+            }
+
+            return expressions.pop();
+        }
+
+        // AssignmentExpression -> LogicalOrExpression
+        else {
+            return expression;
+        }
+    }
+
+    private Expression parseLogicalOrExpression() throws ParserException {
+        Expression expression = this.parseLogicalAndExpression();
+
+        outer:
+        while (!this.hasReachedEndOfInput()) {
+            switch (this.getCurrentToken().type) {
+                case LOGICAL_OR:
+                    this.consume(TokenType.LOGICAL_OR, null);
+                    expression = new LogicalOrExpression(expression, this.parseLogicalAndExpression());
+                    break;
+                default:
+                    break outer;
+            }
+        }
+
+        return expression;
+    }
+
+    private Expression parseLogicalAndExpression() throws ParserException {
+        Expression expression = this.parseEqualityExpression();
+
+        outer:
+        while (!this.hasReachedEndOfInput()) {
+            switch (this.getCurrentToken().type) {
+                case LOGICAL_AND:
+                    this.consume(TokenType.LOGICAL_AND, null);
+                    expression = new LogicalAndExpression(expression, this.parseEqualityExpression());
+                    break;
+                default:
+                    break outer;
+            }
+        }
+
+        return expression;
+    }
+
+    private Expression parseEqualityExpression() throws ParserException {
+        Expression expression = this.parseRelationalExpression();
+
+        outer:
+        while (!this.hasReachedEndOfInput()) {
+            switch (this.getCurrentToken().type) {
+                case EQUAL_TO:
+                    this.consume(TokenType.EQUAL_TO, null);
+                    expression = new EqualToExpression(expression, this.parseRelationalExpression());
+                    break;
+                case NOT_EQUAL_TO:
+                    this.consume(TokenType.NOT_EQUAL_TO, null);
+                    expression = new NotEqualToExpression(expression, this.parseRelationalExpression());
+                    break;
+                default:
+                    break outer;
+            }
+        }
+
+        return expression;
+    }
+
+    private Expression parseRelationalExpression() throws ParserException {
+        Expression expression = this.parseAdditiveExpression();
+
+        outer:
+        while (!this.hasReachedEndOfInput()) {
+            switch (this.getCurrentToken().type) {
+                case LESS_THAN:
+                    this.consume(TokenType.LESS_THAN, null);
+                    expression = new LessThanExpression(expression, this.parseAdditiveExpression());
+                    break;
+                case LESS_THAN_OR_EQUAL_TO:
+                    this.consume(TokenType.LESS_THAN_OR_EQUAL_TO, null);
+                    expression = new LessThanOrEqualToExpression(expression, this.parseAdditiveExpression());
+                    break;
+                case GREATER_THAN:
+                    this.consume(TokenType.GREATER_THAN, null);
+                    expression = new GreaterThanExpression(expression, this.parseAdditiveExpression());
+                    break;
+                case GREATER_THAN_OR_EQUAL_TO:
+                    this.consume(TokenType.GREATER_THAN_OR_EQUAL_TO, null);
+                    expression = new GreaterThanOrEqualToExpression(expression, this.parseAdditiveExpression());
+                    break;
+                default:
+                    break outer;
+            }
+        }
+
+        return expression;
+    }
+
+    private Expression parseAdditiveExpression() throws ParserException {
+        Expression expression = this.parseMultiplicativeExpression();
+
+        outer:
+        while (!this.hasReachedEndOfInput()) {
+            switch (this.getCurrentToken().type) {
+                case PLUS:
+                    this.consume(TokenType.PLUS, null);
+                    expression = new AddExpression(expression, this.parseMultiplicativeExpression());
+                    break;
+                case MINUS:
+                    this.consume(TokenType.MINUS, null);
+                    expression = new SubtractExpression(expression, this.parseMultiplicativeExpression());
+                    break;
+                default:
+                    break outer;
+            }
+        }
+
+        return expression;
+    }
+
+    private Expression parseMultiplicativeExpression() throws ParserException {
+        Expression expression = this.parseUnaryExpression();
+
+        outer:
+        while (!this.hasReachedEndOfInput()) {
+            switch (this.getCurrentToken().type) {
+                case MULTIPLY:
+                    this.consume(TokenType.MULTIPLY, null);
+                    expression = new MultiplyExpression(expression, this.parseUnaryExpression());
+                    break;
+                case DIVIDE:
+                    this.consume(TokenType.DIVIDE, null);
+                    expression = new DivideExpression(expression, this.parseUnaryExpression());
+                    break;
+                case MODULO:
+                    this.consume(TokenType.MODULO, null);
+                    expression = new ModuloExpression(expression, this.parseUnaryExpression());
+                    break;
+                default:
+                    break outer;
+            }
+        }
+
+        return expression;
+    }
+
+    private Expression parseUnaryExpression() throws ParserException {
+        Stack<TokenType> consumedPrefixOperators = new Stack<>();
+
+        outer:
+        while (!this.hasReachedEndOfInput()) {
+            switch (this.getCurrentToken().type) {
+                case LOGICAL_NEGATION:
+                    this.consume(TokenType.LOGICAL_NEGATION, null);
+                    consumedPrefixOperators.push(TokenType.LOGICAL_NEGATION);
+                    break;
+                case MINUS:
+                    this.consume(TokenType.MINUS, null);
+                    consumedPrefixOperators.push(TokenType.MINUS);
+                    break;
+                default:
+                    break outer;
+            }
+        }
+
+        Expression expression = this.parsePostfixExpression();
+
+        while (!consumedPrefixOperators.isEmpty()) {
+            switch (consumedPrefixOperators.pop()) {
+                case LOGICAL_NEGATION:
+                    expression = new LogicalNotExpression(expression);
+                    break;
+                case MINUS:
+                    expression = new NegateExpression(expression);
+                    break;
+                default:
+                    throw new Error();
+            }
+        }
+
+        return expression;
+    }
+
+    private Expression parsePostfixExpression() throws ParserException {
+        Expression expression = this.parsePrimaryExpression();
+
+        outer:
+        while (!this.hasReachedEndOfInput()) {
+            switch (this.getCurrentToken().type) {
+                case PERIOD:
+                case OPENING_BRACKET:
+                    expression = new PostfixExpression(expression, this.parsePostfixOperation());
+                    break;
+                default:
+                    break outer;
+            }
+        }
+
+        return expression;
+    }
+
+    private PostfixOperation parsePostfixOperation() throws ParserException {
+        // PostfixOperation -> MethodInvocation | FieldAccess
+        if (this.lookahead(TokenType.PERIOD)) {
+            this.consume(TokenType.PERIOD, "PostfixOperation");
+            String identifier = this.consume(TokenType.IDENTIFIER, "PostfixOperation").text;
+
+            if (this.lookahead(TokenType.OPENING_PARENTHESIS)) {
+                this.consume(TokenType.OPENING_PARENTHESIS, "MethodInvocation");
+                List<Expression> arguments = this.parseArguments();
+                this.consume(TokenType.CLOSING_PARENTHESIS, "MethodInvocation");
+
+                return new MethodInvocation(identifier, arguments);
+            } else {
+                return new FieldAccess(identifier);
+            }
+        }
+
+        // PostfixOperation -> ArrayAccess
+        else if (this.lookahead(TokenType.OPENING_BRACKET)) {
+            this.consume(TokenType.OPENING_BRACKET, "ArrayAccess");
+            Expression expression = this.parseExpression();
+            this.consume(TokenType.CLOSING_BRACKET, "ArrayAccess");
+
+            return new ArrayAccess(expression);
+        }
+
+        else {
+            throw new UnexpectedTokenException(this.getCurrentToken(), "PostfixOperation", TokenType.PERIOD,
+                    TokenType.OPENING_BRACKET);
+        }
+    }
+
+    private Expression parsePrimaryExpression() throws ParserException {
+        final String context = "PrimaryExpression";
+
+        // PrimaryExpression -> "(" Expression ")"
+        if (this.lookahead(TokenType.OPENING_PARENTHESIS)) {
+            this.consume(TokenType.OPENING_PARENTHESIS, "PrimaryExpression");
+            Expression expression = this.parseExpression();
+            this.consume(TokenType.CLOSING_PARENTHESIS, "PrimaryExpression");
+
+            return expression;
+        }
+
+        // PrimaryExpression -> "IDENTIFIER" | "IDENTIFIER" "(" Arguments ")"
+        else if (this.lookahead(TokenType.IDENTIFIER)) {
+            String identifier = this.consume(TokenType.IDENTIFIER, "PrimaryExpression").text;
+
+            if (this.lookahead(TokenType.OPENING_PARENTHESIS)) {
+                this.consume(TokenType.OPENING_PARENTHESIS, "PrimaryExpression");
+                List<Expression> arguments = this.parseArguments();
+                this.consume(TokenType.CLOSING_PARENTHESIS, "PrimaryExpression");
+
+                return new IdentifierAndArgumentsExpression(identifier, arguments);
+            } else {
+                return new IdentifierExpression(identifier);
+            }
+        }
+
+        // PrimaryExpression -> Literal -> "INTEGER_LITERAL"
+        else if (this.lookahead(TokenType.INTEGER_LITERAL)) {
+            String value = this.consume(TokenType.INTEGER_LITERAL, null).text;
+
+            return new IntegerLiteral(value);
+        }
+
+        // PrimaryExpression -> Literal -> "null"
+        else if (this.lookahead(TokenType.NULL)) {
+            this.consume(TokenType.NULL, null);
+
+            return new NullLiteral();
+        }
+
+        // PrimaryExpression -> Literal -> "true"
+        else if (this.lookahead(TokenType.TRUE)) {
+            this.consume(TokenType.TRUE, null);
+
+            return new BooleanLiteral(true);
+        }
+
+        // PrimaryExpression -> Literal -> "false"
+        else if (this.lookahead(TokenType.FALSE)) {
+            this.consume(TokenType.FALSE, null);
+
+            return new BooleanLiteral(false);
+        }
+
+        // PrimaryExpression -> "this"
+        else if (this.lookahead(TokenType.THIS)) {
+            this.consume(TokenType.THIS, null);
+
+            return new ThisExpression();
+        }
+
+        // PrimaryExpression -> NewObjectExpression | NewArrayExpression
+        else if (this.lookahead(TokenType.NEW)) {
+            this.consume(TokenType.NEW, null);
+
+            // PrimaryExpression -> NewObjectExpression -> "new" "IDENTIFIER" "(" ")"
+            if (this.lookahead(TokenType.IDENTIFIER, TokenType.OPENING_PARENTHESIS)) {
+                String className = this.consume(TokenType.IDENTIFIER, "NewObjectExpression").text;
+                this.consume(TokenType.OPENING_PARENTHESIS, "NewObjectExpression");
+                this.consume(TokenType.CLOSING_PARENTHESIS, "NewObjectExpression");
+
+                return new NewObjectExpression(className);
+            }
+
+            // PrimaryExpression -> NewArrayExpression -> "new" BasicType "[" Expression "]" { "[" "]" }
+            else {
+                BasicType basicType = this.parseBasicType();
+                this.consume(TokenType.OPENING_BRACKET, "NewArrayExpression");
+                Expression expression = this.parseExpression();
+                this.consume(TokenType.CLOSING_BRACKET, "NewArrayExpression");
+                int numberOfDimensions = 1 + this.parseOpeningAndClosingBrackets();
+
+                return new NewArrayExpression(basicType, expression, numberOfDimensions);
+            }
+        }
+
+        else {
+            throw new UnexpectedTokenException(this.getCurrentToken(), "PrimaryExpression",
+                    TokenType.OPENING_PARENTHESIS, TokenType.IDENTIFIER, TokenType.INTEGER_LITERAL, TokenType.NULL,
+                    TokenType.TRUE, TokenType.FALSE, TokenType.THIS, TokenType.NEW);
+        }
+    }
+
+    private List<Expression> parseArguments() throws ParserException {
+        if (this.lookahead(TokenType.CLOSING_PARENTHESIS)) {
+            return Collections.emptyList();
+        }
+
+        // Arguments -> Expression { "," Expression }
+        else {
+            List<Expression> expressions = new ArrayList<>();
+            expressions.add(this.parseExpression());
+
+            while (this.lookahead(TokenType.COMMA)) {
+                this.consume(TokenType.COMMA, null);
+                expressions.add(this.parseExpression());
+            }
+
+            return expressions;
+        }
+    }
+
+    // MARK: - Parsing Types
+
+    private Type parseType() throws ParserException {
         BasicType basicType = this.parseBasicType();
         int numberOfDimensions = this.parseOpeningAndClosingBrackets();
 
         return new Type(basicType, numberOfDimensions);
     }
 
-    private BasicType parseBasicType() {
-        if (this.hasReachedEndOfInput()) {
-            throw new RuntimeException();
+    private BasicType parseBasicType() throws ParserException {
+
+        // BasicType -> "IDENTIFIER"
+        if (this.lookahead(TokenType.IDENTIFIER)) {
+            String className = this.consume(TokenType.IDENTIFIER, null).text;
+            return new UserDefinedType(className);
         }
 
-        switch (this.getCurrentToken().type) {
-            case INT:
-                this.consume(TokenType.INT);
-                return new IntegerType();
-            case BOOLEAN:
-                this.consume(TokenType.BOOLEAN);
-                return new BooleanType();
-            case VOID:
-                this.consume(TokenType.VOID);
-                return new VoidType();
-            case IDENTIFIER:
-                Token token = this.consume(TokenType.IDENTIFIER);
-                return new UserDefinedType(token.text);
-            default:
-                throw new RuntimeException("Bad BasicType");
-        }
-    }
-
-    private boolean currentTokenIsInFirstOfParameter() {
-        if (this.hasReachedEndOfInput()) {
-            return false;
+        // BasicType -> "int"
+        else if (this.lookahead(TokenType.INT)) {
+            this.consume(TokenType.INT, null);
+            return new IntegerType();
         }
 
-        switch (this.getCurrentToken().type) {
-            case INT:
-            case BOOLEAN:
-            case VOID:
-            case IDENTIFIER:
-                return true;
-            default:
-                return false;
+        // BasicType -> "boolean"
+        else if (this.lookahead(TokenType.BOOLEAN)) {
+            this.consume(TokenType.BOOLEAN, null);
+            return new BooleanType();
+        }
+
+        // BasicType -> "void"
+        else if (this.lookahead(TokenType.VOID)) {
+            this.consume(TokenType.VOID, null);
+            return new VoidType();
+        }
+
+        else {
+            throw new UnexpectedTokenException(this.getCurrentToken(), "BasicType", TokenType.IDENTIFIER, TokenType.INT,
+                    TokenType.BOOLEAN, TokenType.VOID);
         }
     }
 
-    // MARK: - Parsing Statements
-
-    public Statement parseStatement() {
-        if (this.hasReachedEndOfInput()) {
-            throw new RuntimeException();
-        }
-
-        switch (this.getCurrentToken().type) {
-            case OPENING_BRACE:
-                return this.parseBlock();
-            case SEMICOLON:
-                return this.parseEmptyStatement();
-            case IF:
-                return this.parseIfStatement();
-            case WHILE:
-                return this.parseWhileStatement();
-            case RETURN:
-                return this.parseReturnStatement();
-            case LOGICAL_NEGATION:
-            case MINUS:
-            case FALSE:
-            case TRUE:
-            case INTEGER_LITERAL:
-            case IDENTIFIER:
-            case THIS:
-            case OPENING_PARENTHESIS:
-            case NEW:
-                return this.parseExpressionStatement();
-            default:
-                throw new RuntimeException();
-        }
-    }
-
-    private Block parseBlock() {
-        this.consume(TokenType.OPENING_BRACE);
-
-        List<BlockStatement> statements = new ArrayList<>();
-
-        while (this.currentCharacterIsInFirstOfBlockStatement()) {
-            statements.add(this.parseBlockStatement());
-        }
-
-        this.consume(TokenType.CLOSING_BRACE);
-
-        return new Block(statements);
-    }
-
-    private BlockStatement parseBlockStatement() {
-        if (this.hasReachedEndOfInput()) {
-            throw new RuntimeException();
-        }
-
-        switch (this.getCurrentToken().type) {
-            case INT:
-            case BOOLEAN:
-            case VOID:
-                return this.parseLocalVariableDeclarationStatement();
-            case OPENING_BRACE:
-            case SEMICOLON:
-            case IF:
-            case WHILE:
-            case RETURN:
-            case LOGICAL_NEGATION:
-            case MINUS:
-            case NULL:
-            case FALSE:
-            case TRUE:
-            case INTEGER_LITERAL:
-            case THIS:
-            case OPENING_PARENTHESIS:
-            case NEW:
-                return this.parseStatement();
-            case IDENTIFIER:
-                // IDENTIFIER is in both first(Statement) and first(LocalVariableDeclaration)
-                if (this.lookahead(TokenType.IDENTIFIER, TokenType.IDENTIFIER)) {
-                    return this.parseLocalVariableDeclarationStatement();
-                } else if (this.lookahead(TokenType.IDENTIFIER, TokenType.OPENING_BRACKET, TokenType.CLOSING_BRACKET)) {
-                    return this.parseLocalVariableDeclarationStatement();
-                } else {
-                    return this.parseStatement();
-                }
-            default:
-                throw new RuntimeException();
-        }
-    }
-
-    private BlockStatement parseLocalVariableDeclarationStatement() {
-        Type type = this.parseType();
-        String name = consume(TokenType.IDENTIFIER).text;
-
-        if (this.check(TokenType.ASSIGN)) {
-            this.consume(TokenType.ASSIGN);
-            Expression value = this.parseExpression();
-            this.consume(TokenType.SEMICOLON);
-
-            return new LocalVariableInitializationStatement(type, name, value);
-        } else {
-            this.consume(TokenType.SEMICOLON);
-
-            return new LocalVariableDeclarationStatement(type, name);
-        }
-    }
-
-    private Statement parseEmptyStatement() {
-        this.consume(TokenType.SEMICOLON);
-
-        return new EmptyStatement();
-    }
-
-    private Statement parseWhileStatement() {
-        this.consume(TokenType.WHILE);
-        this.consume(TokenType.OPENING_PARENTHESIS);
-        Expression condition = this.parseExpression();
-        this.consume(TokenType.CLOSING_PARENTHESIS);
-        Statement statementWhileTrue = this.parseStatement();
-
-        return new WhileStatement(condition, statementWhileTrue);
-    }
-
-    private Statement parseIfStatement() {
-        this.consume(TokenType.IF);
-        this.consume(TokenType.OPENING_PARENTHESIS);
-        Expression condition = this.parseExpression();
-        this.consume(TokenType.CLOSING_PARENTHESIS);
-        Statement statementIfTrue = this.parseStatement();
-
-        if (this.check(TokenType.ELSE)) {
-            this.consume(TokenType.ELSE);
-
-            Statement statementIfFalse = this.parseStatement();
-
-            return new IfElseStatement(condition, statementIfTrue, statementIfFalse);
-        }  else {
-            return new IfStatement(condition, statementIfTrue);
-        }
-    }
-
-    private Statement parseExpressionStatement() {
-        Expression expression = parseExpression();
-
-        this.consume(TokenType.SEMICOLON);
-
-        return new ExpressionStatement(expression);
-    }
-
-    private Statement parseReturnStatement() {
-        this.consume(TokenType.RETURN);
-
-        if (this.currentCharacterIsInFirstOfExpression()) {
-            Expression expression = parseExpression();
-            this.consume(TokenType.SEMICOLON);
-
-            return new ReturnValueStatement(expression);
-        } else {
-            this.consume(TokenType.SEMICOLON);
-
-            return new ReturnNoValueStatement();
-        }
-    }
-
-    private boolean currentCharacterIsInFirstOfBlockStatement() {
-        if (this.hasReachedEndOfInput()) {
-            return false;
-        }
-
-        switch (this.getCurrentToken().type) {
-            case OPENING_BRACE:
-            case SEMICOLON:
-            case IF:
-            case WHILE:
-            case RETURN:
-            case INT:
-            case BOOLEAN:
-            case VOID:
-            case IDENTIFIER:
-            case LOGICAL_NEGATION:
-            case MINUS:
-            case NULL:
-            case FALSE:
-            case TRUE:
-            case INTEGER_LITERAL:
-            case THIS:
-            case OPENING_PARENTHESIS:
-            case NEW:
-                return true;
-            default:
-                return false;
-        }
-    }
-
-    // MARK: - Parsing Expressions
-
-    public Expression parseExpression() {
-        return this.parseAssignmentExpression();
-    }
-
-    private Expression parseAssignmentExpression() {
-        Expression expression = this.parseLogicalOrExpression();
-
-        if (this.check(TokenType.ASSIGN)) {
-            return new AssignmentExpression(expression, this.parseAssignmentExpression());
-        } else {
-            return expression;
-        }
-    }
-
-    private Expression parseLogicalOrExpression() {
-        Expression expression = this.parseLogicalAndExpression();
-
-        while (!this.hasReachedEndOfInput()) {
-            switch (this.getCurrentToken().type) {
-                case LOGICAL_OR:
-                    this.consume(TokenType.LOGICAL_OR);
-                    expression = new LogicalOrExpression(expression, this.parseLogicalAndExpression());
-                    break;
-                default:
-                    return expression;
-            }
-        }
-
-        return expression;
-    }
-
-    private Expression parseLogicalAndExpression() {
-        Expression expression = this.parseEqualityExpression();
-
-        while (!this.hasReachedEndOfInput()) {
-            switch (this.getCurrentToken().type) {
-                case LOGICAL_AND:
-                    this.consume(TokenType.LOGICAL_AND);
-                    expression = new LogicalAndExpression(expression, this.parseEqualityExpression());
-                    break;
-                default:
-                    return expression;
-            }
-        }
-
-        return expression;
-    }
-
-    private Expression parseEqualityExpression() {
-        Expression expression = this.parseRelationalExpression();
-
-        while (!this.hasReachedEndOfInput()) {
-            switch (this.getCurrentToken().type) {
-                case EQUAL_TO:
-                    this.consume(TokenType.EQUAL_TO);
-                    expression = new EqualToExpression(expression, this.parseRelationalExpression());
-                    break;
-                case NOT_EQUAL_TO:
-                    this.consume(TokenType.NOT_EQUAL_TO);
-                    expression = new NotEqualToExpression(expression, this.parseRelationalExpression());
-                    break;
-                default:
-                    return expression;
-            }
-        }
-
-        return expression;
-    }
-
-    private Expression parseRelationalExpression() {
-        Expression expression = this.parseAdditiveExpression();
-
-        while (!this.hasReachedEndOfInput()) {
-            switch (this.getCurrentToken().type) {
-                case LESS_THAN:
-                    this.consume(TokenType.LESS_THAN);
-                    expression = new LessThanExpression(expression, this.parseAdditiveExpression());
-                    break;
-                case LESS_THAN_OR_EQUAL_TO:
-                    this.consume(TokenType.LESS_THAN_OR_EQUAL_TO);
-                    expression = new LessThanOrEqualToExpression(expression, this.parseAdditiveExpression());
-                    break;
-                case GREATER_THAN:
-                    this.consume(TokenType.GREATER_THAN);
-                    expression = new GreaterThanExpression(expression, this.parseAdditiveExpression());
-                    break;
-                case GREATER_THAN_OR_EQUAL_TO:
-                    this.consume(TokenType.GREATER_THAN_OR_EQUAL_TO);
-                    expression = new GreaterThanOrEqualToExpression(expression, this.parseAdditiveExpression());
-                    break;
-                default:
-                    return expression;
-            }
-        }
-
-        return expression;
-    }
-
-    private Expression parseAdditiveExpression() {
-        Expression expression = this.parseMultiplicativeExpression();
-
-        while (!this.hasReachedEndOfInput()) {
-            switch (this.getCurrentToken().type) {
-                case PLUS:
-                    this.consume(TokenType.PLUS);
-                    expression = new AddExpression(expression, this.parseMultiplicativeExpression());
-                    break;
-                case MINUS:
-                    this.consume(TokenType.MINUS);
-                    expression = new SubtractExpression(expression, this.parseMultiplicativeExpression());
-                    break;
-                default:
-                    return expression;
-            }
-        }
-
-        return expression;
-    }
-
-    private Expression parseMultiplicativeExpression() {
-        Expression expression = this.parseUnaryExpression();
-
-        while (!this.hasReachedEndOfInput()) {
-            switch (this.getCurrentToken().type) {
-                case MULTIPLY:
-                    this.consume(TokenType.MULTIPLY);
-                    expression = new MultiplyExpression(expression, this.parseUnaryExpression());
-                    break;
-                case DIVIDE:
-                    this.consume(TokenType.DIVIDE);
-                    expression = new DivideExpression(expression, this.parseUnaryExpression());
-                    break;
-                case MODULO:
-                    this.consume(TokenType.MODULO);
-                    expression = new ModuloExpression(expression, this.parseUnaryExpression());
-                    break;
-                default:
-                    return expression;
-            }
-        }
-
-        return expression;
-    }
-
-    private Expression parseUnaryExpression() {
-        if (this.hasReachedEndOfInput()) {
-            throw new RuntimeException();
-        }
-
-        switch (this.getCurrentToken().type) {
-            case NULL:
-            case TRUE:
-            case FALSE:
-            case INTEGER_LITERAL:
-            case IDENTIFIER:
-            case THIS:
-            case OPENING_PARENTHESIS:
-            case NEW:
-                return this.parsePostfixExpression();
-            case LOGICAL_NEGATION:
-                return new LogicalNotExpression(this.parseUnaryExpression());
-            case MINUS:
-                return new NegateExpression(this.parseUnaryExpression());
-            default:
-                throw new RuntimeException();
-        }
-    }
-
-    private Expression parsePostfixExpression() {
-        Expression expression = this.parsePrimaryExpression();
-
-        if (this.hasReachedEndOfInput()) {
-            return expression;
-        }
-
-        switch (this.getCurrentToken().type) {
-            case PERIOD:
-            case OPENING_BRACKET:
-                return new PostfixExpression(expression, this.parsePostfixOperation());
-            default:
-                return expression;
-        }
-    }
-
-    private PostfixOperation parsePostfixOperation() {
-        if (this.check(TokenType.PERIOD)) {
-            this.consume(TokenType.PERIOD);
-            String identifier = this.consume(TokenType.IDENTIFIER).text;
-
-            if (this.check(TokenType.OPENING_PARENTHESIS)) {
-                this.consume(TokenType.OPENING_PARENTHESIS);
-                List<Expression> arguments = this.parseArguments();
-                this.consume(TokenType.CLOSING_PARENTHESIS);
-
-                return new MethodInvocation(identifier, arguments);
-            } else {
-                return new FieldAccess(identifier);
-            }
-        } else if (this.check(TokenType.OPENING_BRACKET)) {
-            this.consume(TokenType.OPENING_BRACKET);
-            Expression expression = this.parseExpression();
-            this.consume(TokenType.CLOSING_BRACKET);
-
-            return new ArrayAccess(expression);
-        } else {
-            throw new RuntimeException();
-        }
-    }
-
-    private List<Expression> parseArguments() {
-        List<Expression> exp_list = new ArrayList<>();
-
-        if (this.currentCharacterIsInFirstOfExpression()) {
-            exp_list.add(this.parseExpression());
-            while (this.check(TokenType.COMMA)) {
-                this.consume(TokenType.COMMA);
-                exp_list.add(this.parseExpression());
-            }
-        }
-
-        return exp_list;
-    }
-
-    private Expression parsePrimaryExpression() {
-        switch (this.getCurrentToken().type) {
-            case NULL:
-                this.consume(TokenType.NULL);
-                return new NullLiteral();
-            case FALSE:
-                this.consume(TokenType.FALSE);
-                return new BooleanLiteral(false);
-            case TRUE:
-                this.consume(TokenType.TRUE);
-                return new BooleanLiteral(true);
-            case INTEGER_LITERAL: {
-                String value = this.consume(TokenType.INTEGER_LITERAL).text;
-                try {
-                    return new IntegerLiteral(Integer.parseInt(value));
-                } catch (NumberFormatException exception) {
-                    throw new RuntimeException();
-                }
-            }
-            case IDENTIFIER: {
-                String identifier = this.consume(TokenType.IDENTIFIER).text;
-                if (this.check(TokenType.OPENING_PARENTHESIS)) {
-                    this.consume(TokenType.OPENING_PARENTHESIS);
-                    List<Expression> arguments = this.parseArguments();
-                    this.consume(TokenType.CLOSING_PARENTHESIS);
-                    return new IdentifierAndArgumentsExpression(identifier, arguments);
-                } else {
-                    return new IdentifierExpression(identifier);
-                }
-            }
-            case THIS:
-                this.consume(TokenType.THIS);
-                return new ThisExpression();
-            case OPENING_PARENTHESIS: {
-                this.consume(TokenType.OPENING_PARENTHESIS);
-                Expression expression = this.parseExpression();
-                this.consume(TokenType.CLOSING_PARENTHESIS);
-                return expression;
-            }
-            case NEW: {
-                this.consume(TokenType.NEW);
-
-                if (this.hasReachedEndOfInput()) {
-                    throw new RuntimeException();
-                }
-
-                BasicType basicType = null;
-
-                switch (this.getCurrentToken().type) {
-                    case IDENTIFIER: {
-                        String identifier = this.consume(TokenType.IDENTIFIER).text;
-                        if (this.check(TokenType.OPENING_PARENTHESIS)) {
-                            this.consume(TokenType.OPENING_PARENTHESIS);
-                            this.consume(TokenType.CLOSING_PARENTHESIS);
-                            return new NewObjectExpression(identifier);
-                        } else if (this.check(TokenType.OPENING_BRACKET)) {
-                            this.consume(TokenType.OPENING_BRACKET);
-                            basicType = new UserDefinedType(identifier);
-                        }
-                    }
-                    case INT:
-                    case BOOLEAN:
-                    case VOID: {
-                        if (basicType == null) {
-                            basicType = this.parseBasicType();
-                            this.consume(TokenType.OPENING_BRACKET);
-                        }
-                        Expression expression = this.parseExpression();
-                        this.consume(TokenType.CLOSING_BRACKET);
-                        int numberOfDimensions = 1 + this.parseOpeningAndClosingBrackets();
-                        return new NewArrayExpression(basicType, expression, numberOfDimensions);
-                    }
-                    default:
-                        throw new RuntimeException("PrimaryExpression not valid");
-                }
-            }
-            default:
-                throw new RuntimeException("parsePrimary");
-        }
-    }
-
-    private boolean currentCharacterIsInFirstOfExpression() {
-        if (this.hasReachedEndOfInput()) {
-            return false;
-        }
-
-        switch (this.getCurrentToken().type) {
-            case LOGICAL_NEGATION:
-            case MINUS:
-            case NULL:
-            case FALSE:
-            case TRUE:
-            case INTEGER_LITERAL:
-            case IDENTIFIER:
-            case THIS:
-            case OPENING_PARENTHESIS:
-            case NEW:
-                return true;
-            default:
-                return false;
-        }
-    }
-
-    // MARK: - Miscellaneous
-
-    private int parseOpeningAndClosingBrackets() {
+    // Parses pairs of opening and closing brackets leniently.
+    private int parseOpeningAndClosingBrackets() throws ParserException {
         int count = 0;
 
-        while (this.check(TokenType.OPENING_BRACKET)) {
-            this.consume(TokenType.OPENING_BRACKET);
-            this.consume(TokenType.CLOSING_BRACKET);
+        while (this.lookahead(TokenType.OPENING_BRACKET, TokenType.CLOSING_BRACKET)) {
+            this.consume(TokenType.OPENING_BRACKET, null);
+            this.consume(TokenType.CLOSING_BRACKET, null);
 
             count += 1;
         }

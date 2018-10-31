@@ -1,13 +1,9 @@
 package edu.kit.minijava.cli;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 
-import edu.kit.minijava.lexer.Lexer;
-import edu.kit.minijava.parser.Parser;
-import edu.kit.minijava.parser.exceptions.ParserException;
+import edu.kit.minijava.lexer.*;
+import edu.kit.minijava.parser.*;
 
 public class ParserCommand extends Command {
 
@@ -21,11 +17,20 @@ public class ParserCommand extends Command {
             
             Lexer lexer = new Lexer(reader);
             Parser parser = new Parser(lexer);
-            parser.parseProgram();
-            
+            Program program = parser.parseProgram();
+
+            if (program == null) {
+                throw new AssertionError();
+            }
+
             return 0;
-            
-        } catch (FileNotFoundException exception) {
+        }
+        catch (ParserException exception) {
+            System.err.println("error: " + exception.getLocalizedMessage());
+
+            return 1;
+        }
+        catch (FileNotFoundException exception) {
             System.err.println("error: File '" + path + "' was not found!");
 
             return 1;
@@ -33,11 +38,6 @@ public class ParserCommand extends Command {
         catch (IOException exception) {
             System.err.println("error: File '" + path + "' could not be read!");
 
-            return 1;
-        } 
-        catch (ParserException exception) {
-            System.err.println("error: " + exception.getLocalizedMessage());
-            
             return 1;
         }
        
