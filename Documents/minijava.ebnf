@@ -1,0 +1,83 @@
+# MiniJava 3.6
+# Grammar is SLL(3), disregarding dangling else
+# EBNF Syntax: http://www.icosaedro.it/bnf_chk/
+
+
+
+# Requires lookahead of 1
+# - "}" not in first(ClassMember) -> greedy
+# - "static" not in first(AccessModifiedNonStaticMember) = first(Type)
+# - "throws" not in first(Block)
+
+Program = { ClassDeclaration };
+ClassDeclaration = "class" "IDENTIFIER" "{" { ClassMember } "}";
+ClassMember = "public" AccessModifiedClassMember;
+AccessModifiedClassMember = StaticMethodWithMainMethodSignature | AccessModifiedNonStaticMember;
+AccessModifiedNonStaticMember = Type "IDENTIFIER" MemberRest;
+MemberRest = ";" | "(" Parameters ")" MethodRest Block;
+MethodRest = [ "throws" "IDENTIFIER" ];
+StaticMethodWithMainMethodSignature = "static" "void" "IDENTIFIER" "(" "String" "[" "]" "IDENTIFIER" ")" MethodRest Block;
+
+
+# Requires lookahaed of 3, disregarding dangling else.
+# - "IDENTIFIER" "[" in both first(LocalVariableDeclarationStatement) and
+#   first(Statement) (from ExpressionStatement with ArrayAccess postfix op,
+#   but "IDENTIFIER" "[" "]" not in first(ExpressionStatement) -> need k = 3
+# - "if", "while", "return", ";", "{" not in first(Expression)
+# - "}" not in first(BlockStatement) -> greedy
+
+Statement = Block | EmptyStatement | IfStatement | ExpressionStatement | WhileStatement | ReturnStatement;
+Block = "{" { BlockStatement } "}";
+BlockStatement = Statement | LocalVariableDeclarationStatement;
+LocalVariableDeclarationStatement = Type "IDENTIFIER" [ "=" Expression ] ";";
+EmptyStatement = ";";
+WhileStatement = "while" "(" Expression ")" Statement;
+IfStatement = "if" "(" Expression ")" Statement [ "else" Statement ];
+ExpressionStatement = Expression ";";
+ReturnStatement = "return" [ Expression ] ";";
+
+
+# Requires lookahead of 1.
+# - "=" not in follow(AssignmentExpression) -> greedy
+# - "||" not in follow(LogicalOrExpression), etc. -> greedy
+# - "!", "-" not in first(PostfixExpression) -> greedy
+
+Expression = AssignmentExpression;
+AssignmentExpression = LogicalOrExpression [ "=" AssignmentExpression ];
+LogicalOrExpression = LogicalAndExpression { "||" LogicalAndExpression };
+LogicalAndExpression = EqualityExpression { "&&" EqualityExpression };
+EqualityExpression = RelationalExpression { ("==" | "!=") RelationalExpression };
+RelationalExpression = AdditiveExpression { ("<" | "<=" | ">" | ">=") AdditiveExpression };
+AdditiveExpression = MultiplicativeExpression { ("+" | "-") MultiplicativeExpression };
+MultiplicativeExpression = UnaryExpression { ("*" | "/" | "%") UnaryExpression };
+UnaryExpression = { "!" | "-" } PostfixExpression;
+
+
+# Requires lookahead of 3.
+# - "[" in follow(NewArrayExpression) -> only consume "[" with successor "]"
+# - ".", "[" not in follow(PostfixExpression) -> greedy
+# - first(Expression), "," not in follow(Arguments) -> greedy
+# - "(" not in follow(FieldAccess) -> greedy, but need k = 3
+# - "(" not in follow(PrimaryExpression) -> greedy
+# - "IDENTIFIER" "(" not in first2(BasicType)
+
+PostfixExpression = PrimaryExpression { PostfixOperation };
+PostfixOperation = MethodInvocation | FieldAccess | ArrayAccess;
+MethodInvocation = "." "IDENTIFIER" "(" Arguments ")";
+FieldAccess = "." "IDENTIFIER";
+ArrayAccess = "[" Expression "]";
+Arguments = [ Expression { "," Expression } ];
+PrimaryExpression = Literal | "IDENTIFIER" | "IDENTIFIER" "(" Arguments ")" | "this" | "(" Expression ")" | NewObjectExpression | NewArrayExpression;
+Literal = "null" | "true" | "false" | "INTEGER_LITERAL";
+NewObjectExpression = "new" "IDENTIFIER" "(" ")";
+NewArrayExpression = "new" BasicType "[" Expression "]" { "[" "]" };
+
+
+# Requires lookahead of 1.
+# - ",", "int", "boolean", "void", "IDENTIFIER" not in follow(Parameters) -> greedy
+# - "[" not in follow(Type) -> greedy
+
+Parameters = [ Parameter { "," Parameter } ];
+Parameter = Type "IDENTIFIER";
+Type = BasicType { "[" "]" };
+BasicType = "int" | "boolean" | "void" | "IDENTIFIER";
