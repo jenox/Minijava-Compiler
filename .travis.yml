@@ -6,6 +6,7 @@ jdk:
 jobs:
   allow_failures:
     - name: Shared mjtest Lexer Tests
+    - name: Shared mjtest Parser Tests
 
   include:
     - stage: build
