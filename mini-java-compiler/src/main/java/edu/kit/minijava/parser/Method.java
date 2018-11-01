@@ -21,9 +21,20 @@ public final class Method extends ClassMember {
     public String toString() {
         return "Method(" + this.returnType + ", " + this.name + ", " + this.parameters + ", " + this.body + ")";
     }
-    
+
     @Override
     public void accept(INodeVisitor visitor) {
         visitor.visit(this);
     }
+
+    @Override
+    public String getName() {
+        return name;
+    }
+
+    @Override
+    public boolean isMethod() {
+        return true;
+    }
+
 }

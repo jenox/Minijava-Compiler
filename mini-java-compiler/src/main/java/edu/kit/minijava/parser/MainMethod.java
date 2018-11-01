@@ -26,4 +26,14 @@ public final class MainMethod extends ClassMember {
     public void accept(INodeVisitor visitor) {
         visitor.visit(this);
     }
+    
+    @Override
+    public String getName() {
+        return name;
+    }
+    
+    @Override
+    public boolean isMethod() {
+        return true;
+    }
 }
