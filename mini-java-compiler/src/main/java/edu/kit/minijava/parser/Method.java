@@ -2,6 +2,8 @@ package edu.kit.minijava.parser;
 
 import java.util.*;
 
+import util.INodeVisitor;
+
 public final class Method extends ClassMember {
     public Method(Type returnType, String name, List<Parameter> parameters, Block body) {
         this.returnType = returnType;
@@ -18,5 +20,10 @@ public final class Method extends ClassMember {
     @Override
     public String toString() {
         return "Method(" + this.returnType + ", " + this.name + ", " + this.parameters + ", " + this.body + ")";
+    }
+    
+    @Override
+    public void accept(INodeVisitor visitor) {
+        visitor.visit(this);
     }
 }

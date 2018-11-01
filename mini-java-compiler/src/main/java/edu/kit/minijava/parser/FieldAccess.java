@@ -1,5 +1,7 @@
 package edu.kit.minijava.parser;
 
+import util.INodeVisitor;
+
 public final class FieldAccess extends PostfixOperation {
     public FieldAccess(String fieldName) {
         if (fieldName == null) throw new IllegalArgumentException();
@@ -12,5 +14,10 @@ public final class FieldAccess extends PostfixOperation {
     @Override
     public String toString() {
         return "FieldAccess(" + this.fieldName + ")";
+    }
+    
+    @Override
+    public void accept(INodeVisitor visitor) {
+        visitor.visit(this);
     }
 }

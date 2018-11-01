@@ -1,5 +1,7 @@
 package edu.kit.minijava.parser;
 
+import util.INodeVisitor;
+
 public final class Field extends ClassMember {
     public Field(Type type, String name) {
         if (type == null) throw new IllegalArgumentException();
@@ -15,5 +17,10 @@ public final class Field extends ClassMember {
     @Override
     public String toString() {
         return "Field(" + this.type + ", " + this.name + ")";
+    }
+    
+    @Override
+    public void accept(INodeVisitor visitor) {
+        visitor.visit(this);
     }
 }

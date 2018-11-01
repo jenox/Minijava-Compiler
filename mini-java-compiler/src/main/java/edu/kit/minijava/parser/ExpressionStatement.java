@@ -1,5 +1,7 @@
 package edu.kit.minijava.parser;
 
+import util.INodeVisitor;
+
 public final class ExpressionStatement extends Statement {
     public ExpressionStatement(Expression expression) {
         if (expression == null) throw new IllegalArgumentException();
@@ -12,5 +14,10 @@ public final class ExpressionStatement extends Statement {
     @Override
     public String toString() {
         return "ExpressionStatement(" + this.expression + ")";
+    }
+    
+    @Override
+    public void accept(INodeVisitor visitor) {
+        visitor.visit(this);
     }
 }

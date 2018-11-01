@@ -2,6 +2,8 @@ package edu.kit.minijava.parser;
 
 import java.util.*;
 
+import util.INodeVisitor;
+
 public final class MethodInvocation extends PostfixOperation {
     public MethodInvocation(String methodName, List<Expression> arguments) {
         if (methodName == null) throw new IllegalArgumentException();
@@ -17,5 +19,10 @@ public final class MethodInvocation extends PostfixOperation {
     @Override
     public String toString() {
         return "MethodInvocation(" + this.methodName + ", " + this.arguments + ")";
+    }
+    
+    @Override
+    public void accept(INodeVisitor visitor) {
+        visitor.visit(this);
     }
 }

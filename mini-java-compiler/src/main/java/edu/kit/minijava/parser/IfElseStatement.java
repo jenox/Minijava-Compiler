@@ -1,5 +1,7 @@
 package edu.kit.minijava.parser;
 
+import util.INodeVisitor;
+
 public class IfElseStatement extends Statement {
     public IfElseStatement(Expression condition, Statement statementIfTrue, Statement statementIfFalse) {
         if (condition == null) throw new IllegalArgumentException();
@@ -18,5 +20,10 @@ public class IfElseStatement extends Statement {
     @Override
     public String toString() {
         return "IfStatement(" + this.condition + ", " + this.statementIfTrue + ", " + this.statementIfFalse + ")";
+    }
+    
+    @Override
+    public void accept(INodeVisitor visitor) {
+        visitor.visit(this);
     }
 }

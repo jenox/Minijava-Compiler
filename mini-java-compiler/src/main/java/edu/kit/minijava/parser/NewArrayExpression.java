@@ -1,5 +1,7 @@
 package edu.kit.minijava.parser;
 
+import util.INodeVisitor;
+
 public final class NewArrayExpression extends Expression {
     public NewArrayExpression(BasicType type, Expression primaryDimension, int numberOfDimensions) {
         if (type == null) throw new IllegalArgumentException();
@@ -17,5 +19,10 @@ public final class NewArrayExpression extends Expression {
     @Override
     public String toString() {
         return "NewArrayExpression(" + this.type + ", " + this.primaryDimension + ", " + this.numberOfDimensions + ")";
+    }
+    
+    @Override
+    public void accept(INodeVisitor visitor) {
+        visitor.visit(this);
     }
 }

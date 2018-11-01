@@ -2,6 +2,8 @@ package edu.kit.minijava.parser;
 
 import java.util.*;
 
+import util.INodeVisitor;
+
 public final class IdentifierAndArgumentsExpression extends Expression {
     public IdentifierAndArgumentsExpression(String identifier, List<Expression> arguments) {
         if (identifier == null) throw new IllegalArgumentException();
@@ -17,5 +19,10 @@ public final class IdentifierAndArgumentsExpression extends Expression {
     @Override
     public String toString() {
         return "IdentifierAndArgumentsExpression(" + this.identifier + ", " + this.arguments + ")";
+    }
+    
+    @Override
+    public void accept(INodeVisitor visitor) {
+        visitor.visit(this);
     }
 }

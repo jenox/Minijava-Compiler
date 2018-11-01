@@ -1,5 +1,7 @@
 package edu.kit.minijava.parser;
 
+import util.INodeVisitor;
+
 public final class PostfixExpression extends Expression {
     public PostfixExpression(Expression expression, PostfixOperation postfixOperation) {
         if (expression == null) throw new IllegalArgumentException();
@@ -15,5 +17,10 @@ public final class PostfixExpression extends Expression {
     @Override
     public String toString() {
         return "PostfixExpression(" + this.expression + ", " + this.postfixOperation + ")";
+    }
+    
+    @Override
+    public void accept(INodeVisitor visitor) {
+        visitor.visit(this);
     }
 }

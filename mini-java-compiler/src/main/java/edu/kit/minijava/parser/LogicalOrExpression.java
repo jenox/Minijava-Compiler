@@ -1,5 +1,7 @@
 package edu.kit.minijava.parser;
 
+import util.INodeVisitor;
+
 public final class LogicalOrExpression extends Expression {
     public LogicalOrExpression(Expression left, Expression right) {
         if (left == null) throw new IllegalArgumentException();
@@ -15,5 +17,9 @@ public final class LogicalOrExpression extends Expression {
     @Override
     public String toString() {
         return "LogicalOrExpression(" + this.left + ", " + this.right + ")";
+    }
+    @Override
+    public void accept(INodeVisitor visitor) {
+        visitor.visit(this);
     }
 }

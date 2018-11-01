@@ -1,5 +1,7 @@
 package edu.kit.minijava.parser;
 
+import util.INodeVisitor;
+
 public final class WhileStatement extends Statement {
     public WhileStatement(Expression condition, Statement statementWhileTrue) {
         if (condition == null) throw new IllegalArgumentException();
@@ -15,5 +17,10 @@ public final class WhileStatement extends Statement {
     @Override
     public String toString() {
         return "WhileStatement(" + this.condition + ", " + this.statementWhileTrue + ")";
+    }
+    
+    @Override
+    public void accept(INodeVisitor visitor) {
+        visitor.visit(this);
     }
 }

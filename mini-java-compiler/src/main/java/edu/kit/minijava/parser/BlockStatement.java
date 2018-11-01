@@ -1,4 +1,4 @@
 package edu.kit.minijava.parser;
 
-public abstract class BlockStatement {
+public abstract class BlockStatement extends ASTNode {
 }
