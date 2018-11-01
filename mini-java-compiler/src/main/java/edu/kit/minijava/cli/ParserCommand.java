@@ -20,11 +20,15 @@ public class ParserCommand extends Command {
             if (program == null) {
                 throw new AssertionError();
             }
+            
+            ParserPrinter printer = new ParserPrinter(program);
+            printer.print();
 
             return 0;
         }
         catch (ParserException exception) {
             System.err.println("error: " + exception.getLocalizedMessage());
+            exception.printStackTrace();
 
             return 1;
         }
