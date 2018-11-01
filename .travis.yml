@@ -35,7 +35,7 @@ jobs:
         - cd mjtest/tests
         - git checkout master
         - cd ../..
-        - ./mjtest/mjt.py parser --ci_testing --parallel
+        - ./mjtest/mjt.py syntax --ci_testing --parallel
     - name: Custom mjtest Tests (Lexer + Syntax)
       script:
         - ./build
