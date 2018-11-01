@@ -12,7 +12,7 @@ env:
 jobs:
   allow_failures:
     - name: Shared mjtest Lexer Tests
-    - name: Shared mjtest Parser Tests
+    - name: Shared mjtest Syntax Tests
 
   include:
     - stage: build
