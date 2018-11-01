@@ -31,7 +31,7 @@ jobs:
         - cd mjtest/tests
         - git checkout master
         - cd ../..
-        - MJ_RUN="./run" ./mjtest/mjt.py lexer --ci_testing --parallel
+        - MJ_RUN="./run" ./mjtest/mjt.py parser --ci_testing --parallel
     - name: Custom mjtest Tests (Lexer + Syntax)
       script:
         - source ~/virtualenv/python3.6/bin/activate
