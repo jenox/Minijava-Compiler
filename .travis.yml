@@ -21,7 +21,17 @@ jobs:
         - git checkout master
         - cd ../..
         - MJ_RUN="./run" ./mjtest/mjt.py lexer --ci_testing --parallel
-    - name: Custom mjtest Lexer Tests
+    - stage: test
+      name: Shared mjtest Parser Tests
+      script:
+        - source ~/virtualenv/python3.6/bin/activate
+        - ./build
+        - git clone --recursive https://git.scc.kit.edu/IPDSnelting/mjtest.git
+        - cd mjtest/tests
+        - git checkout master
+        - cd ../..
+        - MJ_RUN="./run" ./mjtest/mjt.py lexer --ci_testing --parallel
+    - name: Custom mjtest Tests (Lexer + Syntax)
       script:
         - source ~/virtualenv/python3.6/bin/activate
         - ./build
@@ -30,5 +40,6 @@ jobs:
         - git checkout dev
         - cd ../..
         - MJ_RUN="./run" ./mjtest/mjt.py lexer --ci_testing --parallel
+        - MJ_RUN="./run" ./mjtest/mjt.py syntax --ci_testing --parallel
     - name: Style Check
       script: ./mini-java-compiler/gradlew -b ./mini-java-compiler/build.gradle checkstyleMain checkstyleTest
