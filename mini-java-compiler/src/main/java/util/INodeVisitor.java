@@ -140,8 +140,6 @@ public interface INodeVisitor {
     
     public void visit(Program program);
     
-    public void visit(PropagatedException propagatedException);
-    
     public void visit(ReturnNoValueStatement returnNoValueStatement);
     
     public void visit(ReturnValueStatement returnValueStatement);
