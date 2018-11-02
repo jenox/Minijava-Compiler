@@ -1,8 +1,7 @@
 package edu.kit.minijava.parser;
 
-import java.util.*;
-
-import util.INodeVisitor;
+import java.util.Collections;
+import java.util.List;
 
 public final class ClassDeclaration extends ASTNode {
     public ClassDeclaration(String className, List<ClassMember> members) {
@@ -22,7 +21,7 @@ public final class ClassDeclaration extends ASTNode {
     }
     
     @Override
-    public void accept(INodeVisitor visitor) {
+    public void accept(NodeVisitor visitor) {
         visitor.visit(this);
     }
 }

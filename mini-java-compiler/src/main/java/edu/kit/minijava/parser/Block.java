@@ -1,8 +1,7 @@
 package edu.kit.minijava.parser;
 
-import java.util.*;
-
-import util.INodeVisitor;
+import java.util.Collections;
+import java.util.List;
 
 public final class Block extends Statement {
     public Block(List<BlockStatement> statements) {
@@ -19,7 +18,7 @@ public final class Block extends Statement {
     }
     
     @Override
-    public void accept(INodeVisitor visitor) {
+    public void accept(NodeVisitor visitor) {
         visitor.visit(this);
     }
 }

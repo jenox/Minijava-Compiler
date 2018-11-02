@@ -1,7 +1,5 @@
 package edu.kit.minijava.parser;
 
-import util.INodeVisitor;
-
 public final class IfStatement extends Statement {
     public IfStatement(Expression condition, Statement statementIfTrue) {
         if (condition == null) throw new IllegalArgumentException();
@@ -20,7 +18,7 @@ public final class IfStatement extends Statement {
     }
     
     @Override
-    public void accept(INodeVisitor visitor) {
+    public void accept(NodeVisitor visitor) {
         visitor.visit(this);
     }
 }

@@ -1,62 +1,6 @@
-package util;
+package edu.kit.minijava.parser;
 
-import edu.kit.minijava.parser.AddExpression;
-import edu.kit.minijava.parser.ArrayAccess;
-import edu.kit.minijava.parser.AssignmentExpression;
-import edu.kit.minijava.parser.BasicType;
-import edu.kit.minijava.parser.Block;
-import edu.kit.minijava.parser.BlockStatement;
-import edu.kit.minijava.parser.BooleanLiteral;
-import edu.kit.minijava.parser.BooleanType;
-import edu.kit.minijava.parser.ClassDeclaration;
-import edu.kit.minijava.parser.ClassMember;
-import edu.kit.minijava.parser.DivideExpression;
-import edu.kit.minijava.parser.EmptyStatement;
-import edu.kit.minijava.parser.EqualToExpression;
-import edu.kit.minijava.parser.Expression;
-import edu.kit.minijava.parser.ExpressionStatement;
-import edu.kit.minijava.parser.Field;
-import edu.kit.minijava.parser.FieldAccess;
-import edu.kit.minijava.parser.GreaterThanExpression;
-import edu.kit.minijava.parser.GreaterThanOrEqualToExpression;
-import edu.kit.minijava.parser.IdentifierAndArgumentsExpression;
-import edu.kit.minijava.parser.IdentifierExpression;
-import edu.kit.minijava.parser.IfElseStatement;
-import edu.kit.minijava.parser.IfStatement;
-import edu.kit.minijava.parser.IntegerLiteral;
-import edu.kit.minijava.parser.IntegerType;
-import edu.kit.minijava.parser.LessThanExpression;
-import edu.kit.minijava.parser.LessThanOrEqualToExpression;
-import edu.kit.minijava.parser.LocalVariableDeclarationStatement;
-import edu.kit.minijava.parser.LocalVariableInitializationStatement;
-import edu.kit.minijava.parser.LogicalAndExpression;
-import edu.kit.minijava.parser.LogicalNotExpression;
-import edu.kit.minijava.parser.LogicalOrExpression;
-import edu.kit.minijava.parser.MainMethod;
-import edu.kit.minijava.parser.Method;
-import edu.kit.minijava.parser.MethodInvocation;
-import edu.kit.minijava.parser.ModuloExpression;
-import edu.kit.minijava.parser.MultiplyExpression;
-import edu.kit.minijava.parser.NegateExpression;
-import edu.kit.minijava.parser.NewArrayExpression;
-import edu.kit.minijava.parser.NewObjectExpression;
-import edu.kit.minijava.parser.NotEqualToExpression;
-import edu.kit.minijava.parser.NullLiteral;
-import edu.kit.minijava.parser.Parameter;
-import edu.kit.minijava.parser.PostfixExpression;
-import edu.kit.minijava.parser.PostfixOperation;
-import edu.kit.minijava.parser.Program;
-import edu.kit.minijava.parser.PropagatedException;
-import edu.kit.minijava.parser.ReturnNoValueStatement;
-import edu.kit.minijava.parser.ReturnValueStatement;
-import edu.kit.minijava.parser.SubtractExpression;
-import edu.kit.minijava.parser.ThisExpression;
-import edu.kit.minijava.parser.Type;
-import edu.kit.minijava.parser.UserDefinedType;
-import edu.kit.minijava.parser.VoidType;
-import edu.kit.minijava.parser.WhileStatement;
-
-public interface INodeVisitor {
+public interface NodeVisitor {
 
     public void visit(AddExpression addExpression);
     

@@ -1,7 +1,5 @@
 package edu.kit.minijava.parser;
 
-import util.INodeVisitor;
-
 public final class EmptyStatement extends Statement {
     @Override
     public String toString() {
@@ -9,7 +7,7 @@ public final class EmptyStatement extends Statement {
     }
     
     @Override
-    public void accept(INodeVisitor visitor) {
+    public void accept(NodeVisitor visitor) {
         visitor.visit(this);
     }
 }

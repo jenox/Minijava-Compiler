@@ -1,7 +1,5 @@
 package edu.kit.minijava.parser;
 
-import util.INodeVisitor;
-
 public final class ReturnValueStatement extends Statement {
     public ReturnValueStatement(Expression returnValue) {
         if (returnValue == null) throw new IllegalArgumentException();
@@ -17,7 +15,7 @@ public final class ReturnValueStatement extends Statement {
     }
     
     @Override
-    public void accept(INodeVisitor visitor) {
+    public void accept(NodeVisitor visitor) {
         visitor.visit(this);
     }
 }

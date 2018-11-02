@@ -1,7 +1,5 @@
 package edu.kit.minijava.parser;
 
-import util.INodeVisitor;
-
 public final class UserDefinedType extends BasicType {
     public UserDefinedType(String name) {
         if (name == null) throw new IllegalArgumentException();
@@ -17,7 +15,7 @@ public final class UserDefinedType extends BasicType {
     }
     
     @Override
-    public void accept(INodeVisitor visitor) {
+    public void accept(NodeVisitor visitor) {
         visitor.visit(this);
     }
 }

@@ -1,7 +1,9 @@
 package edu.kit.minijava.lexer;
 
-import java.io.*;
-import java.util.function.*;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.function.BooleanSupplier;
+import java.util.function.Predicate;
 
 public class Lexer {
 

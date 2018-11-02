@@ -1,6 +1,9 @@
 package edu.kit.minijava.cli;
 
-import java.io.*;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStreamReader;
 
 class EchoCommand extends Command {
 
@@ -16,6 +19,8 @@ class EchoCommand extends Command {
                 builder.append((char) symbol);
                 symbol = reader.read();
             }
+            
+            reader.close();
 
             System.out.print(builder.toString());
 

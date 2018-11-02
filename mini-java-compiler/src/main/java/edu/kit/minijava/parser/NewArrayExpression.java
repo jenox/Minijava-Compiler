@@ -1,7 +1,5 @@
 package edu.kit.minijava.parser;
 
-import util.INodeVisitor;
-
 public final class NewArrayExpression extends Expression {
     public NewArrayExpression(BasicType type, Expression primaryDimension, int numberOfDimensions) {
         if (type == null) throw new IllegalArgumentException();
@@ -22,7 +20,7 @@ public final class NewArrayExpression extends Expression {
     }
     
     @Override
-    public void accept(INodeVisitor visitor) {
+    public void accept(NodeVisitor visitor) {
         visitor.visit(this);
     }
 }

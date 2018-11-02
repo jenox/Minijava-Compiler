@@ -43,13 +43,12 @@ import edu.kit.minijava.parser.MultiplyExpression;
 import edu.kit.minijava.parser.NegateExpression;
 import edu.kit.minijava.parser.NewArrayExpression;
 import edu.kit.minijava.parser.NewObjectExpression;
+import edu.kit.minijava.parser.NodeVisitor;
 import edu.kit.minijava.parser.NotEqualToExpression;
 import edu.kit.minijava.parser.NullLiteral;
 import edu.kit.minijava.parser.Parameter;
 import edu.kit.minijava.parser.PostfixExpression;
-import edu.kit.minijava.parser.PostfixOperation;
 import edu.kit.minijava.parser.Program;
-import edu.kit.minijava.parser.PropagatedException;
 import edu.kit.minijava.parser.ReturnNoValueStatement;
 import edu.kit.minijava.parser.ReturnValueStatement;
 import edu.kit.minijava.parser.SubtractExpression;
@@ -58,9 +57,8 @@ import edu.kit.minijava.parser.Type;
 import edu.kit.minijava.parser.UserDefinedType;
 import edu.kit.minijava.parser.VoidType;
 import edu.kit.minijava.parser.WhileStatement;
-import util.INodeVisitor;
 
-public class ParserPrinter implements INodeVisitor {
+public class ParserPrinter implements NodeVisitor {
 
     private int depth;
     private Program program;
@@ -141,8 +139,8 @@ public class ParserPrinter implements INodeVisitor {
         // sort members
         members.sort(new Comparator<ClassMember>() {
 
-            @Override
-            public int compare(ClassMember o1, ClassMember o2) {
+          @Override
+          public int compare(ClassMember o1, ClassMember o2) {
                 if (o1.isMethod()) {
                     if (o2.isMethod()) {
                         return String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName());
@@ -159,9 +157,11 @@ public class ParserPrinter implements INodeVisitor {
                         return String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName());
                     }
                 }
-            }
+            } 
+            
+            
         });
-
+        
         for (ClassMember member : members) {
             member.accept(this);
         }

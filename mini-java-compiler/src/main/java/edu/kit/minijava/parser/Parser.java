@@ -1,9 +1,15 @@
 package edu.kit.minijava.parser;
 
-import edu.kit.minijava.lexer.*;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Stack;
 
-import java.io.*;
-import java.util.*;
+import edu.kit.minijava.lexer.Lexer;
+import edu.kit.minijava.lexer.LexerException;
+import edu.kit.minijava.lexer.Token;
+import edu.kit.minijava.lexer.TokenType;
 
 public final class Parser {
 

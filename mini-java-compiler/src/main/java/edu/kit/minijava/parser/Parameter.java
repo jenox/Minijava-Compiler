@@ -1,7 +1,5 @@
 package edu.kit.minijava.parser;
 
-import util.INodeVisitor;
-
 public final class Parameter extends ASTNode {
     public Parameter(Type type, String name) {
         if (type == null) throw new IllegalArgumentException();
@@ -20,7 +18,7 @@ public final class Parameter extends ASTNode {
     }
     
     @Override
-    public void accept(INodeVisitor visitor) {
+    public void accept(NodeVisitor visitor) {
         visitor.visit(this);
     }
 }

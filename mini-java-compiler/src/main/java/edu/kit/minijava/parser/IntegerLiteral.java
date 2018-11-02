@@ -1,7 +1,5 @@
 package edu.kit.minijava.parser;
 
-import util.INodeVisitor;
-
 public final class IntegerLiteral extends Expression {
     public IntegerLiteral(String value) {
         this.value = value;
@@ -15,7 +13,7 @@ public final class IntegerLiteral extends Expression {
     }
     
     @Override
-    public void accept(INodeVisitor visitor) {
+    public void accept(NodeVisitor visitor) {
         visitor.visit(this);
     }
 }

@@ -1,7 +1,5 @@
 package edu.kit.minijava.parser;
 
-import util.INodeVisitor;
-
 public final class BooleanLiteral extends Expression {
     public BooleanLiteral(boolean value) {
         this.value = value;
@@ -15,7 +13,7 @@ public final class BooleanLiteral extends Expression {
     }
     
     @Override
-    public void accept(INodeVisitor visitor) {
+    public void accept(NodeVisitor visitor) {
         visitor.visit(this);
     }
 }

@@ -1,7 +1,5 @@
 package edu.kit.minijava.parser;
 
-import util.INodeVisitor;
-
 public final class ModuloExpression extends Expression {
     public ModuloExpression(Expression left, Expression right) {
         if (left == null) throw new IllegalArgumentException();
@@ -20,7 +18,7 @@ public final class ModuloExpression extends Expression {
     }
     
     @Override
-    public void accept(INodeVisitor visitor) {
+    public void accept(NodeVisitor visitor) {
         visitor.visit(this);
     }
 }

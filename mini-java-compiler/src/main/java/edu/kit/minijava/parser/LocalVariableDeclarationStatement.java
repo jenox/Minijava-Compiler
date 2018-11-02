@@ -1,7 +1,5 @@
 package edu.kit.minijava.parser;
 
-import util.INodeVisitor;
-
 public final class LocalVariableDeclarationStatement extends BlockStatement {
     public LocalVariableDeclarationStatement(Type type, String name) {
         if (type == null) throw new IllegalArgumentException();
@@ -20,7 +18,7 @@ public final class LocalVariableDeclarationStatement extends BlockStatement {
     }
     
     @Override
-    public void accept(INodeVisitor visitor) {
+    public void accept(NodeVisitor visitor) {
         visitor.visit(this);
     }
 }

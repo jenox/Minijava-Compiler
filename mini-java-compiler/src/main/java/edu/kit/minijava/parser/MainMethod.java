@@ -1,7 +1,5 @@
 package edu.kit.minijava.parser;
 
-import util.INodeVisitor;
-
 public final class MainMethod extends ClassMember {
     public MainMethod(String name, String argumentsParameterName, Block body) {
         if (name == null) throw new IllegalArgumentException();
@@ -23,7 +21,7 @@ public final class MainMethod extends ClassMember {
     }
     
     @Override
-    public void accept(INodeVisitor visitor) {
+    public void accept(NodeVisitor visitor) {
         visitor.visit(this);
     }
     

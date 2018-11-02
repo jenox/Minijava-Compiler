@@ -1,7 +1,5 @@
 package edu.kit.minijava.parser;
 
-import util.INodeVisitor;
-
 public final class NewObjectExpression extends Expression {
     public NewObjectExpression(String className) {
         if (className == null) throw new IllegalArgumentException();
@@ -17,7 +15,7 @@ public final class NewObjectExpression extends Expression {
     }
     
     @Override
-    public void accept(INodeVisitor visitor) {
+    public void accept(NodeVisitor visitor) {
         visitor.visit(this);
     }
 }

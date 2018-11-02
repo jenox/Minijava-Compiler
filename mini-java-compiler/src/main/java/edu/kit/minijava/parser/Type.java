@@ -1,7 +1,5 @@
 package edu.kit.minijava.parser;
 
-import util.INodeVisitor;
-
 public final class Type extends ASTNode {
     public Type(BasicType basicType, int numberOfDimensions) {
         if (basicType == null) throw new IllegalArgumentException();
@@ -19,7 +17,7 @@ public final class Type extends ASTNode {
     }
     
     @Override
-    public void accept(INodeVisitor visitor) {
+    public void accept(NodeVisitor visitor) {
         visitor.visit(this);
     }
 }

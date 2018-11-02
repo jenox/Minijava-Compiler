@@ -1,8 +1,7 @@
 package edu.kit.minijava.parser;
 
-import java.util.*;
-
-import util.INodeVisitor;
+import java.util.Collections;
+import java.util.List;
 
 public final class Method extends ClassMember {
     public Method(Type returnType, String name, List<Parameter> parameters, Block body) {
@@ -23,7 +22,7 @@ public final class Method extends ClassMember {
     }
 
     @Override
-    public void accept(INodeVisitor visitor) {
+    public void accept(NodeVisitor visitor) {
         visitor.visit(this);
     }
 

@@ -1,7 +1,5 @@
 package edu.kit.minijava.parser;
 
-import util.INodeVisitor;
-
 public final class ReturnNoValueStatement extends Statement {
     public ReturnNoValueStatement() {
     }
@@ -12,7 +10,7 @@ public final class ReturnNoValueStatement extends Statement {
     }
     
     @Override
-    public void accept(INodeVisitor visitor) {
+    public void accept(NodeVisitor visitor) {
         visitor.visit(this);
     }
 }
