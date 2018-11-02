@@ -138,8 +138,6 @@ public interface INodeVisitor {
     
     public void visit(PostfixExpression postfixExpression);
     
-    public void visit(PostfixOperation postfixOperation);
-    
     public void visit(Program program);
     
     public void visit(PropagatedException propagatedException);
