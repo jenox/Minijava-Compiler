@@ -76,62 +76,65 @@ public class ParserPrinter implements NodeVisitor {
 
     @Override
     public void visit(AddExpression addExpression) {
-        printWhitespace();
-        System.out.println("AddExpression");
-        depth++;
+        printLeftPar();
         addExpression.left.accept(this);
+        print(" + ");
         addExpression.right.accept(this);
-        depth--;
+        printRightPar();
     }
 
     @Override
     public void visit(ArrayAccess arrayAccess) {
-        printWhitespace();
-        System.out.println("ArrayAccess");
-        depth++;
+        print("[");
         arrayAccess.index.accept(this);
-        depth--;
+        print("]");
     }
 
     @Override
     public void visit(AssignmentExpression assignmentExpression) {
-        printWhitespace();
-        System.out.println("AssignmentExpression");
-        depth++;
+        printLeftPar();
         assignmentExpression.left.accept(this);
+        print(" = ");
         assignmentExpression.right.accept(this);
-        depth--;
-
+        printRightPar();
     }
 
     @Override
     public void visit(Block block) {
-        printWhitespace();
-        System.out.println("Block");
-        depth++;
-        for (BlockStatement statement : block.statements) {
-            statement.accept(this);
+        printLeftBrace();
+        if (block.statements.isEmpty()) {
+            print(" }\n"); // whitespace, right brace, newline
+        } else {
+            depth++; //indent statements
+            for (BlockStatement statement : block.statements) {
+                newLine();
+                printWhitespace();
+                statement.accept(this);
+            }
+            newLine();
+            depth--; //back to top level
+            printWhitespace();
+            printRightBrace();
+            newLine();
         }
-        depth--;
     }
 
     @Override
     public void visit(BooleanLiteral booleanLiteral) {
-        printWhitespace();
-        System.out.println("BooleanLiteral (" + booleanLiteral.value + ")");
+        print(String.valueOf(booleanLiteral.value));
     }
 
     @Override
     public void visit(BooleanType booleanType) {
-        printWhitespace();
-        System.out.println("BooleanType");
+        print("boolean");
     }
 
     @Override
     public void visit(ClassDeclaration classDeclaration) {
         printWhitespace();
-        System.out.println("ClassDeclaration (" + classDeclaration.className + ")");
+        print("class " + classDeclaration.className + " {\n");
         depth++;
+        //copy members to new list
         List<ClassMember> members = new ArrayList<>(classDeclaration.members.size());
         for (ClassMember member : classDeclaration.members) {
             members.add(member);
@@ -139,8 +142,8 @@ public class ParserPrinter implements NodeVisitor {
         // sort members
         members.sort(new Comparator<ClassMember>() {
 
-          @Override
-          public int compare(ClassMember o1, ClassMember o2) {
+            @Override
+            public int compare(ClassMember o1, ClassMember o2) {
                 if (o1.isMethod()) {
                     if (o2.isMethod()) {
                         return String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName());
@@ -157,330 +160,307 @@ public class ParserPrinter implements NodeVisitor {
                         return String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName());
                     }
                 }
-            } 
-            
-            
+            }
+
         });
-        
+
         for (ClassMember member : members) {
+            newLine();
+            printWhitespace();
             member.accept(this);
         }
         depth--;
-
+        printWhitespace();
+        printRightBrace();
     }
 
     @Override
     public void visit(DivideExpression divideExpression) {
         printWhitespace();
-        System.out.println("DivideExpression");
-        depth++;
         divideExpression.left.accept(this);
+        print(" / ");
         divideExpression.right.accept(this);
-        depth--;
     }
 
     @Override
     public void visit(EmptyStatement emptyStatement) {
-        printWhitespace();
-        System.out.println("EmptyStatement");
+        print(";");
     }
 
     @Override
     public void visit(EqualToExpression equalToExpression) {
-        printWhitespace();
-        System.out.println("EqualToExpression");
-        depth++;
+        printLeftPar();
         equalToExpression.left.accept(this);
+        print(" == ");
         equalToExpression.right.accept(this);
-        depth--;
+        printRightPar();
     }
 
     @Override
     public void visit(ExpressionStatement expressionStatement) {
-        printWhitespace();
-        System.out.println("ExpressionStatement");
-        depth++;
         expressionStatement.expression.accept(this);
-        depth--;
     }
 
     @Override
     public void visit(Field field) {
-        printWhitespace();
-        System.out.println("Field (" + field.name + ")");
-        depth++;
         field.type.accept(this);
-        depth--;
-
+        print(" "); //whitespace
+        print(field.name);
+        print(";");
+        newLine();
     }
 
     @Override
     public void visit(FieldAccess fieldAccess) {
-        printWhitespace();
-        System.out.println("FieldAccess (" + fieldAccess.fieldName + ")");
+        print(fieldAccess.fieldName + ".");
     }
 
     @Override
     public void visit(GreaterThanExpression greaterThanExpression) {
-        printWhitespace();
-        System.out.println("GreaterThanExpression");
-        depth++;
+        printLeftPar();
         greaterThanExpression.left.accept(this);
+        print(" > ");
         greaterThanExpression.right.accept(this);
-        depth--;
+        printRightPar();
     }
 
     @Override
     public void visit(GreaterThanOrEqualToExpression greaterThanOrEqualToExpression) {
-        printWhitespace();
-        System.out.println("GreaterThanOrEqualToExpression");
-        depth++;
+        printLeftPar();
         greaterThanOrEqualToExpression.left.accept(this);
+        print(" >= ");
         greaterThanOrEqualToExpression.right.accept(this);
-        depth--;
+        printRightPar();
     }
 
     @Override
     public void visit(IdentifierAndArgumentsExpression identifierAndArgumentsExpression) {
-        printWhitespace();
-        System.out.println("IdentifierAndArgumentsExpression (" + identifierAndArgumentsExpression.identifier + ")");
-        depth++;
+        print(identifierAndArgumentsExpression.identifier);
+        printLeftPar();
         for (Expression exp : identifierAndArgumentsExpression.arguments) {
             exp.accept(this);
+            print(", "); //seperator
         }
-        depth--;
+        printRightPar();
     }
 
     @Override
     public void visit(IdentifierExpression identifierExpression) {
-        printWhitespace();
-        System.out.println("IdentifierExpression (" + identifierExpression.identifier + ")");
+        print(identifierExpression.identifier);
     }
 
     @Override
     public void visit(IfElseStatement ifElseStatement) {
-        printWhitespace();
-        System.out.println("IfElseStatement");
-        depth++;
+        print("if ");
         ifElseStatement.condition.accept(this);
+        print(" {\n");
+        depth++;
+        printWhitespace();
         ifElseStatement.statementIfTrue.accept(this);
+        depth--;
+        newLine();
+        printWhitespace();
+        print("} else {\n");
+        depth++;
+        printWhitespace();
         ifElseStatement.statementIfFalse.accept(this);
         depth--;
+        newLine();
+        printWhitespace();
+        printRightBrace();
+        newLine();
     }
 
     @Override
     public void visit(IfStatement ifStatement) {
-        printWhitespace();
-        System.out.println("IfStatement");
-        depth++;
+        print("if ");
         ifStatement.condition.accept(this);
+        print(" {\n");
+        depth++;
+        printWhitespace();
         ifStatement.statementIfTrue.accept(this);
+        newLine();
         depth--;
+        printWhitespace();
+        printRightBrace();
+        newLine();
     }
 
     @Override
     public void visit(IntegerLiteral integerLiteral) {
-        printWhitespace();
-        System.out.println("IntegerLiteral (" + integerLiteral.value + ")");
+        print(integerLiteral.value);
     }
 
     @Override
     public void visit(IntegerType integerType) {
-        printWhitespace();
-        System.out.println("IntegerType");
+        print("int");
     }
 
     @Override
     public void visit(LessThanExpression lessThanExpression) {
-        printWhitespace();
-        System.out.println("LessThanExpression");
-        depth++;
+        printLeftPar();
         lessThanExpression.left.accept(this);
+        print(" < ");
         lessThanExpression.right.accept(this);
-        depth--;
+        printRightPar();
     }
 
     @Override
     public void visit(LessThanOrEqualToExpression lessThanOrEqualToExpression) {
-        printWhitespace();
-        System.out.println("LessThanOrEqualToExpression");
-        depth++;
+        printLeftPar();
         lessThanOrEqualToExpression.left.accept(this);
+        print(" <= ");
         lessThanOrEqualToExpression.right.accept(this);
-        depth--;
+        printRightPar();
     }
 
     @Override
     public void visit(LocalVariableDeclarationStatement localVariableDeclarationStatement) {
-        printWhitespace();
-        System.out.println("LocalVariableDeclarationStatement (name: " + localVariableDeclarationStatement.name + ")");
-        depth++;
         localVariableDeclarationStatement.type.accept(this);
-        depth--;
+        print(" " + localVariableDeclarationStatement.name + ";\n");
     }
 
     @Override
     public void visit(LocalVariableInitializationStatement localVariableInitializationStatement) {
-        printWhitespace();
-        System.out.println(
-                "LocalVariableInitializationStatement (name: " + localVariableInitializationStatement.name + ")");
-        depth++;
-        localVariableInitializationStatement.type.accept(this);
-        localVariableInitializationStatement.value.accept(this);
-        depth--;
+       localVariableInitializationStatement.type.accept(this);
+       print(" " + localVariableInitializationStatement.name + " = ");
+       localVariableInitializationStatement.value.accept(this);
+       print(";");
     }
 
     @Override
     public void visit(LogicalAndExpression logicalAndExpression) {
-        printWhitespace();
-        System.out.println("LogicalAndExpression");
-        depth++;
+        printLeftPar();
         logicalAndExpression.left.accept(this);
+        print(" && ");
         logicalAndExpression.right.accept(this);
-        depth--;
+        printRightPar();
     }
 
     @Override
     public void visit(LogicalNotExpression logicalNotExpression) {
-        printWhitespace();
-        System.out.println("LogicalNotExpression");
-        depth++;
+        print("(!");
         logicalNotExpression.other.accept(this);
-        depth--;
+        printRightPar();
     }
 
     @Override
     public void visit(LogicalOrExpression logicalOrExpression) {
-        printWhitespace();
-        System.out.println("LogicalOrExpression");
-        depth++;
+        printLeftPar();
         logicalOrExpression.left.accept(this);
+        print(" || ");
         logicalOrExpression.right.accept(this);
-        depth--;
+        printRightPar();
     }
 
     @Override
     public void visit(MainMethod mainMethod) {
-        printWhitespace();
-        System.out.println(
-                "Main method (name: " + mainMethod.name + ", params: " + mainMethod.argumentsParameterName + ")");
-        depth++;
+        print("public static void " + mainMethod.name + "(String[] " + mainMethod.argumentsParameterName + ") ");
         mainMethod.body.accept(this);
-        depth--;
+        newLine();
     }
 
     @Override
     public void visit(Method method) {
         printWhitespace();
-        System.out.println("Method (" + method.name + ")");
-        depth++;
-        // print return type first
-        method.returnType.accept(this);
-        // print parameters
-        for (Parameter param : method.parameters) {
-            param.accept(this);
+        print(method.name + "(");
+        if (!method.parameters.isEmpty()) {
+            method.parameters.get(0).accept(this);
+            for (int i = 1; i < method.parameters.size(); i++) {
+                print(", ");
+                method.parameters.get(i).accept(this);
+            }
         }
-        // print block
+        print(") ");
         method.body.accept(this);
-        depth--;
+        newLine();
     }
 
     @Override
     public void visit(MethodInvocation methodInvocation) {
         printWhitespace();
-        System.out.println("MethodInvocation (" + methodInvocation.methodName + ")");
-        depth++;
-        for (Expression arg : methodInvocation.arguments) {
-            arg.accept(this);
+        print(methodInvocation.methodName + "(");
+        if (!methodInvocation.arguments.isEmpty()) {
+            methodInvocation.arguments.get(0).accept(this);
+            for (int i = 1; i < methodInvocation.arguments.size(); i++) {
+                print(", ");
+                methodInvocation.arguments.get(i).accept(this);
+            }
         }
-        depth--;
+        print(")");
     }
 
     @Override
     public void visit(ModuloExpression moduloExpression) {
-        printWhitespace();
-        System.out.println("ModuloExpression");
-        depth++;
+        printLeftPar();
         moduloExpression.left.accept(this);
+        print(" % ");
         moduloExpression.right.accept(this);
-        depth--;
+        printRightPar();
     }
 
     @Override
     public void visit(MultiplyExpression multiplyExpression) {
-        printWhitespace();
-        System.out.println("MultiplyExpression");
-        depth++;
+        printLeftPar();
         multiplyExpression.left.accept(this);
+        print(" * ");
         multiplyExpression.right.accept(this);
-        depth--;
+        printRightPar();
     }
 
     @Override
     public void visit(NegateExpression negateExpression) {
-        printWhitespace();
-        System.out.println("NegateExpression");
-        depth++;
+        print("(!");
         negateExpression.other.accept(this);
-        depth--;
+        printRightPar();
     }
 
     @Override
     public void visit(NewArrayExpression newArrayExpression) {
-        printWhitespace();
-        System.out.println("NewArrayExpression (numOfDims: " + newArrayExpression.numberOfDimensions + ")");
-        depth++;
+        print("new ");
         newArrayExpression.type.accept(this);
+        print(" [");
         newArrayExpression.primaryDimension.accept(this);
-        depth--;
+        print("] ");
+        for (int i = 0; i < newArrayExpression.numberOfDimensions; i++) {
+            print("[]");
+        }
     }
 
     @Override
     public void visit(NewObjectExpression newObjectExpression) {
-        printWhitespace();
-        System.out.println("NewObjectExpression (" + newObjectExpression.className + ")");
+        print("new " + newObjectExpression.className + "()");
+        newObjectExpression.accept(this);
     }
 
     @Override
     public void visit(NotEqualToExpression notEqualToExpression) {
-        printWhitespace();
-        System.out.println("NotEqualToEpression");
-        depth++;
+        printLeftPar();
         notEqualToExpression.left.accept(this);
+        print(" != ");
         notEqualToExpression.right.accept(this);
-        depth--;
+        printRightPar();
     }
 
     @Override
     public void visit(NullLiteral nullLiteral) {
-        printWhitespace();
-        System.out.println("NullLiteral");
+        print("null");
     }
 
     @Override
     public void visit(Parameter parameter) {
-        printWhitespace();
-        System.out.println("Parameter (" + parameter.name + ")");
-        depth++;
         parameter.type.accept(this);
-        depth--;
+        print(" " + parameter.name);
     }
 
     @Override
     public void visit(PostfixExpression postfixExpression) {
-        printWhitespace();
-        System.out.println("PostfixExpression");
-        depth++;
         postfixExpression.expression.accept(this);
         postfixExpression.postfixOperation.accept(this);
-        depth--;
     }
 
     @Override
     public void visit(Program program) {
-        printWhitespace();
-        System.out.println("Program");
-        depth++;
         List<ClassDeclaration> classes = new ArrayList<>(program.classDeclarations.size());
         for (ClassDeclaration declaration : program.classDeclarations) {
             classes.add(declaration);
@@ -498,69 +478,66 @@ public class ParserPrinter implements NodeVisitor {
         for (ClassDeclaration declaration : classes) {
             declaration.accept(this);
         }
-        depth--;
 
     }
 
     @Override
     public void visit(ReturnNoValueStatement returnNoValueStatement) {
-        printWhitespace();
-        System.out.println("ReturnNoValueStatement");
+        print("return ;");
     }
 
     @Override
     public void visit(ReturnValueStatement returnValueStatement) {
-        printWhitespace();
-        System.out.println("ReturnValueStatement");
-        depth++;
+        print("(return ");
         returnValueStatement.returnValue.accept(this);
-        depth--;
+        print(";)");
     }
 
     @Override
     public void visit(SubtractExpression subtractExpression) {
-        printWhitespace();
-        System.out.println("SubtractExpression");
-        depth++;
+        printLeftPar();
         subtractExpression.left.accept(this);
+        print(" - ");
         subtractExpression.right.accept(this);
-        depth--;
+        printRightPar();
     }
 
     @Override
     public void visit(ThisExpression thisExpression) {
-        printWhitespace();
-        System.out.println("ThisExpression");
+        print("this");
     }
 
     @Override
     public void visit(Type type) {
-        printWhitespace();
-        System.out.println("Type (numOfDims: " + type.numberOfDimensions + ")");
-        depth++;
         type.basicType.accept(this);
-        depth--;
+        for (int i = 0; i < type.numberOfDimensions; i++) {
+            print("[]");
+        }
     }
 
     @Override
     public void visit(UserDefinedType userDefinedType) {
-        printWhitespace();
-        System.out.println("UserDefinedType(" + userDefinedType.name + ")");
+        print(userDefinedType.name);
     }
 
     @Override
     public void visit(VoidType voidType) {
-        printWhitespace();
-        System.out.println("VoidType");
+        print("void");
     }
 
     @Override
     public void visit(WhileStatement whileStatement) {
-        printWhitespace();
-        System.out.println("WhileStatement");
-        depth++;
+        print("while ");
         whileStatement.condition.accept(this);
+        print(" {\n");
+        depth++;
+        printWhitespace();
         whileStatement.statementWhileTrue.accept(this);
+        newLine();
+        depth--;
+        printWhitespace();
+        printRightBrace();
+        newLine();
     }
 
     /**
@@ -572,4 +549,27 @@ public class ParserPrinter implements NodeVisitor {
         }
     }
 
+    private void print(String s) {
+        System.out.print(s);
+    }
+
+    private void printLeftPar() {
+        System.out.print("(");
+    }
+
+    private void printRightPar() {
+        System.out.print(")");
+    }
+
+    private void printLeftBrace() {
+        System.out.print("{");
+    }
+
+    private void printRightBrace() {
+        System.out.print("}");
+    }
+
+    private void newLine() {
+        System.out.println(); // creates new line
+    }
 }
