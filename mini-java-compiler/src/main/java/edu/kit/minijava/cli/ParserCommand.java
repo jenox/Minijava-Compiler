@@ -33,7 +33,7 @@ public class ParserCommand extends Command {
         }
         catch (ParserException exception) {
             System.err.println("error: " + exception.getLocalizedMessage());
-            exception.printStackTrace();
+            //exception.printStackTrace();
 
             return 1;
         }
