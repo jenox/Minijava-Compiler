@@ -26,8 +26,8 @@ public class ParserCommand extends Command {
                 throw new AssertionError();
             }
             
-            ParserPrinter printer = new ParserPrinter(program);
-            printer.print();
+           // ParserPrinter printer = new ParserPrinter(program);
+           // printer.print();
 
             return 0;
         }
