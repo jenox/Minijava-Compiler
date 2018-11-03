@@ -483,12 +483,12 @@ public class ParserPrinter implements NodeVisitor {
 
     @Override
     public void visit(ReturnNoValueStatement returnNoValueStatement) {
-        print("return ;");
+        print("return;");
     }
 
     @Override
     public void visit(ReturnValueStatement returnValueStatement) {
-        print("(return ");
+        print("(return");
         returnValueStatement.returnValue.accept(this);
         print(";)");
     }
