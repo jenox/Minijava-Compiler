@@ -16,7 +16,7 @@ public final class LogicalAndExpression extends Expression {
     public String toString() {
         return "LogicalAndExpression(" + this.left + ", " + this.right + ")";
     }
-    
+
     @Override
     public void accept(NodeVisitor visitor) {
         visitor.visit(this);

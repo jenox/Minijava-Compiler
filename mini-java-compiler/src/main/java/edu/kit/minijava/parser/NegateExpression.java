@@ -13,7 +13,7 @@ public final class NegateExpression extends Expression {
     public String toString() {
         return "NegateExpression(" + this.other + ")";
     }
-    
+
     @Override
     public void accept(NodeVisitor visitor) {
         visitor.visit(this);

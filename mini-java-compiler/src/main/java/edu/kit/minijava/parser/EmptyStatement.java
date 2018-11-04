@@ -5,7 +5,7 @@ public final class EmptyStatement extends Statement {
     public String toString() {
         return "EmptyStatement";
     }
-    
+
     @Override
     public void accept(NodeVisitor visitor) {
         visitor.visit(this);

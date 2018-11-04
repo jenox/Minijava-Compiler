@@ -5,7 +5,7 @@ public final class ThisExpression extends Expression {
     public String toString() {
         return "ThisExpression";
     }
-    
+
     @Override
     public void accept(NodeVisitor visitor) {
         visitor.visit(this);

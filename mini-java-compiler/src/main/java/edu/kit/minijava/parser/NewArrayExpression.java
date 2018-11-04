@@ -18,7 +18,7 @@ public final class NewArrayExpression extends Expression {
     public String toString() {
         return "NewArrayExpression(" + this.type + ", " + this.primaryDimension + ", " + this.numberOfDimensions + ")";
     }
-    
+
     @Override
     public void accept(NodeVisitor visitor) {
         visitor.visit(this);

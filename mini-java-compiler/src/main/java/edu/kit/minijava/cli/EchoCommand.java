@@ -19,7 +19,7 @@ class EchoCommand extends Command {
                 builder.append((char) symbol);
                 symbol = reader.read();
             }
-            
+
             reader.close();
 
             System.out.print(builder.toString());

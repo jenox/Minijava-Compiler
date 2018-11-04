@@ -13,7 +13,7 @@ public final class ExpressionStatement extends Statement {
     public String toString() {
         return "ExpressionStatement(" + this.expression + ")";
     }
-    
+
     @Override
     public void accept(NodeVisitor visitor) {
         visitor.visit(this);

@@ -16,7 +16,7 @@ public final class LessThanExpression extends Expression {
     public String toString() {
         return "LessThanExpression(" + this.left + ", " + this.right + ")";
     }
-    
+
     @Override
     public void accept(NodeVisitor visitor) {
         visitor.visit(this);

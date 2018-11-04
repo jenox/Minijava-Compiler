@@ -16,7 +16,7 @@ public final class Block extends Statement {
     public String toString() {
         return "Block(" + this.statements + ")";
     }
-    
+
     @Override
     public void accept(NodeVisitor visitor) {
         visitor.visit(this);

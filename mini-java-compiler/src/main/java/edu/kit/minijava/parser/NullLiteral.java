@@ -5,7 +5,7 @@ public final class NullLiteral extends Expression {
     public String toString() {
         return "NullLiteral";
     }
-    
+
     @Override
     public void accept(NodeVisitor visitor) {
         visitor.visit(this);

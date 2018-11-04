@@ -19,7 +19,7 @@ public final class IdentifierAndArgumentsExpression extends Expression {
     public String toString() {
         return "IdentifierAndArgumentsExpression(" + this.identifier + ", " + this.arguments + ")";
     }
-    
+
     @Override
     public void accept(NodeVisitor visitor) {
         visitor.visit(this);

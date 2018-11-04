@@ -13,7 +13,7 @@ public final class ArrayAccess extends PostfixOperation {
     public String toString() {
         return "ArrayAccess(" + this.index + ")";
     }
-    
+
     @Override
     public void accept(NodeVisitor visitor) {
         visitor.visit(this);

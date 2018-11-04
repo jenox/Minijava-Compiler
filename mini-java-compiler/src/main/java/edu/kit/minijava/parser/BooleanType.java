@@ -5,7 +5,7 @@ public final class BooleanType extends BasicType {
     public String toString() {
         return "BooleanType";
     }
-    
+
     @Override
     public void accept(NodeVisitor visitor) {
         visitor.visit(this);

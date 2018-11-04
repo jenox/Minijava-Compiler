@@ -13,7 +13,7 @@ public final class IdentifierExpression extends Expression {
     public String toString() {
         return "IdentifierExpression(" + this.identifier + ")";
     }
-    
+
     @Override
     public void accept(NodeVisitor visitor) {
         visitor.visit(this);

@@ -16,7 +16,7 @@ public final class SubtractExpression extends Expression {
     public String toString() {
         return "SubtractExpression(" + this.left + ", " + this.right + ")";
     }
-    
+
     @Override
     public void accept(NodeVisitor visitor) {
         visitor.visit(this);

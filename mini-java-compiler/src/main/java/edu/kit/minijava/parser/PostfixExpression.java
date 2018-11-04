@@ -16,7 +16,7 @@ public final class PostfixExpression extends Expression {
     public String toString() {
         return "PostfixExpression(" + this.expression + ", " + this.postfixOperation + ")";
     }
-    
+
     @Override
     public void accept(NodeVisitor visitor) {
         visitor.visit(this);

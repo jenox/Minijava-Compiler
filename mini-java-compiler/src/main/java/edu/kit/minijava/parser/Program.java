@@ -16,7 +16,7 @@ public final class Program extends ASTNode {
     public String toString() {
         return "Program(" + this.classDeclarations + ")";
     }
-    
+
     @Override
     public void accept(NodeVisitor visitor) {
         visitor.visit(this);

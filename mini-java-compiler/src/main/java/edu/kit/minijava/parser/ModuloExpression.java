@@ -16,7 +16,7 @@ public final class ModuloExpression extends Expression {
     public String toString() {
         return "ModuloExpression(" + this.left + ", " + this.right + ")";
     }
-    
+
     @Override
     public void accept(NodeVisitor visitor) {
         visitor.visit(this);

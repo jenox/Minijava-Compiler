@@ -13,7 +13,7 @@ public final class UserDefinedType extends BasicType {
     public String toString() {
         return "UserDefinedType(" + this.name + ")";
     }
-    
+
     @Override
     public void accept(NodeVisitor visitor) {
         visitor.visit(this);

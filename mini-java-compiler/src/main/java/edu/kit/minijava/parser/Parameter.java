@@ -16,7 +16,7 @@ public final class Parameter extends ASTNode {
     public String toString() {
         return "Parameter(" + this.type + ", " + this.name + ")";
     }
-    
+
     @Override
     public void accept(NodeVisitor visitor) {
         visitor.visit(this);

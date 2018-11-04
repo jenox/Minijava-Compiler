@@ -11,7 +11,7 @@ public final class IntegerLiteral extends Expression {
     public String toString() {
         return "IntegerLiteral(" + this.value + ")";
     }
-    
+
     @Override
     public void accept(NodeVisitor visitor) {
         visitor.visit(this);

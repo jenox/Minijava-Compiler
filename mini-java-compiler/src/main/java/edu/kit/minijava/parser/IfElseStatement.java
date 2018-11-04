@@ -19,7 +19,7 @@ public class IfElseStatement extends Statement {
     public String toString() {
         return "IfStatement(" + this.condition + ", " + this.statementIfTrue + ", " + this.statementIfFalse + ")";
     }
-    
+
     @Override
     public void accept(NodeVisitor visitor) {
         visitor.visit(this);

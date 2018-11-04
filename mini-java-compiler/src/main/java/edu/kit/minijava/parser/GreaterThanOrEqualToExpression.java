@@ -16,7 +16,7 @@ public final class GreaterThanOrEqualToExpression extends Expression {
     public String toString() {
         return "GreaterThanOrEqualToExpression(" + this.left + ", " + this.right + ")";
     }
-    
+
     @Override
     public void accept(NodeVisitor visitor) {
         visitor.visit(this);

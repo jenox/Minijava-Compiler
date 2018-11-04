@@ -16,7 +16,7 @@ public final class WhileStatement extends Statement {
     public String toString() {
         return "WhileStatement(" + this.condition + ", " + this.statementWhileTrue + ")";
     }
-    
+
     @Override
     public void accept(NodeVisitor visitor) {
         visitor.visit(this);

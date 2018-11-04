@@ -16,7 +16,7 @@ public final class AssignmentExpression extends Expression {
     public String toString() {
         return "AssignmentExpression(" + this.left + ", " + this.right + ")";
     }
-    
+
     @Override
     public void accept(NodeVisitor visitor) {
         visitor.visit(this);

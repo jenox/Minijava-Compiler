@@ -19,7 +19,7 @@ public final class LocalVariableInitializationStatement extends BlockStatement {
     public String toString() {
         return "LocalVariableInitializationStatement(" + this.type + ", " + this.name + ", " + this.value + ")";
     }
-    
+
     @Override
     public void accept(NodeVisitor visitor) {
         visitor.visit(this);

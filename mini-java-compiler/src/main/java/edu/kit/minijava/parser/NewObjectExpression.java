@@ -13,7 +13,7 @@ public final class NewObjectExpression extends Expression {
     public String toString() {
         return "NewObjectExpression(" + this.className + ")";
     }
-    
+
     @Override
     public void accept(NodeVisitor visitor) {
         visitor.visit(this);

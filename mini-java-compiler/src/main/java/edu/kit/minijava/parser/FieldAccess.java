@@ -13,7 +13,7 @@ public final class FieldAccess extends PostfixOperation {
     public String toString() {
         return "FieldAccess(" + this.fieldName + ")";
     }
-    
+
     @Override
     public void accept(NodeVisitor visitor) {
         visitor.visit(this);

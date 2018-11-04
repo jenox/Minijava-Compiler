@@ -16,7 +16,7 @@ public final class NotEqualToExpression extends Expression {
     public String toString() {
         return "NotEqualToExpression(" + this.left + ", " + this.right + ")";
     }
-    
+
     @Override
     public void accept(NodeVisitor visitor) {
         visitor.visit(this);

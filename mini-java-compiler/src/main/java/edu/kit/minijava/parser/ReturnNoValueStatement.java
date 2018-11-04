@@ -8,7 +8,7 @@ public final class ReturnNoValueStatement extends Statement {
     public String toString() {
         return "ReturnNoValueStatement";
     }
-    
+
     @Override
     public void accept(NodeVisitor visitor) {
         visitor.visit(this);

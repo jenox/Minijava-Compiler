@@ -19,7 +19,7 @@ public final class MethodInvocation extends PostfixOperation {
     public String toString() {
         return "MethodInvocation(" + this.methodName + ", " + this.arguments + ")";
     }
-    
+
     @Override
     public void accept(NodeVisitor visitor) {
         visitor.visit(this);

@@ -16,7 +16,7 @@ public final class IfStatement extends Statement {
     public String toString() {
         return "IfStatement(" + this.condition + ", " + this.statementIfTrue + ")";
     }
-    
+
     @Override
     public void accept(NodeVisitor visitor) {
         visitor.visit(this);

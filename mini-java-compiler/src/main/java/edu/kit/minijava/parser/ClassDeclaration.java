@@ -19,7 +19,7 @@ public final class ClassDeclaration extends ASTNode {
     public String toString() {
         return "ClassDeclaration(" + this.className + ", " + this.members + ")";
     }
-    
+
     @Override
     public void accept(NodeVisitor visitor) {
         visitor.visit(this);

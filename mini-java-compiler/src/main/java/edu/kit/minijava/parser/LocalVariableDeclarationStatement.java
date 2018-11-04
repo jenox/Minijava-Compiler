@@ -16,7 +16,7 @@ public final class LocalVariableDeclarationStatement extends BlockStatement {
     public String toString() {
         return "LocalVariableDeclarationStatement(" + this.type + ", " + this.name + ")";
     }
-    
+
     @Override
     public void accept(NodeVisitor visitor) {
         visitor.visit(this);

@@ -19,17 +19,17 @@ public final class MainMethod extends ClassMember {
     public String toString() {
         return "MainMethod(" + this.name + ", " + this.argumentsParameterName + ", " + this.body + ")";
     }
-    
+
     @Override
     public void accept(NodeVisitor visitor) {
         visitor.visit(this);
     }
-    
+
     @Override
     public String getName() {
         return name;
     }
-    
+
     @Override
     public boolean isMethod() {
         return true;

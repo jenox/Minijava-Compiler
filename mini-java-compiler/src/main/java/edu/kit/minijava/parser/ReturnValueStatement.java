@@ -13,7 +13,7 @@ public final class ReturnValueStatement extends Statement {
     public String toString() {
         return "ReturnValueStatement(" + this.returnValue + ")";
     }
-    
+
     @Override
     public void accept(NodeVisitor visitor) {
         visitor.visit(this);

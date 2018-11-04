@@ -16,7 +16,7 @@ public final class EqualToExpression extends Expression {
     public String toString() {
         return "EqualToExpression(" + this.left + ", " + this.right + ")";
     }
-    
+
     @Override
     public void accept(NodeVisitor visitor) {
         visitor.visit(this);

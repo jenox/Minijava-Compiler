@@ -15,7 +15,7 @@ public final class Type extends ASTNode {
     public String toString() {
         return "Type(" + this.basicType + ", " + this.numberOfDimensions + ")";
     }
-    
+
     @Override
     public void accept(NodeVisitor visitor) {
         visitor.visit(this);

@@ -16,7 +16,7 @@ public final class DivideExpression extends Expression {
     public String toString() {
         return "DivideExpression(" + this.left + ", " + this.right + ")";
     }
-    
+
     @Override
     public void accept(NodeVisitor visitor) {
         visitor.visit(this);

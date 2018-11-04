@@ -13,7 +13,7 @@ public final class LogicalNotExpression extends Expression {
     public String toString() {
         return "LogicalNotExpression(" + this.other + ")";
     }
-    
+
     @Override
     public void accept(NodeVisitor visitor) {
         visitor.visit(this);

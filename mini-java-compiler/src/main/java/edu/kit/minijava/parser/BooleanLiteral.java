@@ -11,7 +11,7 @@ public final class BooleanLiteral extends Expression {
     public String toString() {
         return "BooleanLiteral(" + this.value + ")";
     }
-    
+
     @Override
     public void accept(NodeVisitor visitor) {
         visitor.visit(this);

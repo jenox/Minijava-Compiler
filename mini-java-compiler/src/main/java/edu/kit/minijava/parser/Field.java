@@ -16,17 +16,17 @@ public final class Field extends ClassMember {
     public String toString() {
         return "Field(" + this.type + ", " + this.name + ")";
     }
-    
+
     @Override
     public void accept(NodeVisitor visitor) {
         visitor.visit(this);
     }
-    
+
     @Override
     public String getName() {
         return name;
     }
-    
+
     @Override
     public boolean isMethod() {
         return false;

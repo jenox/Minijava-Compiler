@@ -5,7 +5,7 @@ public final class IntegerType extends BasicType {
     public String toString() {
         return "IntegerType";
     }
-    
+
     @Override
     public void accept(NodeVisitor visitor) {
         visitor.visit(this);

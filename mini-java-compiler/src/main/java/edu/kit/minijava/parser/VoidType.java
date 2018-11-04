@@ -5,7 +5,7 @@ public final class VoidType extends BasicType {
     public String toString() {
         return "VoidType";
     }
-    
+
     @Override
     public void accept(NodeVisitor visitor) {
         visitor.visit(this);
