@@ -224,9 +224,13 @@ public class PrettyPrinter implements ASTVisitor {
     public void visit(IdentifierAndArgumentsExpression identifierAndArgumentsExpression) {
         print(identifierAndArgumentsExpression.identifier);
         printLeftPar();
+        String separator = "";
         for (Expression exp : identifierAndArgumentsExpression.arguments) {
+            // Separate argument list with commas after the first arguments
+            print(separator);
+            separator = ", ";
+
             exp.accept(this);
-            print(", "); //seperator
         }
         printRightPar();
     }
@@ -383,9 +387,10 @@ public class PrettyPrinter implements ASTVisitor {
         //printWhitespace();
         print(method.name + "(");
         if (!method.parameters.isEmpty()) {
-            method.parameters.get(0).accept(this);
-            for (int i = 1; i < method.parameters.size(); i++) {
-                print(", ");
+            String separator = "";
+            for (int i = 0; i < method.parameters.size(); i++) {
+                this.print(separator);
+                separator = ", ";
                 method.parameters.get(i).accept(this);
             }
         }
