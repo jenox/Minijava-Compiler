@@ -6,10 +6,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Stack;
 
-import edu.kit.minijava.lexer.Lexer;
-import edu.kit.minijava.lexer.LexerException;
-import edu.kit.minijava.lexer.Token;
-import edu.kit.minijava.lexer.TokenType;
+import edu.kit.minijava.lexer.*;
+import edu.kit.minijava.ast.*;
 
 public final class Parser {
 
