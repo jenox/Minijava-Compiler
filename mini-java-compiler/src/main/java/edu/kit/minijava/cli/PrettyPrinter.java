@@ -385,6 +385,9 @@ public class PrettyPrinter implements ASTVisitor {
 
     @Override
     public void visit(Method method) {
+        print("public ");
+        method.returnType.accept(this);
+        print(" ");
         print(method.name + "(");
         if (!method.parameters.isEmpty()) {
             String separator = "";
