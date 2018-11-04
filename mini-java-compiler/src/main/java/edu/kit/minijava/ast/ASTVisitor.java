@@ -1,102 +1,56 @@
 package edu.kit.minijava.ast;
 
 public interface ASTVisitor {
+    void visit(Program program);
+    void visit(ClassDeclaration classDeclaration);
+    void visit(Field field);
+    void visit(MainMethod mainMethod);
+    void visit(Method method);
+    void visit(Parameter parameter);
 
-    public void visit(AddExpression addExpression);
+    void visit(Type type);
+    void visit(IntegerType type);
+    void visit(VoidType type);
+    void visit(BooleanType type);
+    void visit(UserDefinedType type);
 
-    public void visit(ArrayAccess arrayAccess);
+    void visit(Block block);
+    void visit(EmptyStatement statement);
+    void visit(IfStatement statement);
+    void visit(IfElseStatement statement);
+    void visit(ExpressionStatement statement);
+    void visit(WhileStatement statement);
+    void visit(ReturnNoValueStatement statement);
+    void visit(ReturnValueStatement statement);
+    void visit(LocalVariableDeclarationStatement statement);
+    void visit(LocalVariableInitializationStatement statement);
 
-    public void visit(AssignmentExpression assignmentExpression);
-
-    public void visit(Block block);
-
-    public void visit(BooleanLiteral booleanLiteral);
-
-    public void visit(BooleanType booleanType);
-
-    public void visit(ClassDeclaration classDeclaration);
-
-    public void visit(DivideExpression divideExpression);
-
-    public void visit(EmptyStatement emptyStatement);
-
-    public void visit(EqualToExpression equalToExpression);
-
-    public void visit(ExpressionStatement expressionStatement);
-
-    public void visit(Field field);
-
-    public void visit(FieldAccess fieldAccess);
-
-    public void visit(GreaterThanExpression greaterThanExpression);
-
-    public void visit(GreaterThanOrEqualToExpression greaterThanOrEqualToExpression);
-
-    public void visit(IdentifierAndArgumentsExpression identifierAndArgumentsExpression);
-
-    public void visit(IdentifierExpression identifierExpression);
-
-    public void visit(IfElseStatement ifElseStatement);
-
-    public void visit(IfStatement ifStatement);
-
-    public void visit(IntegerLiteral integerLiteral);
-
-    public void visit(IntegerType integerType);
-
-    public void visit(LessThanExpression lessThanExpression);
-
-    public void visit(LessThanOrEqualToExpression lessThanOrEqualToExpression);
-
-    public void visit(LocalVariableDeclarationStatement localVariableDeclarationStatement);
-
-    public void visit(LocalVariableInitializationStatement localVariableInitializationStatement);
-
-    public void visit(LogicalAndExpression logicalAndExpression);
-
-    public void visit(LogicalNotExpression logicalNotExpression);
-
-    public void visit(LogicalOrExpression logicalOrExpression);
-
-    public void visit(MainMethod mainMethod);
-
-    public void visit(Method method);
-
-    public void visit(MethodInvocation methodInvocation);
-
-    public void visit(ModuloExpression moduloExpression);
-
-    public void visit(MultiplyExpression multiplyExpression);
-
-    public void visit(NegateExpression negateExpression);
-
-    public void visit(NewArrayExpression newArrayExpression);
-
-    public void visit(NewObjectExpression newObjectExpression);
-
-    public void visit(NotEqualToExpression notEqualToExpression);
-
-    public void visit(NullLiteral nullLiteral);
-
-    public void visit(Parameter parameter);
-
-    public void visit(PostfixExpression postfixExpression);
-
-    public void visit(Program program);
-
-    public void visit(ReturnNoValueStatement returnNoValueStatement);
-
-    public void visit(ReturnValueStatement returnValueStatement);
-
-    public void visit(SubtractExpression subtractExpression);
-
-    public void visit(ThisExpression thisExpression);
-
-    public void visit(Type type);
-
-    public void visit(UserDefinedType userDefinedType);
-
-    public void visit(VoidType voidType);
-
-    public void visit(WhileStatement whileStatement);
+    void visit(AssignmentExpression expression);
+    void visit(LogicalOrExpression expression);
+    void visit(LogicalAndExpression expression);
+    void visit(LogicalNotExpression expression);
+    void visit(EqualToExpression expression);
+    void visit(NotEqualToExpression expression);
+    void visit(LessThanExpression expression);
+    void visit(LessThanOrEqualToExpression expression);
+    void visit(GreaterThanExpression expression);
+    void visit(GreaterThanOrEqualToExpression expression);
+    void visit(AddExpression expression);
+    void visit(SubtractExpression expression);
+    void visit(MultiplyExpression expression);
+    void visit(DivideExpression expression);
+    void visit(ModuloExpression expression);
+    void visit(NegateExpression expression);
+    void visit(PostfixExpression expression);
+    void visit(MethodInvocation operation);
+    void visit(FieldAccess operation);
+    void visit(ArrayAccess operation);
+    void visit(NullLiteral literal);
+    void visit(BooleanLiteral literal);
+    void visit(IntegerLiteral literal);
+    void visit(IdentifierExpression expression);
+    void visit(IdentifierAndArgumentsExpression expression);
+    void visit(ThisExpression expression);
+    void visit(NewObjectExpression expression);
+    void visit(NewArrayExpression expression);
 }
