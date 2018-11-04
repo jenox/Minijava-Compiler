@@ -17,7 +17,10 @@ public class CommandLineInterface {
                 command = new LextestCommand();
                 break;
             case "--parsetest":
-                command = new ParserCommand();
+                command = new ParserCommand(false);
+                break;
+            case "--asttest":
+                command = new ParserCommand(true);
                 break;
             default:
                 printErrorAndExit();

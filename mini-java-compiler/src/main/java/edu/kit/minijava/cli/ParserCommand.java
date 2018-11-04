@@ -11,6 +11,12 @@ import edu.kit.minijava.ast.*;
 
 public class ParserCommand extends Command {
 
+    ParserCommand(boolean printAST) {
+        this.printAST = printAST;
+    }
+
+    private final boolean printAST;
+
     @Override
     public int execute(String path) {
         try {
@@ -25,8 +31,12 @@ public class ParserCommand extends Command {
                 throw new AssertionError();
             }
 
-            // PrettyPrinter printer = new PrettyPrinter(program);
-            // printer.print();
+            if (this.printAST) {
+                PrettyPrinter printer = new PrettyPrinter();
+                String formatted = printer.format(program);
+
+                System.out.print(formatted);
+            }
 
             return 0;
         }
