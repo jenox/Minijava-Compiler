@@ -339,14 +339,14 @@ public class Lexer {
 
         while (!this.hasReachedEndOfInput()) {
             char character = this.advance();
-            if (character == '*') {
-                readEndOfCommentPrefix = true;
-            } else if (character == '/' && readEndOfCommentPrefix) {
+
+            if (character == '/' && readEndOfCommentPrefix) {
                 return;
             } else {
-                readEndOfCommentPrefix = false;
+                readEndOfCommentPrefix = (character == '*');
             }
         }
+        // We read all the way to the end of the input without finding the end of comment sequence
         throw this.fail("Encountered unterminated comment");
     }
 
