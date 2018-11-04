@@ -20,7 +20,7 @@ public class PrettyPrinter implements ASTVisitor {
         this.builder.setLength(0);
 
         this.visit(program);
-
+      
         return this.builder.toString();
     }
 
@@ -523,6 +523,7 @@ public class PrettyPrinter implements ASTVisitor {
             declaration.accept(this);
         }
 
+        newLine();
     }
 
     @Override
