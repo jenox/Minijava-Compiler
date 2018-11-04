@@ -8,13 +8,13 @@ public class Lexer {
     // MARK: - Initialization
 
     public Lexer(InputStreamReader reader) throws IOException {
-        this.reader = reader;
+        this.reader = new BufferedReader(reader);
         this.currentCharacter = this.reader.read();
     }
 
     // MARK: - State
 
-    private final InputStreamReader reader;
+    private final BufferedReader reader;
     private int currentCharacter;
 
     private int currentRow = 0;
