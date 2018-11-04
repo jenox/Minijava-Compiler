@@ -19,7 +19,7 @@ public class CommandLineInterface {
             case "--parsetest":
                 command = new ParserCommand(false);
                 break;
-            case "--asttest":
+            case "--print-ast":
                 command = new ParserCommand(true);
                 break;
             default:
