@@ -1,6 +1,7 @@
 package edu.kit.minijava.lexer;
 
 import java.io.*;
+import java.util.BitSet;
 import java.util.function.*;
 
 public class Lexer {
@@ -8,13 +9,13 @@ public class Lexer {
     // MARK: - Initialization
 
     public Lexer(InputStreamReader reader) throws IOException {
-        this.reader = reader;
+        this.reader = new BufferedReader(reader);
         this.currentCharacter = this.reader.read();
     }
 
     // MARK: - State
 
-    private final InputStreamReader reader;
+    private final BufferedReader reader;
     private int currentCharacter;
 
     private int currentRow = 0;
@@ -26,10 +27,6 @@ public class Lexer {
     }
 
     private char getCurrentCharacter() {
-        if (this.hasReachedEndOfInput()) {
-            throw new IllegalStateException();
-        }
-
         return (char)this.currentCharacter;
     }
 
@@ -61,46 +58,67 @@ public class Lexer {
     }
 
     private String advanceWhile(BooleanSupplier predicate) throws IOException {
-        return this.advanceWhile(predicate, s -> true);
-    }
+        StringBuilder buffer = new StringBuilder();
 
-    private String advanceWhile(BooleanSupplier predicate, Predicate<StringBuffer> stringPredicate) throws IOException {
-        StringBuffer buffer = new StringBuffer();
-
-        while (!this.hasReachedEndOfInput() && predicate.getAsBoolean() && stringPredicate.test(buffer)) {
+        while (!this.hasReachedEndOfInput() && predicate.getAsBoolean()) {
             buffer.append(this.advance());
         }
 
         return buffer.toString();
     }
 
+
+    private void skipWhile(BooleanSupplier predicate) throws IOException {
+        while (!this.hasReachedEndOfInput() && predicate.getAsBoolean()) {
+            this.advance();
+        }
+    }
+
     // MARK: - Helpers
+
+    private static BitSet buildBitSet(String characters) {
+        final BitSet result = new BitSet();
+        for (int i = 0; i < characters.length(); i++) {
+            result.set(characters.charAt(i));
+        }
+        return result;
+    }
+
+    private static final BitSet NUMERIC_BITSET
+            = buildBitSet("0123456789");
+    private static final BitSet ALPHANUMERIC_BITSET
+            = buildBitSet("_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789");
+    private static final BitSet SEPARATOR_BITSET
+            = buildBitSet("(){}[];,.");
+    private static final BitSet OPERATOR_BITSET
+            = buildBitSet("!=*+-/:<>?%&^~|");
+
 
     private boolean isCurrentCharacterNumeric() {
         if (this.hasReachedEndOfInput()) return false;
 
         char character = this.getCurrentCharacter();
-
-        return "0123456789".indexOf(character) != -1;
+        return NUMERIC_BITSET.get(character);
     }
 
     private boolean isCurrentCharacterAlphanumeric() {
         if (this.hasReachedEndOfInput()) return false;
 
         char character = this.getCurrentCharacter();
-
-        return "_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".indexOf(character) != -1;
+        return ALPHANUMERIC_BITSET.get(character);
     }
 
     private boolean isCurrentCharacterWhitespace() {
         if (this.hasReachedEndOfInput()) return false;
 
         switch (this.getCurrentCharacter()) {
-            case ' ': return true;
-            case '\t': return true;
-            case '\r': return true;
-            case '\n': return true;
-            default: return false;
+            case ' ':
+            case '\t':
+            case '\r':
+            case '\n':
+                return true;
+            default:
+                return false;
         }
     }
 
@@ -108,16 +126,14 @@ public class Lexer {
         if (this.hasReachedEndOfInput()) return false;
 
         char character = this.getCurrentCharacter();
-
-        return "(){}[];,.".indexOf(character) != -1;
+        return SEPARATOR_BITSET.get(character);
     }
 
     private boolean isCurrentCharacterOperatorSymbol() {
         if (this.hasReachedEndOfInput()) return false;
 
         char character = this.getCurrentCharacter();
-
-        return "!=*+-/:<>?%&^~|".indexOf(character) != -1;
+        return OPERATOR_BITSET.get(character);
     }
 
     // MARK: - Fetching Tokens
@@ -135,7 +151,7 @@ public class Lexer {
     }
 
     private Token nextNullableToken() throws IOException, LexerException {
-        this.advanceWhile(this::isCurrentCharacterWhitespace);
+        this.skipWhile(this::isCurrentCharacterWhitespace);
 
         if (this.hasReachedEndOfInput()) {
             return null;
@@ -172,42 +188,19 @@ public class Lexer {
                throw this.fail("Invalid separator '" + text + "'");
            }
         } else if (this.isCurrentCharacterOperatorSymbol()) {
-            String text = String.valueOf(this.advance());
 
-            // Append as long as result is valid prefix or start of comment.
-            while (!this.hasReachedEndOfInput() && !text.endsWith("/*")) {
-                if (!(text + this.getCurrentCharacter()).endsWith("/*")) {
-                    if (!this.isPrefixOfValidOperator(text + this.getCurrentCharacter())) {
-                        break;
-                    }
-                }
+            String operator = this.lexOperator();
 
-                text += this.advance();
+            if (operator == null) {
+                return null;
             }
 
-            // If comment was started, read till end of comment.
-            if (text.endsWith("/*")) {
-                text = text.substring(0, text.length() - 2);
-
-                String comment = this.advanceWhile(() -> true, s -> !this.stringBufferEndsWithEndOfCommentSequence(s));
-
-                if (!comment.endsWith("*/")) {
-                    throw this.fail("Encountered unterminated comment");
-                }
-
-                // If there was an operator before start of comment, fallthrough to return operator as token.
-                if (text.isEmpty()) {
-                    return null;
-                }
+            TokenType operatorType = this.operatorFromString(operator);
+            if (operatorType == null) {
+                throw this.fail("Invalid operator  '" + operator + "'");
             }
 
-            TokenType operator = this.operatorFromString(text);
-
-            if (operator != null) {
-                return new Token(operator, text, location);
-            } else {
-                throw this.fail("Invalid operator '" + text + "'");
-            }
+            return new Token(operatorType, operator, location);
         } else {
             String name = Character.getName(this.getCurrentCharacter());
 
@@ -215,35 +208,137 @@ public class Lexer {
         }
     }
 
-    private boolean stringBufferEndsWithEndOfCommentSequence(StringBuffer buffer) {
+    private String lexOperator() throws IOException, LexerException {
+        char operatorStart = this.advance();
 
-        // Building an explicit string object and calling `endsWith(_)` is too slow.
-        if (buffer.length() < 2) {
-            return false;
-        } else if (buffer.charAt(buffer.length() - 2) != '*') {
-            return false;
-        } else if (buffer.charAt(buffer.length() - 1) != '/') {
-            return false;
-        }  else {
-            return true;
+        switch (operatorStart) {
+            case '=':
+                switch (this.getCurrentCharacter()) {
+                    case '=':this.advance(); return "==";
+                    default: return "=";
+                }
+
+            case '!':
+                switch (this.getCurrentCharacter()) {
+                    case '=': this.advance(); return "!=";
+                    default: return "!";
+                }
+
+            case '<':
+                switch (this.getCurrentCharacter()) {
+                    case '=': this.advance(); return "<=";
+                    case '<':
+                        this.advance();
+                        switch (this.getCurrentCharacter()) {
+                            case '=': this.advance(); return "<<=";
+                            default: return "<<";
+                        }
+                    default: return "<";
+                }
+
+            case '>':
+                switch (this.getCurrentCharacter()) {
+                    case '=': this.advance(); return ">=";
+                    case '>':
+                        this.advance();
+                        switch (this.getCurrentCharacter()) {
+                            case '=': this.advance(); return ">>=";
+                            case '>':
+                                this.advance();
+                                switch (this.getCurrentCharacter()) {
+                                    case '=': this.advance(); return ">>>=";
+                                    default: return ">>>";
+                                }
+                            default: return ">>";
+                        }
+                    default: return ">";
+                }
+
+            case '+':
+                switch (this.getCurrentCharacter()) {
+                    case '=': this.advance(); return "+=";
+                    case '+': this.advance(); return "++";
+                    default: return "+";
+                }
+
+            case '-':
+                switch (this.getCurrentCharacter()) {
+                    case '=': this.advance(); return "-=";
+                    case '-': this.advance(); return "--";
+                    default: return "-";
+                }
+
+            case '*':
+                switch (this.getCurrentCharacter()) {
+                    case '=': this.advance(); return "*=";
+                    default: return "*";
+
+                }
+
+            case '/':
+                switch (this.getCurrentCharacter()) {
+                    case '=': this.advance(); return "/=";
+                    case '*':
+                        // Skip second start symbol for start of comment sequence
+                        this.advance();
+                        this.lexComment();
+
+                        // Skip to the next token
+                        return null;
+
+                    default: return "/";
+                }
+
+            case '%':
+                switch (this.getCurrentCharacter()) {
+                    case '=': this.advance(); return "%=";
+                    default: return "%";
+                }
+
+            case '|':
+                switch (this.getCurrentCharacter()) {
+                    case '=': this.advance(); return "|=";
+                    case '|': this.advance(); return "||";
+                    default: return "|";
+                }
+
+            case '?': return "?";
+            case ':': return ":";
+            case '~': return "~";
+
+            case '&':
+                switch (this.getCurrentCharacter()) {
+                    case '=': this.advance(); return "&=";
+                    case '&': this.advance(); return "&&";
+                    default: return "&";
+                }
+
+            case '^':
+                switch (this.getCurrentCharacter()) {
+                    case '=': this.advance(); return "^=";
+                    default: return "^";
+
+                }
+
+            default: throw this.fail("Invalid operator prefix '" + operatorStart + "'");
         }
+
     }
 
-    private boolean isPrefixOfValidOperator(String text) {
-        String[] operators = {
-                "=", "==", "!=", "<", "<=", ">", ">=",
-                "+", "+=", "-", "-=", "*", "*=", "/", "/=", "%", "%=", "++", "--",
-                "!", "||", "&&", "?", ":",
-                "~", "&", "&=", "|", "|=", "^", "^=", "<<", "<<=", ">>", ">>=", ">>>", ">>>="
-        };
+    private void lexComment() throws IOException, LexerException {
+        boolean readEndOfCommentPrefix = false;
 
-        for (String operator : operators) {
-            if (operator.startsWith(text)) {
-                return true;
+        while (!this.hasReachedEndOfInput()) {
+            char character = this.advance();
+
+            if (character == '/' && readEndOfCommentPrefix) {
+                return;
+            } else {
+                readEndOfCommentPrefix = (character == '*');
             }
         }
-
-        return false;
+        // We read all the way to the end of the input without finding the end of comment sequence
+        throw this.fail("Encountered unterminated comment");
     }
 
     // MARK: - Exception Management
