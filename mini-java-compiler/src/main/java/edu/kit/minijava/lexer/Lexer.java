@@ -69,7 +69,7 @@ public class Lexer {
 
 
     private void skipWhile(BooleanSupplier predicate) throws IOException {
-        while(!this.hasReachedEndOfInput() && predicate.getAsBoolean()) {
+        while (!this.hasReachedEndOfInput() && predicate.getAsBoolean()) {
             this.advance();
         }
     }
@@ -211,25 +211,25 @@ public class Lexer {
     private String lexOperator() throws IOException, LexerException {
         char operatorStart = this.advance();
 
-        switch(operatorStart) {
+        switch (operatorStart) {
             case '=':
-                switch(this.getCurrentCharacter()) {
+                switch (this.getCurrentCharacter()) {
                     case '=':this.advance(); return "==";
                     default: return "=";
                 }
 
             case '!':
-                switch(this.getCurrentCharacter()) {
+                switch (this.getCurrentCharacter()) {
                     case '=': this.advance(); return "!=";
                     default: return "!";
                 }
 
             case '<':
-                switch(this.getCurrentCharacter()) {
+                switch (this.getCurrentCharacter()) {
                     case '=': this.advance(); return "<=";
                     case '<':
                         this.advance();
-                        switch(this.getCurrentCharacter()) {
+                        switch (this.getCurrentCharacter()) {
                             case '=': this.advance(); return "<<=";
                             default: return "<<";
                         }
@@ -237,15 +237,15 @@ public class Lexer {
                 }
 
             case '>':
-                switch(this.getCurrentCharacter()) {
+                switch (this.getCurrentCharacter()) {
                     case '=': this.advance(); return ">=";
                     case '>':
                         this.advance();
-                        switch(this.getCurrentCharacter()) {
+                        switch (this.getCurrentCharacter()) {
                             case '=': this.advance(); return ">>=";
                             case '>':
                                 this.advance();
-                                switch(this.getCurrentCharacter()) {
+                                switch (this.getCurrentCharacter()) {
                                     case '=': this.advance(); return ">>>=";
                                     default: return ">>>";
                                 }
@@ -255,28 +255,28 @@ public class Lexer {
                 }
 
             case '+':
-                switch(this.getCurrentCharacter()) {
+                switch (this.getCurrentCharacter()) {
                     case '=': this.advance(); return "+=";
                     case '+': this.advance(); return "++";
                     default: return "+";
                 }
 
             case '-':
-                switch(this.getCurrentCharacter()) {
+                switch (this.getCurrentCharacter()) {
                     case '=': this.advance(); return "-=";
                     case '-': this.advance(); return "--";
                     default: return "-";
                 }
 
             case '*':
-                switch(this.getCurrentCharacter()) {
+                switch (this.getCurrentCharacter()) {
                     case '=': this.advance(); return "*=";
                     default: return "*";
 
                 }
 
             case '/':
-                switch(this.getCurrentCharacter()) {
+                switch (this.getCurrentCharacter()) {
                     case '=': this.advance(); return "/=";
                     case '*':
                         // Skip second start symbol for start of comment sequence
@@ -290,13 +290,13 @@ public class Lexer {
                 }
 
             case '%':
-                switch(this.getCurrentCharacter()) {
+                switch (this.getCurrentCharacter()) {
                     case '=': this.advance(); return "%=";
                     default: return "%";
                 }
 
             case '|':
-                switch(this.getCurrentCharacter()) {
+                switch (this.getCurrentCharacter()) {
                     case '=': this.advance(); return "|=";
                     case '|': this.advance(); return "||";
                     default: return "|";
@@ -307,14 +307,14 @@ public class Lexer {
             case '~': return "~";
 
             case '&':
-                switch(this.getCurrentCharacter()) {
+                switch (this.getCurrentCharacter()) {
                     case '=': this.advance(); return "&=";
                     case '&': this.advance(); return "&&";
                     default: return "&";
                 }
 
             case '^':
-                switch(this.getCurrentCharacter()) {
+                switch (this.getCurrentCharacter()) {
                     case '=': this.advance(); return "^=";
                     default: return "^";
 
