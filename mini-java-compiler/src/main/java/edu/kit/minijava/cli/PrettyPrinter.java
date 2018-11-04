@@ -537,7 +537,7 @@ public class PrettyPrinter implements ASTVisitor {
 
     @Override
     public void visit(ReturnValueStatement returnValueStatement) {
-        print("return");
+        print("return ");
         returnValueStatement.returnValue.accept(this);
         print(";");
     }
