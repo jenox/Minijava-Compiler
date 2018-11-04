@@ -178,6 +178,7 @@ public class PrettyPrinter implements ASTVisitor {
 
     @Override
     public void visit(Field field) {
+        print("public ");
         field.type.accept(this);
         print(" "); //whitespace
         print(field.name);
