@@ -1,6 +1,7 @@
 package edu.kit.minijava.lexer;
 
 import java.io.*;
+import java.util.BitSet;
 import java.util.function.*;
 
 public class Lexer {
@@ -76,31 +77,49 @@ public class Lexer {
 
     // MARK: - Helpers
 
+    private static BitSet buildBitSet(String characters) {
+        final BitSet result = new BitSet();
+        for (int i = 0; i < characters.length(); i++) {
+            result.set(characters.charAt(i));
+        }
+        return result;
+    }
+
+    private static final BitSet NUMERIC_BITSET
+            = buildBitSet("0123456789");
+    private static final BitSet ALPHANUMERIC_BITSET
+            = buildBitSet("_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789");
+    private static final BitSet SEPARATOR_BITSET
+            = buildBitSet("(){}[];,.");
+    private static final BitSet OPERATOR_BITSET
+            = buildBitSet("!=*+-/:<>?%&^~|");
+
+
     private boolean isCurrentCharacterNumeric() {
         if (this.hasReachedEndOfInput()) return false;
 
         char character = this.getCurrentCharacter();
-
-        return "0123456789".indexOf(character) != -1;
+        return NUMERIC_BITSET.get(character);
     }
 
     private boolean isCurrentCharacterAlphanumeric() {
         if (this.hasReachedEndOfInput()) return false;
 
         char character = this.getCurrentCharacter();
-
-        return "_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".indexOf(character) != -1;
+        return ALPHANUMERIC_BITSET.get(character);
     }
 
     private boolean isCurrentCharacterWhitespace() {
         if (this.hasReachedEndOfInput()) return false;
 
         switch (this.getCurrentCharacter()) {
-            case ' ': return true;
-            case '\t': return true;
-            case '\r': return true;
-            case '\n': return true;
-            default: return false;
+            case ' ':
+            case '\t':
+            case '\r':
+            case '\n':
+                return true;
+            default:
+                return false;
         }
     }
 
@@ -108,16 +127,14 @@ public class Lexer {
         if (this.hasReachedEndOfInput()) return false;
 
         char character = this.getCurrentCharacter();
-
-        return "(){}[];,.".indexOf(character) != -1;
+        return SEPARATOR_BITSET.get(character);
     }
 
     private boolean isCurrentCharacterOperatorSymbol() {
         if (this.hasReachedEndOfInput()) return false;
 
         char character = this.getCurrentCharacter();
-
-        return "!=*+-/:<>?%&^~|".indexOf(character) != -1;
+        return OPERATOR_BITSET.get(character);
     }
 
     // MARK: - Fetching Tokens
