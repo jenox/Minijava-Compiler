@@ -67,15 +67,6 @@ public class Lexer {
         return buffer.toString();
     }
 
-    private String advanceWhile(BooleanSupplier predicate, Predicate<StringBuilder> stringPredicate) throws IOException {
-        StringBuilder buffer = new StringBuilder();
-
-        while (!this.hasReachedEndOfInput() && predicate.getAsBoolean() && stringPredicate.test(buffer)) {
-            buffer.append(this.advance());
-        }
-
-        return buffer.toString();
-    }
 
     private void skipWhile(BooleanSupplier predicate) throws IOException {
         while(!this.hasReachedEndOfInput() && predicate.getAsBoolean()) {
@@ -348,20 +339,6 @@ public class Lexer {
         }
         // We read all the way to the end of the input without finding the end of comment sequence
         throw this.fail("Encountered unterminated comment");
-    }
-
-    private boolean stringBufferEndsWithEndOfCommentSequence(StringBuilder buffer) {
-
-        // Building an explicit string object and calling `endsWith(_)` is too slow.
-        if (buffer.length() < 2) {
-            return false;
-        } else if (buffer.charAt(buffer.length() - 2) != '*') {
-            return false;
-        } else if (buffer.charAt(buffer.length() - 1) != '/') {
-            return false;
-        }  else {
-            return true;
-        }
     }
 
     // MARK: - Exception Management
