@@ -17,11 +17,11 @@ public class PrettyPrinter implements ASTVisitor {
     }
 
     public String format(Program program) {
-        this.buffer.setLength(0);
+        this.builder.setLength(0);
 
         this.visit(program);
 
-        return this.buffer.toString();
+        return this.builder.toString();
     }
 
     @Override
@@ -594,38 +594,38 @@ public class PrettyPrinter implements ASTVisitor {
 
     // MARK: - Output
 
-    private final StringBuffer buffer = new StringBuffer();
+    private final StringBuilder builder = new StringBuilder();
 
     /**
      * prints depth number of times tab without linebreak at end
      */
     private void printWhitespace() {
         for (int i = 0; i < depth; i++) {
-            this.buffer.append(INDENT);
+            this.builder.append(INDENT);
         }
     }
 
     private void print(String s) {
-        this.buffer.append(s);
+        this.builder.append(s);
     }
 
     private void printLeftPar() {
-        this.buffer.append("(");
+        this.builder.append("(");
     }
 
     private void printRightPar() {
-        this.buffer.append(")");
+        this.builder.append(")");
     }
 
     private void printLeftBrace() {
-        this.buffer.append("{");
+        this.builder.append("{");
     }
 
     private void printRightBrace() {
-        this.buffer.append("}");
+        this.builder.append("}");
     }
 
     private void newLine() {
-        this.buffer.append("\n");
+        this.builder.append("\n");
     }
 }
