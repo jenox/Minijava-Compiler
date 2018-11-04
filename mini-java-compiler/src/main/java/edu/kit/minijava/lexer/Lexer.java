@@ -81,6 +81,12 @@ public class Lexer {
         return buffer.toString();
     }
 
+    private void skipWhile(BooleanSupplier predicate) throws IOException {
+        while(!this.hasReachedEndOfInput() && predicate.getAsBoolean()) {
+            this.advance();
+        }
+    }
+
     // MARK: - Helpers
 
     private static BitSet buildBitSet(String characters) {
@@ -158,7 +164,7 @@ public class Lexer {
     }
 
     private Token nextNullableToken() throws IOException, LexerException {
-        this.advanceWhile(this::isCurrentCharacterWhitespace);
+        this.skipWhile(this::isCurrentCharacterWhitespace);
 
         if (this.hasReachedEndOfInput()) {
             return null;
