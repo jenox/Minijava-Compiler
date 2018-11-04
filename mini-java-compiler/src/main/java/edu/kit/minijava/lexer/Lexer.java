@@ -364,23 +364,6 @@ public class Lexer {
         }
     }
 
-    private boolean isPrefixOfValidOperator(String text) {
-        String[] operators = {
-                "=", "==", "!=", "<", "<=", ">", ">=",
-                "+", "+=", "-", "-=", "*", "*=", "/", "/=", "%", "%=", "++", "--",
-                "!", "||", "&&", "?", ":",
-                "~", "&", "&=", "|", "|=", "^", "^=", "<<", "<<=", ">>", ">>=", ">>>", ">>>="
-        };
-
-        for (String operator : operators) {
-            if (operator.startsWith(text)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     // MARK: - Exception Management
 
     private LexerException previousException = null;
