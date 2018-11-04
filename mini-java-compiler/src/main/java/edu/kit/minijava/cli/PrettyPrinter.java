@@ -384,7 +384,6 @@ public class PrettyPrinter implements ASTVisitor {
 
     @Override
     public void visit(Method method) {
-        //printWhitespace();
         print(method.name + "(");
         if (!method.parameters.isEmpty()) {
             String separator = "";
@@ -401,7 +400,7 @@ public class PrettyPrinter implements ASTVisitor {
 
     @Override
     public void visit(MethodInvocation methodInvocation) {
-        printWhitespace();
+        print(".");
         print(methodInvocation.methodName + "(");
         if (!methodInvocation.arguments.isEmpty()) {
             String separator = "";
