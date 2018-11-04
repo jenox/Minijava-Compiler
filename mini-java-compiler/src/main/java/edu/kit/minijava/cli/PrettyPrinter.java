@@ -7,12 +7,13 @@ import edu.kit.minijava.ast.*;
 public class PrettyPrinter implements ASTVisitor {
 
     private int depth;
-    private Program program;
-
+    private int expressionStatementDepth;
+    
     private static final String INDENT = "\t";
 
     public PrettyPrinter() {
         depth = 0;
+        expressionStatementDepth = 0;
     }
 
     public String format(Program program) {
@@ -25,11 +26,17 @@ public class PrettyPrinter implements ASTVisitor {
 
     @Override
     public void visit(AddExpression addExpression) {
+        if (expressionStatementDepth > 0) {
         printLeftPar();
+        }
+        expressionStatementDepth++;
         addExpression.left.accept(this);
         print(" + ");
         addExpression.right.accept(this);
+        expressionStatementDepth--;
+        if (expressionStatementDepth > 0) {
         printRightPar();
+        }
     }
 
     @Override
@@ -41,11 +48,17 @@ public class PrettyPrinter implements ASTVisitor {
 
     @Override
     public void visit(AssignmentExpression assignmentExpression) {
+        if (expressionStatementDepth > 0) {
         printLeftPar();
+        }
+        expressionStatementDepth++;
         assignmentExpression.left.accept(this);
         print(" = ");
         assignmentExpression.right.accept(this);
+        expressionStatementDepth--;
+        if (expressionStatementDepth > 0) {
         printRightPar();
+        }
     }
 
     @Override
@@ -125,10 +138,17 @@ public class PrettyPrinter implements ASTVisitor {
 
     @Override
     public void visit(DivideExpression divideExpression) {
-        printWhitespace();
+        if (expressionStatementDepth > 0) {
+        printLeftPar();
+        }
+        expressionStatementDepth++;
         divideExpression.left.accept(this);
         print(" / ");
         divideExpression.right.accept(this);
+        expressionStatementDepth--;
+        if (expressionStatementDepth > 0) {
+            printRightPar();
+        }
     }
 
     @Override
@@ -138,16 +158,23 @@ public class PrettyPrinter implements ASTVisitor {
 
     @Override
     public void visit(EqualToExpression equalToExpression) {
+        if (expressionStatementDepth > 0) {
         printLeftPar();
+        }
+        expressionStatementDepth++;
         equalToExpression.left.accept(this);
         print(" == ");
         equalToExpression.right.accept(this);
+        expressionStatementDepth--;
+        if (expressionStatementDepth > 0) {
         printRightPar();
+        }
     }
 
     @Override
     public void visit(ExpressionStatement expressionStatement) {
         expressionStatement.expression.accept(this);
+        print(";");
     }
 
     @Override
@@ -161,25 +188,37 @@ public class PrettyPrinter implements ASTVisitor {
 
     @Override
     public void visit(FieldAccess fieldAccess) {
-        print(fieldAccess.fieldName + ".");
+        print("." + fieldAccess.fieldName);
     }
 
     @Override
     public void visit(GreaterThanExpression greaterThanExpression) {
+        if (expressionStatementDepth > 0) {
         printLeftPar();
+        }
+        expressionStatementDepth++;
         greaterThanExpression.left.accept(this);
         print(" > ");
         greaterThanExpression.right.accept(this);
+        expressionStatementDepth--;
+        if (expressionStatementDepth > 0) {
         printRightPar();
+        }
     }
 
     @Override
     public void visit(GreaterThanOrEqualToExpression greaterThanOrEqualToExpression) {
+        if (expressionStatementDepth > 0) {
         printLeftPar();
+        }
+        expressionStatementDepth++;
         greaterThanOrEqualToExpression.left.accept(this);
         print(" >= ");
         greaterThanOrEqualToExpression.right.accept(this);
+        expressionStatementDepth--;
+        if (expressionStatementDepth > 0) {
         printRightPar();
+        }
     }
 
     @Override
@@ -247,26 +286,38 @@ public class PrettyPrinter implements ASTVisitor {
 
     @Override
     public void visit(LessThanExpression lessThanExpression) {
+        if (expressionStatementDepth > 0) {
         printLeftPar();
+        }
+        expressionStatementDepth++;
         lessThanExpression.left.accept(this);
         print(" < ");
         lessThanExpression.right.accept(this);
+        expressionStatementDepth--;
+        if (expressionStatementDepth > 0) {
         printRightPar();
+        }
     }
 
     @Override
     public void visit(LessThanOrEqualToExpression lessThanOrEqualToExpression) {
+        if (expressionStatementDepth > 0) {
         printLeftPar();
+        }
+        expressionStatementDepth++;
         lessThanOrEqualToExpression.left.accept(this);
         print(" <= ");
         lessThanOrEqualToExpression.right.accept(this);
+        expressionStatementDepth--;
+        if (expressionStatementDepth > 0) {
         printRightPar();
+        }
     }
 
     @Override
     public void visit(LocalVariableDeclarationStatement localVariableDeclarationStatement) {
         localVariableDeclarationStatement.type.accept(this);
-        print(" " + localVariableDeclarationStatement.name + ";\n");
+        print(" " + localVariableDeclarationStatement.name + ";");
     }
 
     @Override
@@ -279,27 +330,46 @@ public class PrettyPrinter implements ASTVisitor {
 
     @Override
     public void visit(LogicalAndExpression logicalAndExpression) {
+        if (expressionStatementDepth > 0) {
         printLeftPar();
+        }
+        expressionStatementDepth++;
         logicalAndExpression.left.accept(this);
         print(" && ");
         logicalAndExpression.right.accept(this);
+        expressionStatementDepth--;
+        if (expressionStatementDepth > 0) {
         printRightPar();
+        }
     }
 
     @Override
     public void visit(LogicalNotExpression logicalNotExpression) {
-        print("(!");
+        if (expressionStatementDepth > 0) {
+        printLeftPar();
+        }
+        expressionStatementDepth++;
+        print("!");
         logicalNotExpression.other.accept(this);
+        expressionStatementDepth--;
+        if (expressionStatementDepth > 0) {
         printRightPar();
+        }
     }
 
     @Override
     public void visit(LogicalOrExpression logicalOrExpression) {
+        if (expressionStatementDepth > 0) {
         printLeftPar();
+        }
+        expressionStatementDepth++;
         logicalOrExpression.left.accept(this);
         print(" || ");
         logicalOrExpression.right.accept(this);
+        expressionStatementDepth--;
+        if (expressionStatementDepth > 0) {
         printRightPar();
+        }
     }
 
     @Override
@@ -311,7 +381,7 @@ public class PrettyPrinter implements ASTVisitor {
 
     @Override
     public void visit(Method method) {
-        printWhitespace();
+        //printWhitespace();
         print(method.name + "(");
         if (!method.parameters.isEmpty()) {
             method.parameters.get(0).accept(this);
@@ -341,27 +411,46 @@ public class PrettyPrinter implements ASTVisitor {
 
     @Override
     public void visit(ModuloExpression moduloExpression) {
+        if (expressionStatementDepth > 0) {
         printLeftPar();
+        }
+        expressionStatementDepth++;
         moduloExpression.left.accept(this);
         print(" % ");
         moduloExpression.right.accept(this);
+        expressionStatementDepth--;
+        if (expressionStatementDepth > 0) {
         printRightPar();
+        }
     }
 
     @Override
     public void visit(MultiplyExpression multiplyExpression) {
+        if (expressionStatementDepth > 0) {
         printLeftPar();
+        }
+        expressionStatementDepth++;
         multiplyExpression.left.accept(this);
         print(" * ");
         multiplyExpression.right.accept(this);
+        expressionStatementDepth--;
+        if (expressionStatementDepth > 0) {
         printRightPar();
+        }
     }
 
     @Override
     public void visit(NegateExpression negateExpression) {
-        print("(!");
+        if (expressionStatementDepth > 0) {
+            printLeftPar();
+        }
+        expressionStatementDepth++;
+        print("-");
         negateExpression.other.accept(this);
+        expressionStatementDepth--;
+        if (expressionStatementDepth > 0) {
         printRightPar();
+        }
     }
 
     @Override
@@ -370,8 +459,8 @@ public class PrettyPrinter implements ASTVisitor {
         newArrayExpression.type.accept(this);
         print(" [");
         newArrayExpression.primaryDimension.accept(this);
-        print("] ");
-        for (int i = 0; i < newArrayExpression.numberOfDimensions; i++) {
+        print("]");
+        for (int i = 1; i < newArrayExpression.numberOfDimensions; i++) {
             print("[]");
         }
     }
@@ -384,11 +473,17 @@ public class PrettyPrinter implements ASTVisitor {
 
     @Override
     public void visit(NotEqualToExpression notEqualToExpression) {
+        if (expressionStatementDepth > 0) {
         printLeftPar();
+        }
+        expressionStatementDepth++;
         notEqualToExpression.left.accept(this);
         print(" != ");
         notEqualToExpression.right.accept(this);
+        expressionStatementDepth--;
+        if (expressionStatementDepth > 0) {
         printRightPar();
+        }
     }
 
     @Override
@@ -437,18 +532,24 @@ public class PrettyPrinter implements ASTVisitor {
 
     @Override
     public void visit(ReturnValueStatement returnValueStatement) {
-        print("(return");
+        print("return");
         returnValueStatement.returnValue.accept(this);
-        print(";)");
+        print(";");
     }
 
     @Override
     public void visit(SubtractExpression subtractExpression) {
+        if (expressionStatementDepth > 0) {
         printLeftPar();
+        }
+        expressionStatementDepth++;
         subtractExpression.left.accept(this);
         print(" - ");
         subtractExpression.right.accept(this);
+        expressionStatementDepth--;
+        if (expressionStatementDepth > 0) {
         printRightPar();
+        }
     }
 
     @Override
