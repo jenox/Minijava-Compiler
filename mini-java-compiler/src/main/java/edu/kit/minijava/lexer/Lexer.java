@@ -62,11 +62,17 @@ public class Lexer {
     }
 
     private String advanceWhile(BooleanSupplier predicate) throws IOException {
-        return this.advanceWhile(predicate, s -> true);
+        StringBuilder buffer = new StringBuilder();
+
+        while (!this.hasReachedEndOfInput() && predicate.getAsBoolean()) {
+            buffer.append(this.advance());
+        }
+
+        return buffer.toString();
     }
 
-    private String advanceWhile(BooleanSupplier predicate, Predicate<StringBuffer> stringPredicate) throws IOException {
-        StringBuffer buffer = new StringBuffer();
+    private String advanceWhile(BooleanSupplier predicate, Predicate<StringBuilder> stringPredicate) throws IOException {
+        StringBuilder buffer = new StringBuilder();
 
         while (!this.hasReachedEndOfInput() && predicate.getAsBoolean() && stringPredicate.test(buffer)) {
             buffer.append(this.advance());
@@ -232,7 +238,7 @@ public class Lexer {
         }
     }
 
-    private boolean stringBufferEndsWithEndOfCommentSequence(StringBuffer buffer) {
+    private boolean stringBufferEndsWithEndOfCommentSequence(StringBuilder buffer) {
 
         // Building an explicit string object and calling `endsWith(_)` is too slow.
         if (buffer.length() < 2) {
