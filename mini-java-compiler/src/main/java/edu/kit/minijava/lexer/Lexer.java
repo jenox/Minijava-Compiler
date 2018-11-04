@@ -197,47 +197,157 @@ public class Lexer {
                throw this.fail("Invalid separator '" + text + "'");
            }
         } else if (this.isCurrentCharacterOperatorSymbol()) {
-            String text = String.valueOf(this.advance());
 
-            // Append as long as result is valid prefix or start of comment.
-            while (!this.hasReachedEndOfInput() && !text.endsWith("/*")) {
-                if (!(text + this.getCurrentCharacter()).endsWith("/*")) {
-                    if (!this.isPrefixOfValidOperator(text + this.getCurrentCharacter())) {
-                        break;
-                    }
-                }
+            String operator = this.lexOperator();
 
-                text += this.advance();
+            if (operator == null) {
+                return null;
             }
 
-            // If comment was started, read till end of comment.
-            if (text.endsWith("/*")) {
-                text = text.substring(0, text.length() - 2);
-
-                String comment = this.advanceWhile(() -> true, s -> !this.stringBufferEndsWithEndOfCommentSequence(s));
-
-                if (!comment.endsWith("*/")) {
-                    throw this.fail("Encountered unterminated comment");
-                }
-
-                // If there was an operator before start of comment, fallthrough to return operator as token.
-                if (text.isEmpty()) {
-                    return null;
-                }
+            TokenType operatorType = this.operatorFromString(operator);
+            if (operatorType == null) {
+                throw this.fail("Invalid operator  '" + operator + "'");
             }
 
-            TokenType operator = this.operatorFromString(text);
-
-            if (operator != null) {
-                return new Token(operator, text, location);
-            } else {
-                throw this.fail("Invalid operator '" + text + "'");
-            }
+            return new Token(operatorType, operator, location);
         } else {
             String name = Character.getName(this.getCurrentCharacter());
 
             throw this.fail("Forbidden character '" + name + "' in input");
         }
+    }
+
+    private String lexOperator() throws IOException, LexerException {
+        char operatorStart = this.advance();
+
+        switch(operatorStart) {
+            case '=':
+                switch(this.getCurrentCharacter()) {
+                    case '=':this.advance(); return "==";
+                    default: return "=";
+                }
+
+            case '!':
+                switch(this.getCurrentCharacter()) {
+                    case '=': this.advance(); return "!=";
+                    default: return "!";
+                }
+
+            case '<':
+                switch(this.getCurrentCharacter()) {
+                    case '=': this.advance(); return "<=";
+                    case '<':
+                        this.advance();
+                        switch(this.getCurrentCharacter()) {
+                            case '=': this.advance(); return "<<=";
+                            default: return "<<";
+                        }
+                    default: return "<";
+                }
+
+            case '>':
+                switch(this.getCurrentCharacter()) {
+                    case '=': this.advance(); return ">=";
+                    case '>':
+                        this.advance();
+                        switch(this.getCurrentCharacter()) {
+                            case '=': this.advance(); return ">>=";
+                            case '>':
+                                this.advance();
+                                switch(this.getCurrentCharacter()) {
+                                    case '=': this.advance(); return ">>>=";
+                                    default: return ">>>";
+                                }
+                            default: return ">>";
+                        }
+                    default: return ">";
+                }
+
+            case '+':
+                switch(this.getCurrentCharacter()) {
+                    case '=': this.advance(); return "+=";
+                    case '+': this.advance(); return "++";
+                    default: return "+";
+                }
+
+            case '-':
+                switch(this.getCurrentCharacter()) {
+                    case '=': this.advance(); return "-=";
+                    case '-': this.advance(); return "--";
+                    default: return "-";
+                }
+
+            case '*':
+                switch(this.getCurrentCharacter()) {
+                    case '=': this.advance(); return "*=";
+                    default: return "*";
+
+                }
+
+            case '/':
+                switch(this.getCurrentCharacter()) {
+                    case '=': this.advance(); return "/=";
+                    case '*':
+                        // Skip second start symbol for start of comment sequence
+                        this.advance();
+                        this.lexComment();
+
+                        // Skip to the next token
+                        return null;
+
+                    default: return "/";
+                }
+
+            case '%':
+                switch(this.getCurrentCharacter()) {
+                    case '=': this.advance(); return "%=";
+                    default: return "%";
+                }
+
+            case '|':
+                switch(this.getCurrentCharacter()) {
+                    case '=': this.advance(); return "|=";
+                    case '|': this.advance(); return "||";
+                    default: return "|";
+                }
+
+            case '?': return "?";
+            case ':': return ":";
+            case '~': return "~";
+
+            case '&':
+                switch(this.getCurrentCharacter()) {
+                    case '=': this.advance(); return "&=";
+                    case '&': this.advance(); return "&&";
+                    default: return "&";
+                }
+
+            case '^':
+                switch(this.getCurrentCharacter()) {
+                    case '=': this.advance(); return "^=";
+                    default: return "^";
+
+                }
+
+            default: throw this.fail("Invalid operator prefix '" + operatorStart + "'");
+        }
+
+    }
+
+    private void lexComment() throws IOException, LexerException {
+        boolean readEndOfCommentPrefix = false;
+
+        while (!this.hasReachedEndOfInput()) {
+            char character = this.advance();
+            if (character == '*') {
+                readEndOfCommentPrefix = true;
+            } else if (character == '/' && readEndOfCommentPrefix) {
+                return;
+            } else {
+                readEndOfCommentPrefix = false;
+            }
+        }
+        throw this.fail("Encountered unterminated comment");
     }
 
     private boolean stringBufferEndsWithEndOfCommentSequence(StringBuilder buffer) {
