@@ -4,14 +4,14 @@ import java.util.*;
 
 import edu.kit.minijava.ast.*;
 
-public class ParserPrinter implements ASTVisitor {
+public class PrettyPrinter implements ASTVisitor {
 
     private int depth;
     private Program program;
 
     public final static String INDENT = "\t";
 
-    public ParserPrinter(Program program) {
+    public PrettyPrinter(Program program) {
         this.program = program;
         depth = 0;
     }
