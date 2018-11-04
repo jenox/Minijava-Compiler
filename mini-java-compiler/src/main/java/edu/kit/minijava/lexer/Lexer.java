@@ -27,10 +27,6 @@ public class Lexer {
     }
 
     private char getCurrentCharacter() {
-        if (this.hasReachedEndOfInput()) {
-            throw new IllegalStateException();
-        }
-
         return (char)this.currentCharacter;
     }
 
