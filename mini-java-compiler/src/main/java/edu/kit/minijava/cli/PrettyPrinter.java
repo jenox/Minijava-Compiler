@@ -404,10 +404,11 @@ public class PrettyPrinter implements ASTVisitor {
         printWhitespace();
         print(methodInvocation.methodName + "(");
         if (!methodInvocation.arguments.isEmpty()) {
-            methodInvocation.arguments.get(0).accept(this);
-            for (int i = 1; i < methodInvocation.arguments.size(); i++) {
-                print(", ");
-                methodInvocation.arguments.get(i).accept(this);
+            String separator = "";
+            for (Expression expression : methodInvocation.arguments) {
+                print(separator);
+                separator = ", ";
+                expression.accept(this);
             }
         }
         print(")");
