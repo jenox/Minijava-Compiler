@@ -77,7 +77,6 @@ public class PrettyPrinter implements ASTVisitor {
             depth--; //back to top level
             printWhitespace();
             printRightBrace();
-            newLine();
         }
     }
 
