@@ -7,7 +7,7 @@ public abstract class Statement {
     private Statement() {
     }
 
-    public final class IfStatement extends Statement {
+    public static final class IfStatement extends Statement {
         public IfStatement(Expression condition, Statement statementIfTrue, Statement statementIfFalse) {
             this.condition = condition;
             this.statementIfTrue = statementIfTrue;
@@ -19,7 +19,7 @@ public abstract class Statement {
         public final Statement statementIfFalse; //nullable
     }
 
-    public final class WhileStatement extends Statement {
+    public static final class WhileStatement extends Statement {
         public WhileStatement(Expression condition, Statement statementWhileTrue) {
             this.condition = condition;
             this.statementWhileTrue = statementWhileTrue;
@@ -29,7 +29,7 @@ public abstract class Statement {
         public final Statement statementWhileTrue;
     }
 
-    public final class ExpressionStatement extends Statement {
+    public static final class ExpressionStatement extends Statement {
         public ExpressionStatement(Expression expression) {
             this.expression = expression;
         }
@@ -37,7 +37,7 @@ public abstract class Statement {
         public final Expression expression;
     }
 
-    public final class ReturnStatement extends Statement {
+    public static final class ReturnStatement extends Statement {
         public ReturnStatement(Expression value) {
             this.value = value;
         }
@@ -45,12 +45,12 @@ public abstract class Statement {
         public final Expression value; // nullable
     }
 
-    public final class EmptyStatement extends Statement {
+    public static final class EmptyStatement extends Statement {
         public EmptyStatement() {
         }
     }
 
-    public final class Block extends Statement {
+    public static final class Block extends Statement {
         public Block(List<Statement> statements) {
             this.statements = Collections.unmodifiableList(statements);
         }
@@ -58,7 +58,7 @@ public abstract class Statement {
         public final List<Statement> statements;
     }
 
-    public final class LocalVariableDeclarationStatement extends Statement implements VariableDeclaration {
+    public static final class LocalVariableDeclarationStatement extends Statement implements VariableDeclaration {
         public LocalVariableDeclarationStatement(TypeReference type, String name, Expression value) {
             this.type = type;
             this.name = name;

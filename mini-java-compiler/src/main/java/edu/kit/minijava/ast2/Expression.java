@@ -11,7 +11,7 @@ public abstract class Expression {
 
     public final TypeReference type;
 
-    public final class BinaryOperation extends Expression {
+    public static final class BinaryOperation extends Expression {
         public BinaryOperation(BinaryOperationType operationType, Expression left, Expression right) {
             this.operationType = operationType;
             this.left = left;
@@ -23,7 +23,7 @@ public abstract class Expression {
         public final Expression right;
     }
 
-    public final class UnaryOperation extends Expression {
+    public static final class UnaryOperation extends Expression {
         public UnaryOperation(UnaryOperationType operationType, Expression other) {
             this.operationType = operationType;
             this.other = other;
@@ -33,12 +33,12 @@ public abstract class Expression {
         public final Expression other;
     }
 
-    public final class NullLiteral extends Expression {
+    public static final class NullLiteral extends Expression {
         public NullLiteral() {
         }
     }
 
-    public final class BooleanLiteral extends Expression {
+    public static final class BooleanLiteral extends Expression {
         public BooleanLiteral(boolean value) {
             this.value = value;
         }
@@ -46,7 +46,7 @@ public abstract class Expression {
         public final boolean value;
     }
 
-    public final class IntegerLiteral extends Expression {
+    public static final class IntegerLiteral extends Expression {
         public IntegerLiteral(String value) {
             this.value = value;
         }
@@ -54,7 +54,7 @@ public abstract class Expression {
         public final String value;
     }
 
-    public final class MethodInvocation extends Expression {
+    public static final class MethodInvocation extends Expression {
         public MethodInvocation(Expression context, String methodName, List<Expression> arguments) {
             List<TypeReference> argumentTypes = arguments.stream().map(e -> e.type).collect(Collectors.toList());
 
@@ -68,7 +68,7 @@ public abstract class Expression {
         public final List<Expression> arguments;
     }
 
-    public final class ExplicitFieldAccess extends Expression {
+    public static final class ExplicitFieldAccess extends Expression {
         public ExplicitFieldAccess(Expression context, String fieldName) {
             this.context = context;
             this.reference = new FieldReference(context.type, fieldName);
@@ -78,7 +78,7 @@ public abstract class Expression {
         public final FieldReference reference;
     }
 
-    public final class ArrayElementAccess extends Expression {
+    public static final class ArrayElementAccess extends Expression {
         public ArrayElementAccess(Expression context, Expression index) {
             this.context = context;
             this.index = index;
@@ -88,7 +88,7 @@ public abstract class Expression {
         public final Expression index;
     }
 
-    public final class VariableAccess extends Expression {
+    public static final class VariableAccess extends Expression {
         public VariableAccess(String variableName) {
             this.reference = new VariableReference(variableName);
         }
@@ -96,12 +96,12 @@ public abstract class Expression {
         public final VariableReference reference;
     }
 
-    public final class CurrentContextAccess extends Expression {
+    public static final class CurrentContextAccess extends Expression {
         public CurrentContextAccess() {
         }
     }
 
-    public final class NewObjectCreation extends Expression {
+    public static final class NewObjectCreation extends Expression {
         public NewObjectCreation(String className) {
             this.reference = new ClassReference(className);
         }
@@ -109,7 +109,7 @@ public abstract class Expression {
         public final ClassReference reference;
     }
 
-    public final class NewArrayCreation extends Expression {
+    public static final class NewArrayCreation extends Expression {
         public NewArrayCreation(BasicTypeReference reference, Expression primaryDimension, int numberOfDimensions) {
             this.reference = reference;
             this.primaryDimension = primaryDimension;
