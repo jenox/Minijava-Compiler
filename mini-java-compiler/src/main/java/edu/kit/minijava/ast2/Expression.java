@@ -69,8 +69,14 @@ public abstract class Expression {
             List<TypeReference> argumentTypes = arguments.stream().map(e -> e.type).collect(Collectors.toList());
 
             this.context = context;
-            this.reference = new MethodReference(context.type, methodName, argumentTypes);
             this.arguments = arguments;
+
+            if (context != null) {
+                this.reference = new MethodReference(context.type, methodName, argumentTypes);
+            }
+            else {
+                this.reference = new MethodReference(null, methodName, argumentTypes);
+            }
         }
 
         public final Expression context; // nullable
