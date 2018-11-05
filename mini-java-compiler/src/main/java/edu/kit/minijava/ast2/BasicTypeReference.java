@@ -1,22 +1,17 @@
 package edu.kit.minijava.ast2;
 
-public abstract class BasicTypeReference {
-    private BasicTypeReference() {
+public final class BasicTypeReference extends AbstractReference<BasicTypeDeclaration> {
+    public BasicTypeReference(String name) {
+        if (name == null) throw new IllegalArgumentException();
+
+        this.name = name;
     }
 
-    public static final class UnresolvedBasicTypeReference extends BasicTypeReference {
-        public UnresolvedBasicTypeReference(String name) {
-            this.name = name;
-        }
+    public BasicTypeReference(PrimitiveTypeDeclaration declaration) {
+        this.name = null;
 
-        public final String name;
+        this.resolveTo(declaration);
     }
 
-    public static final class ResolvedBasicTypeReference extends BasicTypeReference {
-        public ResolvedBasicTypeReference(BasicTypeDeclaration declaration) {
-            this.declaration = declaration;
-        }
-
-        public final BasicTypeDeclaration declaration;
-    }
+    public final String name;
 }

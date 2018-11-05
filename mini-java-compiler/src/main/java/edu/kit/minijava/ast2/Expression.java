@@ -5,7 +5,8 @@ import java.util.stream.Collectors;
 
 public abstract class Expression {
     private Expression() {
-        this.type = new TypeReference();
+        this.type = null;
+        throw new UnsupportedOperationException();
     }
 
     public final TypeReference type;
@@ -58,7 +59,7 @@ public abstract class Expression {
             List<TypeReference> argumentTypes = arguments.stream().map(e -> e.type).collect(Collectors.toList());
 
             this.context = context;
-            this.reference = new MethodReference.UnresolvedMethodReference(context, methodName, argumentTypes);
+            this.reference = new MethodReference(context.type, methodName, argumentTypes);
             this.arguments = arguments;
         }
 
@@ -70,7 +71,7 @@ public abstract class Expression {
     public final class ExplicitFieldAccess extends Expression {
         public ExplicitFieldAccess(Expression context, String fieldName) {
             this.context = context;
-            this.reference = new FieldReference.UnresolvedFieldReference(context, fieldName);
+            this.reference = new FieldReference(context.type, fieldName);
         }
 
         public final Expression context;
@@ -89,7 +90,7 @@ public abstract class Expression {
 
     public final class VariableAccess extends Expression {
         public VariableAccess(String variableName) {
-            this.reference = new VariableReference.UnresolvedVariableReference(variableName);
+            this.reference = new VariableReference(variableName);
         }
 
         public final VariableReference reference;
@@ -98,5 +99,25 @@ public abstract class Expression {
     public final class CurrentContextAccess extends Expression {
         public CurrentContextAccess() {
         }
+    }
+
+    public final class NewObjectCreation extends Expression {
+        public NewObjectCreation(String className) {
+            this.reference = new ClassReference(className);
+        }
+
+        public final ClassReference reference;
+    }
+
+    public final class NewArrayCreation extends Expression {
+        public NewArrayCreation(BasicTypeReference reference, Expression primaryDimension, int numberOfDimensions) {
+            this.reference = reference;
+            this.primaryDimension = primaryDimension;
+            this.numberOfDimensions = numberOfDimensions;
+        }
+
+        public final BasicTypeReference reference;
+        public final Expression primaryDimension;
+        public final int numberOfDimensions;
     }
 }

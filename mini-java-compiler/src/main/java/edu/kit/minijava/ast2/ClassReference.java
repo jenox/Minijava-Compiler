@@ -1,7 +1,7 @@
 package edu.kit.minijava.ast2;
 
-public final class VariableReference extends AbstractReference<VariableDeclaration> {
-    public VariableReference(String name) {
+public final class ClassReference extends AbstractReference<ClassDeclaration> {
+    public ClassReference(String name) {
         if (name == null) throw new IllegalArgumentException();
 
         this.name = name;

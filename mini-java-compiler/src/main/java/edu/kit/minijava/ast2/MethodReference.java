@@ -2,27 +2,17 @@ package edu.kit.minijava.ast2;
 
 import java.util.*;
 
-public abstract class MethodReference {
-    private MethodReference() {
+public final class MethodReference extends AbstractReference<MethodDeclaration> {
+    public MethodReference(TypeReference context, String name, List<TypeReference> argumentTypes) {
+        if (name == null) throw new IllegalArgumentException();
+        if (argumentTypes == null) throw new IllegalArgumentException();
+
+        this.context = context;
+        this.name = name;
+        this.argumentTypes = Collections.unmodifiableList(argumentTypes);
     }
 
-    public static final class UnresolvedMethodReference extends MethodReference {
-        public UnresolvedMethodReference(Expression context, String name, List<TypeReference> argumentTypes) {
-            this.context = context;
-            this.name = name;
-            this.argumentTypes = argumentTypes;
-        }
-
-        public final Expression context; // nullable
-        public final String name;
-        public final List<TypeReference> argumentTypes;
-    }
-
-    public static final class ResolvedMethodReference extends MethodReference {
-        public ResolvedMethodReference(MethodDeclaration declaration) {
-            this.declaration = declaration;
-        }
-
-        public final MethodDeclaration declaration;
-    }
+    public final TypeReference context; // nullable
+    public final String name;
+    public final List<TypeReference> argumentTypes;
 }
