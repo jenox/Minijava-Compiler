@@ -265,7 +265,7 @@ public class PrettyPrinter implements ASTVisitor {
 
 	@Override
 	public void visit(IfElseStatement ifElseStatement) {
-		print("if");
+		print("if ");
 		printLeftPar();
 		ifElseStatement.condition.accept(this);
 		printRightPar();
@@ -292,7 +292,7 @@ public class PrettyPrinter implements ASTVisitor {
 
 	@Override
 	public void visit(IfStatement ifStatement) {
-		print("if");
+		print("if ");
 		printLeftPar();
 		ifStatement.condition.accept(this);
 		printRightPar();
@@ -618,7 +618,7 @@ public class PrettyPrinter implements ASTVisitor {
 
 	@Override
 	public void visit(WhileStatement whileStatement) {
-		print("while");
+		print("while ");
 		printLeftPar();
 		whileStatement.condition.accept(this);
 		printRightPar();
