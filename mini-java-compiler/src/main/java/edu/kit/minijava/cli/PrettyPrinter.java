@@ -84,8 +84,9 @@ public class PrettyPrinter implements ASTVisitor {
 		boolean currentNested = nested;
 		nested = true;
 		if (currentNested) {
-			firstStatement.accept(this);
-		}
+			newLine();
+		} 
+		firstStatement.accept(this);
 		for (int i = 1; i < block.statements.size(); i++) {
 			BlockStatement statement = block.statements.get(i);
 			newLine();
