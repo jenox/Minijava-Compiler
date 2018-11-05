@@ -11,15 +11,15 @@ env:
 
 jobs:
   allow_failures:
-    - name: Shared mjtest Lexer Tests
-    - name: Shared mjtest Syntax Tests
+    - name: Shared mjtest Lexer + Syntax Tests
+    - name: Shared mjtest AST Tests
 
   include:
     - stage: build
       name: Build
       script: ./build
     - stage: test
-      name: Shared mjtest Lexer Tests
+      name: Shared mjtest Lexer + Syntax Tests
       script:
         - ./build
         - git clone --recursive https://git.scc.kit.edu/IPDSnelting/mjtest.git
@@ -27,16 +27,17 @@ jobs:
         - git checkout master
         - cd ../..
         - ./mjtest/mjt.py lexer --ci_testing --parallel
+        - ./mjtest/mjt.py syntax --ci_testing --parallel
     - stage: test
-      name: Shared mjtest Syntax Tests
+      name: Shared mjtest AST Tests
       script:
         - ./build
         - git clone --recursive https://git.scc.kit.edu/IPDSnelting/mjtest.git
         - cd mjtest/tests
         - git checkout master
         - cd ../..
-        - ./mjtest/mjt.py syntax --ci_testing --parallel
-    - name: Custom mjtest Tests (Lexer + Syntax)
+        - ./mjtest/mjt.py ast --ci_testing --parallel
+    - name: Custom mjtest Tests (Lexer + Syntax + AST)
       script:
         - ./build
         - git clone --recursive https://git.scc.kit.edu/ubduq/mjtest.git
@@ -45,5 +46,6 @@ jobs:
         - cd ../..
         - ./mjtest/mjt.py lexer --ci_testing --parallel
         - ./mjtest/mjt.py syntax --ci_testing --parallel
+        - ./mjtest/mjt.py ast --ci_testing --parallel
     - name: Style Check
       script: ./mini-java-compiler/gradlew -b ./mini-java-compiler/build.gradle checkstyleMain checkstyleTest
