@@ -7,7 +7,7 @@ import java.io.InputStreamReader;
 
 import edu.kit.minijava.lexer.*;
 import edu.kit.minijava.parser.*;
-import edu.kit.minijava.ast.*;
+import edu.kit.minijava.ast2.*;
 
 public class ParserCommand extends Command {
 
@@ -31,12 +31,12 @@ public class ParserCommand extends Command {
                 throw new AssertionError();
             }
 
-            if (this.printAST) {
-                PrettyPrinter printer = new PrettyPrinter();
-                String formatted = printer.format(program);
-
-                System.out.print(formatted);
-            }
+//            if (this.printAST) {
+//                PrettyPrinter printer = new PrettyPrinter();
+//                String formatted = printer.format(program);
+//
+//                System.out.print(formatted);
+//            }
 
             return 0;
         }

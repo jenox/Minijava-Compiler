@@ -1,13 +1,18 @@
 package edu.kit.minijava.ast2;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public abstract class Statement {
     private Statement() {
     }
 
     public static final class IfStatement extends Statement {
+        public IfStatement(Expression condition, Statement statementIfTrue) {
+            this.condition = condition;
+            this.statementIfTrue = statementIfTrue;
+            this.statementIfFalse = null;
+        }
+
         public IfStatement(Expression condition, Statement statementIfTrue, Statement statementIfFalse) {
             this.condition = condition;
             this.statementIfTrue = statementIfTrue;
@@ -38,6 +43,10 @@ public abstract class Statement {
     }
 
     public static final class ReturnStatement extends Statement {
+        public ReturnStatement() {
+            this.value = null;
+        }
+
         public ReturnStatement(Expression value) {
             this.value = value;
         }
@@ -59,6 +68,12 @@ public abstract class Statement {
     }
 
     public static final class LocalVariableDeclarationStatement extends Statement implements VariableDeclaration {
+        public LocalVariableDeclarationStatement(TypeReference type, String name) {
+            this.type = type;
+            this.name = name;
+            this.value = null;
+        }
+
         public LocalVariableDeclarationStatement(TypeReference type, String name, Expression value) {
             this.type = type;
             this.name = name;

@@ -11,14 +11,14 @@ abstract class AbstractReference<DeclarationType> {
     }
 
     public void resolveTo(DeclarationType declaration) {
-        if (!this.isResolved()) throw new IllegalStateException();
+        if (this.isResolved()) throw new IllegalStateException();
         if (declaration == null) throw new IllegalArgumentException();
 
         this.declaration = declaration;
     }
 
     public DeclarationType getDeclaration() {
-        if (this.isResolved()) throw new IllegalStateException();
+        if (!this.isResolved()) throw new IllegalStateException();
 
         return this.declaration;
     }

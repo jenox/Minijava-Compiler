@@ -1,6 +1,6 @@
 package edu.kit.minijava.ast2;
 
-public final class FieldDeclaration implements VariableDeclaration {
+public final class FieldDeclaration implements MemberDeclaration, VariableDeclaration {
     public FieldDeclaration(TypeReference type, String name) {
         this.type = type;
         this.name = name;
