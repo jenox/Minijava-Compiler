@@ -1,8 +1,13 @@
 package edu.kit.minijava.cli;
 
-import java.io.*;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStreamReader;
 
-import edu.kit.minijava.lexer.*;
+import edu.kit.minijava.lexer.Lexer;
+import edu.kit.minijava.lexer.LexerException;
+import edu.kit.minijava.lexer.Token;
 
 class LextestCommand extends Command {
     public int execute(String path) {

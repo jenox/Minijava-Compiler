@@ -17,7 +17,10 @@ public class CommandLineInterface {
                 command = new LextestCommand();
                 break;
             case "--parsetest":
-                command = new ParserCommand();
+                command = new ParserCommand(false);
+                break;
+            case "--print-ast":
+                command = new ParserCommand(true);
                 break;
             default:
                 printErrorAndExit();
@@ -29,6 +32,7 @@ public class CommandLineInterface {
         }
         catch (Throwable exception) {
             String message = exception.getLocalizedMessage();
+            exception.printStackTrace();
 
             if (message == null || message.isEmpty()) {
                 System.err.println("error: something went terribly wrong!");

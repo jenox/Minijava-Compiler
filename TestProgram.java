@@ -1,6 +1,10 @@
-public class TestProgram {
+class TestProgram {
 
     public static void main (String[] args) {
-        System.out.println("hallo");
+	int x = 5 - 3;
+	boolean b = true;
+	/*some comment*/
+	return;
     }
+
 }

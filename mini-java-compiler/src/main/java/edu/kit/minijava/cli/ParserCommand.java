@@ -1,11 +1,21 @@
 package edu.kit.minijava.cli;
 
-import java.io.*;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStreamReader;
 
 import edu.kit.minijava.lexer.*;
 import edu.kit.minijava.parser.*;
+import edu.kit.minijava.ast.*;
 
 public class ParserCommand extends Command {
+
+    ParserCommand(boolean printAST) {
+        this.printAST = printAST;
+    }
+
+    private final boolean printAST;
 
     @Override
     public int execute(String path) {
@@ -19,6 +29,13 @@ public class ParserCommand extends Command {
 
             if (program == null) {
                 throw new AssertionError();
+            }
+
+            if (this.printAST) {
+                PrettyPrinter printer = new PrettyPrinter();
+                String formatted = printer.format(program);
+
+                System.out.print(formatted);
             }
 
             return 0;

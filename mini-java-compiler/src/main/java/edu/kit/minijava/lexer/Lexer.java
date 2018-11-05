@@ -1,7 +1,7 @@
 package edu.kit.minijava.lexer;
 
 import java.io.*;
-import java.util.BitSet;
+import java.util.*;
 import java.util.function.*;
 
 public class Lexer {

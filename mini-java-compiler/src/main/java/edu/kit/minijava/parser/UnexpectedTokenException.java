@@ -1,6 +1,7 @@
 package edu.kit.minijava.parser;
 
-import edu.kit.minijava.lexer.*;
+import edu.kit.minijava.lexer.Token;
+import edu.kit.minijava.lexer.TokenType;
 
 public class UnexpectedTokenException extends ParserException {
     public UnexpectedTokenException(Token actualToken, String context, TokenType... expectedTypes) {
