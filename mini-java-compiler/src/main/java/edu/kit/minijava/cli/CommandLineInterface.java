@@ -32,6 +32,7 @@ public class CommandLineInterface {
         }
         catch (Throwable exception) {
             String message = exception.getLocalizedMessage();
+            exception.printStackTrace();
 
             if (message == null || message.isEmpty()) {
                 System.err.println("error: something went terribly wrong!");
