@@ -26,8 +26,8 @@ jobs:
         - cd mjtest/tests
         - git checkout master
         - cd ../..
-        - ./mjtest/mjt.py lexer --ci_testing --parallel
-        - ./mjtest/mjt.py syntax --ci_testing --parallel
+        - ./mjtest/mjt.py lexer --ci_testing --parallel --output_no_incorrect_reports
+        - ./mjtest/mjt.py syntax --ci_testing --parallel --output_no_incorrect_reports
     - stage: test
       name: Shared mjtest AST Tests
       script:
@@ -36,7 +36,7 @@ jobs:
         - cd mjtest/tests
         - git checkout master
         - cd ../..
-        - ./mjtest/mjt.py ast --ci_testing --parallel
+        - ./mjtest/mjt.py ast --ci_testing --parallel --output_no_incorrect_reports
     - name: Custom mjtest Tests (Lexer + Syntax + AST)
       script:
         - ./build
@@ -44,8 +44,8 @@ jobs:
         - cd mjtest/tests
         - git checkout dev
         - cd ../..
-        - ./mjtest/mjt.py lexer --ci_testing --parallel
-        - ./mjtest/mjt.py syntax --ci_testing --parallel
-        - ./mjtest/mjt.py ast --ci_testing --parallel
+        - ./mjtest/mjt.py lexer --ci_testing --parallel --output_no_incorrect_reports
+        - ./mjtest/mjt.py syntax --ci_testing --parallel --output_no_incorrect_reports
+        - ./mjtest/mjt.py ast --ci_testing --parallel --output_no_incorrect_reports
     - name: Style Check
       script: ./mini-java-compiler/gradlew -b ./mini-java-compiler/build.gradle checkstyleMain checkstyleTest
