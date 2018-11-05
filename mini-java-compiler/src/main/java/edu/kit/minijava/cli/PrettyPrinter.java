@@ -67,14 +67,27 @@ public class PrettyPrinter implements ASTVisitor {
 	public void visit(Block block) {
 		if (!nested) {
 			printLeftBrace();
-			depth++;
 			if (block.statements.isEmpty()) {
 				print(" }\n"); // whitespace, right brace, newline
+				printWhitespace();
+				return;
 			}
+			depth++;
+			newLine();
+			printWhitespace();
 		}
+		if (block.statements.isEmpty()) {
+			print(" ");
+			return;
+		}
+		BlockStatement firstStatement = block.statements.get(0);
 		boolean currentNested = nested;
 		nested = true;
-		for (BlockStatement statement : block.statements) {
+		if (currentNested) {
+			firstStatement.accept(this);
+		}
+		for (int i = 1; i < block.statements.size(); i++) {
+			BlockStatement statement = block.statements.get(i);
 			newLine();
 			printWhitespace();
 			statement.accept(this);
