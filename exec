@@ -1,4 +1,13 @@
 #!/bin/bash
 
 SCRIPT_PATH=$(dirname "$0")
-($SCRIPT_PATH/build >> /dev/null && $SCRIPT_PATH/run "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9") || echo "Exit code:" $?
+
+$SCRIPT_PATH/build > /dev/null || exit 1
+
+TMP_FILE=`mktemp`
+TIMEFORMAT=$'\nDuration: %R seconds'
+time ( $SCRIPT_PATH/run "$@"; echo $? > $TMP_FILE )
+EXIT_CODE=`cat $TMP_FILE`
+rm $TMP_FILE
+
+echo "Exit Code: $EXIT_CODE"
