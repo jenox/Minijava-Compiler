@@ -37,7 +37,8 @@ public class CommandLineInterface {
                 System.err.println("error: something went terribly wrong!");
                 System.err.println();
                 exception.printStackTrace(System.err);
-            } else {
+            }
+            else {
                 System.err.println("error: " + message);
             }
 

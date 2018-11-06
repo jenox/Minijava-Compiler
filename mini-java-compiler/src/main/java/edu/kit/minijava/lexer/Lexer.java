@@ -41,13 +41,15 @@ public class Lexer {
             this.currentRow += 1;
             this.currentColumn = 0;
             this.lastCharacterWasCarriageReturn = true;
-        } else if (character == '\n') {
+        }
+        else if (character == '\n') {
             if (!this.lastCharacterWasCarriageReturn) {
                 this.currentRow += 1;
                 this.currentColumn = 0;
                 this.lastCharacterWasCarriageReturn = false;
             }
-        } else {
+        }
+        else {
             this.currentColumn += 1;
             this.lastCharacterWasCarriageReturn = false;
         }
@@ -164,30 +166,36 @@ public class Lexer {
                 String text = String.valueOf(this.advance());
 
                 return new Token(TokenType.INTEGER_LITERAL, text, location);
-            } else {
+            }
+            else {
                 String text = this.advanceWhile(this::isCurrentCharacterNumeric);
 
                 return new Token(TokenType.INTEGER_LITERAL, text, location);
             }
-        } else if (this.isCurrentCharacterAlphanumeric()) {
+        }
+        else if (this.isCurrentCharacterAlphanumeric()) {
             String text = this.advanceWhile(this::isCurrentCharacterAlphanumeric);
             TokenType type = this.keywordFromString(text);
 
             if (type != null) {
                 return new Token(type, text, location);
-            } else {
+            }
+            else {
                 return new Token(TokenType.IDENTIFIER, text, location);
             }
-        } else if (this.isCurrentCharacterSeparator()) {
-           String text = String.valueOf(this.advance());
-           TokenType separator = this.separatorFromString(text);
+        }
+        else if (this.isCurrentCharacterSeparator()) {
+            String text = String.valueOf(this.advance());
+            TokenType separator = this.separatorFromString(text);
 
-           if (separator != null) {
-               return new Token(separator, text, location);
-           } else {
-               throw this.fail("Invalid separator '" + text + "'");
-           }
-        } else if (this.isCurrentCharacterOperatorSymbol()) {
+            if (separator != null) {
+                return new Token(separator, text, location);
+            }
+            else {
+                throw this.fail("Invalid separator '" + text + "'");
+            }
+        }
+        else if (this.isCurrentCharacterOperatorSymbol()) {
 
             String operator = this.lexOperator();
 
@@ -201,7 +209,8 @@ public class Lexer {
             }
 
             return new Token(operatorType, operator, location);
-        } else {
+        }
+        else {
             String name = Character.getName(this.getCurrentCharacter());
 
             throw this.fail("Forbidden character '" + name + "' in input");
@@ -333,7 +342,8 @@ public class Lexer {
 
             if (character == '/' && readEndOfCommentPrefix) {
                 return;
-            } else {
+            }
+            else {
                 readEndOfCommentPrefix = (character == '*');
             }
         }

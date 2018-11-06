@@ -37,7 +37,8 @@ public final class Parser {
 
                 if (token != null) {
                     this.tokens.add(token);
-                } else {
+                }
+                else {
                     this.hasReceivedEndOfInputFromLexer = true;
                     break;
                 }
@@ -49,7 +50,8 @@ public final class Parser {
 
         if (offset < this.tokens.size()) {
             return this.tokens.get(offset);
-        } else {
+        }
+        else {
             return null;
         }
     }
@@ -435,7 +437,8 @@ public final class Parser {
 
             if (operation == null || operation.precedence < minimumPrecedence) {
                 break;
-            } else {
+            }
+            else {
                 this.consume(operation.tokenType, null);
             }
 
@@ -466,7 +469,8 @@ public final class Parser {
                 this.consume(TokenType.CLOSING_PARENTHESIS, "MethodInvocation");
 
                 return new Expression.MethodInvocation(context, identifier, arguments);
-            } else {
+            }
+            else {
                 return new Expression.ExplicitFieldAccess(context, identifier);
             }
         }
@@ -507,7 +511,8 @@ public final class Parser {
                 this.consume(TokenType.CLOSING_PARENTHESIS, "PrimaryExpression");
 
                 return new Expression.MethodInvocation(null, identifier, arguments);
-            } else {
+            }
+            else {
                 return new Expression.VariableAccess(identifier);
             }
         }

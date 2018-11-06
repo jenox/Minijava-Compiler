@@ -28,7 +28,8 @@ public class UnexpectedTokenException extends ParserException {
             builder.append(this.actualToken);
             builder.append(" at ");
             builder.append(this.actualToken.location);
-        } else {
+        }
+        else {
             builder.append("Unexpected EOF");
         }
 
@@ -41,11 +42,13 @@ public class UnexpectedTokenException extends ParserException {
 
             if (this.expectedTypes.length == 1) {
                 builder.append(this.expectedTypes[0]);
-            } else if (this.expectedTypes.length == 2) {
+            }
+            else if (this.expectedTypes.length == 2) {
                 builder.append(this.expectedTypes[0]);
                 builder.append(" or ");
                 builder.append(this.expectedTypes[1]);
-            } else {
+            }
+            else {
                 for (int index = 0; index < this.expectedTypes.length - 2; index += 1) {
                     builder.append(this.expectedTypes[index]);
                     builder.append(", ");
