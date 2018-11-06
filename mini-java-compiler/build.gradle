@@ -17,6 +17,10 @@ jar {
     }
 }
 
+apply plugin: 'application'
+mainClassName = 'edu.kit.minijava.cli.CommandLineInterface'
+applicationDefaultJvmArgs = ['-ea']
+
 apply plugin: 'checkstyle'
 
 checkstyle {
