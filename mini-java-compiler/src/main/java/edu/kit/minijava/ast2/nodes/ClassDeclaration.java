@@ -1,8 +1,8 @@
-package edu.kit.minijava.ast2;
+package edu.kit.minijava.ast2.nodes;
 
 import java.util.*;
 
-public final class ClassDeclaration implements BasicTypeDeclaration {
+public final class ClassDeclaration extends ASTNode implements BasicTypeDeclaration {
     public ClassDeclaration(String name, List<MethodDeclaration> staticMethodDeclarations,
                             List<MethodDeclaration> instanceMethodDeclarations,
                             List<FieldDeclaration> fieldDeclarations) {
@@ -30,5 +30,10 @@ public final class ClassDeclaration implements BasicTypeDeclaration {
     @Override
     public List<? extends VariableDeclaration> getFieldDeclarations() {
         return this.fieldDeclarations;
+    }
+
+    @Override
+    public void accept(ASTVisitor visitor) {
+        visitor.visit(this);
     }
 }

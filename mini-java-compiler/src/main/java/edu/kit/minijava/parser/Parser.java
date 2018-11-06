@@ -4,7 +4,8 @@ import java.io.*;
 import java.util.*;
 
 import edu.kit.minijava.lexer.*;
-import edu.kit.minijava.ast2.*;
+import edu.kit.minijava.ast2.nodes.*;
+import edu.kit.minijava.ast2.references.*;
 
 public final class Parser {
 

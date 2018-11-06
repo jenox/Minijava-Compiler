@@ -1,4 +1,6 @@
-package edu.kit.minijava.ast2;
+package edu.kit.minijava.ast2.nodes;
+
+import edu.kit.minijava.ast2.references.*;
 
 import java.util.*;
 

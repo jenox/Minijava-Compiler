@@ -1,7 +1,7 @@
 package edu.kit.minijava.parser;
 
 import edu.kit.minijava.lexer.*;
-import edu.kit.minijava.ast2.*;
+import edu.kit.minijava.ast2.nodes.*;
 
 enum BinaryOperation {
     MULTIPLICATION(TokenType.MULTIPLY, Associativity.LEFT_ASSOCIATIVE, 50),

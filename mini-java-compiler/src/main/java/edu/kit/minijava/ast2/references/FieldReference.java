@@ -1,4 +1,6 @@
-package edu.kit.minijava.ast2;
+package edu.kit.minijava.ast2.references;
+
+import edu.kit.minijava.ast2.nodes.*;
 
 public final class FieldReference extends AbstractReference<FieldDeclaration> {
     public FieldReference(TypeReference context, String name) {

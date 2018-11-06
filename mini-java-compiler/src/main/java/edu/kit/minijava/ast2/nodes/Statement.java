@@ -1,8 +1,10 @@
-package edu.kit.minijava.ast2;
+package edu.kit.minijava.ast2.nodes;
+
+import edu.kit.minijava.ast2.references.*;
 
 import java.util.*;
 
-public abstract class Statement {
+public abstract class Statement extends ASTNode {
     private Statement() {
     }
 
@@ -22,6 +24,11 @@ public abstract class Statement {
         public final Expression condition;
         public final Statement statementIfTrue;
         public final Statement statementIfFalse; //nullable
+
+        @Override
+        public void accept(ASTVisitor visitor) {
+            visitor.visit(this);
+        }
     }
 
     public static final class WhileStatement extends Statement {
@@ -32,6 +39,11 @@ public abstract class Statement {
 
         public final Expression condition;
         public final Statement statementWhileTrue;
+
+        @Override
+        public void accept(ASTVisitor visitor) {
+            visitor.visit(this);
+        }
     }
 
     public static final class ExpressionStatement extends Statement {
@@ -40,6 +52,11 @@ public abstract class Statement {
         }
 
         public final Expression expression;
+
+        @Override
+        public void accept(ASTVisitor visitor) {
+            visitor.visit(this);
+        }
     }
 
     public static final class ReturnStatement extends Statement {
@@ -52,10 +69,20 @@ public abstract class Statement {
         }
 
         public final Expression value; // nullable
+
+        @Override
+        public void accept(ASTVisitor visitor) {
+            visitor.visit(this);
+        }
     }
 
     public static final class EmptyStatement extends Statement {
         public EmptyStatement() {
+        }
+
+        @Override
+        public void accept(ASTVisitor visitor) {
+            visitor.visit(this);
         }
     }
 
@@ -65,6 +92,11 @@ public abstract class Statement {
         }
 
         public final List<Statement> statements;
+
+        @Override
+        public void accept(ASTVisitor visitor) {
+            visitor.visit(this);
+        }
     }
 
     public static final class LocalVariableDeclarationStatement extends Statement implements VariableDeclaration {
@@ -87,6 +119,11 @@ public abstract class Statement {
         @Override
         public TypeReference getType() {
             return this.type;
+        }
+
+        @Override
+        public void accept(ASTVisitor visitor) {
+            visitor.visit(this);
         }
     }
 }

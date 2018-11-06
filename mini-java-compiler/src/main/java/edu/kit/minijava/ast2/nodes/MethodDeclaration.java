@@ -1,9 +1,11 @@
-package edu.kit.minijava.ast2;
+package edu.kit.minijava.ast2.nodes;
+
+import edu.kit.minijava.ast2.references.*;
 
 import java.util.*;
 import java.util.stream.*;
 
-public final class MethodDeclaration implements MemberDeclaration, SubroutineDeclaration {
+public final class MethodDeclaration extends ASTNode implements MemberDeclaration, SubroutineDeclaration {
     public MethodDeclaration(TypeReference returnType, String name, List<ParameterDeclaration> parameters,
                              Statement.Block body) {
         this.returnType = returnType;
@@ -25,5 +27,10 @@ public final class MethodDeclaration implements MemberDeclaration, SubroutineDec
     @Override
     public TypeReference getReturnType() {
         return this.returnType;
+    }
+
+    @Override
+    public void accept(ASTVisitor visitor) {
+        visitor.visit(this);
     }
 }

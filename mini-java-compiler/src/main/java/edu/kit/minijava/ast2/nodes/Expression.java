@@ -1,9 +1,11 @@
-package edu.kit.minijava.ast2;
+package edu.kit.minijava.ast2.nodes;
+
+import edu.kit.minijava.ast2.references.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
-public abstract class Expression {
+public abstract class Expression extends ASTNode {
     private Expression(TypeReference type) {
         this.type = type;
     }
@@ -22,6 +24,11 @@ public abstract class Expression {
         public final BinaryOperationType operationType;
         public final Expression left;
         public final Expression right;
+
+        @Override
+        public void accept(ASTVisitor visitor) {
+            visitor.visit(this);
+        }
     }
 
     public static final class UnaryOperation extends Expression {
@@ -34,11 +41,21 @@ public abstract class Expression {
 
         public final UnaryOperationType operationType;
         public final Expression other;
+
+        @Override
+        public void accept(ASTVisitor visitor) {
+            visitor.visit(this);
+        }
     }
 
     public static final class NullLiteral extends Expression {
         public NullLiteral() {
             super(new TypeReference());
+        }
+
+        @Override
+        public void accept(ASTVisitor visitor) {
+            visitor.visit(this);
         }
     }
 
@@ -50,6 +67,11 @@ public abstract class Expression {
         }
 
         public final boolean value;
+
+        @Override
+        public void accept(ASTVisitor visitor) {
+            visitor.visit(this);
+        }
     }
 
     public static final class IntegerLiteral extends Expression {
@@ -60,6 +82,11 @@ public abstract class Expression {
         }
 
         public final String value;
+
+        @Override
+        public void accept(ASTVisitor visitor) {
+            visitor.visit(this);
+        }
     }
 
     public static final class MethodInvocation extends Expression {
@@ -82,6 +109,11 @@ public abstract class Expression {
         public final Expression context; // nullable
         public final MethodReference reference;
         public final List<Expression> arguments;
+
+        @Override
+        public void accept(ASTVisitor visitor) {
+            visitor.visit(this);
+        }
     }
 
     public static final class ExplicitFieldAccess extends Expression {
@@ -94,6 +126,11 @@ public abstract class Expression {
 
         public final Expression context;
         public final FieldReference reference;
+
+        @Override
+        public void accept(ASTVisitor visitor) {
+            visitor.visit(this);
+        }
     }
 
     public static final class ArrayElementAccess extends Expression {
@@ -106,6 +143,11 @@ public abstract class Expression {
 
         public final Expression context;
         public final Expression index;
+
+        @Override
+        public void accept(ASTVisitor visitor) {
+            visitor.visit(this);
+        }
     }
 
     public static final class VariableAccess extends Expression {
@@ -116,11 +158,21 @@ public abstract class Expression {
         }
 
         public final VariableReference reference;
+
+        @Override
+        public void accept(ASTVisitor visitor) {
+            visitor.visit(this);
+        }
     }
 
     public static final class CurrentContextAccess extends Expression {
         public CurrentContextAccess() {
             super(new TypeReference());
+        }
+
+        @Override
+        public void accept(ASTVisitor visitor) {
+            visitor.visit(this);
         }
     }
 
@@ -132,6 +184,11 @@ public abstract class Expression {
         }
 
         public final ClassReference reference;
+
+        @Override
+        public void accept(ASTVisitor visitor) {
+            visitor.visit(this);
+        }
     }
 
     public static final class NewArrayCreation extends Expression {
@@ -146,5 +203,10 @@ public abstract class Expression {
         public final BasicTypeReference reference;
         public final Expression primaryDimension;
         public final int numberOfDimensions;
+
+        @Override
+        public void accept(ASTVisitor visitor) {
+            visitor.visit(this);
+        }
     }
 }
