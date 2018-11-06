@@ -205,56 +205,6 @@ public class PrettyPrinter implements ASTVisitor {
     }
 
     @Override
-    public void visit(BooleanType booleanType) {
-        print("boolean");
-    }
-
-    @Override
-    public void visit(ClassDeclaration classDeclaration) {
-        printWhitespace();
-        print("class " + classDeclaration.className + " {\n");
-        depth++;
-        // copy members to new list
-        List<ClassMember> members = new ArrayList<>(classDeclaration.members.size());
-        for (ClassMember member : classDeclaration.members) {
-            members.add(member);
-        }
-        // sort members
-        members.sort(new Comparator<ClassMember>() {
-
-            @Override
-            public int compare(ClassMember o1, ClassMember o2) {
-                if (o1.isMethod()) {
-                    if (o2.isMethod()) {
-                        return String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName());
-                    } else {
-                        // o1 is method, o2 is not
-                        return 1;
-                    }
-                } else {
-                    if (o2.isMethod()) {
-                        // o2 is method, o1 is not
-                        return -1;
-                    } else {
-                        // both are not a method
-                        return String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName());
-                    }
-                }
-            }
-
-        });
-
-        for (ClassMember member : members) {
-            newLine();
-            printWhitespace();
-            member.accept(this);
-        }
-        depth--;
-        printWhitespace();
-        printRightBrace();
-    }
-
-    @Override
     public void visit(DivideExpression divideExpression) {
         if (expressionStatementDepth > 0) {
             printLeftPar();
@@ -293,16 +243,6 @@ public class PrettyPrinter implements ASTVisitor {
     public void visit(ExpressionStatement expressionStatement) {
         expressionStatement.expression.accept(this);
         print(";");
-    }
-
-    @Override
-    public void visit(Field field) {
-        print("public ");
-        field.type.accept(this);
-        print(" "); // whitespace
-        print(field.name);
-        print(";");
-        newLine();
     }
 
     @Override
@@ -413,11 +353,6 @@ public class PrettyPrinter implements ASTVisitor {
     }
 
     @Override
-    public void visit(IntegerType integerType) {
-        print("int");
-    }
-
-    @Override
     public void visit(LessThanExpression lessThanExpression) {
         if (expressionStatementDepth > 0) {
             printLeftPar();
@@ -503,32 +438,6 @@ public class PrettyPrinter implements ASTVisitor {
         if (expressionStatementDepth > 0) {
             printRightPar();
         }
-    }
-
-    @Override
-    public void visit(MainMethod mainMethod) {
-        print("public static void " + mainMethod.name + "(String[] " + mainMethod.argumentsParameterName + ") ");
-        mainMethod.body.accept(this);
-        newLine();
-    }
-
-    @Override
-    public void visit(Method method) {
-        print("public ");
-        method.returnType.accept(this);
-        print(" ");
-        print(method.name + "(");
-        if (!method.parameters.isEmpty()) {
-            String separator = "";
-            for (int i = 0; i < method.parameters.size(); i++) {
-                this.print(separator);
-                separator = ", ";
-                method.parameters.get(i).accept(this);
-            }
-        }
-        print(") ");
-        method.body.accept(this);
-        newLine();
     }
 
     @Override
@@ -629,38 +538,9 @@ public class PrettyPrinter implements ASTVisitor {
     }
 
     @Override
-    public void visit(Parameter parameter) {
-        parameter.type.accept(this);
-        print(" " + parameter.name);
-    }
-
-    @Override
     public void visit(PostfixExpression postfixExpression) {
         postfixExpression.expression.accept(this);
         postfixExpression.postfixOperation.accept(this);
-    }
-
-    @Override
-    public void visit(Program program) {
-        List<ClassDeclaration> classes = new ArrayList<>(program.classDeclarations.size());
-        for (ClassDeclaration declaration : program.classDeclarations) {
-            classes.add(declaration);
-        }
-
-        // sort classes by name
-        classes.sort(new Comparator<ClassDeclaration>() {
-
-            @Override
-            public int compare(ClassDeclaration o1, ClassDeclaration o2) {
-                return String.CASE_INSENSITIVE_ORDER.compare(o1.className, o2.className);
-            }
-        });
-
-        for (ClassDeclaration declaration : classes) {
-            declaration.accept(this);
-        }
-
-        newLine();
     }
 
     @Override
@@ -693,24 +573,6 @@ public class PrettyPrinter implements ASTVisitor {
     @Override
     public void visit(ThisExpression thisExpression) {
         print("this");
-    }
-
-    @Override
-    public void visit(Type type) {
-        type.basicType.accept(this);
-        for (int i = 0; i < type.numberOfDimensions; i++) {
-            print("[]");
-        }
-    }
-
-    @Override
-    public void visit(UserDefinedType userDefinedType) {
-        print(userDefinedType.name);
-    }
-
-    @Override
-    public void visit(VoidType voidType) {
-        print("void");
     }
 
     @Override
