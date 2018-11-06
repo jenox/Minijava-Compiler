@@ -20,13 +20,25 @@ public final class MethodDeclaration extends ASTNode implements MemberDeclaratio
     private final Statement.Block body;
 
     @Override
-    public List<? extends TypeReference> getParameterTypes() {
-        return this.parameters.stream().map(ParameterDeclaration::getType).collect(Collectors.toList());
+    public TypeReference getReturnType() {
+        return this.returnType;
+    }
+
+    public String getName() {
+        return this.name;
+    }
+
+    public List<ParameterDeclaration> getParameters() {
+        return this.parameters;
     }
 
     @Override
-    public TypeReference getReturnType() {
-        return this.returnType;
+    public List<TypeReference> getParameterTypes() {
+        return this.parameters.stream().map(ParameterDeclaration::getType).collect(Collectors.toList());
+    }
+
+    public Statement.Block getBody() {
+        return this.body;
     }
 
     @Override

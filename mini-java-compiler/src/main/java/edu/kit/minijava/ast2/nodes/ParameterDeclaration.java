@@ -16,6 +16,10 @@ public final class ParameterDeclaration extends ASTNode implements VariableDecla
         return this.type;
     }
 
+    public String getName() {
+        return this.name;
+    }
+
     @Override
     public void accept(ASTVisitor visitor) {
         visitor.visit(this);

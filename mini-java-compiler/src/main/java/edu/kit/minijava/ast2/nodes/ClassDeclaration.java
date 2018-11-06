@@ -17,18 +17,22 @@ public final class ClassDeclaration extends ASTNode implements BasicTypeDeclarat
     private final List<MethodDeclaration> instanceMethodDeclarations;
     private final List<FieldDeclaration> fieldDeclarations;
 
+    public String getName() {
+        return this.name;
+    }
+
     @Override
-    public List<? extends SubroutineDeclaration> getStaticMethodDeclarations() {
+    public List<MethodDeclaration> getStaticMethodDeclarations() {
         return this.staticMethodDeclarations;
     }
 
     @Override
-    public List<? extends SubroutineDeclaration> getInstanceMethodDeclarations() {
+    public List<MethodDeclaration> getInstanceMethodDeclarations() {
         return this.instanceMethodDeclarations;
     }
 
     @Override
-    public List<? extends VariableDeclaration> getFieldDeclarations() {
+    public List<FieldDeclaration> getFieldDeclarations() {
         return this.fieldDeclarations;
     }
 

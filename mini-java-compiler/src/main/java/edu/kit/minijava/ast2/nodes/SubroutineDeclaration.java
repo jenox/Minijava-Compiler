@@ -5,6 +5,6 @@ import edu.kit.minijava.ast2.references.*;
 import java.util.*;
 
 public interface SubroutineDeclaration {
-    List<? extends TypeReference> getParameterTypes();
+    List<TypeReference> getParameterTypes();
     TypeReference getReturnType();
 }

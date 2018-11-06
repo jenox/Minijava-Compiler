@@ -9,7 +9,18 @@ public final class BasicTypeReference extends AbstractReference<BasicTypeDeclara
         this.name = name;
     }
 
+    public BasicTypeReference(String name, PrimitiveTypeDeclaration declaration) {
+        if (name == null) throw new IllegalArgumentException();
+        if (declaration == null) throw new IllegalArgumentException();
+
+        this.name = name;
+
+        this.resolveTo(declaration);
+    }
+
     public BasicTypeReference(PrimitiveTypeDeclaration declaration) {
+        if (declaration == null) throw new IllegalArgumentException();
+
         this.name = null;
 
         this.resolveTo(declaration);

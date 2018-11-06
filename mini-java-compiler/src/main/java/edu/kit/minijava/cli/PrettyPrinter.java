@@ -1,22 +1,23 @@
 package edu.kit.minijava.cli;
 
-import java.util.*;
+import edu.kit.minijava.ast2.nodes.*;
+import edu.kit.minijava.ast2.references.*;
 
-import edu.kit.minijava.ast.*;
+import java.util.*;
 
 public class PrettyPrinter implements ASTVisitor {
 
-    private int depth;
-    private int expressionStatementDepth;
-    private boolean nested;
-
-    private static final String INDENT = "\t";
+//    private int expressionStatementDepth;
+//    private boolean nested;
+//    private static final String INDENT = "\t";
 
     public PrettyPrinter() {
-        depth = 0;
-        expressionStatementDepth = 0;
-        nested = false;
+//        depth = 0;
+//        expressionStatementDepth = 0;
+//        nested = false;
     }
+
+    // MARK: - Classes
 
     public String format(Program program) {
         this.builder.setLength(0);
@@ -26,6 +27,97 @@ public class PrettyPrinter implements ASTVisitor {
         return this.builder.toString();
     }
 
+    public void visit(Program program) {
+        List<ClassDeclaration> declarations = new ArrayList<>(program.classes);
+        declarations.sort(Comparator.comparing(ClassDeclaration::getName));
+
+        for (ClassDeclaration declaration : declarations) {
+            declaration.accept(this);
+        }
+    }
+
+    public void visit(ClassDeclaration declaration) {
+        this.print("class " + declaration.name);
+        this.beginBlock();
+
+        List<MethodDeclaration> methods = new ArrayList<>();
+        methods.addAll(declaration.getInstanceMethodDeclarations());
+        methods.addAll(declaration.getStaticMethodDeclarations());
+        methods.sort(Comparator.comparing(MethodDeclaration::getName));
+
+        List<FieldDeclaration> fields = new ArrayList<>(declaration.getFieldDeclarations());
+        fields.sort(Comparator.comparing(FieldDeclaration::getName));
+
+        for (MethodDeclaration method : methods) {
+            method.accept(this);
+        }
+
+        for (FieldDeclaration field : fields) {
+            field.accept(this);
+        }
+
+        this.endBlock();
+    }
+
+    public void visit(FieldDeclaration declaration) {
+        this.print("public ");
+        this.print(declaration.getType());
+        this.print(" ");
+        this.print(declaration.getName());
+        this.println(";");
+    }
+
+    public void visit(MethodDeclaration declaration) {
+        this.print("public ");
+        this.print(declaration.getReturnType());
+        this.print(" ");
+        this.print(declaration.getName());
+        this.print("(");
+
+        if (!declaration.getParameterTypes().isEmpty()) {
+            String separator = "";
+
+            for (ParameterDeclaration parameter : declaration.getParameters()) {
+                this.print(separator);
+                parameter.accept(this);
+
+                separator = ", ";
+            }
+        }
+
+        this.print(")");
+        this.beginBlock();
+        this.endBlock();
+    }
+
+    public void visit(ParameterDeclaration declaration) {
+        this.print(declaration.getType());
+        this.print(" ");
+        this.print(declaration.getName());
+    }
+
+    public void visit(Statement.IfStatement statement) {}
+    public void visit(Statement.WhileStatement statement) {}
+    public void visit(Statement.ExpressionStatement statement) {}
+    public void visit(Statement.ReturnStatement statement) {}
+    public void visit(Statement.EmptyStatement statement) {}
+    public void visit(Statement.Block statement) {}
+    public void visit(Statement.LocalVariableDeclarationStatement statement) {}
+
+    public void visit(Expression.BinaryOperation expression) {}
+    public void visit(Expression.UnaryOperation expression) {}
+    public void visit(Expression.NullLiteral expression) {}
+    public void visit(Expression.BooleanLiteral expression) {}
+    public void visit(Expression.IntegerLiteral expression) {}
+    public void visit(Expression.MethodInvocation expression) {}
+    public void visit(Expression.ExplicitFieldAccess expression) {}
+    public void visit(Expression.ArrayElementAccess expression) {}
+    public void visit(Expression.VariableAccess expression) {}
+    public void visit(Expression.CurrentContextAccess expression) {}
+    public void visit(Expression.NewObjectCreation expression) {}
+    public void visit(Expression.NewArrayCreation expression) {}
+
+    /*
     @Override
     public void visit(AddExpression addExpression) {
         if (expressionStatementDepth > 0) {
@@ -638,40 +730,83 @@ public class PrettyPrinter implements ASTVisitor {
         newLine();
     }
 
+    */
+
     // MARK: - Output
 
     private final StringBuilder builder = new StringBuilder();
 
-    /**
-     * prints depth number of times tab without linebreak at end
-     */
-    private void printWhitespace() {
-        for (int i = 0; i < depth; i++) {
-            this.builder.append(INDENT);
+    private int indentationDepth = 0;
+    private boolean hasPrintedIndentationForCurrentLine = false;
+
+    private void print(String string) {
+        if (!this.hasPrintedIndentationForCurrentLine) {
+            for (int index = 0; index < this.indentationDepth; index += 1) {
+                this.builder.append("\t");
+            }
+
+            this.hasPrintedIndentationForCurrentLine = true;
+        }
+
+        this.builder.append(string);
+    }
+
+    private void println(String string) {
+        this.print(string);
+        this.printNewline();
+    }
+
+    private void printNewline() {
+        this.builder.append("\n");
+        this.hasPrintedIndentationForCurrentLine = false;
+    }
+
+    private void beginBlock() {
+        this.print(" {");
+        this.indentationDepth += 1;
+        this.printNewline();
+    }
+
+    private void endBlock() {
+        this.indentationDepth -= 1;
+        this.print("}");
+        this.printNewline();
+    }
+
+    private void print(TypeReference reference) {
+        this.print(reference.name);
+
+        for (int index = 0; index < reference.numberOfDimensions; index += 1) {
+            this.print("[]");
         }
     }
 
-    private void print(String s) {
-        this.builder.append(s);
-    }
+    /**
+     * prints depth number of times tab without linebreak at end
+     */
+//    private void printWhitespace() {
+//        for (int i = 0; i < depth; i++) {
+//            this.builder.append(INDENT);
+//        }
+//    }
 
-    private void printLeftPar() {
-        this.builder.append("(");
-    }
-
-    private void printRightPar() {
-        this.builder.append(")");
-    }
-
-    private void printLeftBrace() {
-        this.builder.append("{");
-    }
-
-    private void printRightBrace() {
-        this.builder.append("}");
-    }
-
-    private void newLine() {
-        this.builder.append("\n");
-    }
+//    private void printLeftPar() {
+//        this.builder.append("(");
+//    }
+//
+//    private void printRightPar() {
+//        this.builder.append(")");
+//    }
+//
+//    private void printLeftBrace() {
+//        this.builder.append("{");
+//    }
+//
+//    private void printRightBrace() {
+//        this.builder.append("}");
+//    }
+//
+//    private void newLine() {
+//        this.builder.append("\n");
+//    }
 }

@@ -163,8 +163,8 @@ public final class Parser {
 
             Statement.Block body = this.parseBlock();
 
-            TypeReference returnType = new TypeReference(new BasicTypeReference(PrimitiveTypeDeclaration.VOID), 0);
-            TypeReference parameterType = new TypeReference(new BasicTypeReference("String"), 0);
+            TypeReference returnType = new TypeReference(new BasicTypeReference("void", PrimitiveTypeDeclaration.VOID), 0);
+            TypeReference parameterType = new TypeReference(new BasicTypeReference("String"), 1);
             ParameterDeclaration parameter = new ParameterDeclaration(parameterType, parameterName);
             List<ParameterDeclaration> parameters = Collections.singletonList(parameter);
 
@@ -620,25 +620,29 @@ public final class Parser {
         // BasicType -> "IDENTIFIER"
         if (this.lookahead(TokenType.IDENTIFIER)) {
             String className = this.consume(TokenType.IDENTIFIER, null).text;
+
             return new BasicTypeReference(className);
         }
 
         // BasicType -> "int"
         else if (this.lookahead(TokenType.INT)) {
-            this.consume(TokenType.INT, null);
-            return new BasicTypeReference(PrimitiveTypeDeclaration.INTEGER);
+            String name = this.consume(TokenType.INT, null).text;
+
+            return new BasicTypeReference(name, PrimitiveTypeDeclaration.INTEGER);
         }
 
         // BasicType -> "boolean"
         else if (this.lookahead(TokenType.BOOLEAN)) {
-            this.consume(TokenType.BOOLEAN, null);
-            return new BasicTypeReference(PrimitiveTypeDeclaration.BOOLEAN);
+            String name = this.consume(TokenType.BOOLEAN, null).text;
+
+            return new BasicTypeReference(name, PrimitiveTypeDeclaration.BOOLEAN);
         }
 
         // BasicType -> "void"
         else if (this.lookahead(TokenType.VOID)) {
-            this.consume(TokenType.VOID, null);
-            return new BasicTypeReference(PrimitiveTypeDeclaration.VOID);
+            String name = this.consume(TokenType.VOID, null).text;
+
+            return new BasicTypeReference(name, PrimitiveTypeDeclaration.VOID);
         }
 
         else {
