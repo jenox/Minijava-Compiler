@@ -8,12 +8,7 @@ public enum PrimitiveTypeDeclaration implements BasicTypeDeclaration {
     VOID;
 
     @Override
-    public List<MethodDeclaration> getStaticMethodDeclarations() {
-        return Collections.emptyList();
-    }
-
-    @Override
-    public List<MethodDeclaration> getInstanceMethodDeclarations() {
+    public List<MethodDeclaration> getMethodDeclarations() {
         return Collections.emptyList();
     }
 

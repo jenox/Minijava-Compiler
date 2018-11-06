@@ -37,12 +37,10 @@ public class PrettyPrinter implements ASTVisitor {
     }
 
     public void visit(ClassDeclaration declaration) {
-        this.print("class " + declaration.name);
+        this.print("class " + declaration.getName());
         this.beginBlock();
 
-        List<MethodDeclaration> methods = new ArrayList<>();
-        methods.addAll(declaration.getInstanceMethodDeclarations());
-        methods.addAll(declaration.getStaticMethodDeclarations());
+        List<MethodDeclaration> methods = new ArrayList<>(declaration.getMethodDeclarations());
         methods.sort(Comparator.comparing(MethodDeclaration::getName));
 
         List<FieldDeclaration> fields = new ArrayList<>(declaration.getFieldDeclarations());
@@ -69,6 +67,11 @@ public class PrettyPrinter implements ASTVisitor {
 
     public void visit(MethodDeclaration declaration) {
         this.print("public ");
+
+        if (declaration.isStatic()) {
+            this.print("static ");
+        }
+
         this.print(declaration.getReturnType());
         this.print(" ");
         this.print(declaration.getName());

@@ -100,27 +100,19 @@ public final class Parser {
         this.consume(TokenType.CLASS, "ClassDeclaration");
 
         String name = this.consume(TokenType.IDENTIFIER, "ClassDeclaration").text;
-        List<MethodDeclaration> staticMethodDeclarations = new ArrayList<>();
-        List<MethodDeclaration> instanceMethodDeclarations = new ArrayList<>();
-        List<FieldDeclaration> fieldDeclarations = new ArrayList<>();
+        List<MethodDeclaration> methods = new ArrayList<>();
+        List<FieldDeclaration> fields = new ArrayList<>();
 
         this.consume(TokenType.OPENING_BRACE, "ClassDeclaration");
 
-        // TODO: This is super ugly.
         while (!this.lookahead(TokenType.CLOSING_BRACE)) {
-            boolean isStaticMethod = this.lookahead(TokenType.PUBLIC, TokenType.STATIC);
             MemberDeclaration declaration = this.parseClassMember();
 
             if (declaration instanceof MethodDeclaration) {
-                if (isStaticMethod) {
-                    staticMethodDeclarations.add((MethodDeclaration)declaration);
-                }
-                else {
-                    instanceMethodDeclarations.add((MethodDeclaration)declaration);
-                }
+                methods.add((MethodDeclaration)declaration);
             }
             else if (declaration instanceof FieldDeclaration) {
-                fieldDeclarations.add((FieldDeclaration)declaration);
+                fields.add((FieldDeclaration)declaration);
             }
             else {
                 throw new AssertionError();
@@ -129,7 +121,7 @@ public final class Parser {
 
         this.consume(TokenType.CLOSING_BRACE, "ClassDeclaration");
 
-        return new ClassDeclaration(name, staticMethodDeclarations, instanceMethodDeclarations, fieldDeclarations);
+        return new ClassDeclaration(name, methods, fields);
     }
 
     private MemberDeclaration parseClassMember() throws ParserException {
@@ -168,7 +160,7 @@ public final class Parser {
             ParameterDeclaration parameter = new ParameterDeclaration(parameterType, parameterName);
             List<ParameterDeclaration> parameters = Collections.singletonList(parameter);
 
-            return new MethodDeclaration(returnType, methodName, parameters, body);
+            return new MethodDeclaration(true, returnType, methodName, parameters, body);
         }
 
         // ClassMember -> Method | Field
@@ -198,7 +190,7 @@ public final class Parser {
 
                 Statement.Block body = this.parseBlock();
 
-                return new MethodDeclaration(type, name, parameters, body);
+                return new MethodDeclaration(false, type, name, parameters, body);
             }
         }
     }

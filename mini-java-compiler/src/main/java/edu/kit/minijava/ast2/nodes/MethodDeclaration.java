@@ -5,19 +5,25 @@ import edu.kit.minijava.ast2.references.*;
 import java.util.*;
 import java.util.stream.*;
 
-public final class MethodDeclaration extends ASTNode implements MemberDeclaration, SubroutineDeclaration {
-    public MethodDeclaration(TypeReference returnType, String name, List<ParameterDeclaration> parameters,
-                             Statement.Block body) {
+public final class MethodDeclaration extends ASTNode implements SubroutineDeclaration, MemberDeclaration {
+    public MethodDeclaration(boolean isStatic, TypeReference returnType, String name,
+                             List<ParameterDeclaration> parameters, Statement.Block body) {
+        this.isStatic = isStatic;
         this.returnType = returnType;
         this.name = name;
         this.parameters = Collections.unmodifiableList(parameters);
         this.body = body;
     }
 
+    private final boolean isStatic;
     private final TypeReference returnType;
     private final String name;
     private final List<ParameterDeclaration> parameters;
     private final Statement.Block body;
+
+    public boolean isStatic() {
+        return this.isStatic;
+    }
 
     @Override
     public TypeReference getReturnType() {

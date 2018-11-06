@@ -3,18 +3,14 @@ package edu.kit.minijava.ast2.nodes;
 import java.util.*;
 
 public final class ClassDeclaration extends ASTNode implements BasicTypeDeclaration {
-    public ClassDeclaration(String name, List<MethodDeclaration> staticMethodDeclarations,
-                            List<MethodDeclaration> instanceMethodDeclarations,
-                            List<FieldDeclaration> fieldDeclarations) {
+    public ClassDeclaration(String name, List<MethodDeclaration> methods, List<FieldDeclaration> fields) {
         this.name = name;
-        this.staticMethodDeclarations = Collections.unmodifiableList(staticMethodDeclarations);
-        this.instanceMethodDeclarations = Collections.unmodifiableList(instanceMethodDeclarations);
-        this.fieldDeclarations = Collections.unmodifiableList(fieldDeclarations);
+        this.methodDeclarations = Collections.unmodifiableList(methods);
+        this.fieldDeclarations = Collections.unmodifiableList(fields);
     }
 
-    public final String name;
-    private final List<MethodDeclaration> staticMethodDeclarations;
-    private final List<MethodDeclaration> instanceMethodDeclarations;
+    private final String name;
+    private final List<MethodDeclaration> methodDeclarations;
     private final List<FieldDeclaration> fieldDeclarations;
 
     public String getName() {
@@ -22,13 +18,8 @@ public final class ClassDeclaration extends ASTNode implements BasicTypeDeclarat
     }
 
     @Override
-    public List<MethodDeclaration> getStaticMethodDeclarations() {
-        return this.staticMethodDeclarations;
-    }
-
-    @Override
-    public List<MethodDeclaration> getInstanceMethodDeclarations() {
-        return this.instanceMethodDeclarations;
+    public List<MethodDeclaration> getMethodDeclarations() {
+        return this.methodDeclarations;
     }
 
     @Override
