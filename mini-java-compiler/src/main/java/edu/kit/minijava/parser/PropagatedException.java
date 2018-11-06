@@ -5,5 +5,10 @@ public class PropagatedException extends ParserException {
         this.cause = cause;
     }
 
-    final Throwable cause;
+    private final Throwable cause;
+
+    @Override
+    public Throwable getCause() {
+        return this.cause;
+    }
 }

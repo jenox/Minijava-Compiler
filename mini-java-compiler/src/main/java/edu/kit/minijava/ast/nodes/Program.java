@@ -3,13 +3,17 @@ package edu.kit.minijava.ast.nodes;
 import java.util.*;
 
 public final class Program extends ASTNode {
-    public Program(List<ClassDeclaration> classes) {
-        if (classes == null) throw new IllegalArgumentException();
+    public Program(List<ClassDeclaration> classDeclarations) {
+        if (classDeclarations == null) throw new IllegalArgumentException();
 
-        this.classes = Collections.unmodifiableList(classes);
+        this.classDeclarations = Collections.unmodifiableList(classDeclarations);
     }
 
-    public final List<ClassDeclaration> classes;
+    private final List<ClassDeclaration> classDeclarations;
+
+    public List<ClassDeclaration> getClassDeclarations() {
+        return this.classDeclarations;
+    }
 
     @Override
     public <T> void accept(ASTVisitor<T> visitor, T context) {

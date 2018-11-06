@@ -1,7 +1,6 @@
 package edu.kit.minijava.parser;
 
-import edu.kit.minijava.lexer.Token;
-import edu.kit.minijava.lexer.TokenType;
+import edu.kit.minijava.lexer.*;
 
 public class UnexpectedTokenException extends ParserException {
     public UnexpectedTokenException(Token actualToken, String context, TokenType... expectedTypes) {
@@ -15,9 +14,21 @@ public class UnexpectedTokenException extends ParserException {
         this.expectedTypes = expectedTypes;
     }
 
-    public final Token actualToken; // nullable
-    public final String context;
-    public final TokenType[] expectedTypes;
+    private final Token actualToken; // nullable
+    private final String context;
+    private final TokenType[] expectedTypes;
+
+    public Token getActualToken() {
+        return this.actualToken;
+    }
+
+    public String getContext() {
+        return this.context;
+    }
+
+    public TokenType[] getExpectedTypes() {
+        return this.expectedTypes;
+    }
 
     @Override
     public String getMessage() {
@@ -27,8 +38,9 @@ public class UnexpectedTokenException extends ParserException {
             builder.append("Unexpected token ");
             builder.append(this.actualToken);
             builder.append(" at ");
-            builder.append(this.actualToken.location);
-        } else {
+            builder.append(this.actualToken.getLocation());
+        }
+        else {
             builder.append("Unexpected EOF");
         }
 
@@ -41,11 +53,13 @@ public class UnexpectedTokenException extends ParserException {
 
             if (this.expectedTypes.length == 1) {
                 builder.append(this.expectedTypes[0]);
-            } else if (this.expectedTypes.length == 2) {
+            }
+            else if (this.expectedTypes.length == 2) {
                 builder.append(this.expectedTypes[0]);
                 builder.append(" or ");
                 builder.append(this.expectedTypes[1]);
-            } else {
+            }
+            else {
                 for (int index = 0; index < this.expectedTypes.length - 2; index += 1) {
                     builder.append(this.expectedTypes[index]);
                     builder.append(", ");

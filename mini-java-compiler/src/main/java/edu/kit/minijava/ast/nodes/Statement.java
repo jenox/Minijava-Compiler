@@ -21,9 +21,21 @@ public abstract class Statement extends ASTNode {
             this.statementIfFalse = statementIfFalse;
         }
 
-        public final Expression condition;
-        public final Statement statementIfTrue;
-        public final Statement statementIfFalse; //nullable
+        private final Expression condition;
+        private final Statement statementIfTrue;
+        private final Statement statementIfFalse; //nullable
+
+        public Expression getCondition() {
+            return this.condition;
+        }
+
+        public Statement getStatementIfTrue() {
+            return this.statementIfTrue;
+        }
+
+        public Statement getStatementIfFalse() {
+            return this.statementIfFalse;
+        }
 
         @Override
         public <T> void accept(ASTVisitor<T> visitor, T context) {
@@ -37,8 +49,16 @@ public abstract class Statement extends ASTNode {
             this.statementWhileTrue = statementWhileTrue;
         }
 
-        public final Expression condition;
-        public final Statement statementWhileTrue;
+        private final Expression condition;
+        private final Statement statementWhileTrue;
+
+        public Expression getCondition() {
+            return this.condition;
+        }
+
+        public Statement getStatementWhileTrue() {
+            return this.statementWhileTrue;
+        }
 
         @Override
         public <T> void accept(ASTVisitor<T> visitor, T context) {
@@ -51,7 +71,11 @@ public abstract class Statement extends ASTNode {
             this.expression = expression;
         }
 
-        public final Expression expression;
+        private final Expression expression;
+
+        public Expression getExpression() {
+            return this.expression;
+        }
 
         @Override
         public <T> void accept(ASTVisitor<T> visitor, T context) {
@@ -68,7 +92,11 @@ public abstract class Statement extends ASTNode {
             this.value = value;
         }
 
-        public final Expression value; // nullable
+        private final Expression value; // nullable
+
+        public Expression getValue() {
+            return this.value;
+        }
 
         @Override
         public <T> void accept(ASTVisitor<T> visitor, T context) {
@@ -91,7 +119,11 @@ public abstract class Statement extends ASTNode {
             this.statements = Collections.unmodifiableList(statements);
         }
 
-        public final List<Statement> statements;
+        private final List<Statement> statements;
+
+        public List<Statement> getStatements() {
+            return this.statements;
+        }
 
         @Override
         public <T> void accept(ASTVisitor<T> visitor, T context) {
@@ -112,13 +144,21 @@ public abstract class Statement extends ASTNode {
             this.value = value;
         }
 
-        public final TypeReference type;
-        public final String name;
-        public final Expression value; //nullable
+        private final TypeReference type;
+        private final String name;
+        private final Expression value; //nullable
 
         @Override
         public TypeReference getType() {
             return this.type;
+        }
+
+        public String getName() {
+            return this.name;
+        }
+
+        public Expression getValue() {
+            return this.value;
         }
 
         @Override

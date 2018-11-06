@@ -1,11 +1,11 @@
 package edu.kit.minijava.parser;
 
-import java.io.*;
-import java.util.*;
-
 import edu.kit.minijava.lexer.*;
 import edu.kit.minijava.ast.nodes.*;
 import edu.kit.minijava.ast.references.*;
+
+import java.io.*;
+import java.util.*;
 
 public final class Parser {
 
@@ -37,7 +37,8 @@ public final class Parser {
 
                 if (token != null) {
                     this.tokens.add(token);
-                } else {
+                }
+                else {
                     this.hasReceivedEndOfInputFromLexer = true;
                     break;
                 }
@@ -49,7 +50,8 @@ public final class Parser {
 
         if (offset < this.tokens.size()) {
             return this.tokens.get(offset);
-        } else {
+        }
+        else {
             return null;
         }
     }
@@ -75,7 +77,7 @@ public final class Parser {
     private Token consume(TokenType type, String context) throws ParserException {
         Token token = this.getCurrentToken();
 
-        if (token == null || token.type != type) {
+        if (token == null || token.getType() != type) {
             throw new UnexpectedTokenException(token, context, type);
         }
 
@@ -99,7 +101,7 @@ public final class Parser {
     private ClassDeclaration parseClassDeclaration() throws ParserException {
         this.consume(TokenType.CLASS, "ClassDeclaration");
 
-        String name = this.consume(TokenType.IDENTIFIER, "ClassDeclaration").text;
+        String name = this.consume(TokenType.IDENTIFIER, "ClassDeclaration").getText();
         List<MethodDeclaration> methods = new ArrayList<>();
         List<FieldDeclaration> fields = new ArrayList<>();
 
@@ -132,19 +134,19 @@ public final class Parser {
             this.consume(TokenType.STATIC, "MainMethod");
             this.consume(TokenType.VOID, "MainMethod");
 
-            String methodName = this.consume(TokenType.IDENTIFIER, "MainMethod").text;
+            String methodName = this.consume(TokenType.IDENTIFIER, "MainMethod").getText();
 
             this.consume(TokenType.OPENING_PARENTHESIS, "MainMethod");
 
             Token parameterTypeToken = this.consume(TokenType.IDENTIFIER, "MainMethod");
-            if (!parameterTypeToken.text.equals("String")) {
+            if (!parameterTypeToken.getText().equals("String")) {
                 throw new UnexpectedTokenException(parameterTypeToken, "MainMethod", TokenType.IDENTIFIER);
             }
 
             this.consume(TokenType.OPENING_BRACKET, "MainMethod");
             this.consume(TokenType.CLOSING_BRACKET, "MainMethod");
 
-            String parameterName = this.consume(TokenType.IDENTIFIER, "MainMethod").text;
+            String parameterName = this.consume(TokenType.IDENTIFIER, "MainMethod").getText();
 
             this.consume(TokenType.CLOSING_PARENTHESIS, "MainMethod");
 
@@ -166,7 +168,7 @@ public final class Parser {
         // ClassMember -> Method | Field
         else {
             TypeReference type = this.parseType();
-            String name = this.consume(TokenType.IDENTIFIER, "ClassMember").text;
+            String name = this.consume(TokenType.IDENTIFIER, "ClassMember").getText();
 
             // ClassMember -> Field
             if (this.lookahead(TokenType.SEMICOLON)) {
@@ -216,7 +218,7 @@ public final class Parser {
 
     private ParameterDeclaration parseParameter() throws ParserException {
         TypeReference type = this.parseType();
-        String name = this.consume(TokenType.IDENTIFIER, "Parameter").text;
+        String name = this.consume(TokenType.IDENTIFIER, "Parameter").getText();
 
         return new ParameterDeclaration(type, name);
     }
@@ -293,7 +295,7 @@ public final class Parser {
 
     private Statement parseLocalVariableDeclarationStatement() throws ParserException {
         TypeReference type = this.parseType();
-        String name = this.consume(TokenType.IDENTIFIER, "LocalVariableDeclarationStatement").text;
+        String name = this.consume(TokenType.IDENTIFIER, "LocalVariableDeclarationStatement").getText();
 
         // LocalVariableDeclarationStatement -> Type "IDENTIFIER" "=" Expression ";"
         if (this.lookahead(TokenType.ASSIGN)) {
@@ -385,7 +387,7 @@ public final class Parser {
         // 1. Consume prefix operators
         consumePrefixOperators:
         while (!this.hasReachedEndOfInput()) {
-            switch (this.getCurrentToken().type) {
+            switch (this.getCurrentToken().getType()) {
                 case LOGICAL_NEGATION:
                     this.consume(TokenType.LOGICAL_NEGATION, null);
                     consumedPrefixOperators.push(TokenType.LOGICAL_NEGATION);
@@ -405,7 +407,7 @@ public final class Parser {
         // 3. Consume postfix operations (they have higher precedence than prefix operators)
         consumePostfixOperations:
         while (!this.hasReachedEndOfInput()) {
-            switch (this.getCurrentToken().type) {
+            switch (this.getCurrentToken().getType()) {
                 case PERIOD:
                 case OPENING_BRACKET:
                     expression = this.parsePostfixOperationWithContext(expression);
@@ -431,17 +433,18 @@ public final class Parser {
 
         // 5. Precedence climbing with 'atom' including prefix operators and postfix operations.
         while (!this.hasReachedEndOfInput()) {
-            BinaryOperation operation = BinaryOperation.forTokenType(this.getCurrentToken().type);
+            BinaryOperation operation = BinaryOperation.forTokenType(this.getCurrentToken().getType());
 
-            if (operation == null || operation.precedence < minimumPrecedence) {
+            if (operation == null || operation.getPrecedence() < minimumPrecedence) {
                 break;
-            } else {
-                this.consume(operation.tokenType, null);
+            }
+            else {
+                this.consume(operation.getTokenType(), null);
             }
 
-            int precedence = operation.precedence;
+            int precedence = operation.getPrecedence();
 
-            if (operation.associativity == Associativity.LEFT_ASSOCIATIVE) {
+            if (operation.getAssociativity() == Associativity.LEFT_ASSOCIATIVE) {
                 precedence = precedence + 1;
             }
 
@@ -458,7 +461,7 @@ public final class Parser {
         // PostfixOperation -> MethodInvocation | FieldAccess
         if (this.lookahead(TokenType.PERIOD)) {
             this.consume(TokenType.PERIOD, "PostfixOperation");
-            String identifier = this.consume(TokenType.IDENTIFIER, "PostfixOperation").text;
+            String identifier = this.consume(TokenType.IDENTIFIER, "PostfixOperation").getText();
 
             if (this.lookahead(TokenType.OPENING_PARENTHESIS)) {
                 this.consume(TokenType.OPENING_PARENTHESIS, "MethodInvocation");
@@ -466,7 +469,8 @@ public final class Parser {
                 this.consume(TokenType.CLOSING_PARENTHESIS, "MethodInvocation");
 
                 return new Expression.MethodInvocation(context, identifier, arguments);
-            } else {
+            }
+            else {
                 return new Expression.ExplicitFieldAccess(context, identifier);
             }
         }
@@ -499,7 +503,7 @@ public final class Parser {
 
         // PrimaryExpression -> "IDENTIFIER" | "IDENTIFIER" "(" Arguments ")"
         else if (this.lookahead(TokenType.IDENTIFIER)) {
-            String identifier = this.consume(TokenType.IDENTIFIER, "PrimaryExpression").text;
+            String identifier = this.consume(TokenType.IDENTIFIER, "PrimaryExpression").getText();
 
             if (this.lookahead(TokenType.OPENING_PARENTHESIS)) {
                 this.consume(TokenType.OPENING_PARENTHESIS, "PrimaryExpression");
@@ -507,14 +511,15 @@ public final class Parser {
                 this.consume(TokenType.CLOSING_PARENTHESIS, "PrimaryExpression");
 
                 return new Expression.MethodInvocation(null, identifier, arguments);
-            } else {
+            }
+            else {
                 return new Expression.VariableAccess(identifier);
             }
         }
 
         // PrimaryExpression -> Literal -> "INTEGER_LITERAL"
         else if (this.lookahead(TokenType.INTEGER_LITERAL)) {
-            String value = this.consume(TokenType.INTEGER_LITERAL, null).text;
+            String value = this.consume(TokenType.INTEGER_LITERAL, null).getText();
 
             return new Expression.IntegerLiteral(value);
         }
@@ -553,7 +558,7 @@ public final class Parser {
 
             // PrimaryExpression -> NewObjectExpression -> "new" "IDENTIFIER" "(" ")"
             if (this.lookahead(TokenType.IDENTIFIER, TokenType.OPENING_PARENTHESIS)) {
-                String className = this.consume(TokenType.IDENTIFIER, "NewObjectExpression").text;
+                String className = this.consume(TokenType.IDENTIFIER, "NewObjectExpression").getText();
                 this.consume(TokenType.OPENING_PARENTHESIS, "NewObjectExpression");
                 this.consume(TokenType.CLOSING_PARENTHESIS, "NewObjectExpression");
 
@@ -611,28 +616,28 @@ public final class Parser {
 
         // BasicType -> "IDENTIFIER"
         if (this.lookahead(TokenType.IDENTIFIER)) {
-            String className = this.consume(TokenType.IDENTIFIER, null).text;
+            String className = this.consume(TokenType.IDENTIFIER, null).getText();
 
             return new BasicTypeReference(className);
         }
 
         // BasicType -> "int"
         else if (this.lookahead(TokenType.INT)) {
-            String name = this.consume(TokenType.INT, null).text;
+            String name = this.consume(TokenType.INT, null).getText();
 
             return new BasicTypeReference(name, PrimitiveTypeDeclaration.INTEGER);
         }
 
         // BasicType -> "boolean"
         else if (this.lookahead(TokenType.BOOLEAN)) {
-            String name = this.consume(TokenType.BOOLEAN, null).text;
+            String name = this.consume(TokenType.BOOLEAN, null).getText();
 
             return new BasicTypeReference(name, PrimitiveTypeDeclaration.BOOLEAN);
         }
 
         // BasicType -> "void"
         else if (this.lookahead(TokenType.VOID)) {
-            String name = this.consume(TokenType.VOID, null).text;
+            String name = this.consume(TokenType.VOID, null).getText();
 
             return new BasicTypeReference(name, PrimitiveTypeDeclaration.VOID);
         }
