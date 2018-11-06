@@ -5,7 +5,7 @@ import edu.kit.minijava.ast2.references.*;
 
 import java.util.*;
 
-public class PrettyPrinter implements ASTVisitor<Object> {
+public class PrettyPrinter implements ASTVisitor<PrettyPrinter.Options> {
 
 //    private int expressionStatementDepth;
 //    private boolean nested;
@@ -15,6 +15,10 @@ public class PrettyPrinter implements ASTVisitor<Object> {
 //        depth = 0;
 //        expressionStatementDepth = 0;
 //        nested = false;
+    }
+
+    public enum Options {
+        DO_NOT_PRINT_NEWLINE_AFTER_BLOCK;
     }
 
     // MARK: - Classes
@@ -27,7 +31,7 @@ public class PrettyPrinter implements ASTVisitor<Object> {
         return this.builder.toString();
     }
 
-    public void visit(Program program, Object context) {
+    public void visit(Program program, Options context) {
         List<ClassDeclaration> declarations = new ArrayList<>(program.classes);
         declarations.sort(Comparator.comparing(ClassDeclaration::getName));
 
@@ -36,7 +40,7 @@ public class PrettyPrinter implements ASTVisitor<Object> {
         }
     }
 
-    public void visit(ClassDeclaration declaration, Object context) {
+    public void visit(ClassDeclaration declaration, Options context) {
         this.print("class " + declaration.getName());
         this.beginBlock();
 
@@ -57,7 +61,7 @@ public class PrettyPrinter implements ASTVisitor<Object> {
         this.endBlock(true);
     }
 
-    public void visit(FieldDeclaration declaration, Object context) {
+    public void visit(FieldDeclaration declaration, Options context) {
         this.print("public ");
         this.print(declaration.getType());
         this.print(" ");
@@ -65,7 +69,7 @@ public class PrettyPrinter implements ASTVisitor<Object> {
         this.println(";");
     }
 
-    public void visit(MethodDeclaration declaration, Object context) {
+    public void visit(MethodDeclaration declaration, Options context) {
         this.print("public ");
 
         if (declaration.isStatic()) {
@@ -89,43 +93,144 @@ public class PrettyPrinter implements ASTVisitor<Object> {
         }
 
         this.print(")");
-        this.beginBlock();
-        this.endBlock();
+
+        declaration.getBody().accept(this, null);
     }
 
-    public void visit(ParameterDeclaration declaration, Object context) {
+    public void visit(ParameterDeclaration declaration, Options context) {
         this.print(declaration.getType());
         this.print(" ");
         this.print(declaration.getName());
     }
 
-    public void visit(Statement.IfStatement statement, Object context) {
-    }
-    public void visit(Statement.WhileStatement statement, Object context) {
-    }
-    public void visit(Statement.ExpressionStatement statement, Object context) {
-    }
-    public void visit(Statement.ReturnStatement statement, Object context) {
-    }
-    public void visit(Statement.EmptyStatement statement, Object context) {
-    }
-    public void visit(Statement.Block block, Object context) {
-    }
-    public void visit(Statement.LocalVariableDeclarationStatement statement, Object context) {
+
+    // MARK: - Statements
+
+    public void visit(Statement.IfStatement statement, Options context) {
+        this.print("if (");
+        statement.condition.accept(this, null);
+        this.print(") ");
+
+        if (statement.statementIfTrue instanceof Statement.Block) {
+            statement.statementIfTrue.accept(this, Options.DO_NOT_PRINT_NEWLINE_AFTER_BLOCK);
+
+            if (statement.statementIfFalse == null) {
+                this.println("");
+            }
+        }
+        else {
+            this.println("");
+            this.indentationDepth += 1;
+            statement.statementIfTrue.accept(this, null);
+            this.indentationDepth -= 1;
+        }
+
+        if (statement.statementIfFalse != null) {
+            if (statement.statementIfFalse instanceof Statement.Block) {
+                this.print(" else ");
+                statement.statementIfFalse.accept(this, null);
+            }
+            else if (statement.statementIfFalse instanceof Statement.IfStatement) {
+                this.print(" else ");
+                statement.statementIfFalse.accept(this, null);
+            }
+            else if (!(statement.statementIfFalse instanceof Statement.EmptyStatement)) {
+                this.print(" else ");
+                this.indentationDepth += 1;
+                statement.statementIfFalse.accept(this, null);
+                this.indentationDepth -= 1;
+            }
+        }
     }
 
-    public void visit(Expression.BinaryOperation expression, Object context) {}
-    public void visit(Expression.UnaryOperation expression, Object context) {}
-    public void visit(Expression.NullLiteral expression, Object context) {}
-    public void visit(Expression.BooleanLiteral expression, Object context) {}
-    public void visit(Expression.IntegerLiteral expression, Object context) {}
-    public void visit(Expression.MethodInvocation expression, Object context) {}
-    public void visit(Expression.ExplicitFieldAccess expression, Object context) {}
-    public void visit(Expression.ArrayElementAccess expression, Object context) {}
-    public void visit(Expression.VariableAccess expression, Object context) {}
-    public void visit(Expression.CurrentContextAccess expression, Object context) {}
-    public void visit(Expression.NewObjectCreation expression, Object context) {}
-    public void visit(Expression.NewArrayCreation expression, Object context) {}
+    public void visit(Statement.WhileStatement statement, Options context) {
+        this.print("while (");
+        statement.condition.accept(this, null);
+        this.print(") ");
+
+        if (statement.statementWhileTrue instanceof Statement.Block) {
+            statement.statementWhileTrue.accept(this, null);
+        }
+        else {
+            this.println("");
+            this.indentationDepth += 1;
+            statement.statementWhileTrue.accept(this, null);
+            this.indentationDepth -= 1;
+        }
+    }
+
+    public void visit(Statement.ExpressionStatement statement, Options context) {
+        statement.expression.accept(this, null);
+        this.println(";");
+    }
+
+    public void visit(Statement.ReturnStatement statement, Options context) {
+        if (statement.value != null) {
+            this.print("return ");
+            statement.value.accept(this, null);
+            this.println(";");
+        }
+        else {
+            this.println("return;");
+        }
+    }
+
+    public void visit(Statement.EmptyStatement statement, Options context) {
+        this.println(";");
+    }
+
+    public void visit(Statement.Block block, Options context) {
+        if (block.statements.isEmpty()) {
+            if (context == Options.DO_NOT_PRINT_NEWLINE_AFTER_BLOCK) {
+                this.print("{ }");
+            }
+            else {
+                this.println("{ }");
+            }
+        }
+        else {
+            this.beginBlock();
+
+            for (Statement statement : block.statements) {
+                statement.accept(this, null);
+            }
+
+            if (context == Options.DO_NOT_PRINT_NEWLINE_AFTER_BLOCK) {
+                this.endBlock(false);
+            }
+            else {
+                this.endBlock(true);
+            }
+        }
+    }
+
+    public void visit(Statement.LocalVariableDeclarationStatement statement, Options context) {
+        this.print(statement.type);
+        this.print(" ");
+        this.print(statement.name);
+
+        if (statement.value != null) {
+            this.print(" = ");
+            statement.value.accept(this, null);
+            this.println(";");
+        }
+        else {
+            this.println(";");
+        }
+    }
+
+    public void visit(Expression.BinaryOperation expression, Options context) {}
+    public void visit(Expression.UnaryOperation expression, Options context) {}
+    public void visit(Expression.NullLiteral expression, Options context) {}
+    public void visit(Expression.BooleanLiteral expression, Options context) {}
+    public void visit(Expression.IntegerLiteral expression, Options context) {}
+    public void visit(Expression.MethodInvocation expression, Options context) {}
+    public void visit(Expression.ExplicitFieldAccess expression, Options context) {}
+    public void visit(Expression.ArrayElementAccess expression, Options context) {}
+    public void visit(Expression.VariableAccess expression, Options context) {}
+    public void visit(Expression.CurrentContextAccess expression, Options context) {}
+    public void visit(Expression.NewObjectCreation expression, Options context) {}
+    public void visit(Expression.NewArrayCreation expression, Options context) {}
 
     /*
     @Override
@@ -166,47 +271,6 @@ public class PrettyPrinter implements ASTVisitor<Object> {
     }
 
     @Override
-    public void visit(Block block) {
-        if (!nested) {
-            printLeftBrace();
-            if (block.statements.isEmpty()) {
-                print(" }\n"); // whitespace, right brace, newline
-                printWhitespace();
-                return;
-            }
-            depth++;
-            newLine();
-            printWhitespace();
-        }
-        if (block.statements.isEmpty()) {
-            print(" ");
-            return;
-        }
-        BlockStatement firstStatement = block.statements.get(0);
-        boolean currentNested = nested;
-        nested = true;
-        int start = 0;
-        if (true) {
-            firstStatement.accept(this);
-            start = 1;
-        }
-        for (int i = start; i < block.statements.size(); i++) {
-            BlockStatement statement = block.statements.get(i);
-            newLine();
-            printWhitespace();
-            statement.accept(this);
-        }
-        nested = currentNested;
-        if (!nested) {
-            depth--; // back to top level
-            newLine();
-            printWhitespace();
-            printRightBrace();
-        }
-
-    }
-
-    @Override
     public void visit(BooleanLiteral booleanLiteral) {
         print(String.valueOf(booleanLiteral.value));
     }
@@ -227,11 +291,6 @@ public class PrettyPrinter implements ASTVisitor<Object> {
     }
 
     @Override
-    public void visit(EmptyStatement emptyStatement) {
-        print(";");
-    }
-
-    @Override
     public void visit(EqualToExpression equalToExpression) {
         if (expressionStatementDepth > 0) {
             printLeftPar();
@@ -244,12 +303,6 @@ public class PrettyPrinter implements ASTVisitor<Object> {
         if (expressionStatementDepth > 0) {
             printRightPar();
         }
-    }
-
-    @Override
-    public void visit(ExpressionStatement expressionStatement) {
-        expressionStatement.expression.accept(this);
-        print(";");
     }
 
     @Override
@@ -308,53 +361,6 @@ public class PrettyPrinter implements ASTVisitor<Object> {
     }
 
     @Override
-    public void visit(IfElseStatement ifElseStatement) {
-        print("if ");
-        printLeftPar();
-        ifElseStatement.condition.accept(this);
-        printRightPar();
-        print(" {\n");
-        depth++;
-        boolean localNested = nested;
-        nested = true;
-        printWhitespace();
-        ifElseStatement.statementIfTrue.accept(this);
-        depth--;
-        newLine();
-        printWhitespace();
-        print("} else {\n");
-        depth++;
-        printWhitespace();
-        ifElseStatement.statementIfFalse.accept(this);
-        depth--;
-        nested = localNested;
-        newLine();
-        printWhitespace();
-        printRightBrace();
-        newLine();
-    }
-
-    @Override
-    public void visit(IfStatement ifStatement) {
-        print("if ");
-        printLeftPar();
-        ifStatement.condition.accept(this);
-        printRightPar();
-        print(" {\n");
-        depth++;
-        boolean localNested = nested;
-        nested = true;
-        printWhitespace();
-        ifStatement.statementIfTrue.accept(this);
-        newLine();
-        depth--;
-        nested = localNested;
-        printWhitespace();
-        printRightBrace();
-        newLine();
-    }
-
-    @Override
     public void visit(IntegerLiteral integerLiteral) {
         print(integerLiteral.value);
     }
@@ -387,20 +393,6 @@ public class PrettyPrinter implements ASTVisitor<Object> {
         if (expressionStatementDepth > 0) {
             printRightPar();
         }
-    }
-
-    @Override
-    public void visit(LocalVariableDeclarationStatement localVariableDeclarationStatement) {
-        localVariableDeclarationStatement.type.accept(this);
-        print(" " + localVariableDeclarationStatement.name + ";");
-    }
-
-    @Override
-    public void visit(LocalVariableInitializationStatement localVariableInitializationStatement) {
-        localVariableInitializationStatement.type.accept(this);
-        print(" " + localVariableInitializationStatement.name + " = ");
-        localVariableInitializationStatement.value.accept(this);
-        print(";");
     }
 
     @Override
@@ -551,18 +543,6 @@ public class PrettyPrinter implements ASTVisitor<Object> {
     }
 
     @Override
-    public void visit(ReturnNoValueStatement returnNoValueStatement) {
-        print("return;");
-    }
-
-    @Override
-    public void visit(ReturnValueStatement returnValueStatement) {
-        print("return ");
-        returnValueStatement.returnValue.accept(this);
-        print(";");
-    }
-
-    @Override
     public void visit(SubtractExpression subtractExpression) {
         if (expressionStatementDepth > 0) {
             printLeftPar();
@@ -580,26 +560,6 @@ public class PrettyPrinter implements ASTVisitor<Object> {
     @Override
     public void visit(ThisExpression thisExpression) {
         print("this");
-    }
-
-    @Override
-    public void visit(WhileStatement whileStatement) {
-        print("while ");
-        printLeftPar();
-        whileStatement.condition.accept(this);
-        printRightPar();
-        print(" {\n");
-        depth++;
-        boolean localNested = nested;
-        nested = true;
-        printWhitespace();
-        whileStatement.statementWhileTrue.accept(this);
-        newLine();
-        depth--;
-        nested = localNested;
-        printWhitespace();
-        printRightBrace();
-        newLine();
     }
 
     */
@@ -634,15 +594,18 @@ public class PrettyPrinter implements ASTVisitor<Object> {
     }
 
     private void beginBlock() {
-        this.print(" {");
+        this.print("{");
         this.indentationDepth += 1;
         this.printNewline();
     }
 
-    private void endBlock() {
+    private void endBlock(boolean newline) {
         this.indentationDepth -= 1;
         this.print("}");
-        this.printNewline();
+
+        if (newline) {
+            this.printNewline();
+        }
     }
 
     private void print(TypeReference reference) {
