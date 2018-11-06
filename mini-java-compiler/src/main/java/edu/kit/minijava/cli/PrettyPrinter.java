@@ -111,7 +111,7 @@ public class PrettyPrinter implements ASTVisitor<PrettyPrinter.Options> {
         if (statement.statementIfTrue instanceof Statement.Block) {
             statement.statementIfTrue.accept(this, Options.DO_NOT_PRINT_NEWLINE_AFTER_BLOCK);
 
-            if (statement.statementIfFalse != null) {
+            if (this.shouldPrintElseStatement(statement.statementIfFalse)) {
                 this.print(" ");
             }
             else {
@@ -125,7 +125,7 @@ public class PrettyPrinter implements ASTVisitor<PrettyPrinter.Options> {
             this.indentationDepth -= 1;
         }
 
-        if (statement.statementIfFalse != null) {
+        if (this.shouldPrintElseStatement(statement.statementIfFalse)) {
             if (statement.statementIfFalse instanceof Statement.Block) {
                 this.print("else ");
                 statement.statementIfFalse.accept(this, null);
@@ -134,13 +134,20 @@ public class PrettyPrinter implements ASTVisitor<PrettyPrinter.Options> {
                 this.print("else ");
                 statement.statementIfFalse.accept(this, null);
             }
-            else if (!(statement.statementIfFalse instanceof Statement.EmptyStatement)) {
+            else {
                 this.print("else ");
                 this.indentationDepth += 1;
                 statement.statementIfFalse.accept(this, null);
                 this.indentationDepth -= 1;
             }
         }
+    }
+
+    private boolean shouldPrintElseStatement(Statement statement) {
+        if (statement == null) return false;
+        if (statement instanceof Statement.EmptyStatement) return false;
+
+        return true;
     }
 
     public void visit(Statement.WhileStatement statement, Options context) {
