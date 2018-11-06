@@ -41,7 +41,9 @@ public class PrettyPrinter implements ASTVisitor<PrettyPrinter.Options> {
     }
 
     public void visit(ClassDeclaration declaration, Options context) {
-        this.print("class " + declaration.getName());
+        this.print("class ");
+        this.print(declaration.getName());
+        this.print(" ");
         this.beginBlock();
 
         List<MethodDeclaration> methods = new ArrayList<>(declaration.getMethodDeclarations());
@@ -92,7 +94,7 @@ public class PrettyPrinter implements ASTVisitor<PrettyPrinter.Options> {
             }
         }
 
-        this.print(")");
+        this.print(") ");
 
         declaration.getBody().accept(this, null);
     }
@@ -322,6 +324,8 @@ public class PrettyPrinter implements ASTVisitor<PrettyPrinter.Options> {
     private boolean hasPrintedIndentationForCurrentLine = false;
 
     private void print(String string) {
+        assert string != null;
+
         if (!this.hasPrintedIndentationForCurrentLine) {
             for (int index = 0; index < this.indentationDepth; index += 1) {
                 this.builder.append("\t");
