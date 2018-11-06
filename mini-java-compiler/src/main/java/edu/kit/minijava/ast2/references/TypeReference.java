@@ -8,6 +8,23 @@ public final class TypeReference extends AbstractReference<BasicTypeDeclaration>
         this.numberOfDimensions = 0;
     }
 
+    public TypeReference(String name, int numberOfDimensions) {
+        if (name == null) throw new IllegalArgumentException();
+
+        this.name = name;
+        this.numberOfDimensions = numberOfDimensions;
+    }
+
+    public TypeReference(String name, PrimitiveTypeDeclaration declaration, int numberOfDimensions) {
+        if (name == null) throw new IllegalArgumentException();
+        if (declaration == null) throw new IllegalArgumentException();
+
+        this.name = name;
+        this.numberOfDimensions = numberOfDimensions;
+
+        this.resolveTo(declaration);
+    }
+
     public TypeReference(BasicTypeReference reference, int numberOfDimensions) {
         if (reference == null) throw new IllegalArgumentException();
 

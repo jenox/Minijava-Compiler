@@ -155,8 +155,8 @@ public final class Parser {
 
             Statement.Block body = this.parseBlock();
 
-            TypeReference returnType = new TypeReference(new BasicTypeReference("void", PrimitiveTypeDeclaration.VOID), 0);
-            TypeReference parameterType = new TypeReference(new BasicTypeReference("String"), 1);
+            TypeReference returnType = new TypeReference("void", PrimitiveTypeDeclaration.VOID, 0);
+            TypeReference parameterType = new TypeReference("String", 1);
             ParameterDeclaration parameter = new ParameterDeclaration(parameterType, parameterName);
             List<ParameterDeclaration> parameters = Collections.singletonList(parameter);
 
