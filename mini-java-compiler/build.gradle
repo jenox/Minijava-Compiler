@@ -17,6 +17,9 @@ jar {
     }
 }
 
+apply plugin: 'application'
+mainClassName = 'edu.kit.minijava.cli.CommandLineInterface'
+
 apply plugin: 'checkstyle'
 
 checkstyle {
