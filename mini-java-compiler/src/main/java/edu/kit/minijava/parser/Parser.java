@@ -1,11 +1,11 @@
 package edu.kit.minijava.parser;
 
-import java.io.*;
-import java.util.*;
-
 import edu.kit.minijava.lexer.*;
 import edu.kit.minijava.ast.nodes.*;
 import edu.kit.minijava.ast.references.*;
+
+import java.io.*;
+import java.util.*;
 
 public final class Parser {
 

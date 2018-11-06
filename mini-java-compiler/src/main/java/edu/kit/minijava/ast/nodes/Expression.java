@@ -3,7 +3,7 @@ package edu.kit.minijava.ast.nodes;
 import edu.kit.minijava.ast.references.*;
 
 import java.util.*;
-import java.util.stream.Collectors;
+import java.util.stream.*;
 
 public abstract class Expression extends ASTNode {
     private Expression(TypeReference type) {
