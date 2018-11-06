@@ -26,8 +26,8 @@ public abstract class Expression extends ASTNode {
         public final Expression right;
 
         @Override
-        public void accept(ASTVisitor visitor) {
-            visitor.visit(this);
+        public <T> void accept(ASTVisitor<T> visitor, T context) {
+            visitor.visit(this, context);
         }
     }
 
@@ -43,8 +43,8 @@ public abstract class Expression extends ASTNode {
         public final Expression other;
 
         @Override
-        public void accept(ASTVisitor visitor) {
-            visitor.visit(this);
+        public <T> void accept(ASTVisitor<T> visitor, T context) {
+            visitor.visit(this, context);
         }
     }
 
@@ -54,8 +54,8 @@ public abstract class Expression extends ASTNode {
         }
 
         @Override
-        public void accept(ASTVisitor visitor) {
-            visitor.visit(this);
+        public <T> void accept(ASTVisitor<T> visitor, T context) {
+            visitor.visit(this, context);
         }
     }
 
@@ -69,8 +69,8 @@ public abstract class Expression extends ASTNode {
         public final boolean value;
 
         @Override
-        public void accept(ASTVisitor visitor) {
-            visitor.visit(this);
+        public <T> void accept(ASTVisitor<T> visitor, T context) {
+            visitor.visit(this, context);
         }
     }
 
@@ -84,8 +84,8 @@ public abstract class Expression extends ASTNode {
         public final String value;
 
         @Override
-        public void accept(ASTVisitor visitor) {
-            visitor.visit(this);
+        public <T> void accept(ASTVisitor<T> visitor, T context) {
+            visitor.visit(this, context);
         }
     }
 
@@ -111,8 +111,8 @@ public abstract class Expression extends ASTNode {
         public final List<Expression> arguments;
 
         @Override
-        public void accept(ASTVisitor visitor) {
-            visitor.visit(this);
+        public <T> void accept(ASTVisitor<T> visitor, T context) {
+            visitor.visit(this, context);
         }
     }
 
@@ -128,8 +128,8 @@ public abstract class Expression extends ASTNode {
         public final FieldReference reference;
 
         @Override
-        public void accept(ASTVisitor visitor) {
-            visitor.visit(this);
+        public <T> void accept(ASTVisitor<T> visitor, T context) {
+            visitor.visit(this, context);
         }
     }
 
@@ -145,8 +145,8 @@ public abstract class Expression extends ASTNode {
         public final Expression index;
 
         @Override
-        public void accept(ASTVisitor visitor) {
-            visitor.visit(this);
+        public <T> void accept(ASTVisitor<T> visitor, T context) {
+            visitor.visit(this, context);
         }
     }
 
@@ -160,8 +160,8 @@ public abstract class Expression extends ASTNode {
         public final VariableReference reference;
 
         @Override
-        public void accept(ASTVisitor visitor) {
-            visitor.visit(this);
+        public <T> void accept(ASTVisitor<T> visitor, T context) {
+            visitor.visit(this, context);
         }
     }
 
@@ -171,8 +171,8 @@ public abstract class Expression extends ASTNode {
         }
 
         @Override
-        public void accept(ASTVisitor visitor) {
-            visitor.visit(this);
+        public <T> void accept(ASTVisitor<T> visitor, T context) {
+            visitor.visit(this, context);
         }
     }
 
@@ -186,8 +186,8 @@ public abstract class Expression extends ASTNode {
         public final ClassReference reference;
 
         @Override
-        public void accept(ASTVisitor visitor) {
-            visitor.visit(this);
+        public <T> void accept(ASTVisitor<T> visitor, T context) {
+            visitor.visit(this, context);
         }
     }
 
@@ -205,8 +205,8 @@ public abstract class Expression extends ASTNode {
         public final int numberOfDimensions;
 
         @Override
-        public void accept(ASTVisitor visitor) {
-            visitor.visit(this);
+        public <T> void accept(ASTVisitor<T> visitor, T context) {
+            visitor.visit(this, context);
         }
     }
 }

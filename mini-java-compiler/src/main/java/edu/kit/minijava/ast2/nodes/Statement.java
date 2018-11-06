@@ -26,8 +26,8 @@ public abstract class Statement extends ASTNode {
         public final Statement statementIfFalse; //nullable
 
         @Override
-        public void accept(ASTVisitor visitor) {
-            visitor.visit(this);
+        public <T> void accept(ASTVisitor<T> visitor, T context) {
+            visitor.visit(this, context);
         }
     }
 
@@ -41,8 +41,8 @@ public abstract class Statement extends ASTNode {
         public final Statement statementWhileTrue;
 
         @Override
-        public void accept(ASTVisitor visitor) {
-            visitor.visit(this);
+        public <T> void accept(ASTVisitor<T> visitor, T context) {
+            visitor.visit(this, context);
         }
     }
 
@@ -54,8 +54,8 @@ public abstract class Statement extends ASTNode {
         public final Expression expression;
 
         @Override
-        public void accept(ASTVisitor visitor) {
-            visitor.visit(this);
+        public <T> void accept(ASTVisitor<T> visitor, T context) {
+            visitor.visit(this, context);
         }
     }
 
@@ -71,8 +71,8 @@ public abstract class Statement extends ASTNode {
         public final Expression value; // nullable
 
         @Override
-        public void accept(ASTVisitor visitor) {
-            visitor.visit(this);
+        public <T> void accept(ASTVisitor<T> visitor, T context) {
+            visitor.visit(this, context);
         }
     }
 
@@ -81,8 +81,8 @@ public abstract class Statement extends ASTNode {
         }
 
         @Override
-        public void accept(ASTVisitor visitor) {
-            visitor.visit(this);
+        public <T> void accept(ASTVisitor<T> visitor, T context) {
+            visitor.visit(this, context);
         }
     }
 
@@ -94,8 +94,8 @@ public abstract class Statement extends ASTNode {
         public final List<Statement> statements;
 
         @Override
-        public void accept(ASTVisitor visitor) {
-            visitor.visit(this);
+        public <T> void accept(ASTVisitor<T> visitor, T context) {
+            visitor.visit(this, context);
         }
     }
 
@@ -122,8 +122,8 @@ public abstract class Statement extends ASTNode {
         }
 
         @Override
-        public void accept(ASTVisitor visitor) {
-            visitor.visit(this);
+        public <T> void accept(ASTVisitor<T> visitor, T context) {
+            visitor.visit(this, context);
         }
     }
 }

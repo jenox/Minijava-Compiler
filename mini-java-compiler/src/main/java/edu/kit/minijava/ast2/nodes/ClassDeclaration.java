@@ -28,7 +28,7 @@ public final class ClassDeclaration extends ASTNode implements BasicTypeDeclarat
     }
 
     @Override
-    public void accept(ASTVisitor visitor) {
-        visitor.visit(this);
+    public <T> void accept(ASTVisitor<T> visitor, T context) {
+        visitor.visit(this, context);
     }
 }

@@ -5,7 +5,7 @@ import edu.kit.minijava.ast2.references.*;
 
 import java.util.*;
 
-public class PrettyPrinter implements ASTVisitor {
+public class PrettyPrinter implements ASTVisitor<Object> {
 
 //    private int expressionStatementDepth;
 //    private boolean nested;
@@ -22,21 +22,21 @@ public class PrettyPrinter implements ASTVisitor {
     public String format(Program program) {
         this.builder.setLength(0);
 
-        this.visit(program);
+        this.visit(program, null);
 
         return this.builder.toString();
     }
 
-    public void visit(Program program) {
+    public void visit(Program program, Object context) {
         List<ClassDeclaration> declarations = new ArrayList<>(program.classes);
         declarations.sort(Comparator.comparing(ClassDeclaration::getName));
 
         for (ClassDeclaration declaration : declarations) {
-            declaration.accept(this);
+            declaration.accept(this, null);
         }
     }
 
-    public void visit(ClassDeclaration declaration) {
+    public void visit(ClassDeclaration declaration, Object context) {
         this.print("class " + declaration.getName());
         this.beginBlock();
 
@@ -47,17 +47,17 @@ public class PrettyPrinter implements ASTVisitor {
         fields.sort(Comparator.comparing(FieldDeclaration::getName));
 
         for (MethodDeclaration method : methods) {
-            method.accept(this);
+            method.accept(this, null);
         }
 
         for (FieldDeclaration field : fields) {
-            field.accept(this);
+            field.accept(this, null);
         }
 
-        this.endBlock();
+        this.endBlock(true);
     }
 
-    public void visit(FieldDeclaration declaration) {
+    public void visit(FieldDeclaration declaration, Object context) {
         this.print("public ");
         this.print(declaration.getType());
         this.print(" ");
@@ -65,7 +65,7 @@ public class PrettyPrinter implements ASTVisitor {
         this.println(";");
     }
 
-    public void visit(MethodDeclaration declaration) {
+    public void visit(MethodDeclaration declaration, Object context) {
         this.print("public ");
 
         if (declaration.isStatic()) {
@@ -82,7 +82,7 @@ public class PrettyPrinter implements ASTVisitor {
 
             for (ParameterDeclaration parameter : declaration.getParameters()) {
                 this.print(separator);
-                parameter.accept(this);
+                parameter.accept(this, null);
 
                 separator = ", ";
             }
@@ -93,32 +93,39 @@ public class PrettyPrinter implements ASTVisitor {
         this.endBlock();
     }
 
-    public void visit(ParameterDeclaration declaration) {
+    public void visit(ParameterDeclaration declaration, Object context) {
         this.print(declaration.getType());
         this.print(" ");
         this.print(declaration.getName());
     }
 
-    public void visit(Statement.IfStatement statement) {}
-    public void visit(Statement.WhileStatement statement) {}
-    public void visit(Statement.ExpressionStatement statement) {}
-    public void visit(Statement.ReturnStatement statement) {}
-    public void visit(Statement.EmptyStatement statement) {}
-    public void visit(Statement.Block statement) {}
-    public void visit(Statement.LocalVariableDeclarationStatement statement) {}
+    public void visit(Statement.IfStatement statement, Object context) {
+    }
+    public void visit(Statement.WhileStatement statement, Object context) {
+    }
+    public void visit(Statement.ExpressionStatement statement, Object context) {
+    }
+    public void visit(Statement.ReturnStatement statement, Object context) {
+    }
+    public void visit(Statement.EmptyStatement statement, Object context) {
+    }
+    public void visit(Statement.Block block, Object context) {
+    }
+    public void visit(Statement.LocalVariableDeclarationStatement statement, Object context) {
+    }
 
-    public void visit(Expression.BinaryOperation expression) {}
-    public void visit(Expression.UnaryOperation expression) {}
-    public void visit(Expression.NullLiteral expression) {}
-    public void visit(Expression.BooleanLiteral expression) {}
-    public void visit(Expression.IntegerLiteral expression) {}
-    public void visit(Expression.MethodInvocation expression) {}
-    public void visit(Expression.ExplicitFieldAccess expression) {}
-    public void visit(Expression.ArrayElementAccess expression) {}
-    public void visit(Expression.VariableAccess expression) {}
-    public void visit(Expression.CurrentContextAccess expression) {}
-    public void visit(Expression.NewObjectCreation expression) {}
-    public void visit(Expression.NewArrayCreation expression) {}
+    public void visit(Expression.BinaryOperation expression, Object context) {}
+    public void visit(Expression.UnaryOperation expression, Object context) {}
+    public void visit(Expression.NullLiteral expression, Object context) {}
+    public void visit(Expression.BooleanLiteral expression, Object context) {}
+    public void visit(Expression.IntegerLiteral expression, Object context) {}
+    public void visit(Expression.MethodInvocation expression, Object context) {}
+    public void visit(Expression.ExplicitFieldAccess expression, Object context) {}
+    public void visit(Expression.ArrayElementAccess expression, Object context) {}
+    public void visit(Expression.VariableAccess expression, Object context) {}
+    public void visit(Expression.CurrentContextAccess expression, Object context) {}
+    public void visit(Expression.NewObjectCreation expression, Object context) {}
+    public void visit(Expression.NewArrayCreation expression, Object context) {}
 
     /*
     @Override

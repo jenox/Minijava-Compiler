@@ -12,7 +12,7 @@ public final class Program extends ASTNode {
     public final List<ClassDeclaration> classes;
 
     @Override
-    public void accept(ASTVisitor visitor) {
-        visitor.visit(this);
+    public <T> void accept(ASTVisitor<T> visitor, T context) {
+        visitor.visit(this, context);
     }
 }
