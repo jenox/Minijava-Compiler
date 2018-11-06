@@ -4,10 +4,10 @@ public class CommandLineInterface {
     public static void main(String[] arguments) {
 
         if (arguments.length != 2) {
-            printErrorAndExit();
+            CommandLineInterface.printErrorAndExit();
         }
 
-        Command command = null;
+        final Command command;
 
         switch (arguments[0]) {
             case "--echo":
@@ -23,7 +23,8 @@ public class CommandLineInterface {
                 command = new ParserCommand(true);
                 break;
             default:
-                printErrorAndExit();
+                CommandLineInterface.printErrorAndExit();
+                return;
         }
 
         int status = 0;

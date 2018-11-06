@@ -38,6 +38,8 @@ Einige Coding-Standards für das Compiler-Praktikum
       <property name="max" value="120"/>
     </module>
     <module name="RequireThis">
+      <property name="checkFields" value="true"/>
+      <property name="checkMethods" value="true"/>
       <property name="validateOnlyOverlapping" value="false"/>
     </module>
     <module name="RegexpSinglelineJava">
