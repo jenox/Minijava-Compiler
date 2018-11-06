@@ -7,20 +7,14 @@ import java.util.*;
 
 public class PrettyPrinter implements ASTVisitor<PrettyPrinter.Options> {
 
-//    private int expressionStatementDepth;
-//    private boolean nested;
-//    private static final String INDENT = "\t";
-
     public PrettyPrinter() {
-//        depth = 0;
-//        expressionStatementDepth = 0;
-//        nested = false;
     }
 
     public enum Options {
         DO_NOT_PRINT_NEWLINE_AFTER_BLOCK,
         DO_NOT_PRINT_PARENTHESES_AROUND_EXPRESSION;
     }
+
 
     // MARK: - Classes
 
@@ -397,33 +391,4 @@ public class PrettyPrinter implements ASTVisitor<PrettyPrinter.Options> {
             this.print("[]");
         }
     }
-
-    /**
-     * prints depth number of times tab without linebreak at end
-     */
-//    private void printWhitespace() {
-//        for (int i = 0; i < depth; i++) {
-//            this.builder.append(INDENT);
-//        }
-//    }
-
-//    private void printLeftPar() {
-//        this.builder.append("(");
-//    }
-//
-//    private void printRightPar() {
-//        this.builder.append(")");
-//    }
-//
-//    private void printLeftBrace() {
-//        this.builder.append("{");
-//    }
-//
-//    private void printRightBrace() {
-//        this.builder.append("}");
-//    }
-//
-//    private void newLine() {
-//        this.builder.append("\n");
-//    }
 }
