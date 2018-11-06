@@ -187,7 +187,10 @@ public class PrettyPrinter implements ASTVisitor<PrettyPrinter.Options> {
     }
 
     public void visit(Statement.Block block, Options context) {
-        if (block.statements.isEmpty()) {
+        List<Statement> statements = new ArrayList<>(block.statements);
+        statements.removeIf(s -> s instanceof Statement.EmptyStatement);
+
+        if (statements.isEmpty()) {
             if (context == Options.DO_NOT_PRINT_NEWLINE_AFTER_BLOCK) {
                 this.print("{ }");
             }
@@ -198,7 +201,7 @@ public class PrettyPrinter implements ASTVisitor<PrettyPrinter.Options> {
         else {
             this.beginBlock();
 
-            for (Statement statement : block.statements) {
+            for (Statement statement : statements) {
                 statement.accept(this, null);
             }
 
