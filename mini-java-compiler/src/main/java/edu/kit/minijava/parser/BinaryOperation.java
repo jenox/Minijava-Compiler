@@ -1,7 +1,7 @@
 package edu.kit.minijava.parser;
 
 import edu.kit.minijava.lexer.*;
-import edu.kit.minijava.ast.*;
+import edu.kit.minijava.ast2.nodes.*;
 
 enum BinaryOperation {
     MULTIPLICATION(TokenType.MULTIPLY, Associativity.LEFT_ASSOCIATIVE, 50),
@@ -29,24 +29,28 @@ enum BinaryOperation {
     final Associativity associativity;
     final int precedence;
 
-    Expression instantiate(Expression lhs, Expression rhs) {
+    private BinaryOperationType getBinaryOperationType() {
         switch (this) {
-            case MULTIPLICATION: return new MultiplyExpression(lhs, rhs);
-            case DIVISION: return new DivideExpression(lhs, rhs);
-            case MODULO: return new ModuloExpression(lhs, rhs);
-            case ADDITION: return new AddExpression(lhs, rhs);
-            case SUBTRACTION: return new SubtractExpression(lhs, rhs);
-            case LESS_THAN: return new LessThanExpression(lhs, rhs);
-            case LESS_THAN_OR_EQUAL_TO: return new LessThanOrEqualToExpression(lhs, rhs);
-            case GREATER_THAN: return new GreaterThanExpression(lhs, rhs);
-            case GREATER_THAN_OR_EQUAL_TO: return new GreaterThanOrEqualToExpression(lhs, rhs);
-            case EQUAL_TO: return new EqualToExpression(lhs, rhs);
-            case NOT_EQUAL_TO: return new NotEqualToExpression(lhs, rhs);
-            case LOGICAL_AND: return new LogicalAndExpression(lhs, rhs);
-            case LOGICAL_OR: return new LogicalOrExpression(lhs, rhs);
-            case ASSIGNMENT: return new AssignmentExpression(lhs, rhs);
+            case MULTIPLICATION: return BinaryOperationType.MULTIPLICATION;
+            case DIVISION: return BinaryOperationType.DIVISION;
+            case MODULO: return BinaryOperationType.MODULO;
+            case ADDITION: return BinaryOperationType.ADDITION;
+            case SUBTRACTION: return BinaryOperationType.SUBTRACTION;
+            case LESS_THAN: return BinaryOperationType.LESS_THAN;
+            case LESS_THAN_OR_EQUAL_TO: return BinaryOperationType.LESS_THAN_OR_EQUAL_TO;
+            case GREATER_THAN: return BinaryOperationType.GREATER_THAN;
+            case GREATER_THAN_OR_EQUAL_TO: return BinaryOperationType.GREATER_THAN_OR_EQUAL_TO;
+            case EQUAL_TO: return BinaryOperationType.EQUAL_TO;
+            case NOT_EQUAL_TO: return BinaryOperationType.NOT_EQUAL_TO;
+            case LOGICAL_AND: return BinaryOperationType.LOGICAL_AND;
+            case LOGICAL_OR: return BinaryOperationType.LOGICAL_OR;
+            case ASSIGNMENT: return BinaryOperationType.ASSIGNMENT;
             default: throw new AssertionError();
         }
+    }
+
+    Expression.BinaryOperation instantiate(Expression lhs, Expression rhs) {
+        return new Expression.BinaryOperation(this.getBinaryOperationType(), lhs, rhs);
     }
 
     static BinaryOperation forTokenType(TokenType tokenType) {

@@ -1,13 +1,11 @@
 package edu.kit.minijava.parser;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Stack;
+import java.io.*;
+import java.util.*;
 
 import edu.kit.minijava.lexer.*;
-import edu.kit.minijava.ast.*;
+import edu.kit.minijava.ast2.nodes.*;
+import edu.kit.minijava.ast2.references.*;
 
 public final class Parser {
 
@@ -102,20 +100,31 @@ public final class Parser {
         this.consume(TokenType.CLASS, "ClassDeclaration");
 
         String name = this.consume(TokenType.IDENTIFIER, "ClassDeclaration").text;
-        List<ClassMember> members = new ArrayList<>();
+        List<MethodDeclaration> methods = new ArrayList<>();
+        List<FieldDeclaration> fields = new ArrayList<>();
 
         this.consume(TokenType.OPENING_BRACE, "ClassDeclaration");
 
         while (!this.lookahead(TokenType.CLOSING_BRACE)) {
-            members.add(this.parseClassMember());
+            MemberDeclaration declaration = this.parseClassMember();
+
+            if (declaration instanceof MethodDeclaration) {
+                methods.add((MethodDeclaration)declaration);
+            }
+            else if (declaration instanceof FieldDeclaration) {
+                fields.add((FieldDeclaration)declaration);
+            }
+            else {
+                throw new AssertionError();
+            }
         }
 
         this.consume(TokenType.CLOSING_BRACE, "ClassDeclaration");
 
-        return new ClassDeclaration(name, members);
+        return new ClassDeclaration(name, methods, fields);
     }
 
-    private ClassMember parseClassMember() throws ParserException {
+    private MemberDeclaration parseClassMember() throws ParserException {
         this.consume(TokenType.PUBLIC, "Class Member");
 
         // ClassMember -> MainMethod
@@ -144,28 +153,33 @@ public final class Parser {
                 this.consume(TokenType.IDENTIFIER, "MainMethod");
             }
 
-            Block body = this.parseBlock();
+            Statement.Block body = this.parseBlock();
 
-            return new MainMethod(methodName, parameterName, body);
+            TypeReference returnType = new TypeReference("void", PrimitiveTypeDeclaration.VOID, 0);
+            TypeReference parameterType = new TypeReference("String", 1);
+            ParameterDeclaration parameter = new ParameterDeclaration(parameterType, parameterName);
+            List<ParameterDeclaration> parameters = Collections.singletonList(parameter);
+
+            return new MethodDeclaration(true, returnType, methodName, parameters, body);
         }
 
         // ClassMember -> Method | Field
         else {
-            Type type = this.parseType();
+            TypeReference type = this.parseType();
             String name = this.consume(TokenType.IDENTIFIER, "ClassMember").text;
 
             // ClassMember -> Field
             if (this.lookahead(TokenType.SEMICOLON)) {
                 this.consume(TokenType.SEMICOLON, "Field");
 
-                return new Field(type, name);
+                return new FieldDeclaration(type, name);
             }
 
             // ClassMember -> Method
             else {
                 this.consume(TokenType.OPENING_PARENTHESIS, "Method");
 
-                List<Parameter> parameters = this.parseParameters();
+                List<ParameterDeclaration> parameters = this.parseParameters();
 
                 this.consume(TokenType.CLOSING_PARENTHESIS, "Method");
 
@@ -174,21 +188,21 @@ public final class Parser {
                     this.consume(TokenType.IDENTIFIER, "Method");
                 }
 
-                Block body = this.parseBlock();
+                Statement.Block body = this.parseBlock();
 
-                return new Method(type, name, parameters, body);
+                return new MethodDeclaration(false, type, name, parameters, body);
             }
         }
     }
 
-    private List<Parameter> parseParameters() throws ParserException {
+    private List<ParameterDeclaration> parseParameters() throws ParserException {
         if (this.lookahead(TokenType.CLOSING_PARENTHESIS)) {
             return Collections.emptyList();
         }
 
         // Parameters -> Parameter { "," Parameter }
         else {
-            List<Parameter> parameters = new ArrayList<>();
+            List<ParameterDeclaration> parameters = new ArrayList<>();
             parameters.add(this.parseParameter());
 
             while (this.lookahead(TokenType.COMMA)) {
@@ -200,11 +214,11 @@ public final class Parser {
         }
     }
 
-    private Parameter parseParameter() throws ParserException {
-        Type type = this.parseType();
+    private ParameterDeclaration parseParameter() throws ParserException {
+        TypeReference type = this.parseType();
         String name = this.consume(TokenType.IDENTIFIER, "Parameter").text;
 
-        return new Parameter(type, name);
+        return new ParameterDeclaration(type, name);
     }
 
     // MARK: - Parsing Statements
@@ -230,10 +244,10 @@ public final class Parser {
         }
     }
 
-    private Block parseBlock() throws ParserException {
+    private Statement.Block parseBlock() throws ParserException {
         this.consume(TokenType.OPENING_BRACE, "Block");
 
-        List<BlockStatement> statements = new ArrayList<>();
+        List<Statement> statements = new ArrayList<>();
 
         while (!this.lookahead(TokenType.CLOSING_BRACE)) {
             statements.add(this.parseBlockStatement());
@@ -241,10 +255,10 @@ public final class Parser {
 
         this.consume(TokenType.CLOSING_BRACE, "Block");
 
-        return new Block(statements);
+        return new Statement.Block(statements);
     }
 
-    private BlockStatement parseBlockStatement() throws ParserException {
+    private Statement parseBlockStatement() throws ParserException {
 
         // BlockStatement -> LocalVariableDeclarationStatement
         if (this.lookahead(TokenType.IDENTIFIER, TokenType.OPENING_BRACKET, TokenType.CLOSING_BRACKET)) {
@@ -277,8 +291,8 @@ public final class Parser {
         }
     }
 
-    private BlockStatement parseLocalVariableDeclarationStatement() throws ParserException {
-        Type type = this.parseType();
+    private Statement parseLocalVariableDeclarationStatement() throws ParserException {
+        TypeReference type = this.parseType();
         String name = this.consume(TokenType.IDENTIFIER, "LocalVariableDeclarationStatement").text;
 
         // LocalVariableDeclarationStatement -> Type "IDENTIFIER" "=" Expression ";"
@@ -287,21 +301,21 @@ public final class Parser {
             Expression value = this.parseExpression(0);
             this.consume(TokenType.SEMICOLON, "LocalVariableDeclarationStatement");
 
-            return new LocalVariableInitializationStatement(type, name, value);
+            return new Statement.LocalVariableDeclarationStatement(type, name, value);
         }
 
         // LocalVariableDeclarationStatement -> Type "IDENTIFIER"  ";"
         else {
             this.consume(TokenType.SEMICOLON, "LocalVariableDeclarationStatement");
 
-            return new LocalVariableDeclarationStatement(type, name);
+            return new Statement.LocalVariableDeclarationStatement(type, name);
         }
     }
 
     private Statement parseEmptyStatement() throws ParserException {
         this.consume(TokenType.SEMICOLON, "EmptyStatement");
 
-        return new EmptyStatement();
+        return new Statement.EmptyStatement();
     }
 
     private Statement parseWhileStatement() throws ParserException {
@@ -311,7 +325,7 @@ public final class Parser {
         this.consume(TokenType.CLOSING_PARENTHESIS, "WhileStatement");
         Statement statementWhileTrue = this.parseStatement();
 
-        return new WhileStatement(condition, statementWhileTrue);
+        return new Statement.WhileStatement(condition, statementWhileTrue);
     }
 
     private Statement parseIfStatement() throws ParserException {
@@ -327,12 +341,12 @@ public final class Parser {
 
             Statement statementIfFalse = this.parseStatement();
 
-            return new IfElseStatement(condition, statementIfTrue, statementIfFalse);
+            return new Statement.IfStatement(condition, statementIfTrue, statementIfFalse);
         }
 
         // IfStatement -> "if" "(" Expression ")" Statement
         else {
-            return new IfStatement(condition, statementIfTrue);
+            return new Statement.IfStatement(condition, statementIfTrue);
         }
     }
 
@@ -341,7 +355,7 @@ public final class Parser {
 
         this.consume(TokenType.SEMICOLON, "ExpressionStatement");
 
-        return new ExpressionStatement(expression);
+        return new Statement.ExpressionStatement(expression);
     }
 
     private Statement parseReturnStatement() throws ParserException {
@@ -351,15 +365,15 @@ public final class Parser {
         if (this.lookahead(TokenType.SEMICOLON)) {
             this.consume(TokenType.SEMICOLON, "ReturnStatement");
 
-            return new ReturnNoValueStatement();
+            return new Statement.ReturnStatement();
         }
 
         // ReturnStatement -> "return" Expression ";"
         else {
-            Expression expression = this.parseExpression(0);
+            Expression value = this.parseExpression(0);
             this.consume(TokenType.SEMICOLON, "ReturnStatement");
 
-            return new ReturnValueStatement(expression);
+            return new Statement.ReturnStatement(value);
         }
     }
 
@@ -394,7 +408,7 @@ public final class Parser {
             switch (this.getCurrentToken().type) {
                 case PERIOD:
                 case OPENING_BRACKET:
-                    expression = new PostfixExpression(expression, this.parsePostfixOperation());
+                    expression = this.parsePostfixOperationWithContext(expression);
                     break;
                 default:
                     break consumePostfixOperations;
@@ -405,10 +419,10 @@ public final class Parser {
         while (!consumedPrefixOperators.isEmpty()) {
             switch (consumedPrefixOperators.pop()) {
                 case LOGICAL_NEGATION:
-                    expression = new LogicalNotExpression(expression);
+                    expression = new Expression.UnaryOperation(UnaryOperationType.LOGICAL_NEGATION, expression);
                     break;
                 case MINUS:
-                    expression = new NegateExpression(expression);
+                    expression = new Expression.UnaryOperation(UnaryOperationType.NUMERIC_NEGATION, expression);
                     break;
                 default:
                     throw new Error();
@@ -439,7 +453,7 @@ public final class Parser {
         return expression;
     }
 
-    private PostfixOperation parsePostfixOperation() throws ParserException {
+    private Expression parsePostfixOperationWithContext(Expression context) throws ParserException {
 
         // PostfixOperation -> MethodInvocation | FieldAccess
         if (this.lookahead(TokenType.PERIOD)) {
@@ -451,19 +465,19 @@ public final class Parser {
                 List<Expression> arguments = this.parseArguments();
                 this.consume(TokenType.CLOSING_PARENTHESIS, "MethodInvocation");
 
-                return new MethodInvocation(identifier, arguments);
+                return new Expression.MethodInvocation(context, identifier, arguments);
             } else {
-                return new FieldAccess(identifier);
+                return new Expression.ExplicitFieldAccess(context, identifier);
             }
         }
 
         // PostfixOperation -> ArrayAccess
         else if (this.lookahead(TokenType.OPENING_BRACKET)) {
             this.consume(TokenType.OPENING_BRACKET, "ArrayAccess");
-            Expression expression = this.parseExpression(0);
+            Expression index = this.parseExpression(0);
             this.consume(TokenType.CLOSING_BRACKET, "ArrayAccess");
 
-            return new ArrayAccess(expression);
+            return new Expression.ArrayElementAccess(context, index);
         }
 
         else {
@@ -492,9 +506,9 @@ public final class Parser {
                 List<Expression> arguments = this.parseArguments();
                 this.consume(TokenType.CLOSING_PARENTHESIS, "PrimaryExpression");
 
-                return new IdentifierAndArgumentsExpression(identifier, arguments);
+                return new Expression.MethodInvocation(null, identifier, arguments);
             } else {
-                return new IdentifierExpression(identifier);
+                return new Expression.VariableAccess(identifier);
             }
         }
 
@@ -502,35 +516,35 @@ public final class Parser {
         else if (this.lookahead(TokenType.INTEGER_LITERAL)) {
             String value = this.consume(TokenType.INTEGER_LITERAL, null).text;
 
-            return new IntegerLiteral(value);
+            return new Expression.IntegerLiteral(value);
         }
 
         // PrimaryExpression -> Literal -> "null"
         else if (this.lookahead(TokenType.NULL)) {
             this.consume(TokenType.NULL, null);
 
-            return new NullLiteral();
+            return new Expression.NullLiteral();
         }
 
         // PrimaryExpression -> Literal -> "true"
         else if (this.lookahead(TokenType.TRUE)) {
             this.consume(TokenType.TRUE, null);
 
-            return new BooleanLiteral(true);
+            return new Expression.BooleanLiteral(true);
         }
 
         // PrimaryExpression -> Literal -> "false"
         else if (this.lookahead(TokenType.FALSE)) {
             this.consume(TokenType.FALSE, null);
 
-            return new BooleanLiteral(false);
+            return new Expression.BooleanLiteral(false);
         }
 
         // PrimaryExpression -> "this"
         else if (this.lookahead(TokenType.THIS)) {
             this.consume(TokenType.THIS, null);
 
-            return new ThisExpression();
+            return new Expression.CurrentContextAccess();
         }
 
         // PrimaryExpression -> NewObjectExpression | NewArrayExpression
@@ -543,18 +557,18 @@ public final class Parser {
                 this.consume(TokenType.OPENING_PARENTHESIS, "NewObjectExpression");
                 this.consume(TokenType.CLOSING_PARENTHESIS, "NewObjectExpression");
 
-                return new NewObjectExpression(className);
+                return new Expression.NewObjectCreation(className);
             }
 
             // PrimaryExpression -> NewArrayExpression -> "new" BasicType "[" Expression "]" { "[" "]" }
             else {
-                BasicType basicType = this.parseBasicType();
+                BasicTypeReference basicType = this.parseBasicType();
                 this.consume(TokenType.OPENING_BRACKET, "NewArrayExpression");
                 Expression expression = this.parseExpression(0);
                 this.consume(TokenType.CLOSING_BRACKET, "NewArrayExpression");
                 int numberOfDimensions = 1 + this.parseOpeningAndClosingBrackets();
 
-                return new NewArrayExpression(basicType, expression, numberOfDimensions);
+                return new Expression.NewArrayCreation(basicType, expression, numberOfDimensions);
             }
         }
 
@@ -586,37 +600,41 @@ public final class Parser {
 
     // MARK: - Parsing Types
 
-    private Type parseType() throws ParserException {
-        BasicType basicType = this.parseBasicType();
+    private TypeReference parseType() throws ParserException {
+        BasicTypeReference basicType = this.parseBasicType();
         int numberOfDimensions = this.parseOpeningAndClosingBrackets();
 
-        return new Type(basicType, numberOfDimensions);
+        return new TypeReference(basicType, numberOfDimensions);
     }
 
-    private BasicType parseBasicType() throws ParserException {
+    private BasicTypeReference parseBasicType() throws ParserException {
 
         // BasicType -> "IDENTIFIER"
         if (this.lookahead(TokenType.IDENTIFIER)) {
             String className = this.consume(TokenType.IDENTIFIER, null).text;
-            return new UserDefinedType(className);
+
+            return new BasicTypeReference(className);
         }
 
         // BasicType -> "int"
         else if (this.lookahead(TokenType.INT)) {
-            this.consume(TokenType.INT, null);
-            return new IntegerType();
+            String name = this.consume(TokenType.INT, null).text;
+
+            return new BasicTypeReference(name, PrimitiveTypeDeclaration.INTEGER);
         }
 
         // BasicType -> "boolean"
         else if (this.lookahead(TokenType.BOOLEAN)) {
-            this.consume(TokenType.BOOLEAN, null);
-            return new BooleanType();
+            String name = this.consume(TokenType.BOOLEAN, null).text;
+
+            return new BasicTypeReference(name, PrimitiveTypeDeclaration.BOOLEAN);
         }
 
         // BasicType -> "void"
         else if (this.lookahead(TokenType.VOID)) {
-            this.consume(TokenType.VOID, null);
-            return new VoidType();
+            String name = this.consume(TokenType.VOID, null).text;
+
+            return new BasicTypeReference(name, PrimitiveTypeDeclaration.VOID);
         }
 
         else {
