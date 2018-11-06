@@ -117,7 +117,10 @@ public class PrettyPrinter implements ASTVisitor<PrettyPrinter.Options> {
         if (statement.statementIfTrue instanceof Statement.Block) {
             statement.statementIfTrue.accept(this, Options.DO_NOT_PRINT_NEWLINE_AFTER_BLOCK);
 
-            if (statement.statementIfFalse == null) {
+            if (statement.statementIfFalse != null) {
+                this.print(" ");
+            }
+            else {
                 this.println("");
             }
         }
@@ -130,15 +133,15 @@ public class PrettyPrinter implements ASTVisitor<PrettyPrinter.Options> {
 
         if (statement.statementIfFalse != null) {
             if (statement.statementIfFalse instanceof Statement.Block) {
-                this.print(" else ");
+                this.print("else ");
                 statement.statementIfFalse.accept(this, null);
             }
             else if (statement.statementIfFalse instanceof Statement.IfStatement) {
-                this.print(" else ");
+                this.print("else ");
                 statement.statementIfFalse.accept(this, null);
             }
             else if (!(statement.statementIfFalse instanceof Statement.EmptyStatement)) {
-                this.print(" else ");
+                this.print("else ");
                 this.indentationDepth += 1;
                 statement.statementIfFalse.accept(this, null);
                 this.indentationDepth -= 1;
