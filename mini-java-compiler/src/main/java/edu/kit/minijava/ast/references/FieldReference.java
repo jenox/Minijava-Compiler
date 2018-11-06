@@ -11,6 +11,14 @@ public final class FieldReference extends AbstractReference<FieldDeclaration> {
         this.name = name;
     }
 
-    public final TypeReference context;
-    public final String name;
+    private final TypeReference context;
+    private final String name;
+
+    public TypeReference getContext() {
+        return this.context;
+    }
+
+    public String getName() {
+        return this.name;
+    }
 }

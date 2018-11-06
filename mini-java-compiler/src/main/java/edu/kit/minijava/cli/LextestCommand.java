@@ -47,7 +47,7 @@ class LextestCommand extends Command {
     }
 
     private String descriptionOfToken(Token token) {
-        switch (token.type) {
+        switch (token.getType()) {
             case ABSTRACT: return "abstract";
             case ASSERT: return "assert";
             case BOOLEAN: return "boolean";
@@ -147,10 +147,9 @@ class LextestCommand extends Command {
             case SEMICOLON: return ";";
             case COMMA: return ",";
             case PERIOD: return ".";
-            case IDENTIFIER: return "identifier " + token.text;
-            case INTEGER_LITERAL: return "integer literal " + token.text;
+            case IDENTIFIER: return "identifier " + token.getText();
+            case INTEGER_LITERAL: return "integer literal " + token.getText();
+            default: throw new RuntimeException();
         }
-
-        throw new RuntimeException();
     }
 }

@@ -6,8 +6,16 @@ public final class TokenLocation {
         this.column = column;
     }
 
-    public final int row;
-    public final int column;
+    private final int row;
+    private final int column;
+
+    public int getRow() {
+        return this.row;
+    }
+
+    public int getColumn() {
+        return this.column;
+    }
 
     @Override
     public String toString() {

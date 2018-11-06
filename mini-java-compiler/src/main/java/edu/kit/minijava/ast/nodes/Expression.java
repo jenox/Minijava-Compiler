@@ -10,7 +10,11 @@ public abstract class Expression extends ASTNode {
         this.type = type;
     }
 
-    public final TypeReference type;
+    private final TypeReference type;
+
+    public TypeReference getType() {
+        return this.type;
+    }
 
     public static final class BinaryOperation extends Expression {
         public BinaryOperation(BinaryOperationType operationType, Expression left, Expression right) {
@@ -21,9 +25,21 @@ public abstract class Expression extends ASTNode {
             this.right = right;
         }
 
-        public final BinaryOperationType operationType;
-        public final Expression left;
-        public final Expression right;
+        private final BinaryOperationType operationType;
+        private final Expression left;
+        private final Expression right;
+
+        public BinaryOperationType getOperationType() {
+            return this.operationType;
+        }
+
+        public Expression getLeft() {
+            return this.left;
+        }
+
+        public Expression getRight() {
+            return this.right;
+        }
 
         @Override
         public <T> void accept(ASTVisitor<T> visitor, T context) {
@@ -39,8 +55,16 @@ public abstract class Expression extends ASTNode {
             this.other = other;
         }
 
-        public final UnaryOperationType operationType;
-        public final Expression other;
+        private final UnaryOperationType operationType;
+        private final Expression other;
+
+        public UnaryOperationType getOperationType() {
+            return this.operationType;
+        }
+
+        public Expression getOther() {
+            return this.other;
+        }
 
         @Override
         public <T> void accept(ASTVisitor<T> visitor, T context) {
@@ -66,7 +90,11 @@ public abstract class Expression extends ASTNode {
             this.value = value;
         }
 
-        public final boolean value;
+        private final boolean value;
+
+        public boolean getValue() {
+            return this.value;
+        }
 
         @Override
         public <T> void accept(ASTVisitor<T> visitor, T context) {
@@ -81,7 +109,11 @@ public abstract class Expression extends ASTNode {
             this.value = value;
         }
 
-        public final String value;
+        private final String value;
+
+        public String getValue() {
+            return this.value;
+        }
 
         @Override
         public <T> void accept(ASTVisitor<T> visitor, T context) {
@@ -106,9 +138,21 @@ public abstract class Expression extends ASTNode {
             }
         }
 
-        public final Expression context; // nullable
-        public final MethodReference reference;
-        public final List<Expression> arguments;
+        private final Expression context; // nullable
+        private final MethodReference reference;
+        private final List<Expression> arguments;
+
+        public Expression getContext() {
+            return this.context;
+        }
+
+        public MethodReference getReference() {
+            return this.reference;
+        }
+
+        public List<Expression> getArguments() {
+            return this.arguments;
+        }
 
         @Override
         public <T> void accept(ASTVisitor<T> visitor, T context) {
@@ -124,8 +168,16 @@ public abstract class Expression extends ASTNode {
             this.reference = new FieldReference(context.type, fieldName);
         }
 
-        public final Expression context;
-        public final FieldReference reference;
+        private final Expression context;
+        private final FieldReference reference;
+
+        public Expression getContext() {
+            return this.context;
+        }
+
+        public FieldReference getReference() {
+            return this.reference;
+        }
 
         @Override
         public <T> void accept(ASTVisitor<T> visitor, T context) {
@@ -141,8 +193,16 @@ public abstract class Expression extends ASTNode {
             this.index = index;
         }
 
-        public final Expression context;
-        public final Expression index;
+        private final Expression context;
+        private final Expression index;
+
+        public Expression getContext() {
+            return this.context;
+        }
+
+        public Expression getIndex() {
+            return this.index;
+        }
 
         @Override
         public <T> void accept(ASTVisitor<T> visitor, T context) {
@@ -157,7 +217,11 @@ public abstract class Expression extends ASTNode {
             this.reference = new VariableReference(variableName);
         }
 
-        public final VariableReference reference;
+        private final VariableReference reference;
+
+        public VariableReference getReference() {
+            return this.reference;
+        }
 
         @Override
         public <T> void accept(ASTVisitor<T> visitor, T context) {
@@ -183,7 +247,11 @@ public abstract class Expression extends ASTNode {
             this.reference = new ClassReference(className);
         }
 
-        public final ClassReference reference;
+        private final ClassReference reference;
+
+        public ClassReference getReference() {
+            return this.reference;
+        }
 
         @Override
         public <T> void accept(ASTVisitor<T> visitor, T context) {
@@ -200,9 +268,21 @@ public abstract class Expression extends ASTNode {
             this.numberOfDimensions = numberOfDimensions;
         }
 
-        public final BasicTypeReference reference;
-        public final Expression primaryDimension;
-        public final int numberOfDimensions;
+        private final BasicTypeReference reference;
+        private final Expression primaryDimension;
+        private final int numberOfDimensions;
+
+        public BasicTypeReference getReference() {
+            return this.reference;
+        }
+
+        public Expression getPrimaryDimension() {
+            return this.primaryDimension;
+        }
+
+        public int getNumberOfDimensions() {
+            return this.numberOfDimensions;
+        }
 
         @Override
         public <T> void accept(ASTVisitor<T> visitor, T context) {

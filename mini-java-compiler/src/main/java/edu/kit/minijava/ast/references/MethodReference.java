@@ -14,7 +14,19 @@ public final class MethodReference extends AbstractReference<MethodDeclaration> 
         this.argumentTypes = Collections.unmodifiableList(argumentTypes);
     }
 
-    public final TypeReference context; // nullable
-    public final String name;
-    public final List<TypeReference> argumentTypes;
+    private final TypeReference context; // nullable
+    private final String name;
+    private final List<TypeReference> argumentTypes;
+
+    public TypeReference getContext() {
+        return this.context;
+    }
+
+    public String getName() {
+        return this.name;
+    }
+
+    public List<TypeReference> getArgumentTypes() {
+        return this.argumentTypes;
+    }
 }

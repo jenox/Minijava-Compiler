@@ -15,9 +15,21 @@ public class UnexpectedTokenException extends ParserException {
         this.expectedTypes = expectedTypes;
     }
 
-    public final Token actualToken; // nullable
-    public final String context;
-    public final TokenType[] expectedTypes;
+    private final Token actualToken; // nullable
+    private final String context;
+    private final TokenType[] expectedTypes;
+
+    public Token getActualToken() {
+        return this.actualToken;
+    }
+
+    public String getContext() {
+        return this.context;
+    }
+
+    public TokenType[] getExpectedTypes() {
+        return this.expectedTypes;
+    }
 
     @Override
     public String getMessage() {
@@ -27,7 +39,7 @@ public class UnexpectedTokenException extends ParserException {
             builder.append("Unexpected token ");
             builder.append(this.actualToken);
             builder.append(" at ");
-            builder.append(this.actualToken.location);
+            builder.append(this.actualToken.getLocation());
         }
         else {
             builder.append("Unexpected EOF");

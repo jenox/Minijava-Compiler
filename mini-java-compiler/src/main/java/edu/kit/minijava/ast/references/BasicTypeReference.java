@@ -26,5 +26,9 @@ public final class BasicTypeReference extends AbstractReference<BasicTypeDeclara
         this.resolveTo(declaration);
     }
 
-    public final String name;
+    private final String name;
+
+    public String getName() {
+        return this.name;
+    }
 }

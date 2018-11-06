@@ -9,5 +9,9 @@ public final class VariableReference extends AbstractReference<VariableDeclarati
         this.name = name;
     }
 
-    public final String name;
+    private final String name;
+
+    public String getName() {
+        return this.name;
+    }
 }

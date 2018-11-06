@@ -38,13 +38,13 @@ public final class MethodDeclaration extends ASTNode implements SubroutineDeclar
         return this.parameters;
     }
 
+    public Statement.Block getBody() {
+        return this.body;
+    }
+
     @Override
     public List<TypeReference> getParameterTypes() {
         return this.parameters.stream().map(ParameterDeclaration::getType).collect(Collectors.toList());
-    }
-
-    public Statement.Block getBody() {
-        return this.body;
     }
 
     @Override

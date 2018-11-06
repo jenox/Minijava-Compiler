@@ -25,9 +25,21 @@ enum BinaryOperation {
         this.precedence = precedence;
     }
 
-    final TokenType tokenType;
-    final Associativity associativity;
-    final int precedence;
+    private final TokenType tokenType;
+    private final Associativity associativity;
+    private final int precedence;
+
+    public TokenType getTokenType() {
+        return this.tokenType;
+    }
+
+    public Associativity getAssociativity() {
+        return this.associativity;
+    }
+
+    public int getPrecedence() {
+        return this.precedence;
+    }
 
     private BinaryOperationType getBinaryOperationType() {
         switch (this) {
