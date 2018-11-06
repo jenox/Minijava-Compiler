@@ -1,4 +1,4 @@
-package edu.kit.minijava.ast2.nodes;
+package edu.kit.minijava.ast.nodes;
 
 public interface ASTVisitor<T> {
     void visit(Program program, T context);

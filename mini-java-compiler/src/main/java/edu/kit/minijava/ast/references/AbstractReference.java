@@ -1,4 +1,4 @@
-package edu.kit.minijava.ast2.references;
+package edu.kit.minijava.ast.references;
 
 abstract class AbstractReference<DeclarationType> {
     AbstractReference() {

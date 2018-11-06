@@ -1,9 +1,9 @@
-package edu.kit.minijava.ast2.nodes;
+package edu.kit.minijava.ast.nodes;
 
-import edu.kit.minijava.ast2.references.*;
+import edu.kit.minijava.ast.references.*;
 
-public final class ParameterDeclaration extends ASTNode implements VariableDeclaration {
-    public ParameterDeclaration(TypeReference type, String name) {
+public final class FieldDeclaration extends ASTNode implements VariableDeclaration, MemberDeclaration {
+    public FieldDeclaration(TypeReference type, String name) {
         this.type = type;
         this.name = name;
     }
@@ -11,13 +11,13 @@ public final class ParameterDeclaration extends ASTNode implements VariableDecla
     private final TypeReference type;
     private final String name;
 
+    public String getName() {
+        return this.name;
+    }
+
     @Override
     public TypeReference getType() {
         return this.type;
-    }
-
-    public String getName() {
-        return this.name;
     }
 
     @Override

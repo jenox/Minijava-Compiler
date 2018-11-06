@@ -1,6 +1,6 @@
-package edu.kit.minijava.ast2.nodes;
+package edu.kit.minijava.ast.nodes;
 
-import edu.kit.minijava.ast2.references.*;
+import edu.kit.minijava.ast.references.*;
 
 import java.util.*;
 import java.util.stream.Collectors;

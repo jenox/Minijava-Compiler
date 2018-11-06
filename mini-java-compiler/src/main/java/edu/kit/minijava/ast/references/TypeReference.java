@@ -1,6 +1,6 @@
-package edu.kit.minijava.ast2.references;
+package edu.kit.minijava.ast.references;
 
-import edu.kit.minijava.ast2.nodes.*;
+import edu.kit.minijava.ast.nodes.*;
 
 public final class TypeReference extends AbstractReference<BasicTypeDeclaration> {
     public TypeReference() {

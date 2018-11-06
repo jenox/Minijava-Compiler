@@ -7,7 +7,7 @@ import java.io.InputStreamReader;
 
 import edu.kit.minijava.lexer.*;
 import edu.kit.minijava.parser.*;
-import edu.kit.minijava.ast2.nodes.*;
+import edu.kit.minijava.ast.nodes.*;
 
 public class ParserCommand extends Command {
 

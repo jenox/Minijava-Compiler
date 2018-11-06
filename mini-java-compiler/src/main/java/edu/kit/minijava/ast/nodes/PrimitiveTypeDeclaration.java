@@ -1,4 +1,4 @@
-package edu.kit.minijava.ast2.nodes;
+package edu.kit.minijava.ast.nodes;
 
 import java.util.*;
 
