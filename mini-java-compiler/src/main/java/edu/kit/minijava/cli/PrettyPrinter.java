@@ -18,7 +18,8 @@ public class PrettyPrinter implements ASTVisitor<PrettyPrinter.Options> {
     }
 
     public enum Options {
-        DO_NOT_PRINT_NEWLINE_AFTER_BLOCK;
+        DO_NOT_PRINT_NEWLINE_AFTER_BLOCK,
+        DO_NOT_PRINT_PARENTHESES_AROUND_EXPRESSION;
     }
 
     // MARK: - Classes
@@ -110,7 +111,7 @@ public class PrettyPrinter implements ASTVisitor<PrettyPrinter.Options> {
 
     public void visit(Statement.IfStatement statement, Options context) {
         this.print("if (");
-        statement.condition.accept(this, null);
+        statement.condition.accept(this, Options.DO_NOT_PRINT_PARENTHESES_AROUND_EXPRESSION);
         this.print(") ");
 
         if (statement.statementIfTrue instanceof Statement.Block) {
@@ -147,7 +148,7 @@ public class PrettyPrinter implements ASTVisitor<PrettyPrinter.Options> {
 
     public void visit(Statement.WhileStatement statement, Options context) {
         this.print("while (");
-        statement.condition.accept(this, null);
+        statement.condition.accept(this, Options.DO_NOT_PRINT_PARENTHESES_AROUND_EXPRESSION);
         this.print(") ");
 
         if (statement.statementWhileTrue instanceof Statement.Block) {
@@ -162,14 +163,14 @@ public class PrettyPrinter implements ASTVisitor<PrettyPrinter.Options> {
     }
 
     public void visit(Statement.ExpressionStatement statement, Options context) {
-        statement.expression.accept(this, null);
+        statement.expression.accept(this, Options.DO_NOT_PRINT_PARENTHESES_AROUND_EXPRESSION);
         this.println(";");
     }
 
     public void visit(Statement.ReturnStatement statement, Options context) {
         if (statement.value != null) {
             this.print("return ");
-            statement.value.accept(this, null);
+            statement.value.accept(this, Options.DO_NOT_PRINT_PARENTHESES_AROUND_EXPRESSION);
             this.println(";");
         }
         else {
@@ -213,7 +214,7 @@ public class PrettyPrinter implements ASTVisitor<PrettyPrinter.Options> {
 
         if (statement.value != null) {
             this.print(" = ");
-            statement.value.accept(this, null);
+            statement.value.accept(this, Options.DO_NOT_PRINT_PARENTHESES_AROUND_EXPRESSION);
             this.println(";");
         }
         else {
@@ -225,20 +226,20 @@ public class PrettyPrinter implements ASTVisitor<PrettyPrinter.Options> {
     // MARK: - Expressions
 
     public void visit(Expression.BinaryOperation expression, Options context) {
-        this.print("(");
+        this.printOpeningParenthesis(context);
         expression.left.accept(this, null);
         this.print(" ");
         this.print(expression.operationType.operatorSymbol);
         this.print(" ");
         expression.right.accept(this, null);
-        this.print(")");
+        this.printClosingParenthesis(context);
     }
 
     public void visit(Expression.UnaryOperation expression, Options context) {
-        this.print("(");
+        this.printOpeningParenthesis(context);
         this.print(expression.operationType.operatorSymbol);
         expression.other.accept(this, null);
-        this.print(")");
+        this.printClosingParenthesis(context);
     }
 
     public void visit(Expression.NullLiteral expression, Options context) {
@@ -254,6 +255,8 @@ public class PrettyPrinter implements ASTVisitor<PrettyPrinter.Options> {
     }
 
     public void visit(Expression.MethodInvocation expression, Options context) {
+        this.printOpeningParenthesis(context);
+
         if (expression.context != null) {
             expression.context.accept(this, null);
             this.print(".");
@@ -267,26 +270,31 @@ public class PrettyPrinter implements ASTVisitor<PrettyPrinter.Options> {
 
             for (Expression argument : expression.arguments) {
                 this.print(separator);
-                argument.accept(this, null);
+                argument.accept(this, Options.DO_NOT_PRINT_PARENTHESES_AROUND_EXPRESSION);
 
                 separator = ", ";
             }
         }
 
         this.print(")");
+        this.printClosingParenthesis(context);
     }
 
     public void visit(Expression.ExplicitFieldAccess expression, Options context) {
+        this.printOpeningParenthesis(context);
         expression.context.accept(this, null);
         this.print(".");
         this.print(expression.reference.name);
+        this.printClosingParenthesis(context);
     }
 
     public void visit(Expression.ArrayElementAccess expression, Options context) {
+        this.printOpeningParenthesis(context);
         expression.context.accept(this, null);
         this.print("[");
-        expression.index.accept(this, null);
+        expression.index.accept(this, Options.DO_NOT_PRINT_PARENTHESES_AROUND_EXPRESSION);
         this.print("]");
+        this.printClosingParenthesis(context);
     }
 
     public void visit(Expression.VariableAccess expression, Options context) {
@@ -298,20 +306,37 @@ public class PrettyPrinter implements ASTVisitor<PrettyPrinter.Options> {
     }
 
     public void visit(Expression.NewObjectCreation expression, Options context) {
+        this.printOpeningParenthesis(context);
         this.print("new ");
         this.print(expression.reference.name);
         this.print("()");
+        this.printClosingParenthesis(context);
     }
 
     public void visit(Expression.NewArrayCreation expression, Options context) {
+        this.printOpeningParenthesis(context);
         this.print("new ");
         this.print(expression.reference.name);
         this.print("[");
-        expression.primaryDimension.accept(this, null);
+        expression.primaryDimension.accept(this, Options.DO_NOT_PRINT_PARENTHESES_AROUND_EXPRESSION);
         this.print("]");
 
         for (int index = 1; index < expression.numberOfDimensions; index += 1) {
             this.print("[]");
+        }
+
+        this.printClosingParenthesis(context);
+    }
+
+    private void printOpeningParenthesis(Options context) {
+        if (context != Options.DO_NOT_PRINT_PARENTHESES_AROUND_EXPRESSION) {
+            this.print("(");
+        }
+    }
+
+    private void printClosingParenthesis(Options context) {
+        if (context != Options.DO_NOT_PRINT_PARENTHESES_AROUND_EXPRESSION) {
+            this.print(")");
         }
     }
 
