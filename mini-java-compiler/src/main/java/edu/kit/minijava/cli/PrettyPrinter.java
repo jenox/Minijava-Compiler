@@ -27,7 +27,7 @@ public class PrettyPrinter implements ASTVisitor<PrettyPrinter.Options> {
     }
 
     public void visit(Program program, Options context) {
-        List<ClassDeclaration> declarations = new ArrayList<>(program.classes);
+        List<ClassDeclaration> declarations = new ArrayList<>(program.getClassDeclarations());
         declarations.sort(Comparator.comparing(ClassDeclaration::getName));
 
         for (ClassDeclaration declaration : declarations) {
@@ -105,13 +105,13 @@ public class PrettyPrinter implements ASTVisitor<PrettyPrinter.Options> {
 
     public void visit(Statement.IfStatement statement, Options context) {
         this.print("if (");
-        statement.condition.accept(this, Options.DO_NOT_PRINT_PARENTHESES_AROUND_EXPRESSION);
+        statement.getCondition().accept(this, Options.DO_NOT_PRINT_PARENTHESES_AROUND_EXPRESSION);
         this.print(") ");
 
-        if (statement.statementIfTrue instanceof Statement.Block) {
-            statement.statementIfTrue.accept(this, Options.DO_NOT_PRINT_NEWLINE_AFTER_BLOCK);
+        if (statement.getStatementIfTrue() instanceof Statement.Block) {
+            statement.getStatementIfTrue().accept(this, Options.DO_NOT_PRINT_NEWLINE_AFTER_BLOCK);
 
-            if (this.shouldPrintElseStatement(statement.statementIfFalse)) {
+            if (this.shouldPrintElseStatement(statement.getStatementIfFalse())) {
                 this.print(" ");
             }
             else {
@@ -121,23 +121,23 @@ public class PrettyPrinter implements ASTVisitor<PrettyPrinter.Options> {
         else {
             this.println("");
             this.indentationDepth += 1;
-            statement.statementIfTrue.accept(this, null);
+            statement.getStatementIfTrue().accept(this, null);
             this.indentationDepth -= 1;
         }
 
-        if (this.shouldPrintElseStatement(statement.statementIfFalse)) {
-            if (statement.statementIfFalse instanceof Statement.Block) {
+        if (this.shouldPrintElseStatement(statement.getStatementIfFalse())) {
+            if (statement.getStatementIfFalse() instanceof Statement.Block) {
                 this.print("else ");
-                statement.statementIfFalse.accept(this, null);
+                statement.getStatementIfFalse().accept(this, null);
             }
-            else if (statement.statementIfFalse instanceof Statement.IfStatement) {
+            else if (statement.getStatementIfFalse() instanceof Statement.IfStatement) {
                 this.print("else ");
-                statement.statementIfFalse.accept(this, null);
+                statement.getStatementIfFalse().accept(this, null);
             }
             else {
                 this.print("else ");
                 this.indentationDepth += 1;
-                statement.statementIfFalse.accept(this, null);
+                statement.getStatementIfFalse().accept(this, null);
                 this.indentationDepth -= 1;
             }
         }
@@ -152,29 +152,29 @@ public class PrettyPrinter implements ASTVisitor<PrettyPrinter.Options> {
 
     public void visit(Statement.WhileStatement statement, Options context) {
         this.print("while (");
-        statement.condition.accept(this, Options.DO_NOT_PRINT_PARENTHESES_AROUND_EXPRESSION);
+        statement.getCondition().accept(this, Options.DO_NOT_PRINT_PARENTHESES_AROUND_EXPRESSION);
         this.print(") ");
 
-        if (statement.statementWhileTrue instanceof Statement.Block) {
-            statement.statementWhileTrue.accept(this, null);
+        if (statement.getStatementWhileTrue() instanceof Statement.Block) {
+            statement.getStatementWhileTrue().accept(this, null);
         }
         else {
             this.println("");
             this.indentationDepth += 1;
-            statement.statementWhileTrue.accept(this, null);
+            statement.getStatementWhileTrue().accept(this, null);
             this.indentationDepth -= 1;
         }
     }
 
     public void visit(Statement.ExpressionStatement statement, Options context) {
-        statement.expression.accept(this, Options.DO_NOT_PRINT_PARENTHESES_AROUND_EXPRESSION);
+        statement.getExpression().accept(this, Options.DO_NOT_PRINT_PARENTHESES_AROUND_EXPRESSION);
         this.println(";");
     }
 
     public void visit(Statement.ReturnStatement statement, Options context) {
-        if (statement.value != null) {
+        if (statement.getValue() != null) {
             this.print("return ");
-            statement.value.accept(this, Options.DO_NOT_PRINT_PARENTHESES_AROUND_EXPRESSION);
+            statement.getValue().accept(this, Options.DO_NOT_PRINT_PARENTHESES_AROUND_EXPRESSION);
             this.println(";");
         }
         else {
@@ -187,7 +187,7 @@ public class PrettyPrinter implements ASTVisitor<PrettyPrinter.Options> {
     }
 
     public void visit(Statement.Block block, Options context) {
-        List<Statement> statements = new ArrayList<>(block.statements);
+        List<Statement> statements = new ArrayList<>(block.getStatements());
         statements.removeIf(s -> s instanceof Statement.EmptyStatement);
 
         if (statements.isEmpty()) {
@@ -215,13 +215,13 @@ public class PrettyPrinter implements ASTVisitor<PrettyPrinter.Options> {
     }
 
     public void visit(Statement.LocalVariableDeclarationStatement statement, Options context) {
-        this.print(statement.type);
+        this.print(statement.getType());
         this.print(" ");
-        this.print(statement.name);
+        this.print(statement.getName());
 
-        if (statement.value != null) {
+        if (statement.getValue() != null) {
             this.print(" = ");
-            statement.value.accept(this, Options.DO_NOT_PRINT_PARENTHESES_AROUND_EXPRESSION);
+            statement.getValue().accept(this, Options.DO_NOT_PRINT_PARENTHESES_AROUND_EXPRESSION);
             this.println(";");
         }
         else {
@@ -234,18 +234,18 @@ public class PrettyPrinter implements ASTVisitor<PrettyPrinter.Options> {
 
     public void visit(Expression.BinaryOperation expression, Options context) {
         this.printOpeningParenthesis(context);
-        expression.left.accept(this, null);
+        expression.getLeft().accept(this, null);
         this.print(" ");
-        this.print(expression.operationType.operatorSymbol);
+        this.print(expression.getOperationType().getOperatorSymbol());
         this.print(" ");
-        expression.right.accept(this, null);
+        expression.getRight().accept(this, null);
         this.printClosingParenthesis(context);
     }
 
     public void visit(Expression.UnaryOperation expression, Options context) {
         this.printOpeningParenthesis(context);
-        this.print(expression.operationType.operatorSymbol);
-        expression.other.accept(this, null);
+        this.print(expression.getOperationType().getOperatorSymbol());
+        expression.getOther().accept(this, null);
         this.printClosingParenthesis(context);
     }
 
@@ -254,28 +254,28 @@ public class PrettyPrinter implements ASTVisitor<PrettyPrinter.Options> {
     }
 
     public void visit(Expression.BooleanLiteral expression, Options context) {
-        this.print(expression.value ? "true" : "false");
+        this.print(expression.getValue() ? "true" : "false");
     }
 
     public void visit(Expression.IntegerLiteral expression, Options context) {
-        this.print(expression.value);
+        this.print(expression.getValue());
     }
 
     public void visit(Expression.MethodInvocation expression, Options context) {
         this.printOpeningParenthesis(context);
 
-        if (expression.context != null) {
-            expression.context.accept(this, null);
+        if (expression.getContext() != null) {
+            expression.getContext().accept(this, null);
             this.print(".");
         }
 
-        this.print(expression.reference.name);
+        this.print(expression.getReference().getName());
         this.print("(");
 
-        if (!expression.arguments.isEmpty()) {
+        if (!expression.getArguments().isEmpty()) {
             String separator = "";
 
-            for (Expression argument : expression.arguments) {
+            for (Expression argument : expression.getArguments()) {
                 this.print(separator);
                 argument.accept(this, Options.DO_NOT_PRINT_PARENTHESES_AROUND_EXPRESSION);
 
@@ -289,23 +289,23 @@ public class PrettyPrinter implements ASTVisitor<PrettyPrinter.Options> {
 
     public void visit(Expression.ExplicitFieldAccess expression, Options context) {
         this.printOpeningParenthesis(context);
-        expression.context.accept(this, null);
+        expression.getContext().accept(this, null);
         this.print(".");
-        this.print(expression.reference.name);
+        this.print(expression.getReference().getName());
         this.printClosingParenthesis(context);
     }
 
     public void visit(Expression.ArrayElementAccess expression, Options context) {
         this.printOpeningParenthesis(context);
-        expression.context.accept(this, null);
+        expression.getContext().accept(this, null);
         this.print("[");
-        expression.index.accept(this, Options.DO_NOT_PRINT_PARENTHESES_AROUND_EXPRESSION);
+        expression.getIndex().accept(this, Options.DO_NOT_PRINT_PARENTHESES_AROUND_EXPRESSION);
         this.print("]");
         this.printClosingParenthesis(context);
     }
 
     public void visit(Expression.VariableAccess expression, Options context) {
-        this.print(expression.reference.name);
+        this.print(expression.getReference().getName());
     }
 
     public void visit(Expression.CurrentContextAccess expression, Options context) {
@@ -315,7 +315,7 @@ public class PrettyPrinter implements ASTVisitor<PrettyPrinter.Options> {
     public void visit(Expression.NewObjectCreation expression, Options context) {
         this.printOpeningParenthesis(context);
         this.print("new ");
-        this.print(expression.reference.name);
+        this.print(expression.getReference().getName());
         this.print("()");
         this.printClosingParenthesis(context);
     }
@@ -323,12 +323,12 @@ public class PrettyPrinter implements ASTVisitor<PrettyPrinter.Options> {
     public void visit(Expression.NewArrayCreation expression, Options context) {
         this.printOpeningParenthesis(context);
         this.print("new ");
-        this.print(expression.reference.name);
+        this.print(expression.getReference().getName());
         this.print("[");
-        expression.primaryDimension.accept(this, Options.DO_NOT_PRINT_PARENTHESES_AROUND_EXPRESSION);
+        expression.getPrimaryDimension().accept(this, Options.DO_NOT_PRINT_PARENTHESES_AROUND_EXPRESSION);
         this.print("]");
 
-        for (int index = 1; index < expression.numberOfDimensions; index += 1) {
+        for (int index = 1; index < expression.getNumberOfDimensions(); index += 1) {
             this.print("[]");
         }
 
@@ -395,9 +395,9 @@ public class PrettyPrinter implements ASTVisitor<PrettyPrinter.Options> {
     }
 
     private void print(TypeReference reference) {
-        this.print(reference.name);
+        this.print(reference.getName());
 
-        for (int index = 0; index < reference.numberOfDimensions; index += 1) {
+        for (int index = 0; index < reference.getNumberOfDimensions(); index += 1) {
             this.print("[]");
         }
     }

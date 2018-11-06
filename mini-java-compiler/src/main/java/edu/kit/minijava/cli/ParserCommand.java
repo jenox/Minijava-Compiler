@@ -1,13 +1,10 @@
 package edu.kit.minijava.cli;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStreamReader;
-
 import edu.kit.minijava.lexer.*;
 import edu.kit.minijava.parser.*;
 import edu.kit.minijava.ast.nodes.*;
+
+import java.io.*;
 
 public class ParserCommand extends Command {
 

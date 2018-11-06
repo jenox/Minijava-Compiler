@@ -12,9 +12,21 @@ public class Token {
         this.location = location;
     }
 
-    public final TokenType type;
-    public final String text;
-    public final TokenLocation location;
+    private final TokenType type;
+    private final String text;
+    private final TokenLocation location;
+
+    public TokenType getType() {
+        return this.type;
+    }
+
+    public String getText() {
+        return this.text;
+    }
+
+    public TokenLocation getLocation() {
+        return this.location;
+    }
 
     @Override
     public String toString() {

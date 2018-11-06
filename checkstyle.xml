@@ -6,7 +6,7 @@
 -->
 <!--
     Checkstyle-Configuration: checkstyle
-    Description:
+    Description: 
 Einige Coding-Standards für das Compiler-Praktikum
 -->
 <module name="Checker">
@@ -32,11 +32,27 @@ Einige Coding-Standards für das Compiler-Praktikum
     <module name="ArrayTypeStyle"/>
     <module name="RightCurly">
       <property name="option" value="alone"/>
-      <property name="tokens" value="LITERAL_CATCH,LITERAL_FINALLY,LITERAL_ELSE,CLASS_DEF,METHOD_DEF,CTOR_DEF,LITERAL_FOR,LITERAL_WHILE,LITERAL_DO,STATIC_INIT,INSTANCE_INIT"/>
+      <property name="tokens" value="LITERAL_TRY,LITERAL_CATCH,LITERAL_FINALLY,LITERAL_IF,LITERAL_ELSE,CLASS_DEF,METHOD_DEF,CTOR_DEF,LITERAL_FOR,LITERAL_WHILE,LITERAL_DO,STATIC_INIT,INSTANCE_INIT"/>
     </module>
     <module name="LineLength">
       <property name="max" value="120"/>
     </module>
+    <module name="RequireThis">
+      <property name="checkFields" value="true"/>
+      <property name="checkMethods" value="true"/>
+      <property name="validateOnlyOverlapping" value="false"/>
+    </module>
+    <module name="RegexpSinglelineJava">
+      <property name="format" value="[ \t]+$"/>
+      <property name="message" value="Trailing Whitespace"/>
+      <message key="regexp.exceeded" value="Trailing Whitespace"/>
+    </module>
+    <module name="Indentation"/>
+    <module name="RedundantImport"/>
+    <module name="UnusedImports">
+      <property name="processJavadoc" value="false"/>
+    </module>
+    <module name="VisibilityModifier"/>
   </module>
   <module name="FileTabCharacter">
     <property name="eachLine" value="true"/>

@@ -36,8 +36,9 @@ public enum TokenType {
 
     public boolean matches(Token token) {
         if (token != null) {
-            return token.type == this;
-        } else {
+            return token.getType() == this;
+        }
+        else {
             return false;
         }
     }

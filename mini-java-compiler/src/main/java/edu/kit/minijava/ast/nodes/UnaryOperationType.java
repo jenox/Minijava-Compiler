@@ -8,5 +8,9 @@ public enum UnaryOperationType {
         this.operatorSymbol = operatorSymbol;
     }
 
-    public final String operatorSymbol;
+    private final String operatorSymbol;
+
+    public String getOperatorSymbol() {
+        return this.operatorSymbol;
+    }
 }

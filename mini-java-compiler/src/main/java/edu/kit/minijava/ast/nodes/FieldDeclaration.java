@@ -11,13 +11,13 @@ public final class FieldDeclaration extends ASTNode implements VariableDeclarati
     private final TypeReference type;
     private final String name;
 
-    public String getName() {
-        return this.name;
-    }
-
     @Override
     public TypeReference getType() {
         return this.type;
+    }
+
+    public String getName() {
+        return this.name;
     }
 
     @Override
