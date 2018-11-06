@@ -1,677 +1,404 @@
 package edu.kit.minijava.cli;
 
+import edu.kit.minijava.ast.nodes.*;
+import edu.kit.minijava.ast.references.*;
+
 import java.util.*;
 
-import edu.kit.minijava.ast.*;
-
-public class PrettyPrinter implements ASTVisitor {
-
-    private int depth;
-    private int expressionStatementDepth;
-    private boolean nested;
-
-    private static final String INDENT = "\t";
+public class PrettyPrinter implements ASTVisitor<PrettyPrinter.Options> {
 
     public PrettyPrinter() {
-        depth = 0;
-        expressionStatementDepth = 0;
-        nested = false;
     }
+
+    public enum Options {
+        DO_NOT_PRINT_NEWLINE_AFTER_BLOCK,
+        DO_NOT_PRINT_PARENTHESES_AROUND_EXPRESSION;
+    }
+
+
+    // MARK: - Classes
 
     public String format(Program program) {
         this.builder.setLength(0);
 
-        this.visit(program);
+        this.visit(program, null);
 
         return this.builder.toString();
     }
 
-    @Override
-    public void visit(AddExpression addExpression) {
-        if (expressionStatementDepth > 0) {
-            printLeftPar();
-        }
-        expressionStatementDepth++;
-        addExpression.left.accept(this);
-        print(" + ");
-        addExpression.right.accept(this);
-        expressionStatementDepth--;
-        if (expressionStatementDepth > 0) {
-            printRightPar();
+    public void visit(Program program, Options context) {
+        List<ClassDeclaration> declarations = new ArrayList<>(program.classes);
+        declarations.sort(Comparator.comparing(ClassDeclaration::getName));
+
+        for (ClassDeclaration declaration : declarations) {
+            declaration.accept(this, null);
         }
     }
 
-    @Override
-    public void visit(ArrayAccess arrayAccess) {
-        print("[");
-        arrayAccess.index.accept(this);
-        print("]");
-    }
+    public void visit(ClassDeclaration declaration, Options context) {
+        this.print("class ");
+        this.print(declaration.getName());
+        this.print(" ");
+        this.beginBlock();
 
-    @Override
-    public void visit(AssignmentExpression assignmentExpression) {
-        if (expressionStatementDepth > 0) {
-            printLeftPar();
-        }
-        expressionStatementDepth++;
-        assignmentExpression.left.accept(this);
-        print(" = ");
-        assignmentExpression.right.accept(this);
-        expressionStatementDepth--;
-        if (expressionStatementDepth > 0) {
-            printRightPar();
-        }
-    }
+        List<MethodDeclaration> methods = new ArrayList<>(declaration.getMethodDeclarations());
+        methods.sort(Comparator.comparing(MethodDeclaration::getName));
 
-    @Override
-    public void visit(Block block) {
-        if (!nested) {
-            printLeftBrace();
-            if (block.statements.isEmpty()) {
-                print(" }\n"); // whitespace, right brace, newline
-                printWhitespace();
-                return;
-            }
-            depth++;
-            newLine();
-            printWhitespace();
-        }
-        if (block.statements.isEmpty()) {
-            print(" ");
-            return;
-        }
-        BlockStatement firstStatement = block.statements.get(0);
-        boolean currentNested = nested;
-        nested = true;
-        int start = 0;
-        if (true) {
-            firstStatement.accept(this);
-            start = 1;
-        }
-        for (int i = start; i < block.statements.size(); i++) {
-            BlockStatement statement = block.statements.get(i);
-            newLine();
-            printWhitespace();
-            statement.accept(this);
-        }
-        nested = currentNested;
-        if (!nested) {
-            depth--; // back to top level
-            newLine();
-            printWhitespace();
-            printRightBrace();
+        List<FieldDeclaration> fields = new ArrayList<>(declaration.getFieldDeclarations());
+        fields.sort(Comparator.comparing(FieldDeclaration::getName));
+
+        for (MethodDeclaration method : methods) {
+            method.accept(this, null);
         }
 
-    }
-
-    @Override
-    public void visit(BooleanLiteral booleanLiteral) {
-        print(String.valueOf(booleanLiteral.value));
-    }
-
-    @Override
-    public void visit(BooleanType booleanType) {
-        print("boolean");
-    }
-
-    @Override
-    public void visit(ClassDeclaration classDeclaration) {
-        printWhitespace();
-        print("class " + classDeclaration.className + " {\n");
-        depth++;
-        // copy members to new list
-        List<ClassMember> members = new ArrayList<>(classDeclaration.members.size());
-        for (ClassMember member : classDeclaration.members) {
-            members.add(member);
+        for (FieldDeclaration field : fields) {
+            field.accept(this, null);
         }
-        // sort members
-        members.sort(new Comparator<ClassMember>() {
 
-            @Override
-            public int compare(ClassMember o1, ClassMember o2) {
-                if (o1.isMethod()) {
-                    if (o2.isMethod()) {
-                        return String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName());
-                    } else {
-                        // o1 is method, o2 is not
-                        return 1;
-                    }
-                } else {
-                    if (o2.isMethod()) {
-                        // o2 is method, o1 is not
-                        return -1;
-                    } else {
-                        // both are not a method
-                        return String.CASE_INSENSITIVE_ORDER.compare(o1.getName(), o2.getName());
-                    }
-                }
-            }
+        this.endBlock(true);
+    }
 
-        });
+    public void visit(FieldDeclaration declaration, Options context) {
+        this.print("public ");
+        this.print(declaration.getType());
+        this.print(" ");
+        this.print(declaration.getName());
+        this.println(";");
+    }
 
-        for (ClassMember member : members) {
-            newLine();
-            printWhitespace();
-            member.accept(this);
+    public void visit(MethodDeclaration declaration, Options context) {
+        this.print("public ");
+
+        if (declaration.isStatic()) {
+            this.print("static ");
         }
-        depth--;
-        printWhitespace();
-        printRightBrace();
-    }
 
-    @Override
-    public void visit(DivideExpression divideExpression) {
-        if (expressionStatementDepth > 0) {
-            printLeftPar();
-        }
-        expressionStatementDepth++;
-        divideExpression.left.accept(this);
-        print(" / ");
-        divideExpression.right.accept(this);
-        expressionStatementDepth--;
-        if (expressionStatementDepth > 0) {
-            printRightPar();
-        }
-    }
+        this.print(declaration.getReturnType());
+        this.print(" ");
+        this.print(declaration.getName());
+        this.print("(");
 
-    @Override
-    public void visit(EmptyStatement emptyStatement) {
-        print(";");
-    }
-
-    @Override
-    public void visit(EqualToExpression equalToExpression) {
-        if (expressionStatementDepth > 0) {
-            printLeftPar();
-        }
-        expressionStatementDepth++;
-        equalToExpression.left.accept(this);
-        print(" == ");
-        equalToExpression.right.accept(this);
-        expressionStatementDepth--;
-        if (expressionStatementDepth > 0) {
-            printRightPar();
-        }
-    }
-
-    @Override
-    public void visit(ExpressionStatement expressionStatement) {
-        expressionStatement.expression.accept(this);
-        print(";");
-    }
-
-    @Override
-    public void visit(Field field) {
-        print("public ");
-        field.type.accept(this);
-        print(" "); // whitespace
-        print(field.name);
-        print(";");
-        newLine();
-    }
-
-    @Override
-    public void visit(FieldAccess fieldAccess) {
-        print("." + fieldAccess.fieldName);
-    }
-
-    @Override
-    public void visit(GreaterThanExpression greaterThanExpression) {
-        if (expressionStatementDepth > 0) {
-            printLeftPar();
-        }
-        expressionStatementDepth++;
-        greaterThanExpression.left.accept(this);
-        print(" > ");
-        greaterThanExpression.right.accept(this);
-        expressionStatementDepth--;
-        if (expressionStatementDepth > 0) {
-            printRightPar();
-        }
-    }
-
-    @Override
-    public void visit(GreaterThanOrEqualToExpression greaterThanOrEqualToExpression) {
-        if (expressionStatementDepth > 0) {
-            printLeftPar();
-        }
-        expressionStatementDepth++;
-        greaterThanOrEqualToExpression.left.accept(this);
-        print(" >= ");
-        greaterThanOrEqualToExpression.right.accept(this);
-        expressionStatementDepth--;
-        if (expressionStatementDepth > 0) {
-            printRightPar();
-        }
-    }
-
-    @Override
-    public void visit(IdentifierAndArgumentsExpression identifierAndArgumentsExpression) {
-        print(identifierAndArgumentsExpression.identifier);
-        printLeftPar();
-        String separator = "";
-        for (Expression exp : identifierAndArgumentsExpression.arguments) {
-            // Separate argument list with commas after the first arguments
-            print(separator);
-            separator = ", ";
-
-            exp.accept(this);
-        }
-        printRightPar();
-    }
-
-    @Override
-    public void visit(IdentifierExpression identifierExpression) {
-        print(identifierExpression.identifier);
-    }
-
-    @Override
-    public void visit(IfElseStatement ifElseStatement) {
-        print("if ");
-        printLeftPar();
-        ifElseStatement.condition.accept(this);
-        printRightPar();
-        print(" {\n");
-        depth++;
-        boolean localNested = nested;
-        nested = true;
-        printWhitespace();
-        ifElseStatement.statementIfTrue.accept(this);
-        depth--;
-        newLine();
-        printWhitespace();
-        print("} else {\n");
-        depth++;
-        printWhitespace();
-        ifElseStatement.statementIfFalse.accept(this);
-        depth--;
-        nested = localNested;
-        newLine();
-        printWhitespace();
-        printRightBrace();
-        newLine();
-    }
-
-    @Override
-    public void visit(IfStatement ifStatement) {
-        print("if ");
-        printLeftPar();
-        ifStatement.condition.accept(this);
-        printRightPar();
-        print(" {\n");
-        depth++;
-        boolean localNested = nested;
-        nested = true;
-        printWhitespace();
-        ifStatement.statementIfTrue.accept(this);
-        newLine();
-        depth--;
-        nested = localNested;
-        printWhitespace();
-        printRightBrace();
-        newLine();
-    }
-
-    @Override
-    public void visit(IntegerLiteral integerLiteral) {
-        print(integerLiteral.value);
-    }
-
-    @Override
-    public void visit(IntegerType integerType) {
-        print("int");
-    }
-
-    @Override
-    public void visit(LessThanExpression lessThanExpression) {
-        if (expressionStatementDepth > 0) {
-            printLeftPar();
-        }
-        expressionStatementDepth++;
-        lessThanExpression.left.accept(this);
-        print(" < ");
-        lessThanExpression.right.accept(this);
-        expressionStatementDepth--;
-        if (expressionStatementDepth > 0) {
-            printRightPar();
-        }
-    }
-
-    @Override
-    public void visit(LessThanOrEqualToExpression lessThanOrEqualToExpression) {
-        if (expressionStatementDepth > 0) {
-            printLeftPar();
-        }
-        expressionStatementDepth++;
-        lessThanOrEqualToExpression.left.accept(this);
-        print(" <= ");
-        lessThanOrEqualToExpression.right.accept(this);
-        expressionStatementDepth--;
-        if (expressionStatementDepth > 0) {
-            printRightPar();
-        }
-    }
-
-    @Override
-    public void visit(LocalVariableDeclarationStatement localVariableDeclarationStatement) {
-        localVariableDeclarationStatement.type.accept(this);
-        print(" " + localVariableDeclarationStatement.name + ";");
-    }
-
-    @Override
-    public void visit(LocalVariableInitializationStatement localVariableInitializationStatement) {
-        localVariableInitializationStatement.type.accept(this);
-        print(" " + localVariableInitializationStatement.name + " = ");
-        localVariableInitializationStatement.value.accept(this);
-        print(";");
-    }
-
-    @Override
-    public void visit(LogicalAndExpression logicalAndExpression) {
-        if (expressionStatementDepth > 0) {
-            printLeftPar();
-        }
-        expressionStatementDepth++;
-        logicalAndExpression.left.accept(this);
-        print(" && ");
-        logicalAndExpression.right.accept(this);
-        expressionStatementDepth--;
-        if (expressionStatementDepth > 0) {
-            printRightPar();
-        }
-    }
-
-    @Override
-    public void visit(LogicalNotExpression logicalNotExpression) {
-        if (expressionStatementDepth > 0) {
-            printLeftPar();
-        }
-        expressionStatementDepth++;
-        print("!");
-        logicalNotExpression.other.accept(this);
-        expressionStatementDepth--;
-        if (expressionStatementDepth > 0) {
-            printRightPar();
-        }
-    }
-
-    @Override
-    public void visit(LogicalOrExpression logicalOrExpression) {
-        if (expressionStatementDepth > 0) {
-            printLeftPar();
-        }
-        expressionStatementDepth++;
-        logicalOrExpression.left.accept(this);
-        print(" || ");
-        logicalOrExpression.right.accept(this);
-        expressionStatementDepth--;
-        if (expressionStatementDepth > 0) {
-            printRightPar();
-        }
-    }
-
-    @Override
-    public void visit(MainMethod mainMethod) {
-        print("public static void " + mainMethod.name + "(String[] " + mainMethod.argumentsParameterName + ") ");
-        mainMethod.body.accept(this);
-        newLine();
-    }
-
-    @Override
-    public void visit(Method method) {
-        print("public ");
-        method.returnType.accept(this);
-        print(" ");
-        print(method.name + "(");
-        if (!method.parameters.isEmpty()) {
+        if (!declaration.getParameterTypes().isEmpty()) {
             String separator = "";
-            for (int i = 0; i < method.parameters.size(); i++) {
+
+            for (ParameterDeclaration parameter : declaration.getParameters()) {
                 this.print(separator);
+                parameter.accept(this, null);
+
                 separator = ", ";
-                method.parameters.get(i).accept(this);
             }
         }
-        print(") ");
-        method.body.accept(this);
-        newLine();
+
+        this.print(") ");
+
+        declaration.getBody().accept(this, null);
     }
 
-    @Override
-    public void visit(MethodInvocation methodInvocation) {
-        print(".");
-        print(methodInvocation.methodName + "(");
-        if (!methodInvocation.arguments.isEmpty()) {
+    public void visit(ParameterDeclaration declaration, Options context) {
+        this.print(declaration.getType());
+        this.print(" ");
+        this.print(declaration.getName());
+    }
+
+
+    // MARK: - Statements
+
+    public void visit(Statement.IfStatement statement, Options context) {
+        this.print("if (");
+        statement.condition.accept(this, Options.DO_NOT_PRINT_PARENTHESES_AROUND_EXPRESSION);
+        this.print(") ");
+
+        if (statement.statementIfTrue instanceof Statement.Block) {
+            statement.statementIfTrue.accept(this, Options.DO_NOT_PRINT_NEWLINE_AFTER_BLOCK);
+
+            if (this.shouldPrintElseStatement(statement.statementIfFalse)) {
+                this.print(" ");
+            }
+            else {
+                this.println("");
+            }
+        }
+        else {
+            this.println("");
+            this.indentationDepth += 1;
+            statement.statementIfTrue.accept(this, null);
+            this.indentationDepth -= 1;
+        }
+
+        if (this.shouldPrintElseStatement(statement.statementIfFalse)) {
+            if (statement.statementIfFalse instanceof Statement.Block) {
+                this.print("else ");
+                statement.statementIfFalse.accept(this, null);
+            }
+            else if (statement.statementIfFalse instanceof Statement.IfStatement) {
+                this.print("else ");
+                statement.statementIfFalse.accept(this, null);
+            }
+            else {
+                this.print("else ");
+                this.indentationDepth += 1;
+                statement.statementIfFalse.accept(this, null);
+                this.indentationDepth -= 1;
+            }
+        }
+    }
+
+    private boolean shouldPrintElseStatement(Statement statement) {
+        if (statement == null) return false;
+        if (statement instanceof Statement.EmptyStatement) return false;
+
+        return true;
+    }
+
+    public void visit(Statement.WhileStatement statement, Options context) {
+        this.print("while (");
+        statement.condition.accept(this, Options.DO_NOT_PRINT_PARENTHESES_AROUND_EXPRESSION);
+        this.print(") ");
+
+        if (statement.statementWhileTrue instanceof Statement.Block) {
+            statement.statementWhileTrue.accept(this, null);
+        }
+        else {
+            this.println("");
+            this.indentationDepth += 1;
+            statement.statementWhileTrue.accept(this, null);
+            this.indentationDepth -= 1;
+        }
+    }
+
+    public void visit(Statement.ExpressionStatement statement, Options context) {
+        statement.expression.accept(this, Options.DO_NOT_PRINT_PARENTHESES_AROUND_EXPRESSION);
+        this.println(";");
+    }
+
+    public void visit(Statement.ReturnStatement statement, Options context) {
+        if (statement.value != null) {
+            this.print("return ");
+            statement.value.accept(this, Options.DO_NOT_PRINT_PARENTHESES_AROUND_EXPRESSION);
+            this.println(";");
+        }
+        else {
+            this.println("return;");
+        }
+    }
+
+    public void visit(Statement.EmptyStatement statement, Options context) {
+        this.println(";");
+    }
+
+    public void visit(Statement.Block block, Options context) {
+        List<Statement> statements = new ArrayList<>(block.statements);
+        statements.removeIf(s -> s instanceof Statement.EmptyStatement);
+
+        if (statements.isEmpty()) {
+            if (context == Options.DO_NOT_PRINT_NEWLINE_AFTER_BLOCK) {
+                this.print("{ }");
+            }
+            else {
+                this.println("{ }");
+            }
+        }
+        else {
+            this.beginBlock();
+
+            for (Statement statement : statements) {
+                statement.accept(this, null);
+            }
+
+            if (context == Options.DO_NOT_PRINT_NEWLINE_AFTER_BLOCK) {
+                this.endBlock(false);
+            }
+            else {
+                this.endBlock(true);
+            }
+        }
+    }
+
+    public void visit(Statement.LocalVariableDeclarationStatement statement, Options context) {
+        this.print(statement.type);
+        this.print(" ");
+        this.print(statement.name);
+
+        if (statement.value != null) {
+            this.print(" = ");
+            statement.value.accept(this, Options.DO_NOT_PRINT_PARENTHESES_AROUND_EXPRESSION);
+            this.println(";");
+        }
+        else {
+            this.println(";");
+        }
+    }
+
+
+    // MARK: - Expressions
+
+    public void visit(Expression.BinaryOperation expression, Options context) {
+        this.printOpeningParenthesis(context);
+        expression.left.accept(this, null);
+        this.print(" ");
+        this.print(expression.operationType.operatorSymbol);
+        this.print(" ");
+        expression.right.accept(this, null);
+        this.printClosingParenthesis(context);
+    }
+
+    public void visit(Expression.UnaryOperation expression, Options context) {
+        this.printOpeningParenthesis(context);
+        this.print(expression.operationType.operatorSymbol);
+        expression.other.accept(this, null);
+        this.printClosingParenthesis(context);
+    }
+
+    public void visit(Expression.NullLiteral expression, Options context) {
+        this.print("null");
+    }
+
+    public void visit(Expression.BooleanLiteral expression, Options context) {
+        this.print(expression.value ? "true" : "false");
+    }
+
+    public void visit(Expression.IntegerLiteral expression, Options context) {
+        this.print(expression.value);
+    }
+
+    public void visit(Expression.MethodInvocation expression, Options context) {
+        this.printOpeningParenthesis(context);
+
+        if (expression.context != null) {
+            expression.context.accept(this, null);
+            this.print(".");
+        }
+
+        this.print(expression.reference.name);
+        this.print("(");
+
+        if (!expression.arguments.isEmpty()) {
             String separator = "";
-            for (Expression expression : methodInvocation.arguments) {
-                print(separator);
+
+            for (Expression argument : expression.arguments) {
+                this.print(separator);
+                argument.accept(this, Options.DO_NOT_PRINT_PARENTHESES_AROUND_EXPRESSION);
+
                 separator = ", ";
-                expression.accept(this);
             }
         }
-        print(")");
+
+        this.print(")");
+        this.printClosingParenthesis(context);
     }
 
-    @Override
-    public void visit(ModuloExpression moduloExpression) {
-        if (expressionStatementDepth > 0) {
-            printLeftPar();
-        }
-        expressionStatementDepth++;
-        moduloExpression.left.accept(this);
-        print(" % ");
-        moduloExpression.right.accept(this);
-        expressionStatementDepth--;
-        if (expressionStatementDepth > 0) {
-            printRightPar();
-        }
+    public void visit(Expression.ExplicitFieldAccess expression, Options context) {
+        this.printOpeningParenthesis(context);
+        expression.context.accept(this, null);
+        this.print(".");
+        this.print(expression.reference.name);
+        this.printClosingParenthesis(context);
     }
 
-    @Override
-    public void visit(MultiplyExpression multiplyExpression) {
-        if (expressionStatementDepth > 0) {
-            printLeftPar();
-        }
-        expressionStatementDepth++;
-        multiplyExpression.left.accept(this);
-        print(" * ");
-        multiplyExpression.right.accept(this);
-        expressionStatementDepth--;
-        if (expressionStatementDepth > 0) {
-            printRightPar();
-        }
+    public void visit(Expression.ArrayElementAccess expression, Options context) {
+        this.printOpeningParenthesis(context);
+        expression.context.accept(this, null);
+        this.print("[");
+        expression.index.accept(this, Options.DO_NOT_PRINT_PARENTHESES_AROUND_EXPRESSION);
+        this.print("]");
+        this.printClosingParenthesis(context);
     }
 
-    @Override
-    public void visit(NegateExpression negateExpression) {
-        if (expressionStatementDepth > 0) {
-            printLeftPar();
-        }
-        expressionStatementDepth++;
-        print("-");
-        negateExpression.other.accept(this);
-        expressionStatementDepth--;
-        if (expressionStatementDepth > 0) {
-            printRightPar();
-        }
+    public void visit(Expression.VariableAccess expression, Options context) {
+        this.print(expression.reference.name);
     }
 
-    @Override
-    public void visit(NewArrayExpression newArrayExpression) {
-        print("new ");
-        newArrayExpression.type.accept(this);
-        print(" [");
-        newArrayExpression.primaryDimension.accept(this);
-        print("]");
-        for (int i = 1; i < newArrayExpression.numberOfDimensions; i++) {
-            print("[]");
-        }
+    public void visit(Expression.CurrentContextAccess expression, Options context) {
+        this.print("this");
     }
 
-    @Override
-    public void visit(NewObjectExpression newObjectExpression) {
-        print("new " + newObjectExpression.className + "()");
-        newObjectExpression.accept(this);
+    public void visit(Expression.NewObjectCreation expression, Options context) {
+        this.printOpeningParenthesis(context);
+        this.print("new ");
+        this.print(expression.reference.name);
+        this.print("()");
+        this.printClosingParenthesis(context);
     }
 
-    @Override
-    public void visit(NotEqualToExpression notEqualToExpression) {
-        if (expressionStatementDepth > 0) {
-            printLeftPar();
+    public void visit(Expression.NewArrayCreation expression, Options context) {
+        this.printOpeningParenthesis(context);
+        this.print("new ");
+        this.print(expression.reference.name);
+        this.print("[");
+        expression.primaryDimension.accept(this, Options.DO_NOT_PRINT_PARENTHESES_AROUND_EXPRESSION);
+        this.print("]");
+
+        for (int index = 1; index < expression.numberOfDimensions; index += 1) {
+            this.print("[]");
         }
-        expressionStatementDepth++;
-        notEqualToExpression.left.accept(this);
-        print(" != ");
-        notEqualToExpression.right.accept(this);
-        expressionStatementDepth--;
-        if (expressionStatementDepth > 0) {
-            printRightPar();
+
+        this.printClosingParenthesis(context);
+    }
+
+    private void printOpeningParenthesis(Options context) {
+        if (context != Options.DO_NOT_PRINT_PARENTHESES_AROUND_EXPRESSION) {
+            this.print("(");
         }
     }
 
-    @Override
-    public void visit(NullLiteral nullLiteral) {
-        print("null");
-    }
-
-    @Override
-    public void visit(Parameter parameter) {
-        parameter.type.accept(this);
-        print(" " + parameter.name);
-    }
-
-    @Override
-    public void visit(PostfixExpression postfixExpression) {
-        postfixExpression.expression.accept(this);
-        postfixExpression.postfixOperation.accept(this);
-    }
-
-    @Override
-    public void visit(Program program) {
-        List<ClassDeclaration> classes = new ArrayList<>(program.classDeclarations.size());
-        for (ClassDeclaration declaration : program.classDeclarations) {
-            classes.add(declaration);
-        }
-
-        // sort classes by name
-        classes.sort(new Comparator<ClassDeclaration>() {
-
-            @Override
-            public int compare(ClassDeclaration o1, ClassDeclaration o2) {
-                return String.CASE_INSENSITIVE_ORDER.compare(o1.className, o2.className);
-            }
-        });
-
-        for (ClassDeclaration declaration : classes) {
-            declaration.accept(this);
-        }
-
-        newLine();
-    }
-
-    @Override
-    public void visit(ReturnNoValueStatement returnNoValueStatement) {
-        print("return;");
-    }
-
-    @Override
-    public void visit(ReturnValueStatement returnValueStatement) {
-        print("return ");
-        returnValueStatement.returnValue.accept(this);
-        print(";");
-    }
-
-    @Override
-    public void visit(SubtractExpression subtractExpression) {
-        if (expressionStatementDepth > 0) {
-            printLeftPar();
-        }
-        expressionStatementDepth++;
-        subtractExpression.left.accept(this);
-        print(" - ");
-        subtractExpression.right.accept(this);
-        expressionStatementDepth--;
-        if (expressionStatementDepth > 0) {
-            printRightPar();
+    private void printClosingParenthesis(Options context) {
+        if (context != Options.DO_NOT_PRINT_PARENTHESES_AROUND_EXPRESSION) {
+            this.print(")");
         }
     }
 
-    @Override
-    public void visit(ThisExpression thisExpression) {
-        print("this");
-    }
-
-    @Override
-    public void visit(Type type) {
-        type.basicType.accept(this);
-        for (int i = 0; i < type.numberOfDimensions; i++) {
-            print("[]");
-        }
-    }
-
-    @Override
-    public void visit(UserDefinedType userDefinedType) {
-        print(userDefinedType.name);
-    }
-
-    @Override
-    public void visit(VoidType voidType) {
-        print("void");
-    }
-
-    @Override
-    public void visit(WhileStatement whileStatement) {
-        print("while ");
-        printLeftPar();
-        whileStatement.condition.accept(this);
-        printRightPar();
-        print(" {\n");
-        depth++;
-        boolean localNested = nested;
-        nested = true;
-        printWhitespace();
-        whileStatement.statementWhileTrue.accept(this);
-        newLine();
-        depth--;
-        nested = localNested;
-        printWhitespace();
-        printRightBrace();
-        newLine();
-    }
 
     // MARK: - Output
 
     private final StringBuilder builder = new StringBuilder();
 
-    /**
-     * prints depth number of times tab without linebreak at end
-     */
-    private void printWhitespace() {
-        for (int i = 0; i < depth; i++) {
-            this.builder.append(INDENT);
+    private int indentationDepth = 0;
+    private boolean hasPrintedIndentationForCurrentLine = false;
+
+    private void print(String string) {
+        assert string != null;
+
+        if (!this.hasPrintedIndentationForCurrentLine) {
+            for (int index = 0; index < this.indentationDepth; index += 1) {
+                this.builder.append("\t");
+            }
+
+            this.hasPrintedIndentationForCurrentLine = true;
+        }
+
+        this.builder.append(string);
+    }
+
+    private void println(String string) {
+        this.print(string);
+        this.printNewline();
+    }
+
+    private void printNewline() {
+        this.builder.append("\n");
+        this.hasPrintedIndentationForCurrentLine = false;
+    }
+
+    private void beginBlock() {
+        this.print("{");
+        this.indentationDepth += 1;
+        this.printNewline();
+    }
+
+    private void endBlock(boolean newline) {
+        this.indentationDepth -= 1;
+        this.print("}");
+
+        if (newline) {
+            this.printNewline();
         }
     }
 
-    private void print(String s) {
-        this.builder.append(s);
-    }
+    private void print(TypeReference reference) {
+        this.print(reference.name);
 
-    private void printLeftPar() {
-        this.builder.append("(");
-    }
-
-    private void printRightPar() {
-        this.builder.append(")");
-    }
-
-    private void printLeftBrace() {
-        this.builder.append("{");
-    }
-
-    private void printRightBrace() {
-        this.builder.append("}");
-    }
-
-    private void newLine() {
-        this.builder.append("\n");
+        for (int index = 0; index < reference.numberOfDimensions; index += 1) {
+            this.print("[]");
+        }
     }
 }
