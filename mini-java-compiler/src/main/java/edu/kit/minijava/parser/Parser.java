@@ -134,11 +134,12 @@ public final class Parser {
             this.consume(TokenType.STATIC, "MainMethod");
 
             Token voidToken = this.consume(TokenType.VOID, "MainMethod");
-            String methodName = this.consume(TokenType.IDENTIFIER, "MainMethod").getText();
+            Token methodNameToken = this.consume(TokenType.IDENTIFIER, "MainMethod");
 
             this.consume(TokenType.OPENING_PARENTHESIS, "MainMethod");
 
             Token parameterTypeToken = this.consume(TokenType.IDENTIFIER, "MainMethod");
+
             if (!parameterTypeToken.getText().equals("String")) {
                 throw new UnexpectedTokenException(parameterTypeToken, "MainMethod", TokenType.IDENTIFIER);
             }
@@ -146,7 +147,7 @@ public final class Parser {
             this.consume(TokenType.OPENING_BRACKET, "MainMethod");
             this.consume(TokenType.CLOSING_BRACKET, "MainMethod");
 
-            String parameterName = this.consume(TokenType.IDENTIFIER, "MainMethod").getText();
+            Token parameterNameToken = this.consume(TokenType.IDENTIFIER, "MainMethod");
 
             this.consume(TokenType.CLOSING_PARENTHESIS, "MainMethod");
 
@@ -159,24 +160,29 @@ public final class Parser {
 
             TypeReference returnType = new TypeReference("void", PrimitiveTypeDeclaration.VOID, 0,
                     voidToken.getLocation());
-            TypeReference parameterType = new TypeReference("String", 1,
-                    parameterTypeToken.getLocation());
-            ParameterDeclaration parameter = new ParameterDeclaration(parameterType, parameterName);
+
+            TypeReference parameterType = new TypeReference("String", 1, parameterTypeToken.getLocation());
+            String parameterName = parameterNameToken.getText();
+            TokenLocation parameterLocation = parameterNameToken.getLocation();
+            ParameterDeclaration parameter = new ParameterDeclaration(parameterType, parameterName, parameterLocation);
             List<ParameterDeclaration> parameters = Collections.singletonList(parameter);
 
-            return new MethodDeclaration(true, returnType, methodName, parameters, body);
+            String methodName = methodNameToken.getText();
+            TokenLocation methodLocation = methodNameToken.getLocation();
+
+            return new MethodDeclaration(true, returnType, methodName, parameters, body, methodLocation);
         }
 
         // ClassMember -> Method | Field
         else {
             TypeReference type = this.parseType();
-            String name = this.consume(TokenType.IDENTIFIER, "ClassMember").getText();
+            Token name = this.consume(TokenType.IDENTIFIER, "ClassMember");
 
             // ClassMember -> Field
             if (this.lookahead(TokenType.SEMICOLON)) {
                 this.consume(TokenType.SEMICOLON, "Field");
 
-                return new FieldDeclaration(type, name);
+                return new FieldDeclaration(type, name.getText(), name.getLocation());
             }
 
             // ClassMember -> Method
@@ -194,7 +200,7 @@ public final class Parser {
 
                 Statement.Block body = this.parseBlock();
 
-                return new MethodDeclaration(false, type, name, parameters, body);
+                return new MethodDeclaration(false, type, name.getText(), parameters, body, name.getLocation());
             }
         }
     }
@@ -220,9 +226,9 @@ public final class Parser {
 
     private ParameterDeclaration parseParameter() throws ParserException {
         TypeReference type = this.parseType();
-        String name = this.consume(TokenType.IDENTIFIER, "Parameter").getText();
+        Token token = this.consume(TokenType.IDENTIFIER, "Parameter");
 
-        return new ParameterDeclaration(type, name);
+        return new ParameterDeclaration(type, token.getText(), token.getLocation());
     }
 
     // MARK: - Parsing Statements
@@ -297,7 +303,7 @@ public final class Parser {
 
     private Statement parseLocalVariableDeclarationStatement() throws ParserException {
         TypeReference type = this.parseType();
-        String name = this.consume(TokenType.IDENTIFIER, "LocalVariableDeclarationStatement").getText();
+        Token name = this.consume(TokenType.IDENTIFIER, "LocalVariableDeclarationStatement");
 
         // LocalVariableDeclarationStatement -> Type "IDENTIFIER" "=" Expression ";"
         if (this.lookahead(TokenType.ASSIGN)) {
@@ -305,14 +311,14 @@ public final class Parser {
             Expression value = this.parseExpression(0);
             this.consume(TokenType.SEMICOLON, "LocalVariableDeclarationStatement");
 
-            return new Statement.LocalVariableDeclarationStatement(type, name, value);
+            return new Statement.LocalVariableDeclarationStatement(type, name.getText(), value, name.getLocation());
         }
 
         // LocalVariableDeclarationStatement -> Type "IDENTIFIER"  ";"
         else {
             this.consume(TokenType.SEMICOLON, "LocalVariableDeclarationStatement");
 
-            return new Statement.LocalVariableDeclarationStatement(type, name);
+            return new Statement.LocalVariableDeclarationStatement(type, name.getText(), name.getLocation());
         }
     }
 

@@ -1,6 +1,7 @@
 package edu.kit.minijava.ast.nodes;
 
 import edu.kit.minijava.ast.references.*;
+import edu.kit.minijava.lexer.*;
 
 import java.util.*;
 
@@ -132,21 +133,25 @@ public abstract class Statement implements ASTNode {
     }
 
     public static final class LocalVariableDeclarationStatement extends Statement implements VariableDeclaration {
-        public LocalVariableDeclarationStatement(TypeReference type, String name) {
+        public LocalVariableDeclarationStatement(TypeReference type, String name, TokenLocation location) {
             this.type = type;
             this.name = name;
             this.value = null;
+            this.location = location;
         }
 
-        public LocalVariableDeclarationStatement(TypeReference type, String name, Expression value) {
+        public LocalVariableDeclarationStatement(TypeReference type, String name, Expression value,
+                                                 TokenLocation location) {
             this.type = type;
             this.name = name;
             this.value = value;
+            this.location = location;
         }
 
         private final TypeReference type;
         private final String name;
         private final Expression value; //nullable
+        private final TokenLocation location;
 
         @Override
         public TypeReference getType() {
@@ -159,6 +164,10 @@ public abstract class Statement implements ASTNode {
 
         public Expression getValue() {
             return this.value;
+        }
+
+        public TokenLocation getLocation() {
+            return this.location;
         }
 
         @Override
