@@ -4,7 +4,7 @@ import edu.kit.minijava.ast.references.*;
 
 import java.util.*;
 
-public abstract class Statement extends ASTNode {
+public abstract class Statement implements ASTNode {
     private Statement() {
     }
 

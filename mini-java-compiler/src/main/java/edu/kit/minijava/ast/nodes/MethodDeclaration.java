@@ -5,7 +5,7 @@ import edu.kit.minijava.ast.references.*;
 import java.util.*;
 import java.util.stream.*;
 
-public final class MethodDeclaration extends ASTNode implements SubroutineDeclaration, MemberDeclaration {
+public final class MethodDeclaration implements SubroutineDeclaration, MemberDeclaration, ASTNode {
     public MethodDeclaration(boolean isStatic, TypeReference returnType, String name,
                              List<ParameterDeclaration> parameters, Statement.Block body) {
         this.isStatic = isStatic;

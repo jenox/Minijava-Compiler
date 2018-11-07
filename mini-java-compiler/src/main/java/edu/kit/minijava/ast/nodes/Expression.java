@@ -6,7 +6,7 @@ import edu.kit.minijava.lexer.*;
 import java.util.*;
 import java.util.stream.*;
 
-public abstract class Expression extends ASTNode {
+public abstract class Expression implements ASTNode {
     private Expression() {
         this.type = new TypeOfExpression();
     }
