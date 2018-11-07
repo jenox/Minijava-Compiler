@@ -1,15 +1,20 @@
 package edu.kit.minijava.ast.references;
 
 import edu.kit.minijava.ast.nodes.*;
+import edu.kit.minijava.lexer.*;
 
 public final class BasicTypeReference extends AbstractReference<BasicTypeDeclaration> {
-    public BasicTypeReference(String name) {
+    public BasicTypeReference(String name, TokenLocation location) {
+        super(location);
+
         if (name == null) throw new IllegalArgumentException();
 
         this.name = name;
     }
 
-    public BasicTypeReference(String name, PrimitiveTypeDeclaration declaration) {
+    public BasicTypeReference(String name, PrimitiveTypeDeclaration declaration, TokenLocation location) {
+        super(location);
+
         if (name == null) throw new IllegalArgumentException();
         if (declaration == null) throw new IllegalArgumentException();
 
@@ -18,7 +23,9 @@ public final class BasicTypeReference extends AbstractReference<BasicTypeDeclara
         this.resolveTo(declaration);
     }
 
-    public BasicTypeReference(PrimitiveTypeDeclaration declaration) {
+    public BasicTypeReference(PrimitiveTypeDeclaration declaration, TokenLocation location) {
+        super(location);
+
         if (declaration == null) throw new IllegalArgumentException();
 
         this.name = null;

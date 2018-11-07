@@ -1,9 +1,12 @@
 package edu.kit.minijava.ast.references;
 
 import edu.kit.minijava.ast.nodes.*;
+import edu.kit.minijava.lexer.*;
 
 public final class FieldReference extends AbstractReference<FieldDeclaration> {
-    public FieldReference(TypeOfExpression context, String name) {
+    public FieldReference(TypeOfExpression context, String name, TokenLocation location) {
+        super(location);
+
         if (context == null) throw new IllegalArgumentException();
         if (name == null) throw new IllegalArgumentException();
 

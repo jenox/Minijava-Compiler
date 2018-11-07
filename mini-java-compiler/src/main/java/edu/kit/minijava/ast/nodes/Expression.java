@@ -1,6 +1,7 @@
 package edu.kit.minijava.ast.nodes;
 
 import edu.kit.minijava.ast.references.*;
+import edu.kit.minijava.lexer.*;
 
 import java.util.*;
 import java.util.stream.*;
@@ -122,7 +123,8 @@ public abstract class Expression extends ASTNode {
     }
 
     public static final class MethodInvocation extends Expression {
-        public MethodInvocation(Expression context, String methodName, List<Expression> arguments) {
+        public MethodInvocation(Expression context, String methodName, List<Expression> arguments,
+                                TokenLocation location) {
             super();
 
             List<TypeOfExpression> argumentTypes = arguments.stream().map(e -> e.type).collect(Collectors.toList());
@@ -131,10 +133,10 @@ public abstract class Expression extends ASTNode {
             this.arguments = arguments;
 
             if (context != null) {
-                this.reference = new MethodReference(context.type, methodName, argumentTypes);
+                this.reference = new MethodReference(context.type, methodName, argumentTypes, location);
             }
             else {
-                this.reference = new MethodReference(null, methodName, argumentTypes);
+                this.reference = new MethodReference(null, methodName, argumentTypes, location);
             }
         }
 
@@ -161,11 +163,11 @@ public abstract class Expression extends ASTNode {
     }
 
     public static final class ExplicitFieldAccess extends Expression {
-        public ExplicitFieldAccess(Expression context, String fieldName) {
+        public ExplicitFieldAccess(Expression context, String fieldName, TokenLocation location) {
             super();
 
             this.context = context;
-            this.reference = new FieldReference(context.type, fieldName);
+            this.reference = new FieldReference(context.type, fieldName, location);
         }
 
         private final Expression context;
@@ -211,10 +213,10 @@ public abstract class Expression extends ASTNode {
     }
 
     public static final class VariableAccess extends Expression {
-        public VariableAccess(String variableName) {
+        public VariableAccess(String variableName, TokenLocation location) {
             super();
 
-            this.reference = new VariableReference(variableName);
+            this.reference = new VariableReference(variableName, location);
         }
 
         private final VariableReference reference;
@@ -241,10 +243,10 @@ public abstract class Expression extends ASTNode {
     }
 
     public static final class NewObjectCreation extends Expression {
-        public NewObjectCreation(String className) {
+        public NewObjectCreation(String className, TokenLocation location) {
             super();
 
-            this.reference = new ClassReference(className);
+            this.reference = new ClassReference(className, location);
         }
 
         private final ClassReference reference;

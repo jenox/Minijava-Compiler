@@ -1,11 +1,15 @@
 package edu.kit.minijava.ast.references;
 
 import edu.kit.minijava.ast.nodes.*;
+import edu.kit.minijava.lexer.*;
 
 import java.util.*;
 
 public final class MethodReference extends AbstractReference<MethodDeclaration> {
-    public MethodReference(TypeOfExpression context, String name, List<TypeOfExpression> argumentTypes) {
+    public MethodReference(TypeOfExpression context, String name, List<TypeOfExpression> argumentTypes,
+                           TokenLocation location) {
+        super(location);
+
         if (name == null) throw new IllegalArgumentException();
         if (argumentTypes == null) throw new IllegalArgumentException();
 
