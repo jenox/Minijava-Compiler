@@ -5,7 +5,7 @@ import edu.kit.minijava.ast.nodes.*;
 import java.util.*;
 
 public final class MethodReference extends AbstractReference<MethodDeclaration> {
-    public MethodReference(TypeReference context, String name, List<TypeReference> argumentTypes) {
+    public MethodReference(TypeOfExpression context, String name, List<TypeOfExpression> argumentTypes) {
         if (name == null) throw new IllegalArgumentException();
         if (argumentTypes == null) throw new IllegalArgumentException();
 
@@ -14,11 +14,11 @@ public final class MethodReference extends AbstractReference<MethodDeclaration> 
         this.argumentTypes = Collections.unmodifiableList(argumentTypes);
     }
 
-    private final TypeReference context; // nullable
+    private final TypeOfExpression context; // nullable
     private final String name;
-    private final List<TypeReference> argumentTypes;
+    private final List<TypeOfExpression> argumentTypes;
 
-    public TypeReference getContext() {
+    public TypeOfExpression getContext() {
         return this.context;
     }
 
@@ -26,7 +26,7 @@ public final class MethodReference extends AbstractReference<MethodDeclaration> 
         return this.name;
     }
 
-    public List<TypeReference> getArgumentTypes() {
+    public List<TypeOfExpression> getArgumentTypes() {
         return this.argumentTypes;
     }
 }

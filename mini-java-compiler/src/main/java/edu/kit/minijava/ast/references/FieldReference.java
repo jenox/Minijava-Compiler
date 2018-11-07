@@ -3,7 +3,7 @@ package edu.kit.minijava.ast.references;
 import edu.kit.minijava.ast.nodes.*;
 
 public final class FieldReference extends AbstractReference<FieldDeclaration> {
-    public FieldReference(TypeReference context, String name) {
+    public FieldReference(TypeOfExpression context, String name) {
         if (context == null) throw new IllegalArgumentException();
         if (name == null) throw new IllegalArgumentException();
 
@@ -11,10 +11,10 @@ public final class FieldReference extends AbstractReference<FieldDeclaration> {
         this.name = name;
     }
 
-    private final TypeReference context;
+    private final TypeOfExpression context;
     private final String name;
 
-    public TypeReference getContext() {
+    public TypeOfExpression getContext() {
         return this.context;
     }
 
