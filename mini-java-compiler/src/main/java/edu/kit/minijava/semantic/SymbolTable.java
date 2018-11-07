@@ -4,8 +4,8 @@ import edu.kit.minijava.ast.nodes.*;
 
 import java.util.*;
 
-public class Symboltable {
-    Symboltable() {
+public class SymbolTable {
+    SymbolTable() {
     }
 
     private final Stack<Map<String, VariableDeclaration>> scopes = new Stack<>();
