@@ -2,7 +2,7 @@ package edu.kit.minijava.ast.nodes;
 
 import java.util.*;
 
-public final class ClassDeclaration extends ASTNode implements BasicTypeDeclaration, Declaration {
+public final class ClassDeclaration extends ASTNode implements BasicTypeDeclaration {
     public ClassDeclaration(String name, List<MethodDeclaration> methods, List<FieldDeclaration> fields) {
         this.name = name;
         this.methodDeclarations = Collections.unmodifiableList(methods);

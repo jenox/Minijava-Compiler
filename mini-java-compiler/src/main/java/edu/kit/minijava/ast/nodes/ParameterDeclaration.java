@@ -2,7 +2,7 @@ package edu.kit.minijava.ast.nodes;
 
 import edu.kit.minijava.ast.references.*;
 
-public final class ParameterDeclaration extends ASTNode implements VariableDeclaration, Declaration {
+public final class ParameterDeclaration extends ASTNode implements VariableDeclaration {
     public ParameterDeclaration(TypeReference type, String name) {
         this.type = type;
         this.name = name;

@@ -2,7 +2,7 @@ package edu.kit.minijava.ast.nodes;
 
 import java.util.*;
 
-public enum PrimitiveTypeDeclaration implements BasicTypeDeclaration, Declaration {
+public enum PrimitiveTypeDeclaration implements BasicTypeDeclaration {
     INTEGER,
     BOOLEAN,
     VOID;
