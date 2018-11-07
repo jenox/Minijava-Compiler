@@ -2,7 +2,7 @@ package edu.kit.minijava.ast.nodes;
 
 import edu.kit.minijava.ast.references.*;
 
-public final class FieldDeclaration extends ASTNode implements VariableDeclaration, MemberDeclaration {
+public final class FieldDeclaration extends ASTNode implements VariableDeclaration, MemberDeclaration, Declaration {
     public FieldDeclaration(TypeReference type, String name) {
         this.type = type;
         this.name = name;
