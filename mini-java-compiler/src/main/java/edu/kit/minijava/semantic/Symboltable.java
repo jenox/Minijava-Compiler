@@ -1,13 +1,14 @@
 package edu.kit.minijava.semantic;
 
-import edu.kit.minijava.ast.nodes.VariableDeclaration;
+import edu.kit.minijava.ast.nodes.*;
 
-import java.util.HashMap;
-import java.util.Optional;
-import java.util.Stack;
+import java.util.*;
 
 public class Symboltable {
-    private Stack<HashMap<String, VariableDeclaration>> scopes = new Stack<>();
+    Symboltable() {
+    }
+
+    private final Stack<Map<String, VariableDeclaration>> scopes = new Stack<>();
 
     public void enterScope() {
         this.scopes.push(new HashMap<>());
