@@ -158,8 +158,7 @@ public final class Parser {
 
             Statement.Block body = this.parseBlock();
 
-            TypeReference returnType = new TypeReference("void", PrimitiveTypeDeclaration.VOID, 0,
-                    voidToken.getLocation());
+            TypeReference returnType = new TypeReference("void", 0, voidToken.getLocation());
 
             TypeReference parameterType = new TypeReference("String", 1, parameterTypeToken.getLocation());
             String parameterName = parameterNameToken.getText();
@@ -618,7 +617,7 @@ public final class Parser {
         BasicTypeReference basicType = this.parseBasicType();
         int numberOfDimensions = this.parseOpeningAndClosingBrackets();
 
-        return new TypeReference(basicType, numberOfDimensions);
+        return new TypeReference(basicType.getName(), numberOfDimensions, basicType.getLocation());
     }
 
     private BasicTypeReference parseBasicType() throws ParserException {
@@ -634,21 +633,21 @@ public final class Parser {
         else if (this.lookahead(TokenType.INT)) {
             Token token = this.consume(TokenType.INT, null);
 
-            return new BasicTypeReference(token.getText(), PrimitiveTypeDeclaration.INTEGER, token.getLocation());
+            return new BasicTypeReference(token.getText(), token.getLocation());
         }
 
         // BasicType -> "boolean"
         else if (this.lookahead(TokenType.BOOLEAN)) {
             Token token = this.consume(TokenType.BOOLEAN, null);
 
-            return new BasicTypeReference(token.getText(), PrimitiveTypeDeclaration.BOOLEAN, token.getLocation());
+            return new BasicTypeReference(token.getText(), token.getLocation());
         }
 
         // BasicType -> "void"
         else if (this.lookahead(TokenType.VOID)) {
             Token token = this.consume(TokenType.VOID, null);
 
-            return new BasicTypeReference(token.getText(), PrimitiveTypeDeclaration.VOID, token.getLocation());
+            return new BasicTypeReference(token.getText(), token.getLocation());
         }
 
         else {
