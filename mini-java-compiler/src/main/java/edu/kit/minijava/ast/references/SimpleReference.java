@@ -2,8 +2,8 @@ package edu.kit.minijava.ast.references;
 
 import edu.kit.minijava.lexer.*;
 
-abstract class AbstractReference<DeclarationType> extends Reference {
-    AbstractReference(TokenLocation location) {
+abstract class SimpleReference<DeclarationType> extends Reference {
+    SimpleReference(TokenLocation location) {
         super(location);
     }
 

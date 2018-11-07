@@ -3,7 +3,7 @@ package edu.kit.minijava.ast.references;
 import edu.kit.minijava.ast.nodes.*;
 import edu.kit.minijava.lexer.*;
 
-public final class FieldReference extends AbstractReference<FieldDeclaration> {
+public final class FieldReference extends SimpleReference<FieldDeclaration> {
     public FieldReference(TypeOfExpression context, String name, TokenLocation location) {
         super(location);
 

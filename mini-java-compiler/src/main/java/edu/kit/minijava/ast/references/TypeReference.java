@@ -3,14 +3,7 @@ package edu.kit.minijava.ast.references;
 import edu.kit.minijava.ast.nodes.*;
 import edu.kit.minijava.lexer.*;
 
-public final class TypeReference extends AbstractReference<BasicTypeDeclaration> {
-    public TypeReference(TokenLocation location) {
-        super(location);
-
-        this.name = null;
-        this.numberOfDimensions = 0;
-    }
-
+public final class TypeReference extends SimpleReference<BasicTypeDeclaration> {
     public TypeReference(String name, int numberOfDimensions, TokenLocation location) {
         super(location);
 
