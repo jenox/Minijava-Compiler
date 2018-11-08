@@ -1,24 +1,25 @@
 package edu.kit.minijava.ast.nodes;
 
 import edu.kit.minijava.ast.references.*;
+import edu.kit.minijava.lexer.*;
 
 import java.util.*;
 import java.util.stream.*;
 
-public abstract class Expression extends ASTNode {
-    private Expression(TypeReference type) {
-        this.type = type;
+public abstract class Expression implements ASTNode {
+    private Expression() {
+        this.type = new TypeOfExpression();
     }
 
-    private final TypeReference type;
+    private final TypeOfExpression type;
 
-    public TypeReference getType() {
+    public TypeOfExpression getType() {
         return this.type;
     }
 
     public static final class BinaryOperation extends Expression {
         public BinaryOperation(BinaryOperationType operationType, Expression left, Expression right) {
-            super(new TypeReference());
+            super();
 
             this.operationType = operationType;
             this.left = left;
@@ -49,7 +50,7 @@ public abstract class Expression extends ASTNode {
 
     public static final class UnaryOperation extends Expression {
         public UnaryOperation(UnaryOperationType operationType, Expression other) {
-            super(new TypeReference());
+            super();
 
             this.operationType = operationType;
             this.other = other;
@@ -74,7 +75,7 @@ public abstract class Expression extends ASTNode {
 
     public static final class NullLiteral extends Expression {
         public NullLiteral() {
-            super(new TypeReference());
+            super();
         }
 
         @Override
@@ -85,7 +86,7 @@ public abstract class Expression extends ASTNode {
 
     public static final class BooleanLiteral extends Expression {
         public BooleanLiteral(boolean value) {
-            super(new TypeReference(new BasicTypeReference(PrimitiveTypeDeclaration.BOOLEAN), 0));
+            super();
 
             this.value = value;
         }
@@ -104,7 +105,7 @@ public abstract class Expression extends ASTNode {
 
     public static final class IntegerLiteral extends Expression {
         public IntegerLiteral(String value) {
-            super(new TypeReference(new BasicTypeReference(PrimitiveTypeDeclaration.INTEGER), 0));
+            super();
 
             this.value = value;
         }
@@ -122,19 +123,20 @@ public abstract class Expression extends ASTNode {
     }
 
     public static final class MethodInvocation extends Expression {
-        public MethodInvocation(Expression context, String methodName, List<Expression> arguments) {
-            super(new TypeReference());
+        public MethodInvocation(Expression context, String methodName, List<Expression> arguments,
+                                TokenLocation location) {
+            super();
 
-            List<TypeReference> argumentTypes = arguments.stream().map(e -> e.type).collect(Collectors.toList());
+            List<TypeOfExpression> argumentTypes = arguments.stream().map(e -> e.type).collect(Collectors.toList());
 
             this.context = context;
             this.arguments = arguments;
 
             if (context != null) {
-                this.reference = new MethodReference(context.type, methodName, argumentTypes);
+                this.reference = new MethodReference(context.type, methodName, argumentTypes, location);
             }
             else {
-                this.reference = new MethodReference(null, methodName, argumentTypes);
+                this.reference = new MethodReference(null, methodName, argumentTypes, location);
             }
         }
 
@@ -161,11 +163,11 @@ public abstract class Expression extends ASTNode {
     }
 
     public static final class ExplicitFieldAccess extends Expression {
-        public ExplicitFieldAccess(Expression context, String fieldName) {
-            super(new TypeReference());
+        public ExplicitFieldAccess(Expression context, String fieldName, TokenLocation location) {
+            super();
 
             this.context = context;
-            this.reference = new FieldReference(context.type, fieldName);
+            this.reference = new FieldReference(context.type, fieldName, location);
         }
 
         private final Expression context;
@@ -187,7 +189,7 @@ public abstract class Expression extends ASTNode {
 
     public static final class ArrayElementAccess extends Expression {
         public ArrayElementAccess(Expression context, Expression index) {
-            super(new TypeReference());
+            super();
 
             this.context = context;
             this.index = index;
@@ -211,10 +213,10 @@ public abstract class Expression extends ASTNode {
     }
 
     public static final class VariableAccess extends Expression {
-        public VariableAccess(String variableName) {
-            super(new TypeReference());
+        public VariableAccess(String variableName, TokenLocation location) {
+            super();
 
-            this.reference = new VariableReference(variableName);
+            this.reference = new VariableReference(variableName, location);
         }
 
         private final VariableReference reference;
@@ -231,7 +233,7 @@ public abstract class Expression extends ASTNode {
 
     public static final class CurrentContextAccess extends Expression {
         public CurrentContextAccess() {
-            super(new TypeReference());
+            super();
         }
 
         @Override
@@ -241,10 +243,10 @@ public abstract class Expression extends ASTNode {
     }
 
     public static final class NewObjectCreation extends Expression {
-        public NewObjectCreation(String className) {
-            super(new TypeReference(new BasicTypeReference(className),0));
+        public NewObjectCreation(String className, TokenLocation location) {
+            super();
 
-            this.reference = new ClassReference(className);
+            this.reference = new ClassReference(className, location);
         }
 
         private final ClassReference reference;
@@ -261,7 +263,7 @@ public abstract class Expression extends ASTNode {
 
     public static final class NewArrayCreation extends Expression {
         public NewArrayCreation(BasicTypeReference reference, Expression primaryDimension, int numberOfDimensions) {
-            super(new TypeReference(reference, numberOfDimensions));
+            super();
 
             this.reference = reference;
             this.primaryDimension = primaryDimension;

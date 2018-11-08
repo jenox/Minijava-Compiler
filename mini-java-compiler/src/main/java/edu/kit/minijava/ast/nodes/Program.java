@@ -2,7 +2,7 @@ package edu.kit.minijava.ast.nodes;
 
 import java.util.*;
 
-public final class Program extends ASTNode {
+public final class Program implements ASTNode {
     public Program(List<ClassDeclaration> classDeclarations) {
         if (classDeclarations == null) throw new IllegalArgumentException();
 
