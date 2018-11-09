@@ -3,7 +3,7 @@ package edu.kit.minijava.ast.references;
 public class TypeOfExpression {
 
     public enum Type {
-        BOOLEAN, ARITHMETIC, NULL, TYPE_REF, UNKNOWN
+        BOOLEAN, INT, NULL, TYPE_REF, UNKNOWN
     }
 
     private Type type;
