@@ -41,4 +41,8 @@ public class TypeOfExpression {
     public Type getType() {
         return this.type;
     }
+
+    public TypeReference getReference() {
+        return this.reference;
+    }
 }
