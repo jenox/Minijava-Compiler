@@ -6,6 +6,9 @@ public class TypeOfExpression {
         BOOLEAN, INT, NULL, TYPE_REF, UNKNOWN
     }
 
+    public static final String INT_NAME = "int";
+    public static final String BOOLEAN_NAME = "boolean";
+
     private Type type;
     private TypeReference reference;
 
@@ -34,8 +37,20 @@ public class TypeOfExpression {
         if (reference == null) {
             throw new IllegalArgumentException();
         }
-        this.type = Type.TYPE_REF;
-        this.reference = reference;
+
+        switch (reference.getName()) {
+            case INT_NAME:
+                this.type = Type.INT;
+                break;
+            case BOOLEAN_NAME:
+                this.type = Type.BOOLEAN;
+                break;
+            default:
+                this.type = Type.TYPE_REF;
+                this.reference = reference;
+        }
+
+
     }
 
     public Type getType() {
