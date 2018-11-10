@@ -18,6 +18,7 @@ public final class ClassDeclaration implements BasicTypeDeclaration, ASTNode {
     private final List<FieldDeclaration> fieldDeclarations;
     private final TokenLocation location;
 
+    @Override
     public String getName() {
         return this.name;
     }

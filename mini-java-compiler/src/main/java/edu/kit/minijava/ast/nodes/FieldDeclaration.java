@@ -19,6 +19,7 @@ public final class FieldDeclaration implements VariableDeclaration, MemberDeclar
         return this.type;
     }
 
+    @Override
     public String getName() {
         return this.name;
     }

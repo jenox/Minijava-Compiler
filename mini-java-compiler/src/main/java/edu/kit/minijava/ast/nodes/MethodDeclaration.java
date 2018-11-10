@@ -33,6 +33,7 @@ public final class MethodDeclaration implements SubroutineDeclaration, MemberDec
         return this.returnType;
     }
 
+    @Override
     public String getName() {
         return this.name;
     }

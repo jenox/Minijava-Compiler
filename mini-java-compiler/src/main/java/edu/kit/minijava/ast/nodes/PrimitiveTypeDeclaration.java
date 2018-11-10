@@ -8,6 +8,16 @@ public enum PrimitiveTypeDeclaration implements BasicTypeDeclaration {
     VOID;
 
     @Override
+    public String getName() {
+        switch (this) {
+            case INTEGER: return "integer";
+            case BOOLEAN: return "boolean";
+            case VOID: return "void";
+            default: throw new AssertionError();
+        }
+    }
+
+    @Override
     public List<MethodDeclaration> getMethodDeclarations() {
         return Collections.emptyList();
     }

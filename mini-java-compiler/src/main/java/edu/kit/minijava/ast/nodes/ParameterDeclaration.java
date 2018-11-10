@@ -19,6 +19,7 @@ public final class ParameterDeclaration implements VariableDeclaration, ASTNode 
         return this.type;
     }
 
+    @Override
     public String getName() {
         return this.name;
     }

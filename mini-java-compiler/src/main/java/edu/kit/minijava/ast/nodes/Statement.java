@@ -158,6 +158,7 @@ public abstract class Statement implements ASTNode {
             return this.type;
         }
 
+        @Override
         public String getName() {
             return this.name;
         }
