@@ -19,15 +19,15 @@ public final class ClassAndMemberNameConflictChecker {
     private final Map<ClassDeclaration, Map<String, MethodDeclaration>> instanceMethodDeclarations;
     private final Map<ClassDeclaration, Map<String, FieldDeclaration>> fieldDeclarations;
 
-    public ClassDeclaration getClassDeclarations(String name) {
+    public ClassDeclaration getClassDeclaration(String name) {
         return this.classDeclarations.get(name);
     }
 
-    public MethodDeclaration getInstanceMethodDeclarations(String name, ClassDeclaration container) {
+    public MethodDeclaration getInstanceMethodDeclaration(String name, ClassDeclaration container) {
         return this.instanceMethodDeclarations.get(container).get(name);
     }
 
-    public FieldDeclaration getFieldDeclarations(String name, ClassDeclaration container) {
+    public FieldDeclaration getFieldDeclaration(String name, ClassDeclaration container) {
         return this.fieldDeclarations.get(container).get(name);
     }
 

@@ -23,7 +23,9 @@ public class ValidateCommand extends Command {
             Program program = parser.parseProgram();
 
             ClassAndMemberNameConflictChecker checker = new ClassAndMemberNameConflictChecker(program);
-            System.out.println(checker);
+            TypeReferenceResolver resolver = new TypeReferenceResolver(program, checker);
+
+            System.out.println(resolver);
 
             return 0;
         }
