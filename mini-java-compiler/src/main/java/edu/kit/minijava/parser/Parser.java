@@ -101,7 +101,7 @@ public final class Parser {
     private ClassDeclaration parseClassDeclaration() throws ParserException {
         this.consume(TokenType.CLASS, "ClassDeclaration");
 
-        String name = this.consume(TokenType.IDENTIFIER, "ClassDeclaration").getText();
+        Token token = this.consume(TokenType.IDENTIFIER, "ClassDeclaration");
         List<MethodDeclaration> methods = new ArrayList<>();
         List<FieldDeclaration> fields = new ArrayList<>();
 
@@ -123,7 +123,7 @@ public final class Parser {
 
         this.consume(TokenType.CLOSING_BRACE, "ClassDeclaration");
 
-        return new ClassDeclaration(name, methods, fields);
+        return new ClassDeclaration(token.getText(), methods, fields, token.getLocation());
     }
 
     private MemberDeclaration parseClassMember() throws ParserException {

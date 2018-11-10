@@ -31,4 +31,9 @@ public final class ParameterDeclaration implements VariableDeclaration, ASTNode 
     public <T> void accept(ASTVisitor<T> visitor, T context) {
         visitor.visit(this, context);
     }
+
+    @Override
+    public String toString() {
+        return "parameter '" + this.name + "' at " + this.location;
+    }
 }

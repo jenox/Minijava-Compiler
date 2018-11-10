@@ -174,5 +174,10 @@ public abstract class Statement implements ASTNode {
         public <T> void accept(ASTVisitor<T> visitor, T context) {
             visitor.visit(this, context);
         }
+
+        @Override
+        public String toString() {
+            return "local variable '" + this.name + "' at " + this.location;
+        }
     }
 }

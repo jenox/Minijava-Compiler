@@ -58,4 +58,14 @@ public final class MethodDeclaration implements SubroutineDeclaration, MemberDec
     public <T> void accept(ASTVisitor<T> visitor, T context) {
         visitor.visit(this, context);
     }
+
+    @Override
+    public String toString() {
+        if (this.isStatic) {
+            return "static method '" + this.name + "' at " + this.location;
+        }
+        else {
+            return "instance method '" + this.name + "' at " + this.location;
+        }
+    }
 }

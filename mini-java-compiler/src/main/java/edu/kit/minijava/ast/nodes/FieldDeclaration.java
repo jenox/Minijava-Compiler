@@ -31,4 +31,9 @@ public final class FieldDeclaration implements VariableDeclaration, MemberDeclar
     public <T> void accept(ASTVisitor<T> visitor, T context) {
         visitor.visit(this, context);
     }
+
+    @Override
+    public String toString() {
+        return "field '" + this.name + "' at " + this.location;
+    }
 }
