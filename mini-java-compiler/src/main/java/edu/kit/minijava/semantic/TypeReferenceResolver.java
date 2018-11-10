@@ -11,7 +11,37 @@ public final class TypeReferenceResolver extends ASTVisitor<Void> {
         program.accept(this);
     }
 
+
+    // MARK: - Resolving Type References
+
     private final ClassAndMemberNameConflictChecker checker;
+
+    private void resolve(TypeReference reference) {
+        assert !reference.isResolved();
+
+        switch (reference.getName()) {
+            case "void":
+                reference.resolveTo(PrimitiveTypeDeclaration.VOID);
+                break;
+            case "int":
+                reference.resolveTo(PrimitiveTypeDeclaration.INTEGER);
+                break;
+            case "boolean":
+                reference.resolveTo(PrimitiveTypeDeclaration.BOOLEAN);
+                break;
+            default:
+                assert this.checker.getClassDeclaration(reference.getName()) != null :
+                "use of undeclared identifier " + reference.getName() + " at " + reference.getLocation();
+
+                reference.resolveTo(this.checker.getClassDeclaration(reference.getName()));
+                break;
+        }
+
+        System.out.println("Resolved " + reference + " to " + reference.getDeclaration());
+    }
+
+
+    // MARK: - Traversal
 
     @Override
     protected void visit(Program program, Void context) {
@@ -64,8 +94,7 @@ public final class TypeReferenceResolver extends ASTVisitor<Void> {
     }
 
     @Override
-    protected void visit(Statement.ExpressionStatement statement, Void context) {
-    }
+    protected void visit(Statement.ExpressionStatement statement, Void context) {}
 
     @Override
     protected void visit(Statement.ReturnStatement statement, Void context) {}
@@ -85,27 +114,39 @@ public final class TypeReferenceResolver extends ASTVisitor<Void> {
         this.resolve(statement.getType());
     }
 
-    private void resolve(TypeReference reference) {
-        assert !reference.isResolved();
+    @Override
+    protected void visit(Expression.BinaryOperation expression, Void context) {}
 
-        switch (reference.getName()) {
-            case "void":
-                reference.resolveTo(PrimitiveTypeDeclaration.VOID);
-                break;
-            case "int":
-                reference.resolveTo(PrimitiveTypeDeclaration.INTEGER);
-                break;
-            case "boolean":
-                reference.resolveTo(PrimitiveTypeDeclaration.BOOLEAN);
-                break;
-            default:
-                assert this.checker.getClassDeclaration(reference.getName()) != null :
-                "use of undeclared identifier " + reference.getName() + " at " + reference.getLocation();
+    @Override
+    protected void visit(Expression.UnaryOperation expression, Void context) {}
 
-                reference.resolveTo(this.checker.getClassDeclaration(reference.getName()));
-                break;
-        }
+    @Override
+    protected void visit(Expression.NullLiteral expression, Void context) {}
 
-        System.out.println("Resolved " + reference + " to " + reference.getDeclaration());
-    }
+    @Override
+    protected void visit(Expression.BooleanLiteral expression, Void context) {}
+
+    @Override
+    protected void visit(Expression.IntegerLiteral expression, Void context) {}
+
+    @Override
+    protected void visit(Expression.MethodInvocation expression, Void context) {}
+
+    @Override
+    protected void visit(Expression.ExplicitFieldAccess expression, Void context) {}
+
+    @Override
+    protected void visit(Expression.ArrayElementAccess expression, Void context) {}
+
+    @Override
+    protected void visit(Expression.VariableAccess expression, Void context) {}
+
+    @Override
+    protected void visit(Expression.CurrentContextAccess expression, Void context) {}
+
+    @Override
+    protected void visit(Expression.NewObjectCreation expression, Void context) {}
+
+    @Override
+    protected void visit(Expression.NewArrayCreation expression, Void context) {}
 }
