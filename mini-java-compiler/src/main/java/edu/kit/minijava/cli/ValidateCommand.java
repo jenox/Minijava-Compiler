@@ -3,6 +3,7 @@ package edu.kit.minijava.cli;
 import edu.kit.minijava.lexer.*;
 import edu.kit.minijava.parser.*;
 import edu.kit.minijava.ast.nodes.*;
+import edu.kit.minijava.ast.references.*;
 import edu.kit.minijava.semantic.*;
 
 import java.io.*;
@@ -25,6 +26,15 @@ public class ValidateCommand extends Command {
             ClassAndMemberNameConflictChecker checker = new ClassAndMemberNameConflictChecker(program);
             new TypeReferenceResolver(program, checker);
             new RemainingChecks(program);
+
+            for (Reference reference : new Collector(program).instancesOfClass(Reference.class)) {
+                if (reference.isResolved()) {
+                    System.out.println("Reference " + reference + ": " + reference.getDeclaration());
+                }
+                else {
+                    System.out.println("Unresolved reference " + reference);
+                }
+            }
 
             return 0;
         }

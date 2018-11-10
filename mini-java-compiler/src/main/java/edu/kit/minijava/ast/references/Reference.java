@@ -1,5 +1,6 @@
 package edu.kit.minijava.ast.references;
 
+import edu.kit.minijava.ast.nodes.*;
 import edu.kit.minijava.lexer.*;
 
 public abstract class Reference {
@@ -18,6 +19,10 @@ public abstract class Reference {
     public final TokenLocation getLocation() {
         return this.location;
     }
+
+    public abstract boolean isResolved();
+
+    public abstract Declaration getDeclaration();
 
     @Override
     public String toString() {

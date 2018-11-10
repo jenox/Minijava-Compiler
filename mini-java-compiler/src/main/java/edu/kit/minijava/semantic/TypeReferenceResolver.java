@@ -36,8 +36,6 @@ public final class TypeReferenceResolver extends ASTVisitor<Void> {
                 reference.resolveTo(this.checker.getClassDeclaration(reference.getName()));
                 break;
         }
-
-        System.out.println("Resolved type reference " + reference + " to " + reference.getDeclaration());
     }
 
 
