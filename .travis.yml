@@ -11,15 +11,14 @@ env:
 
 jobs:
   allow_failures:
-    - name: Shared mjtest Lexer + Syntax Tests
-    - name: Shared mjtest AST Tests
+    - name: Shared mjtest Tests
 
   include:
     - stage: build
       name: Build
       script: ./build
     - stage: test
-      name: Shared mjtest Lexer + Syntax Tests
+      name: Shared mjtest Tests
       script:
         - ./build
         - git clone --recursive https://git.scc.kit.edu/IPDSnelting/mjtest.git
@@ -28,16 +27,9 @@ jobs:
         - cd ../..
         - ./mjtest/mjt.py lexer --ci_testing --parallel --output_no_incorrect_reports
         - ./mjtest/mjt.py syntax --ci_testing --parallel --output_no_incorrect_reports
-    - stage: test
-      name: Shared mjtest AST Tests
-      script:
-        - ./build
-        - git clone --recursive https://git.scc.kit.edu/IPDSnelting/mjtest.git
-        - cd mjtest/tests
-        - git checkout master
-        - cd ../..
         - ./mjtest/mjt.py ast --ci_testing --parallel --output_no_incorrect_reports
-    - name: Custom mjtest Tests (Lexer + Syntax + AST)
+        - ./mjtest/mjt.py semantic --ci_testing --parallel --output_no_incorrect_reports
+    - name: Custom mjtest Tests (all up to AST)
       script:
         - ./build
         - git clone --recursive https://git.scc.kit.edu/ubduq/mjtest.git
@@ -47,5 +39,13 @@ jobs:
         - ./mjtest/mjt.py lexer --ci_testing --parallel --output_no_incorrect_reports
         - ./mjtest/mjt.py syntax --ci_testing --parallel --output_no_incorrect_reports
         - ./mjtest/mjt.py ast --ci_testing --parallel --output_no_incorrect_reports
+    - name: Custom mjtest Semantic Analysis Tests
+      script:
+        - ./build
+        - git clone --recursive https://git.scc.kit.edu/ubduq/mjtest.git
+        - cd mjtest/tests
+        - git checkout dev
+        - cd ../..
+        - ./mjtest/mjt.py semantic --ci_testing --parallel --output_no_incorrect_reports
     - name: Style Check
       script: ./mini-java-compiler/gradlew -b ./mini-java-compiler/build.gradle checkstyleMain checkstyleTest
