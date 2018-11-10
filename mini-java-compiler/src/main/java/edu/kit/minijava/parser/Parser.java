@@ -518,7 +518,7 @@ public final class Parser {
                 List<Expression> arguments = this.parseArguments();
                 this.consume(TokenType.CLOSING_PARENTHESIS, "PrimaryExpression");
 
-                return new Expression.MethodInvocation(null, token.getText(), arguments, token.getLocation());
+                return new Expression.MethodInvocation(token.getText(), arguments, token.getLocation());
             }
             else {
                 return new Expression.VariableAccess(token.getText(), token.getLocation());

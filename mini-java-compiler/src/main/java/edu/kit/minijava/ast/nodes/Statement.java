@@ -34,8 +34,8 @@ public abstract class Statement implements ASTNode {
             return this.statementIfTrue;
         }
 
-        public Statement getStatementIfFalse() {
-            return this.statementIfFalse;
+        public Optional<Statement> getStatementIfFalse() {
+            return Optional.ofNullable(this.statementIfFalse);
         }
 
         @Override
@@ -95,8 +95,8 @@ public abstract class Statement implements ASTNode {
 
         private final Expression value; // nullable
 
-        public Expression getValue() {
-            return this.value;
+        public Optional<Expression> getValue() {
+            return Optional.ofNullable(this.value);
         }
 
         @Override
@@ -163,8 +163,8 @@ public abstract class Statement implements ASTNode {
             return this.name;
         }
 
-        public Expression getValue() {
-            return this.value;
+        public Optional<Expression> getValue() {
+            return Optional.ofNullable(this.value);
         }
 
         public TokenLocation getLocation() {

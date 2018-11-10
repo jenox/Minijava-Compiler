@@ -117,7 +117,7 @@ public final class PrettyPrinter extends ASTVisitor<PrettyPrinter.Options> {
         if (statement.getStatementIfTrue() instanceof Statement.Block) {
             statement.getStatementIfTrue().accept(this, Options.DO_NOT_PRINT_NEWLINE_AFTER_BLOCK);
 
-            if (this.shouldPrintElseStatement(statement.getStatementIfFalse())) {
+            if (this.shouldPrintElseStatementForIf(statement)) {
                 this.print(" ");
             }
             else {
@@ -131,29 +131,30 @@ public final class PrettyPrinter extends ASTVisitor<PrettyPrinter.Options> {
             this.indentationDepth -= 1;
         }
 
-        if (this.shouldPrintElseStatement(statement.getStatementIfFalse())) {
-            if (statement.getStatementIfFalse() instanceof Statement.Block) {
+        if (this.shouldPrintElseStatementForIf(statement)) {
+            Statement statementIfFalse = statement.getStatementIfFalse().orElseThrow(AssertionError::new);
+
+            if (statementIfFalse instanceof Statement.Block) {
                 this.print("else ");
-                statement.getStatementIfFalse().accept(this);
+                statementIfFalse.accept(this);
             }
-            else if (statement.getStatementIfFalse() instanceof Statement.IfStatement) {
+            else if (statementIfFalse instanceof Statement.IfStatement) {
                 this.print("else ");
-                statement.getStatementIfFalse().accept(this);
+                statementIfFalse.accept(this);
             }
             else {
                 this.print("else ");
                 this.indentationDepth += 1;
-                statement.getStatementIfFalse().accept(this);
+                statementIfFalse.accept(this);
                 this.indentationDepth -= 1;
             }
         }
     }
 
-    private boolean shouldPrintElseStatement(Statement statement) {
-        if (statement == null) return false;
-        if (statement instanceof Statement.EmptyStatement) return false;
+    private boolean shouldPrintElseStatementForIf(Statement.IfStatement statement) {
+        if (!statement.getStatementIfFalse().isPresent()) return false;
 
-        return true;
+        return !(statement.getStatementIfFalse().get() instanceof Statement.EmptyStatement);
     }
 
     @Override
@@ -181,9 +182,9 @@ public final class PrettyPrinter extends ASTVisitor<PrettyPrinter.Options> {
 
     @Override
     protected void visit(Statement.ReturnStatement statement, Options context) {
-        if (statement.getValue() != null) {
+        if (statement.getValue().isPresent()) {
             this.print("return ");
-            statement.getValue().accept(this, Options.DO_NOT_PRINT_PARENTHESES_AROUND_EXPRESSION);
+            statement.getValue().get().accept(this, Options.DO_NOT_PRINT_PARENTHESES_AROUND_EXPRESSION);
             this.println(";");
         }
         else {
@@ -231,9 +232,9 @@ public final class PrettyPrinter extends ASTVisitor<PrettyPrinter.Options> {
         this.print(" ");
         this.print(statement.getName());
 
-        if (statement.getValue() != null) {
+        if (statement.getValue().isPresent()) {
             this.print(" = ");
-            statement.getValue().accept(this, Options.DO_NOT_PRINT_PARENTHESES_AROUND_EXPRESSION);
+            statement.getValue().get().accept(this, Options.DO_NOT_PRINT_PARENTHESES_AROUND_EXPRESSION);
             this.println(";");
         }
         else {
@@ -282,8 +283,8 @@ public final class PrettyPrinter extends ASTVisitor<PrettyPrinter.Options> {
     protected void visit(Expression.MethodInvocation expression, Options context) {
         this.printOpeningParenthesis(context);
 
-        if (expression.getContext() != null) {
-            expression.getContext().accept(this);
+        if (expression.getContext().isPresent()) {
+            expression.getContext().get().accept(this);
             this.print(".");
         }
 

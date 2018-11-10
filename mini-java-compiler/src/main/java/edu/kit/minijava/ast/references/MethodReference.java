@@ -6,6 +6,16 @@ import edu.kit.minijava.lexer.*;
 import java.util.*;
 
 public final class MethodReference extends SimpleReference<MethodDeclaration> {
+    public MethodReference(String name, List<TypeOfExpression> argumentTypes,
+                           TokenLocation location) {
+        super(name, location);
+
+        if (argumentTypes == null) throw new IllegalArgumentException();
+
+        this.context = null;
+        this.argumentTypes = Collections.unmodifiableList(argumentTypes);
+    }
+
     public MethodReference(TypeOfExpression context, String name, List<TypeOfExpression> argumentTypes,
                            TokenLocation location) {
         super(name, location);
@@ -19,8 +29,8 @@ public final class MethodReference extends SimpleReference<MethodDeclaration> {
     private final TypeOfExpression context; // nullable
     private final List<TypeOfExpression> argumentTypes;
 
-    public final TypeOfExpression getContext() {
-        return this.context;
+    public final Optional<TypeOfExpression> getContext() {
+        return Optional.ofNullable(this.context);
     }
 
     public final List<TypeOfExpression> getArgumentTypes() {

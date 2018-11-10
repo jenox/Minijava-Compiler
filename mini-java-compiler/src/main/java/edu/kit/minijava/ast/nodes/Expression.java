@@ -123,6 +123,16 @@ public abstract class Expression implements ASTNode {
     }
 
     public static final class MethodInvocation extends Expression {
+        public MethodInvocation(String methodName, List<Expression> arguments, TokenLocation location) {
+            super();
+
+            List<TypeOfExpression> argumentTypes = arguments.stream().map(e -> e.type).collect(Collectors.toList());
+
+            this.context = null;
+            this.arguments = arguments;
+            this.reference = new MethodReference(methodName, argumentTypes, location);
+        }
+
         public MethodInvocation(Expression context, String methodName, List<Expression> arguments,
                                 TokenLocation location) {
             super();
@@ -131,21 +141,15 @@ public abstract class Expression implements ASTNode {
 
             this.context = context;
             this.arguments = arguments;
-
-            if (context != null) {
-                this.reference = new MethodReference(context.type, methodName, argumentTypes, location);
-            }
-            else {
-                this.reference = new MethodReference(null, methodName, argumentTypes, location);
-            }
+            this.reference = new MethodReference(context.type, methodName, argumentTypes, location);
         }
 
         private final Expression context; // nullable
         private final MethodReference reference;
         private final List<Expression> arguments;
 
-        public Expression getContext() {
-            return this.context;
+        public Optional<Expression> getContext() {
+            return Optional.ofNullable(this.context);
         }
 
         public MethodReference getReference() {
