@@ -29,6 +29,11 @@ public final class FieldDeclaration implements VariableDeclaration, MemberDeclar
     }
 
     @Override
+    public boolean canBeShadowedByVariableDeclarationInNestedScope() {
+        return true;
+    }
+
+    @Override
     public <T> void accept(ASTVisitor<T> visitor, T context) {
         visitor.visit(this, context);
     }

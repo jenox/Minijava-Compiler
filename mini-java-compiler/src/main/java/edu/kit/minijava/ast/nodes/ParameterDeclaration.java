@@ -29,6 +29,11 @@ public final class ParameterDeclaration implements VariableDeclaration, ASTNode 
     }
 
     @Override
+    public boolean canBeShadowedByVariableDeclarationInNestedScope() {
+        return false;
+    }
+
+    @Override
     public <T> void accept(ASTVisitor<T> visitor, T context) {
         visitor.visit(this, context);
     }

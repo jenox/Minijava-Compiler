@@ -163,6 +163,11 @@ public abstract class Statement implements ASTNode {
             return this.name;
         }
 
+        @Override
+        public boolean canBeShadowedByVariableDeclarationInNestedScope() {
+            return false;
+        }
+
         public Optional<Expression> getValue() {
             return Optional.ofNullable(this.value);
         }

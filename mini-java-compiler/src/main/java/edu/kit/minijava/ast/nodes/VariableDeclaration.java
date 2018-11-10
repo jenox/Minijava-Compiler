@@ -5,4 +5,5 @@ import edu.kit.minijava.ast.references.*;
 public interface VariableDeclaration extends Declaration {
     String getName();
     TypeReference getType();
+    boolean canBeShadowedByVariableDeclarationInNestedScope();
 }

@@ -10,6 +10,10 @@ public class SymbolTable {
 
     private final Stack<Map<String, VariableDeclaration>> scopes = new Stack<>();
 
+    public int getNumberOfScopes() {
+        return this.scopes.size();
+    }
+
     public void enterNewScope() {
         this.scopes.push(new HashMap<>());
     }
@@ -20,20 +24,20 @@ public class SymbolTable {
         this.scopes.pop();
     }
 
-    public void enterDeclaration(String identifier, VariableDeclaration declaration) {
+    public void enterDeclaration(VariableDeclaration declaration) {
         assert !this.scopes.isEmpty();
 
         // TODO: make this a checked exception (redefinition in same scope)
-        assert !this.scopes.peek().containsKey(identifier);
+        assert !this.scopes.peek().containsKey(declaration.getName());
 
         // TODO: where to we catch other invalid redeclarations?
 
-        this.scopes.peek().put(identifier, declaration);
+        this.scopes.peek().put(declaration.getName(), declaration);
     }
 
-    public Optional<VariableDeclaration> getVisibleDeclarationForIdentifer(String identifier) {
+    public Optional<VariableDeclaration> getVisibleDeclarationForName(String name) {
         for (int i = this.scopes.size() - 1; i >= 0; i--) {
-            VariableDeclaration declaration = this.scopes.get(i).get(identifier);
+            VariableDeclaration declaration = this.scopes.get(i).get(name);
 
             if (declaration != null) {
                 return Optional.of(declaration);
@@ -41,5 +45,9 @@ public class SymbolTable {
         }
 
         return Optional.empty();
+    }
+
+    public boolean hasVariableDeclarationInCurrentScopeWithName(String name) {
+        return this.scopes.peek().containsKey(name);
     }
 }
