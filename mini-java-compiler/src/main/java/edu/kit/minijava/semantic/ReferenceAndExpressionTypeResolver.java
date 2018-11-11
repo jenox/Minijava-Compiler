@@ -61,7 +61,11 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<Void> {
     @Override
     protected void visit(FieldDeclaration fieldDeclaration, Void context) {
         if (!this.hasCollectedDeclarationsForUseBeforeDeclare) {
-            this.resolve(fieldDeclaration.getType());
+            String fieldTypeName = fieldDeclaration.getType().getName();
+            Optional<BasicTypeDeclaration> typeDeclaration = this.getBasicTypeNamed(fieldTypeName);
+            assert typeDeclaration.isPresent() : "use of undeclared type";
+            assert typeDeclaration.get() != PrimitiveTypeDeclaration.VOID : "field of type void is not allowed";
+            fieldDeclaration.getType().resolveTo(typeDeclaration.get());
             return;
         }
 
@@ -71,7 +75,16 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<Void> {
     @Override
     protected void visit(MethodDeclaration methodDeclaration, Void context) {
         if (!this.hasCollectedDeclarationsForUseBeforeDeclare) {
-            this.resolve(methodDeclaration.getReturnType());
+            String returnTypeName = methodDeclaration.getReturnType().getName();
+            Optional<BasicTypeDeclaration> typeDeclaration  = this.getBasicTypeNamed(returnTypeName);
+
+            assert typeDeclaration.isPresent() : "use of undeclared type";
+
+            if (methodDeclaration.getReturnType().getNumberOfDimensions() >= 1) {
+                assert typeDeclaration.get() != PrimitiveTypeDeclaration.VOID : "returning array of void not allowed";
+            }
+
+            methodDeclaration.getReturnType().resolveTo(typeDeclaration.get());
             methodDeclaration.getParameters().forEach(node -> node.accept(this, context));
             return;
         }
@@ -89,7 +102,11 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<Void> {
     @Override
     protected void visit(ParameterDeclaration parameterDeclaration, Void context) {
         if (!this.hasCollectedDeclarationsForUseBeforeDeclare) {
-            this.resolve(parameterDeclaration.getType());
+            String parameterTypeName = parameterDeclaration.getType().getName();
+            Optional<BasicTypeDeclaration> typeDeclaration  = this.getBasicTypeNamed(parameterTypeName);
+            assert typeDeclaration.isPresent() : "use of undeclared type";
+            assert typeDeclaration.get() != PrimitiveTypeDeclaration.VOID : "void not allowed as parameter";
+            parameterDeclaration.getType().resolveTo(typeDeclaration.get());
             return;
         }
 
@@ -143,12 +160,19 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<Void> {
 
     @Override
     protected void visit(Statement.LocalVariableDeclarationStatement statement, Void context) {
-        this.resolve(statement.getType());
+
+        // Resolve type.
+        Optional<BasicTypeDeclaration> typeDeclaration = this.getBasicTypeNamed(statement.getType().getName());
+        assert typeDeclaration.isPresent() : "use of undeclared type";
+        assert typeDeclaration.get() != PrimitiveTypeDeclaration.VOID : "variable of type void not allowed";
+        statement.getType().resolveTo(typeDeclaration.get());
 
         // Ensure existing declaration can be shadowed.
-        this.symbolTable.getVisibleDeclarationForName(statement.getName()).ifPresent(declaration -> {
-            assert declaration.canBeShadowedByVariableDeclarationInNestedScope() : "other declaration cant be shadowed";
-            assert !this.symbolTable.isDeclarationInCurrentScope(declaration) : "var already defined in current scope";
+        this.symbolTable.getVisibleDeclarationForName(statement.getName()).ifPresent(previousDeclaration -> {
+            assert previousDeclaration.canBeShadowedByVariableDeclarationInNestedScope() :
+                    "other declaration cant be shadowed";
+            assert !this.symbolTable.isDeclarationInCurrentScope(previousDeclaration ) :
+                    "var already defined in current scope";
         });
 
         this.symbolTable.enterDeclaration(statement);
@@ -356,9 +380,11 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<Void> {
 
     @Override
     protected void visit(Expression.NewObjectCreation expression, Void context) {
-        this.resolve(expression.getReference());
+        Optional<ClassDeclaration> classDeclaration = this.getClassNamed(expression.getReference().getName());
+        assert classDeclaration.isPresent() : "use of undeclared class";
 
-        expression.getType().resolveTo(expression.getReference(), false);
+        expression.getReference().resolveTo(classDeclaration.get());
+        expression.getType().resolveTo(classDeclaration.get(), false);
     }
 
     @Override
@@ -370,51 +396,27 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<Void> {
         assert primaryDimensionType.getDeclaration().get() == PrimitiveTypeDeclaration.INTEGER : "dim must be int";
         assert primaryDimensionType.getNumberOfDimensions() == 0 : "dim must be int";
 
-        this.resolve(expression.getReference());
+        Optional<BasicTypeDeclaration> typeDeclaration = this.getBasicTypeNamed(expression.getReference().getName());
+        assert typeDeclaration.isPresent() : "use of undeclared type";
+        assert typeDeclaration.get() != PrimitiveTypeDeclaration.VOID : "array of void is not allowed";
 
-        expression.getType().resolveTo(expression.getReference(), expression.getNumberOfDimensions(), false);
+        expression.getReference().resolveTo(typeDeclaration.get());
+        expression.getType().resolveTo(typeDeclaration.get(), expression.getNumberOfDimensions(), false);
     }
 
 
     // MARK: - Helpers
 
-    private Optional<BasicTypeDeclaration> basicTypeNamed(String name) {
+    private Optional<BasicTypeDeclaration> getBasicTypeNamed(String name) {
         switch (name) {
             case "void": return Optional.of(PrimitiveTypeDeclaration.VOID);
             case "int": return Optional.of(PrimitiveTypeDeclaration.INTEGER);
             case "boolean": return Optional.of(PrimitiveTypeDeclaration.BOOLEAN);
-            default: return Optional.ofNullable(this.classNamed(name).orElseGet(null));
+            default: return Optional.ofNullable(this.getClassNamed(name).orElse(null));
         }
     }
 
-    private Optional<ClassDeclaration> classNamed(String name) {
+    private Optional<ClassDeclaration> getClassNamed(String name) {
         return Optional.ofNullable(this.checker.getClassDeclaration(name));
-    }
-
-    private void resolve(TypeReference reference) {
-        Optional<BasicTypeDeclaration> declaration = this.basicTypeNamed(reference.getName());
-
-        assert declaration.isPresent() :
-                "use of undeclared identifier " + reference.getName() + " at " + reference.getLocation();
-
-        reference.resolveTo(declaration.get());
-    }
-
-    private void resolve(BasicTypeReference reference) {
-        Optional<BasicTypeDeclaration> declaration = this.basicTypeNamed(reference.getName());
-
-        assert declaration.isPresent() :
-                "use of undeclared identifier " + reference.getName() + " at " + reference.getLocation();
-
-        reference.resolveTo(declaration.get());
-    }
-
-    private void resolve(ClassReference reference) {
-        Optional<ClassDeclaration> declaration = this.classNamed(reference.getName());
-
-        assert declaration.isPresent() :
-                "use of undeclared identifier " + reference.getName() + " at " + reference.getLocation();
-
-        reference.resolveTo(declaration.get());
     }
 }
