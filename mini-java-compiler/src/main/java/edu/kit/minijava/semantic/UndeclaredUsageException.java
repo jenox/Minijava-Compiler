@@ -28,8 +28,11 @@ public class UndeclaredUsageException extends SemanticAnalysisException {
 
         builder.append("Usage of undeclared token ");
         builder.append(this.getIdentifier());
-        builder.append(" at ");
-        builder.append(this.getTokenLocation());
+
+        if (this.getTokenLocation() != null) {
+            builder.append(" at ");
+            builder.append(this.getTokenLocation());
+        }
         builder.append(".");
 
         return builder.toString();

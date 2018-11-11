@@ -46,8 +46,12 @@ public class RedeclarationException extends SemanticAnalysisException {
 
         builder.append("Name ");
         builder.append(this.redeclaration.getName());
-        builder.append(" has already been declared at ");
-        builder.append(this.getTokenLocation());
+        builder.append(" has already been declared");
+
+        if (this.getTokenLocation() != null) {
+            builder.append(" at ");
+            builder.append(this.getTokenLocation());
+        }
         builder.append(".");
 
         return builder.toString();
