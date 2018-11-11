@@ -180,7 +180,7 @@ public class DeclarationAndTypeChecker implements ASTVisitor<TypeContext, Semant
 
     @Override
     public void visit(EmptyStatement statement, TypeContext context) throws SemanticAnalysisException {
-        // nothing to do
+        // Nothing to do here
     }
 
     @Override
@@ -190,7 +190,8 @@ public class DeclarationAndTypeChecker implements ASTVisitor<TypeContext, Semant
         this.variableSymbolTable.enterNewScope();
 
         for (Statement s : statement.getStatements()) {
-            s.accept(this, context);
+            TypeContext statementContext = new TypeContext(context);
+            s.accept(this, statementContext);
         }
 
         this.variableSymbolTable.leaveCurrentScope();

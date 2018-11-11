@@ -36,6 +36,18 @@ public class TypeContext {
 
     }
 
+    /**
+     * Copy constructor for a type context.
+     *
+     * @param another A type context object to be copied.
+     */
+    public TypeContext(TypeContext another) {
+        this.reference = another.reference;
+        this.isNullAllowed = another.isNullAllowed;
+        this.typeRef = another.typeRef;
+        this.numberOfDimensions = another.numberOfDimensions;
+    }
+
     public Reference getReference() {
         return this.reference;
     }
