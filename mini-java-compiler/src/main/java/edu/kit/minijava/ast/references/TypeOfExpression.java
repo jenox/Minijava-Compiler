@@ -143,55 +143,65 @@ public class TypeOfExpression {
     public boolean isCompatibleWith(TypeReference reference) {
         assert this.isResolved;
 
-        // reference is array
-        if (reference.getNumberOfDimensions() >= 1) {
+        // either one is array
+        if (this.numberOfDimensions >= 1 || reference.getNumberOfDimensions() >= 1) {
+
+            // TODO: is `null` a valid value for arrays?
+            if (this.isNull()) return false;
+
             if (this.numberOfDimensions != reference.getNumberOfDimensions()) return false;
-
-            if (this.declaration != null) {
-                return this.declaration == reference.getDeclaration();
-            }
-            else {
-                // TODO: is `null` a valid value for arrays?
-                return false;
-            }
-        }
-
-        // reference is class
-        else if (reference.getDeclaration() instanceof ClassDeclaration) {
-            return this.isObjectOrNull();
-        }
-
-        // reference is non-class
-        else {
             if (this.declaration != reference.getDeclaration()) return false;
-            if (this.numberOfDimensions != 0) return false;
 
             return true;
+        }
+
+        if (reference.getDeclaration() instanceof ClassDeclaration) {
+            return this.declaration == null || this.declaration == reference.getDeclaration();
+        }
+        else {
+            return this.declaration == reference.getDeclaration();
         }
     }
 
     public boolean isCompatibleWith(TypeOfExpression type) {
         assert this.isResolved;
 
-        if (type.getNumberOfDimensions() >= 1) {
-            if (this.numberOfDimensions != type.numberOfDimensions) return false;
+        if (this.numberOfDimensions >= 1 || type.numberOfDimensions >= 1) {
 
-            if (this.declaration != null) {
-                return this.declaration == type.declaration;
-            }
-            else {
-                // TODO: is `null` a valid value for arrays?
-                return false;
-            }
+            // TODO: is `null` a valid value for arrays?
+            if (this.isNull()) return false;
+
+            if (this.numberOfDimensions != type.numberOfDimensions) return false;
+            if (this.declaration != type.declaration) return false;
+
+            return true;
         }
-        else if (type.declaration == null) {
-            return this.isNull();
+
+        if (type.declaration == null) {
+            return false;
         }
         else if (type.declaration instanceof ClassDeclaration) {
-            return this.isObjectOrNull();
+            return this.declaration == null || this.declaration == type.declaration;
         }
         else {
-            return this.declaration == type.declaration && this.numberOfDimensions == 0;
+            return this.declaration == type.declaration;
+        }
+    }
+
+    // must be commutative
+    public boolean canCheckForEqualityWith(TypeOfExpression type) {
+        assert this.isResolved;
+
+        if (this.numberOfDimensions >= 1 || type.numberOfDimensions >= 1) {
+            // TODO: can we compare arrays?
+            return false;
+        }
+
+        if (this.isObjectOrNull() == type.isObjectOrNull()) {
+            return true;
+        }
+        else {
+            return this.declaration == type.declaration;
         }
     }
 }
