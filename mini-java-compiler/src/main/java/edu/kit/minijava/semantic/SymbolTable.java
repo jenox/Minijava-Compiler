@@ -4,11 +4,11 @@ import edu.kit.minijava.ast.nodes.*;
 
 import java.util.*;
 
-public class SymbolTable {
+public class SymbolTable<T extends Declaration> {
     SymbolTable() {
     }
 
-    private final Stack<Map<String, VariableDeclaration>> scopes = new Stack<>();
+    private final Stack<Map<String, T>> scopes = new Stack<>();
 
     public void enterNewScope() {
         this.scopes.push(new HashMap<>());
@@ -20,7 +20,7 @@ public class SymbolTable {
         this.scopes.pop();
     }
 
-    public void enterDeclaration(String identifier, VariableDeclaration declaration) {
+    public void enterDeclaration(String identifier, T declaration) {
         assert !this.scopes.isEmpty();
 
         // TODO: make this a checked exception (redefinition in same scope)
@@ -31,9 +31,9 @@ public class SymbolTable {
         this.scopes.peek().put(identifier, declaration);
     }
 
-    public Optional<VariableDeclaration> getVisibleDeclarationForIdentifer(String identifier) {
+    public Optional<T> getVisibleDeclarationForIdentifer(String identifier) {
         for (int i = this.scopes.size() - 1; i >= 0; i--) {
-            VariableDeclaration declaration = this.scopes.get(i).get(identifier);
+            T declaration = this.scopes.get(i).get(identifier);
 
             if (declaration != null) {
                 return Optional.of(declaration);

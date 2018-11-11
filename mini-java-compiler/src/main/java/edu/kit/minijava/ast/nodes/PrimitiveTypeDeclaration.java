@@ -3,9 +3,16 @@ package edu.kit.minijava.ast.nodes;
 import java.util.*;
 
 public enum PrimitiveTypeDeclaration implements BasicTypeDeclaration {
-    INTEGER,
-    BOOLEAN,
-    VOID;
+    
+    INTEGER("int"),
+    BOOLEAN("boolean"),
+    VOID("void");
+
+    private String typeName;
+
+    PrimitiveTypeDeclaration(String typeName) {
+        this.typeName = typeName;
+    }
 
     @Override
     public List<MethodDeclaration> getMethodDeclarations() {
@@ -15,5 +22,10 @@ public enum PrimitiveTypeDeclaration implements BasicTypeDeclaration {
     @Override
     public List<FieldDeclaration> getFieldDeclarations() {
         return Collections.emptyList();
+    }
+
+    @Override
+    public String getName() {
+        return this.typeName;
     }
 }

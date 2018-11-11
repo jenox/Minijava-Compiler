@@ -11,8 +11,14 @@ public final class Program implements ASTNode {
 
     private final List<ClassDeclaration> classDeclarations;
 
+    private Map<String, ClassDeclaration> classSymbolTable = new HashMap<>();
+
     public List<ClassDeclaration> getClassDeclarations() {
         return this.classDeclarations;
+    }
+
+    public Map<String, ClassDeclaration> getClassSymbolTable() {
+        return this.classSymbolTable;
     }
 
     @Override

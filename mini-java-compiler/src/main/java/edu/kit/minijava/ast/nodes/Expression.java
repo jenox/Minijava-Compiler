@@ -140,12 +140,16 @@ public abstract class Expression implements ASTNode {
             }
         }
 
-        private final Expression context; // nullable
+        private Expression context; // nullable
         private final MethodReference reference;
         private final List<Expression> arguments;
 
         public Expression getContext() {
             return this.context;
+        }
+
+        public void setContext(Expression context) {
+            this.context = context;
         }
 
         public MethodReference getReference() {

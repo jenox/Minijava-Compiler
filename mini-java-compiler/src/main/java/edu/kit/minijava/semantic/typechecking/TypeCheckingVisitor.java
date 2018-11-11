@@ -6,6 +6,11 @@ import edu.kit.minijava.ast.nodes.Statement.*;
 import edu.kit.minijava.ast.references.*;
 import edu.kit.minijava.ast.references.TypeOfExpression.Type;
 import edu.kit.minijava.lexer.TokenLocation;
+import edu.kit.minijava.semantic.*;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 /**
  *
@@ -24,8 +29,24 @@ import edu.kit.minijava.lexer.TokenLocation;
  */
 public class TypeCheckingVisitor implements ASTVisitor<TypeContext> {
 
-    public TypeCheckingVisitor() {
+    private final List<SemanticAnalysisException> encounteredProblems = new ArrayList<>();
 
+    private AnnotatedSymbolTable<VariableDeclaration> variableSymbolTable = new AnnotatedSymbolTable<>();
+    private ClassDeclaration currentClass;
+    private Program astRoot = null;
+
+
+    public void checkTypes(Program program) throws SemanticAnalysisException {
+        this.encounteredProblems.clear();
+        this.astRoot = program;
+
+        this.visit(program, null);
+
+        // Check whether any Exceptions were stored
+        if (!encounteredProblems.isEmpty()) {
+            // Throw the first exception that occurred while visiting the AST
+            throw encounteredProblems.get(0);
+        }
     }
 
     @Override
@@ -38,49 +59,93 @@ public class TypeCheckingVisitor implements ASTVisitor<TypeContext> {
 
     @Override
     public void visit(ClassDeclaration classDeclaration, TypeContext context) {
-        // visit mehthods
+        this.variableSymbolTable.enterNewGlobalScope();
+
+        // TODO Maybe encapsulate this more elegantly in a context
+        this.currentClass = classDeclaration;
+
+        try {
+            this.variableSymbolTable.addAllDeclarations(classDeclaration.getFieldSymbolTable());
+        }
+        catch (RedeclarationException e) {
+            this.markError(e);
+        }
+
+        // Visit each method
         for (MethodDeclaration decl : classDeclaration.getMethodDeclarations()) {
             decl.accept(this, context);
         }
 
+        this.variableSymbolTable.leaveCurrentScope();
     }
 
     @Override
     public void visit(FieldDeclaration fieldDeclaration, TypeContext context) {
-        // set type of context
+        // Set type of context
         context.setType(fieldDeclaration.getType());
+
+        // Field has already been set in class's symbol table when visiting class for the first time
     }
 
     @Override
     public void visit(MethodDeclaration methodDeclaration, TypeContext context) {
-        // visit method body
-        methodDeclaration.accept(this, context);
 
+        // Method itself has already been set in class's symbol table when visiting class for the first time
+
+        // Resolve parameter declarations and add to symbol table
+        this.variableSymbolTable.enterNewLocalScope();
+
+        // Visit method parameters and set declarations
+        for (ParameterDeclaration declaration : methodDeclaration.getParameters()) {
+            declaration.accept(this, context);
+        }
+
+        // Visit method body
+        methodDeclaration.getBody().accept(this, context);
+
+        this.variableSymbolTable.leaveCurrentScope();
     }
 
     @Override
     public void visit(ParameterDeclaration parameterDeclaration, TypeContext context) {
+
+        try {
+            this.variableSymbolTable.enterDeclaration(parameterDeclaration.getName(), parameterDeclaration);
+        }
+        catch (RedeclarationException e) {
+            this.markError(e);
+        }
+
         // set type of context
-        context.setType(parameterDeclaration.getType());
+        if (context != null) {
+            context.setType(parameterDeclaration.getType());
+        }
     }
 
     @Override
     public void visit(IfStatement statement, TypeContext context) {
         // check type of condition
         TypeContext condition = new TypeContext();
+
+        this.variableSymbolTable.enterNewLocalScope();
         statement.getCondition().accept(this, condition);
+        this.variableSymbolTable.leaveCurrentScope();
 
         if (!condition.isBoolean()) {
             this.markError("Condition in if statement not boolean");
         }
 
         // visit statement if true
+        this.variableSymbolTable.enterNewLocalScope();
         statement.getStatementIfTrue().accept(this, context);
+        this.variableSymbolTable.leaveCurrentScope();
 
         // visit statement if false
         Statement falseStatement = statement.getStatementIfFalse();
         if (falseStatement != null) {
+            this.variableSymbolTable.enterNewLocalScope();
             falseStatement.accept(this, context);
+            this.variableSymbolTable.leaveCurrentScope();
         }
     }
 
@@ -88,14 +153,19 @@ public class TypeCheckingVisitor implements ASTVisitor<TypeContext> {
     public void visit(WhileStatement statement, TypeContext context) {
         // check type of condition
         TypeContext condition = new TypeContext();
+
+        this.variableSymbolTable.enterNewLocalScope();
         statement.getCondition().accept(this, condition);
+        this.variableSymbolTable.leaveCurrentScope();
 
         if (!condition.isBoolean()) {
             this.markError("Condition in while not boolean");
         }
 
         // visit statement
+        this.variableSymbolTable.enterNewLocalScope();
         statement.getStatementWhileTrue().accept(this, context);
+        this.variableSymbolTable.leaveCurrentScope();
     }
 
     @Override
@@ -137,15 +207,30 @@ public class TypeCheckingVisitor implements ASTVisitor<TypeContext> {
 
     @Override
     public void visit(Block statement, TypeContext context) {
-        // visit statements
+        // Enter new scope and visit statements
+
+        this.variableSymbolTable.enterNewLocalScope();
+
         for (Statement s : statement.getStatements()) {
             s.accept(this, context);
         }
+
+        this.variableSymbolTable.leaveCurrentScope();
     }
 
     @Override
     public void visit(LocalVariableDeclarationStatement statement, TypeContext context) {
-        context.setType(statement.getType());
+
+        try {
+            this.variableSymbolTable.enterDeclaration(statement.getName(), statement);
+        }
+        catch (RedeclarationException e) {
+            this.markError(e);
+        }
+
+        if (context != null) {
+            context.setType(statement.getType());
+        }
     }
 
     @Override
@@ -159,6 +244,7 @@ public class TypeCheckingVisitor implements ASTVisitor<TypeContext> {
             case SUBTRACTION:
                 expression.getType().resolveTo(Type.INT);
                 context.setArithmetic();
+                break;
             case LESS_THAN:
             case LESS_THAN_OR_EQUAL_TO:
             case GREATER_THAN:
@@ -175,6 +261,7 @@ public class TypeCheckingVisitor implements ASTVisitor<TypeContext> {
                 break;
             case ASSIGNMENT:
                 isAssignment = true;
+                break;
             default: throw new IllegalStateException("unknown binary operator");
         }
         if (isAssignment) {
@@ -278,8 +365,56 @@ public class TypeCheckingVisitor implements ASTVisitor<TypeContext> {
 
     @Override
     public void visit(MethodInvocation expression, TypeContext context) {
-        // set return type
+
+        // First, visit context of the invocation
+        TypeOfExpression methodTargetType;
+
+        Expression invocationContext = expression.getContext();
+        if (invocationContext != null) {
+            expression.getContext().accept(this, context);
+
+            methodTargetType = invocationContext.getType();
+        }
+        else {
+            // TODO Move this?
+            TypeReference contextType = new TypeReference(this.currentClass.getName(), 0, null);
+            contextType.resolveTo(this.currentClass);
+            methodTargetType = new TypeOfExpression();
+            methodTargetType.resolveTo(contextType);
+
+            // Make canonical representation
+            // TODO Do we need to keep this?
+            expression.setContext(new CurrentContextAccess());
+        }
+
+        // Resolve name of method in the correct context
+
         MethodReference method = expression.getReference();
+
+        // Retrieve method declaration
+        Type methodType = methodTargetType.getType();
+
+        if (methodType != Type.TYPE_REF) {
+            throw new IllegalStateException("Method invocation on non type-ref type");
+        }
+
+        TypeReference methodTypeReference = methodTargetType.getReference();
+        ClassDeclaration classDeclaration = this.astRoot.getClassSymbolTable().get(methodTypeReference.getName());
+
+        if (classDeclaration == null) {
+            throw new IllegalStateException("Method invocation with invalid type");
+        }
+
+        MethodDeclaration methodDeclaration = classDeclaration.getMethodSymbolTable().get(method.getName());
+
+        if (methodDeclaration == null) {
+            // TODO Make another exception for undeclared methods
+            this.markError(new UndeclaredUsageException(method.getName(), null));
+        }
+
+        method.resolveTo(methodDeclaration);
+
+        // Set return type
         TypeReference returnType = method.getDeclaration().getReturnType();
         context.setType(returnType); //set type of this expression to return type
         this.setExpressionType(expression, context);
@@ -330,6 +465,29 @@ public class TypeCheckingVisitor implements ASTVisitor<TypeContext> {
         //set type of expression
         this.setExpressionType(expression, childContext);
 
+        // Resolve declaration
+        TypeOfExpression contextType = expression.getContext().getType();
+
+        if (contextType.getType() != Type.TYPE_REF) {
+            throw new IllegalStateException("Field access on non type-ref type");
+        }
+
+        TypeReference contextTypeRef = contextType.getReference();
+        ClassDeclaration classDeclaration = this.astRoot.getClassSymbolTable().get(contextTypeRef.getName());
+
+        if (classDeclaration == null) {
+            throw new IllegalStateException("Field access with invalid type");
+        }
+
+        FieldDeclaration fieldDeclaration = classDeclaration.getFieldSymbolTable().get(contextTypeRef.getName());
+
+        if (fieldDeclaration == null) {
+            // TODO Make another exception for undeclared fields
+            this.markError(new UndeclaredUsageException(contextTypeRef.getName(), null));
+        }
+
+        expression.getReference().resolveTo(fieldDeclaration);
+
         //set parent context to type of accessed field
         TypeReference ref = expression.getReference().getDeclaration().getType();
         context.setType(ref);
@@ -338,7 +496,7 @@ public class TypeCheckingVisitor implements ASTVisitor<TypeContext> {
 
     @Override
     public void visit(ArrayElementAccess expression, TypeContext context) {
-        //get Type of expresion
+        // Get Type of expression
         TypeContext childContext = new TypeContext();
         expression.getContext().accept(this, childContext);
         //check that type is array type
@@ -355,13 +513,30 @@ public class TypeCheckingVisitor implements ASTVisitor<TypeContext> {
 
     @Override
     public void visit(VariableAccess expression, TypeContext context) {
+
+        // Resolve name
+        Optional<VariableDeclaration> declaration
+                = this.variableSymbolTable.getVisibleDeclarationForIdentifer(expression.getReference().getName());
+
+        if (!declaration.isPresent()) {
+            this.markError(new UndeclaredUsageException(expression.getReference().getName(),
+                    expression.getReference().getLocation()));
+
+            // Bail from here
+            return;
+        }
+
+        expression.getReference().resolveTo(declaration.get());
+
         //set type of expression
         TypeReference varRef = expression.getReference().getDeclaration().getType();
         TypeContext varContext = new TypeContext(varRef);
         this.setExpressionType(expression, varContext);
 
         //set parent context
-        context.setType(varRef);
+        if (context != null) {
+            context.setType(varRef);
+        }
 
     }
 
@@ -411,8 +586,15 @@ public class TypeCheckingVisitor implements ASTVisitor<TypeContext> {
     }
 
     private void markError(String s) {
-        // throw new TypeCheckingException();
-        // for debugging purposes
+        this.encounteredProblems.add(new TypeMismatchException(s));
+
+        // Output message for debugging purposes
         System.out.println(s);
+    }
+
+    private void markError(SemanticAnalysisException e) {
+        this.encounteredProblems.add(e);
+
+        System.out.println(e.getMessage());
     }
 }

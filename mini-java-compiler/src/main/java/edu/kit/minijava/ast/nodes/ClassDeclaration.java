@@ -13,6 +13,10 @@ public final class ClassDeclaration implements BasicTypeDeclaration, ASTNode {
     private final List<MethodDeclaration> methodDeclarations;
     private final List<FieldDeclaration> fieldDeclarations;
 
+
+    private final Map<String, MethodDeclaration> methodSymbolTable = new HashMap<>();
+    private final Map<String, FieldDeclaration> fieldSymbolTable = new HashMap<>();
+
     public String getName() {
         return this.name;
     }
@@ -25,6 +29,14 @@ public final class ClassDeclaration implements BasicTypeDeclaration, ASTNode {
     @Override
     public List<FieldDeclaration> getFieldDeclarations() {
         return this.fieldDeclarations;
+    }
+
+    public Map<String, MethodDeclaration> getMethodSymbolTable() {
+        return this.methodSymbolTable;
+    }
+
+    public Map<String, FieldDeclaration> getFieldSymbolTable() {
+        return this.fieldSymbolTable;
     }
 
     @Override
