@@ -1,8 +1,7 @@
 package edu.kit.minijava.parser;
 
-import edu.kit.minijava.ast.nodes.BinaryOperationType;
-import edu.kit.minijava.ast.nodes.Expression;
-import edu.kit.minijava.lexer.TokenType;
+import edu.kit.minijava.lexer.*;
+import edu.kit.minijava.ast.nodes.*;
 
 enum BinaryOperation {
     MULTIPLICATION(TokenType.MULTIPLY, Associativity.LEFT_ASSOCIATIVE, 50),
@@ -44,36 +43,21 @@ enum BinaryOperation {
 
     private BinaryOperationType getBinaryOperationType() {
         switch (this) {
-            case MULTIPLICATION:
-                return BinaryOperationType.MULTIPLICATION;
-            case DIVISION:
-                return BinaryOperationType.DIVISION;
-            case MODULO:
-                return BinaryOperationType.MODULO;
-            case ADDITION:
-                return BinaryOperationType.ADDITION;
-            case SUBTRACTION:
-                return BinaryOperationType.SUBTRACTION;
-            case LESS_THAN:
-                return BinaryOperationType.LESS_THAN;
-            case LESS_THAN_OR_EQUAL_TO:
-                return BinaryOperationType.LESS_THAN_OR_EQUAL_TO;
-            case GREATER_THAN:
-                return BinaryOperationType.GREATER_THAN;
-            case GREATER_THAN_OR_EQUAL_TO:
-                return BinaryOperationType.GREATER_THAN_OR_EQUAL_TO;
-            case EQUAL_TO:
-                return BinaryOperationType.EQUAL_TO;
-            case NOT_EQUAL_TO:
-                return BinaryOperationType.NOT_EQUAL_TO;
-            case LOGICAL_AND:
-                return BinaryOperationType.LOGICAL_AND;
-            case LOGICAL_OR:
-                return BinaryOperationType.LOGICAL_OR;
-            case ASSIGNMENT:
-                return BinaryOperationType.ASSIGNMENT;
-            default:
-                throw new AssertionError();
+            case MULTIPLICATION: return BinaryOperationType.MULTIPLICATION;
+            case DIVISION: return BinaryOperationType.DIVISION;
+            case MODULO: return BinaryOperationType.MODULO;
+            case ADDITION: return BinaryOperationType.ADDITION;
+            case SUBTRACTION: return BinaryOperationType.SUBTRACTION;
+            case LESS_THAN: return BinaryOperationType.LESS_THAN;
+            case LESS_THAN_OR_EQUAL_TO: return BinaryOperationType.LESS_THAN_OR_EQUAL_TO;
+            case GREATER_THAN: return BinaryOperationType.GREATER_THAN;
+            case GREATER_THAN_OR_EQUAL_TO: return BinaryOperationType.GREATER_THAN_OR_EQUAL_TO;
+            case EQUAL_TO: return BinaryOperationType.EQUAL_TO;
+            case NOT_EQUAL_TO: return BinaryOperationType.NOT_EQUAL_TO;
+            case LOGICAL_AND: return BinaryOperationType.LOGICAL_AND;
+            case LOGICAL_OR: return BinaryOperationType.LOGICAL_OR;
+            case ASSIGNMENT: return BinaryOperationType.ASSIGNMENT;
+            default: throw new AssertionError();
         }
     }
 

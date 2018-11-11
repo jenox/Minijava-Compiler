@@ -1,7 +1,6 @@
 package edu.kit.minijava.ast.nodes;
 
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public enum PrimitiveTypeDeclaration implements BasicTypeDeclaration {
 

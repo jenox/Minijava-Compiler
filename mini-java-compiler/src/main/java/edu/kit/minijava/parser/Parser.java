@@ -1,15 +1,11 @@
 package edu.kit.minijava.parser;
 
-import edu.kit.minijava.ast.nodes.*;
-import edu.kit.minijava.ast.references.BasicTypeReference;
-import edu.kit.minijava.ast.references.TypeReference;
 import edu.kit.minijava.lexer.*;
+import edu.kit.minijava.ast.nodes.*;
+import edu.kit.minijava.ast.references.*;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Stack;
+import java.io.*;
+import java.util.*;
 
 public final class Parser {
 
@@ -115,10 +111,10 @@ public final class Parser {
             MemberDeclaration declaration = this.parseClassMember();
 
             if (declaration instanceof MethodDeclaration) {
-                methods.add((MethodDeclaration) declaration);
+                methods.add((MethodDeclaration)declaration);
             }
             else if (declaration instanceof FieldDeclaration) {
-                fields.add((FieldDeclaration) declaration);
+                fields.add((FieldDeclaration)declaration);
             }
             else {
                 throw new AssertionError();
@@ -495,9 +491,10 @@ public final class Parser {
 
             return new Expression.ArrayElementAccess(context, index);
         }
+
         else {
             throw new UnexpectedTokenException(this.getCurrentToken(), "PostfixOperation", TokenType.PERIOD,
-                TokenType.OPENING_BRACKET);
+                    TokenType.OPENING_BRACKET);
         }
     }
 
@@ -587,10 +584,11 @@ public final class Parser {
                 return new Expression.NewArrayCreation(basicType, expression, numberOfDimensions);
             }
         }
+
         else {
             throw new UnexpectedTokenException(this.getCurrentToken(), "PrimaryExpression",
-                TokenType.OPENING_PARENTHESIS, TokenType.IDENTIFIER, TokenType.INTEGER_LITERAL, TokenType.NULL,
-                TokenType.TRUE, TokenType.FALSE, TokenType.THIS, TokenType.NEW);
+                    TokenType.OPENING_PARENTHESIS, TokenType.IDENTIFIER, TokenType.INTEGER_LITERAL, TokenType.NULL,
+                    TokenType.TRUE, TokenType.FALSE, TokenType.THIS, TokenType.NEW);
         }
     }
 
@@ -651,9 +649,10 @@ public final class Parser {
 
             return new BasicTypeReference(token.getText(), token.getLocation());
         }
+
         else {
             throw new UnexpectedTokenException(this.getCurrentToken(), "BasicType", TokenType.IDENTIFIER, TokenType.INT,
-                TokenType.BOOLEAN, TokenType.VOID);
+                    TokenType.BOOLEAN, TokenType.VOID);
         }
     }
 

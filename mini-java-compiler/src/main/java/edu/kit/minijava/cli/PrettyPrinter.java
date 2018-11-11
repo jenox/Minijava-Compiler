@@ -1,11 +1,9 @@
 package edu.kit.minijava.cli;
 
 import edu.kit.minijava.ast.nodes.*;
-import edu.kit.minijava.ast.references.TypeReference;
+import edu.kit.minijava.ast.references.*;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 public class PrettyPrinter implements ASTVisitor<PrettyPrinter.Options, RuntimeException> {
 

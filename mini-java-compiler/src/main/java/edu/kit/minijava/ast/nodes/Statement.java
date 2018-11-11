@@ -1,10 +1,9 @@
 package edu.kit.minijava.ast.nodes;
 
-import edu.kit.minijava.ast.references.TypeReference;
-import edu.kit.minijava.lexer.TokenLocation;
+import edu.kit.minijava.ast.references.*;
+import edu.kit.minijava.lexer.*;
 
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public abstract class Statement implements ASTNode {
     private Statement() {

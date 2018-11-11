@@ -1,7 +1,7 @@
 package edu.kit.minijava.ast.nodes;
 
-import edu.kit.minijava.ast.references.TypeReference;
-import edu.kit.minijava.lexer.TokenLocation;
+import edu.kit.minijava.ast.references.*;
+import edu.kit.minijava.lexer.*;
 
 public final class FieldDeclaration implements VariableDeclaration, MemberDeclaration, ASTNode {
     public FieldDeclaration(TypeReference type, String name, TokenLocation location) {

@@ -1,7 +1,7 @@
 package edu.kit.minijava.ast.references;
 
-import edu.kit.minijava.ast.nodes.FieldDeclaration;
-import edu.kit.minijava.lexer.TokenLocation;
+import edu.kit.minijava.ast.nodes.*;
+import edu.kit.minijava.lexer.*;
 
 public final class FieldReference extends SimpleReference<FieldDeclaration> {
     public FieldReference(TypeOfExpression context, String name, TokenLocation location) {

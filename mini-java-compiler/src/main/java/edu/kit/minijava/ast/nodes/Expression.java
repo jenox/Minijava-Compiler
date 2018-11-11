@@ -1,10 +1,10 @@
 package edu.kit.minijava.ast.nodes;
 
 import edu.kit.minijava.ast.references.*;
-import edu.kit.minijava.lexer.TokenLocation;
+import edu.kit.minijava.lexer.*;
 
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.*;
+import java.util.stream.*;
 
 public abstract class Expression implements ASTNode {
     private Expression() {

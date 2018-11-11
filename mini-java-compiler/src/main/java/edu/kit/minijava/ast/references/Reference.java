@@ -1,6 +1,6 @@
 package edu.kit.minijava.ast.references;
 
-import edu.kit.minijava.lexer.TokenLocation;
+import edu.kit.minijava.lexer.*;
 
 public abstract class Reference {
     Reference(TokenLocation location) {

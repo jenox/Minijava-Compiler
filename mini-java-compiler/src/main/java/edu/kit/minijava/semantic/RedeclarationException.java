@@ -1,7 +1,7 @@
 package edu.kit.minijava.semantic;
 
-import edu.kit.minijava.ast.nodes.Declaration;
-import edu.kit.minijava.lexer.TokenLocation;
+import edu.kit.minijava.ast.nodes.*;
+import edu.kit.minijava.lexer.*;
 
 public class RedeclarationException extends SemanticAnalysisException {
 
@@ -14,11 +14,7 @@ public class RedeclarationException extends SemanticAnalysisException {
     public RedeclarationException(String identifier, Declaration original, Declaration redeclaration,
                                   TokenLocation location) {
         if (identifier == null) throw new IllegalArgumentException();
-
-        // TODO Maybe don't allow this to be null also?
-        // if (original == null) throw new IllegalArgumentException();
         if (redeclaration == null) throw new IllegalArgumentException();
-//        if (location == null) throw new IllegalArgumentException();
 
         this.originalDeclaration = original;
         this.redeclaration = redeclaration;
@@ -56,5 +52,4 @@ public class RedeclarationException extends SemanticAnalysisException {
 
         return builder.toString();
     }
-
 }

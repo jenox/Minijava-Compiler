@@ -1,9 +1,6 @@
 package edu.kit.minijava.ast.nodes;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public final class ClassDeclaration implements BasicTypeDeclaration, ASTNode {
     public ClassDeclaration(String name, List<MethodDeclaration> methods, List<FieldDeclaration> fields) {

@@ -1,6 +1,6 @@
 package edu.kit.minijava.semantic;
 
-import edu.kit.minijava.ast.references.TypeReference;
+import edu.kit.minijava.ast.references.*;
 
 public class TypeContext {
 

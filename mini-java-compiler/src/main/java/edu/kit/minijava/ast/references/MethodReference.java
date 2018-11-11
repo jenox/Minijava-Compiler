@@ -1,10 +1,9 @@
 package edu.kit.minijava.ast.references;
 
-import edu.kit.minijava.ast.nodes.MethodDeclaration;
-import edu.kit.minijava.lexer.TokenLocation;
+import edu.kit.minijava.ast.nodes.*;
+import edu.kit.minijava.lexer.*;
 
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public final class MethodReference extends SimpleReference<MethodDeclaration> {
     public MethodReference(TypeOfExpression context, String name, List<TypeOfExpression> argumentTypes,

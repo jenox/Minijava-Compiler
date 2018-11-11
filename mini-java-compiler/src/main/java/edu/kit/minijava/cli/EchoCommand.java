@@ -1,9 +1,6 @@
 package edu.kit.minijava.cli;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 
 class EchoCommand extends Command {
 

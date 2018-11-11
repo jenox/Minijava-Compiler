@@ -3,13 +3,11 @@ package edu.kit.minijava.semantic;
 import edu.kit.minijava.ast.nodes.*;
 import edu.kit.minijava.ast.nodes.Expression.*;
 import edu.kit.minijava.ast.nodes.Statement.*;
-import edu.kit.minijava.ast.references.MethodReference;
-import edu.kit.minijava.ast.references.TypeOfExpression;
+import edu.kit.minijava.ast.references.*;
 import edu.kit.minijava.ast.references.TypeOfExpression.Type;
-import edu.kit.minijava.ast.references.TypeReference;
-import edu.kit.minijava.lexer.TokenLocation;
+import edu.kit.minijava.lexer.*;
 
-import java.util.Optional;
+import java.util.*;
 
 /**
  * Visits nodes of AST to set declarations, check and set types.
