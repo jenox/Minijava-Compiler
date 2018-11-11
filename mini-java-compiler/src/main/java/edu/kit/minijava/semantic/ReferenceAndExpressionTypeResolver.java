@@ -5,8 +5,8 @@ import edu.kit.minijava.ast.references.*;
 
 import java.util.*;
 
-public class RemainingChecks extends ASTVisitor<ClassDeclaration> {
-    public RemainingChecks(Program program) {
+public class ReferenceAndExpressionTypeResolver extends ASTVisitor<ClassDeclaration> {
+    public ReferenceAndExpressionTypeResolver(Program program) {
         this.symbolTable = new SymbolTable();
 
         program.accept(this);
@@ -186,7 +186,9 @@ public class RemainingChecks extends ASTVisitor<ClassDeclaration> {
     }
 
     @Override
-    protected void visit(Expression.NewObjectCreation expression, ClassDeclaration context) {}
+    protected void visit(Expression.NewObjectCreation expression, ClassDeclaration context) {
+//        expression.getType().resolveTo(expression.getReference().getDeclaration());
+    }
 
     @Override
     protected void visit(Expression.NewArrayCreation expression, ClassDeclaration context) {
