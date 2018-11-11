@@ -5,7 +5,7 @@ import edu.kit.minijava.ast.references.*;
 
 import java.util.*;
 
-public class PrettyPrinter implements ASTVisitor<PrettyPrinter.Options> {
+public class PrettyPrinter implements ASTVisitor<PrettyPrinter.Options, RuntimeException> {
 
     public PrettyPrinter() {
     }
