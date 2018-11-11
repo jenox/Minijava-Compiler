@@ -15,22 +15,17 @@ import java.util.Optional;
 
 /**
  *
- * Visits nodes of AST to check and set types.
+ * Visits nodes of AST to set declarations, check and set types.
  *
  * TypeContext is used for passing type information to nodes in the following way
  *
  * - statements pass context to child nodes, such that afterwards contexts contains type of child nodes
- *
- * - statemtents check type of child nodes
- *
+ * - statements check type of child nodes
  * - expressions set type of given context according to own type
- *
  * - expressions check type of subexpressions
  *
  */
 public class TypeCheckingVisitor implements ASTVisitor<TypeContext, SemanticAnalysisException> {
-
-    private final List<SemanticAnalysisException> encounteredProblems = new ArrayList<>();
 
     private AnnotatedSymbolTable<VariableDeclaration> variableSymbolTable = new AnnotatedSymbolTable<>();
     private ClassDeclaration currentClass;
@@ -38,16 +33,9 @@ public class TypeCheckingVisitor implements ASTVisitor<TypeContext, SemanticAnal
 
 
     public void checkTypes(Program program) throws SemanticAnalysisException {
-        this.encounteredProblems.clear();
         this.astRoot = program;
 
         this.visit(program, null);
-
-        // Check whether any Exceptions were stored
-        if (!encounteredProblems.isEmpty()) {
-            // Throw the first exception that occurred while visiting the AST
-            throw encounteredProblems.get(0);
-        }
     }
 
     @Override
@@ -62,11 +50,9 @@ public class TypeCheckingVisitor implements ASTVisitor<TypeContext, SemanticAnal
     public void visit(ClassDeclaration classDeclaration, TypeContext context) throws SemanticAnalysisException {
         this.variableSymbolTable.enterNewGlobalScope();
 
-        // TODO Maybe encapsulate this more elegantly in a context
+        // TODO Encapsulate the current class context more elegantly in a context var
         this.currentClass = classDeclaration;
-
         this.variableSymbolTable.addAllDeclarations(classDeclaration.getFieldSymbolTable());
-
 
         // Visit each method
         for (MethodDeclaration decl : classDeclaration.getMethodDeclarations()) {
@@ -596,18 +582,5 @@ public class TypeCheckingVisitor implements ASTVisitor<TypeContext, SemanticAnal
             default:
                 throw new IllegalStateException("invalid expression type");
         }
-    }
-
-    private void markError(String s) {
-        this.encounteredProblems.add(new TypeMismatchException(s));
-
-        // Output message for debugging purposes
-        System.out.println(s);
-    }
-
-    private void markError(SemanticAnalysisException e) {
-        this.encounteredProblems.add(e);
-
-        System.out.println(e.getMessage());
     }
 }
