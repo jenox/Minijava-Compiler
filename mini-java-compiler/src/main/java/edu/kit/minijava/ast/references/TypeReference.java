@@ -15,4 +15,8 @@ public final class TypeReference extends SimpleReference<BasicTypeDeclaration> {
     public final int getNumberOfDimensions() {
         return this.numberOfDimensions;
     }
+
+    public final boolean isVoid() {
+        return this.getDeclaration() == PrimitiveTypeDeclaration.VOID && this.numberOfDimensions == 0;
+    }
 }

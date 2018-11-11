@@ -8,15 +8,17 @@ import java.util.*;
 public class ReferenceAndExpressionTypeResolver extends ASTVisitor<ClassDeclaration> {
     public ReferenceAndExpressionTypeResolver(Program program, ClassAndMemberNameConflictChecker checker) {
         this.checker = checker;
-        this.symbolTable = new SymbolTable();
 
         program.accept(this);
     }
 
     private final ClassAndMemberNameConflictChecker checker;
-    private final SymbolTable symbolTable;
+    private final SymbolTable symbolTable = new SymbolTable();
+    private final Stack<ClassDeclaration> classDeclarations = new Stack<>();
+    private final Stack<SubroutineDeclaration> subroutineDeclarations = new Stack<>();
 
     private boolean hasCollectedDeclarationsForUseBeforeDeclare = false;
+
 
     // MARK: - Traversal
 
@@ -41,6 +43,7 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<ClassDeclarat
     protected void visit(ClassDeclaration classDeclaration, ClassDeclaration context) {
         assert this.symbolTable.getNumberOfScopes() == 0;
 
+        this.classDeclarations.push(classDeclaration);
         this.symbolTable.enterNewScope();
 
         for (FieldDeclaration fieldDeclaration : classDeclaration.getFieldDeclarations()) {
@@ -52,6 +55,7 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<ClassDeclarat
         }
 
         this.symbolTable.leaveCurrentScope();
+        this.classDeclarations.pop();
     }
 
     @Override
@@ -72,12 +76,14 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<ClassDeclarat
             return;
         }
 
+        this.subroutineDeclarations.push(methodDeclaration);
         this.symbolTable.enterNewScope();
 
         methodDeclaration.getParameters().forEach(node -> node.accept(this, context));
         methodDeclaration.getBody().accept(this, context);
 
         this.symbolTable.leaveCurrentScope();
+        this.subroutineDeclarations.pop();
     }
 
     @Override
@@ -120,7 +126,16 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<ClassDeclarat
     protected void visit(Statement.ReturnStatement statement, ClassDeclaration context) {
         statement.getValue().ifPresent(node -> node.accept(this, context));
 
-        // TODO: does return type match?
+        TypeReference expectedReturnType = this.subroutineDeclarations.peek().getReturnType();
+
+        if (statement.getValue().isPresent()) {
+            TypeOfExpression actualReturnType = statement.getValue().get().getType();
+
+            assert actualReturnType.isCompatibleWith(expectedReturnType) : "invalid return value";
+        }
+        else {
+            assert expectedReturnType.isVoid() : "cannot return value from void function";
+        }
     }
 
     @Override
