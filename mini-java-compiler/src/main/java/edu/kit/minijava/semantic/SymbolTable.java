@@ -47,7 +47,7 @@ public class SymbolTable {
         return Optional.empty();
     }
 
-    public boolean hasVariableDeclarationInCurrentScopeWithName(String name) {
-        return this.scopes.peek().containsKey(name);
+    public boolean isDeclarationInCurrentScope(VariableDeclaration declaration) {
+        return this.scopes.peek().containsValue(declaration);
     }
 }

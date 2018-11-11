@@ -17,6 +17,8 @@ public abstract class Expression implements ASTNode {
         return this.type;
     }
 
+    public abstract boolean isValidForStatement();
+
     public static final class BinaryOperation extends Expression {
         public BinaryOperation(BinaryOperationType operationType, Expression left, Expression right) {
             super();
@@ -40,6 +42,11 @@ public abstract class Expression implements ASTNode {
 
         public Expression getRight() {
             return this.right;
+        }
+
+        @Override
+        public boolean isValidForStatement() {
+            return this.operationType == BinaryOperationType.ASSIGNMENT;
         }
 
         @Override
@@ -68,6 +75,11 @@ public abstract class Expression implements ASTNode {
         }
 
         @Override
+        public boolean isValidForStatement() {
+            return false;
+        }
+
+        @Override
         public <T> void accept(ASTVisitor<T> visitor, T context) {
             visitor.visit(this, context);
         }
@@ -76,6 +88,11 @@ public abstract class Expression implements ASTNode {
     public static final class NullLiteral extends Expression {
         public NullLiteral() {
             super();
+        }
+
+        @Override
+        public boolean isValidForStatement() {
+            return false;
         }
 
         @Override
@@ -98,6 +115,11 @@ public abstract class Expression implements ASTNode {
         }
 
         @Override
+        public boolean isValidForStatement() {
+            return false;
+        }
+
+        @Override
         public <T> void accept(ASTVisitor<T> visitor, T context) {
             visitor.visit(this, context);
         }
@@ -114,6 +136,11 @@ public abstract class Expression implements ASTNode {
 
         public String getValue() {
             return this.value;
+        }
+
+        @Override
+        public boolean isValidForStatement() {
+            return false;
         }
 
         @Override
@@ -161,6 +188,11 @@ public abstract class Expression implements ASTNode {
         }
 
         @Override
+        public boolean isValidForStatement() {
+            return true;
+        }
+
+        @Override
         public <T> void accept(ASTVisitor<T> visitor, T context) {
             visitor.visit(this, context);
         }
@@ -183,6 +215,11 @@ public abstract class Expression implements ASTNode {
 
         public FieldReference getReference() {
             return this.reference;
+        }
+
+        @Override
+        public boolean isValidForStatement() {
+            return false;
         }
 
         @Override
@@ -211,6 +248,11 @@ public abstract class Expression implements ASTNode {
         }
 
         @Override
+        public boolean isValidForStatement() {
+            return false;
+        }
+
+        @Override
         public <T> void accept(ASTVisitor<T> visitor, T context) {
             visitor.visit(this, context);
         }
@@ -230,6 +272,11 @@ public abstract class Expression implements ASTNode {
         }
 
         @Override
+        public boolean isValidForStatement() {
+            return false;
+        }
+
+        @Override
         public <T> void accept(ASTVisitor<T> visitor, T context) {
             visitor.visit(this, context);
         }
@@ -238,6 +285,11 @@ public abstract class Expression implements ASTNode {
     public static final class CurrentContextAccess extends Expression {
         public CurrentContextAccess() {
             super();
+        }
+
+        @Override
+        public boolean isValidForStatement() {
+            return false;
         }
 
         @Override
@@ -257,6 +309,11 @@ public abstract class Expression implements ASTNode {
 
         public ClassReference getReference() {
             return this.reference;
+        }
+
+        @Override
+        public boolean isValidForStatement() {
+            return true;
         }
 
         @Override
@@ -288,6 +345,11 @@ public abstract class Expression implements ASTNode {
 
         public int getNumberOfDimensions() {
             return this.numberOfDimensions;
+        }
+
+        @Override
+        public boolean isValidForStatement() {
+            return false;
         }
 
         @Override

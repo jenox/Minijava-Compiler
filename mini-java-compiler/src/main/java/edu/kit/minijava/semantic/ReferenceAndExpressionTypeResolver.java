@@ -18,7 +18,6 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<ClassDeclarat
 
     private boolean hasCollectedDeclarationsForUseBeforeDeclare = false;
 
-
     // MARK: - Traversal
 
     @Override
@@ -94,6 +93,9 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<ClassDeclarat
     @Override
     protected void visit(Statement.IfStatement statement, ClassDeclaration context) {
         statement.getCondition().accept(this, context);
+
+        assert statement.getCondition().getType().isBoolean() : "condition for if statement must be boolean";
+
         statement.getStatementIfTrue().accept(this, context);
         statement.getStatementIfFalse().ifPresent(node -> node.accept(this, context));
     }
@@ -101,17 +103,24 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<ClassDeclarat
     @Override
     protected void visit(Statement.WhileStatement statement, ClassDeclaration context) {
         statement.getCondition().accept(this, context);
+
+        assert statement.getCondition().getType().isBoolean() : "condition for while statement must be boolean";
+
         statement.getStatementWhileTrue().accept(this, context);
     }
 
     @Override
     protected void visit(Statement.ExpressionStatement statement, ClassDeclaration context) {
         statement.getExpression().accept(this, context);
+
+        assert statement.getExpression().isValidForStatement() : "not a statement";
     }
 
     @Override
     protected void visit(Statement.ReturnStatement statement, ClassDeclaration context) {
         statement.getValue().ifPresent(node -> node.accept(this, context));
+
+        // TODO: does return type match?
     }
 
     @Override
@@ -119,21 +128,23 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<ClassDeclarat
 
     @Override
     protected void visit(Statement.LocalVariableDeclarationStatement statement, ClassDeclaration context) {
-        statement.getValue().ifPresent(node -> node.accept(this));
-
         this.resolve(statement.getType());
 
-        assert !this.symbolTable.hasVariableDeclarationInCurrentScopeWithName(statement.getName()) :
-        "variable already defined in current scope";
-
-        Optional<VariableDeclaration> declaration = this.symbolTable.getVisibleDeclarationForName(statement.getName());
-
-        if (declaration.isPresent()) {
-            assert declaration.get().canBeShadowedByVariableDeclarationInNestedScope() :
-            declaration.get() + " cannot be shadowed by " + statement;
-        }
+        // Ensure existing declaration can be shadowed.
+        this.symbolTable.getVisibleDeclarationForName(statement.getName()).ifPresent(declaration -> {
+            assert declaration.canBeShadowedByVariableDeclarationInNestedScope() : "other declaration cant be shadowed";
+            assert !this.symbolTable.isDeclarationInCurrentScope(declaration) : "var already defined in current scope";
+        });
 
         this.symbolTable.enterDeclaration(statement);
+
+        // Ensure type of value matches (if present).
+        if (statement.getValue().isPresent()) {
+            statement.getValue().get().accept(this);
+
+            assert statement.getValue().get().getType().isCompatibleWith(statement.getType()) :
+                    "incompatible value for variable declaration";
+        }
     }
 
     @Override
@@ -173,7 +184,7 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<ClassDeclarat
             case EQUAL_TO:
             case NOT_EQUAL_TO:
                 assert expression.getRight().getType().isCompatibleWith(expression.getLeft().getType()) :
-                        "incompatible operand types";
+                        "incompatible operand types for equality check";
                 expression.getType().resolveToBoolean();
                 break;
             case LOGICAL_AND:
@@ -184,7 +195,7 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<ClassDeclarat
                 break;
             case ASSIGNMENT:
                 assert expression.getRight().getType().isCompatibleWith(expression.getLeft().getType()) :
-                        "incompatible operand types";
+                        "incompatible operand types for assignment" + expression.getLeft() + expression.getRight();
                 assert expression.getLeft().getType().isAssignable() : "cannot assign rvalue";
                 expression.getType().resolveTo(expression.getLeft().getType(), false);
                 break;

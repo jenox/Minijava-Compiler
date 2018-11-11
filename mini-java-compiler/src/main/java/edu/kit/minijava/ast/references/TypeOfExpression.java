@@ -157,7 +157,7 @@ public class TypeOfExpression {
         }
 
         // reference is class
-        if (reference.getDeclaration() instanceof ClassDeclaration) {
+        else if (reference.getDeclaration() instanceof ClassDeclaration) {
             return this.isObjectOrNull();
         }
 
@@ -173,11 +173,25 @@ public class TypeOfExpression {
     public boolean isCompatibleWith(TypeOfExpression type) {
         assert this.isResolved;
 
-        if (this.isInteger() && type.isInteger()) return true;
-        if (this.isBoolean() && type.isBoolean()) return true;
-        if (this.isObjectOrNull() && type.isObjectOrNull()) return true;
+        if (type.getNumberOfDimensions() >= 1) {
+            if (this.numberOfDimensions != type.numberOfDimensions) return false;
 
-        // TODO: can we assign/compare arrays?
-        return false;
+            if (this.declaration != null) {
+                return this.declaration == type.declaration;
+            }
+            else {
+                // TODO: is `null` a valid value for arrays?
+                return false;
+            }
+        }
+        else if (type.declaration == null) {
+            return this.isNull();
+        }
+        else if (type.declaration instanceof ClassDeclaration) {
+            return this.isObjectOrNull();
+        }
+        else {
+            return this.declaration == type.declaration && this.numberOfDimensions == 0;
+        }
     }
 }
