@@ -24,8 +24,7 @@ public class ValidateCommand extends Command {
             Program program = parser.parseProgram();
 
             ClassAndMemberNameConflictChecker checker = new ClassAndMemberNameConflictChecker(program);
-            new TypeReferenceResolver(program, checker);
-            new ReferenceAndExpressionTypeResolver(program);
+            new ReferenceAndExpressionTypeResolver(program, checker);
 
             for (Reference reference : new Collector(program).instancesOfClass(Reference.class)) {
                 if (reference.isResolved()) {

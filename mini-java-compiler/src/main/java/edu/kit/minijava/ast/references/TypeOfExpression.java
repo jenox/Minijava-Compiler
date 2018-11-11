@@ -43,6 +43,18 @@ public class TypeOfExpression {
         this.resolveTo(declaration, 0);
     }
 
+    public final void resolveTo(TypeReference reference) {
+        this.resolveTo(reference.getDeclaration(), reference.getNumberOfDimensions());
+    }
+
+    public final void resolveTo(BasicTypeReference reference, int numberOfDimensions) {
+        this.resolveTo(reference.getDeclaration(), numberOfDimensions);
+    }
+
+    public final void resolveTo(ClassReference reference) {
+        this.resolveTo(reference.getDeclaration(), 0);
+    }
+
     public final void resolveToNull() {
         assert !this.isResolved;
 
