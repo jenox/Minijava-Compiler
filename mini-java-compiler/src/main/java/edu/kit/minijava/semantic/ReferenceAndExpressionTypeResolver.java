@@ -276,6 +276,13 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<Void> {
 
     @Override
     protected void visit(Expression.IntegerLiteral expression, Void context) {
+        try {
+            Integer.parseInt(expression.getValue());
+        }
+        catch (NumberFormatException exception) {
+            assert false : "integer too big";
+        }
+
         expression.getType().resolveToInteger();
     }
 
