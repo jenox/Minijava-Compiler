@@ -110,6 +110,9 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<Void> {
             return;
         }
 
+        assert !this.symbolTable.getVisibleDeclarationForName(parameterDeclaration.getName()).isPresent() :
+                "invalid parameter redeclaration";
+
         this.symbolTable.enterDeclaration(parameterDeclaration);
     }
 
