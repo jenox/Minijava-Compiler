@@ -63,7 +63,7 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<Void> {
         if (!this.hasCollectedDeclarationsForUseBeforeDeclare) {
             String fieldTypeName = fieldDeclaration.getType().getName();
             Optional<BasicTypeDeclaration> typeDeclaration = this.getBasicTypeNamed(fieldTypeName);
-            assert typeDeclaration.isPresent() : "use of undeclared type";
+            assert typeDeclaration.isPresent() : "use of undeclared type in field";
             assert typeDeclaration.get() != PrimitiveTypeDeclaration.VOID : "field of type void is not allowed";
             fieldDeclaration.getType().resolveTo(typeDeclaration.get());
             return;
@@ -78,7 +78,7 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<Void> {
             String returnTypeName = methodDeclaration.getReturnType().getName();
             Optional<BasicTypeDeclaration> typeDeclaration  = this.getBasicTypeNamed(returnTypeName);
 
-            assert typeDeclaration.isPresent() : "use of undeclared type";
+            assert typeDeclaration.isPresent() : "use of undeclared type in method";
 
             if (methodDeclaration.getReturnType().getNumberOfDimensions() >= 1) {
                 assert typeDeclaration.get() != PrimitiveTypeDeclaration.VOID : "returning array of void not allowed";
@@ -104,7 +104,7 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<Void> {
         if (!this.hasCollectedDeclarationsForUseBeforeDeclare) {
             String parameterTypeName = parameterDeclaration.getType().getName();
             Optional<BasicTypeDeclaration> typeDeclaration  = this.getBasicTypeNamed(parameterTypeName);
-            assert typeDeclaration.isPresent() : "use of undeclared type";
+            assert typeDeclaration.isPresent() : "use of undeclared type in parameter";
             assert typeDeclaration.get() != PrimitiveTypeDeclaration.VOID : "void not allowed as parameter";
             parameterDeclaration.getType().resolveTo(typeDeclaration.get());
             return;
@@ -159,7 +159,7 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<Void> {
             assert actualReturnType.isCompatibleWith(expectedReturnType) : "invalid return value";
         }
         else {
-            assert expectedReturnType.isVoid() : "cannot return value from void function";
+            assert expectedReturnType.isVoid() : "must return value from non-void function";
         }
     }
 
@@ -171,7 +171,7 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<Void> {
 
         // Resolve type.
         Optional<BasicTypeDeclaration> typeDeclaration = this.getBasicTypeNamed(statement.getType().getName());
-        assert typeDeclaration.isPresent() : "use of undeclared type";
+        assert typeDeclaration.isPresent() : "use of undeclared type in local var";
         assert typeDeclaration.get() != PrimitiveTypeDeclaration.VOID : "variable of type void not allowed";
         statement.getType().resolveTo(typeDeclaration.get());
 
@@ -412,7 +412,7 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<Void> {
         assert primaryDimensionType.getNumberOfDimensions() == 0 : "dim must be int";
 
         Optional<BasicTypeDeclaration> typeDeclaration = this.getBasicTypeNamed(expression.getReference().getName());
-        assert typeDeclaration.isPresent() : "use of undeclared type";
+        assert typeDeclaration.isPresent() : "use of undeclared type in new array";
         assert typeDeclaration.get() != PrimitiveTypeDeclaration.VOID : "array of void is not allowed";
 
         expression.getReference().resolveTo(typeDeclaration.get());
