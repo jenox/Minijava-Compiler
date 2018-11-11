@@ -110,8 +110,13 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<Void> {
             return;
         }
 
-        assert !this.symbolTable.getVisibleDeclarationForName(parameterDeclaration.getName()).isPresent() :
-                "invalid parameter redeclaration";
+        // Ensure existing declaration can be shadowed.
+        this.symbolTable.getVisibleDeclarationForName(parameterDeclaration.getName()).ifPresent(previousDeclaration -> {
+            assert !this.symbolTable.isDeclarationInCurrentScope(previousDeclaration ) :
+                    "invalid parameter redeclaration";
+            assert previousDeclaration.canBeShadowedByVariableDeclarationInNestedScope() :
+                    "other declaration cant be shadowed";
+        });
 
         this.symbolTable.enterDeclaration(parameterDeclaration);
     }
@@ -172,10 +177,10 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<Void> {
 
         // Ensure existing declaration can be shadowed.
         this.symbolTable.getVisibleDeclarationForName(statement.getName()).ifPresent(previousDeclaration -> {
-            assert previousDeclaration.canBeShadowedByVariableDeclarationInNestedScope() :
-                    "other declaration cant be shadowed";
             assert !this.symbolTable.isDeclarationInCurrentScope(previousDeclaration ) :
                     "var already defined in current scope";
+            assert previousDeclaration.canBeShadowedByVariableDeclarationInNestedScope() :
+                    "other declaration cant be shadowed";
         });
 
         this.symbolTable.enterDeclaration(statement);
