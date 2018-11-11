@@ -3,7 +3,7 @@ package edu.kit.minijava.ast.nodes;
 import edu.kit.minijava.ast.references.*;
 import edu.kit.minijava.lexer.*;
 
-public final class ParameterDeclaration implements VariableDeclaration, ASTNode {
+public class ParameterDeclaration implements VariableDeclaration, ASTNode {
     public ParameterDeclaration(TypeReference type, String name, TokenLocation location) {
         this.type = type;
         this.name = name;

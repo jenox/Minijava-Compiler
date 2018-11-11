@@ -28,8 +28,98 @@ public class DeclarationAndTypeChecker implements ASTVisitor<TypeContext, Semant
 
     public void resolveDeclarationsAndTypes(Program program) throws SemanticAnalysisException {
         this.astRoot = program;
+        this.addStandardLibraryDeclarations();
 
         program.accept(this, null);
+    }
+
+    /**
+     * Insert standard library methods into outer scope.
+     *
+     * Note that this method strictly serves as a test for these declarations in the context of semantic analysis
+     * and should not be viewed as a real implementation of handling the standard library.
+     */
+    public void addStandardLibraryDeclarations() {
+
+        // Methods
+        MethodDeclaration readMethod = new MethodDeclaration(false,
+                new TypeReference("int", 0, null),
+                "read", new ArrayList<>(), null, null);
+
+        List<ParameterDeclaration> paramList = new ArrayList<>();
+        paramList.add(new ParameterDeclaration(new TypeReference("int", 0, null),
+            "x", null));
+
+        // Println only allow printing integers and is not overloaded with a declaration for booleans or other types.
+        MethodDeclaration println = new MethodDeclaration(false,
+            new TypeReference("void", 0, null),
+            "println", paramList, null, null);
+
+        paramList = new ArrayList<>();
+        paramList.add(new ParameterDeclaration(new TypeReference("int", 0, null),
+                "b", null));
+
+        MethodDeclaration write = new MethodDeclaration(false,
+            new TypeReference("void", 0, null),
+            "write", paramList, null, null);
+
+        MethodDeclaration flush = new MethodDeclaration(false,
+            new TypeReference("void", 0, null),
+            "flush", new ArrayList<>(), null, null);
+
+        ClassDeclaration systemIn = new ClassDeclaration("#SystemIn", Collections.singletonList(readMethod),
+            Collections.emptyList());
+        ClassDeclaration systemOut = new ClassDeclaration("#SystemOut", Arrays.asList(println, write, flush),
+            Collections.emptyList());
+
+        ClassDeclaration systemClass = new ClassDeclaration("#System", Collections.emptyList(),
+            Arrays.asList(
+                new FieldDeclaration(new TypeReference("#SystemIn", 0, null),
+                "in", null),
+                new FieldDeclaration(new TypeReference("#SystemOut", 0, null),
+                    "out", null)));
+
+        this.astRoot.getClassSymbolTable().put("#System", systemClass);
+        this.astRoot.getClassSymbolTable().put("#SystemIn", systemIn);
+        this.astRoot.getClassSymbolTable().put("#SystemOut", systemOut);
+
+        for (FieldDeclaration decl : systemClass.getFieldDeclarations()) {
+            systemClass.getFieldSymbolTable().put(decl.getName(), decl);
+        }
+
+        for (MethodDeclaration decl : systemIn.getMethodDeclarations()) {
+            systemIn.getMethodSymbolTable().put(decl.getName(), decl);
+        }
+
+        for (MethodDeclaration decl : systemOut.getMethodDeclarations()) {
+            systemOut.getMethodSymbolTable().put(decl.getName(), decl);
+        }
+
+        // Put declarations into global outer scope
+        this.variableSymbolTable.enterNewScope();
+
+        // TODO This should be a special type of declaration, only using a custom ParameterDeclaration as a PoC.
+
+        VariableDeclaration systemDeclaration = new ParameterDeclaration(
+            new TypeReference("#System", 0, null),
+            "System",
+            null) {
+            @Override
+            public boolean canDeclarationBeShadowed() {
+                return true;
+            }
+        };
+
+        systemDeclaration.getType().resolveTo(systemClass);
+
+
+        try {
+            this.variableSymbolTable.enterDeclaration("System", systemDeclaration);
+        }
+        catch (RedeclarationException e) {
+            throw new IllegalStateException("Error when declaring standard library methods!");
+        }
+
     }
 
     @Override
@@ -468,7 +558,8 @@ public class DeclarationAndTypeChecker implements ASTVisitor<TypeContext, Semant
             throw new IllegalStateException("Field access with invalid type");
         }
 
-        FieldDeclaration fieldDeclaration = classDeclaration.getFieldSymbolTable().get(expression.getReference().getName());
+        FieldDeclaration fieldDeclaration
+            = classDeclaration.getFieldSymbolTable().get(expression.getReference().getName());
 
         if (fieldDeclaration == null) {
             throw new UndeclaredUsageException(contextTypeRef.getName(), null);
