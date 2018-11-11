@@ -1,5 +1,5 @@
 package edu.kit.minijava.ast.nodes;
 
 public interface ASTNode {
-    <T> void accept(ASTVisitor<T> visitor, T context);
+    <T, ExceptionType extends Throwable> void accept(ASTVisitor<T, ExceptionType> visitor, T context) throws ExceptionType;
 }

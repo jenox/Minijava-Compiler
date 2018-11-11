@@ -28,7 +28,7 @@ public final class FieldDeclaration implements VariableDeclaration, MemberDeclar
     }
 
     @Override
-    public <T> void accept(ASTVisitor<T> visitor, T context) {
+    public <T, ExceptionType extends Throwable> void accept(ASTVisitor<T, ExceptionType> visitor, T context) throws ExceptionType {
         visitor.visit(this, context);
     }
 }
