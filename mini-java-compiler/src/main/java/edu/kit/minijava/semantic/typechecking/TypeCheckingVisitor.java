@@ -27,7 +27,7 @@ import java.util.Optional;
  * - expressions check type of subexpressions
  *
  */
-public class TypeCheckingVisitor implements ASTVisitor<TypeContext> {
+public class TypeCheckingVisitor implements ASTVisitor<TypeContext, SemanticAnalysisException> {
 
     private final List<SemanticAnalysisException> encounteredProblems = new ArrayList<>();
 
@@ -50,7 +50,7 @@ public class TypeCheckingVisitor implements ASTVisitor<TypeContext> {
     }
 
     @Override
-    public void visit(Program program, TypeContext context) {
+    public void visit(Program program, TypeContext context) throws SemanticAnalysisException {
         for (ClassDeclaration decl : program.getClassDeclarations()) {
             decl.accept(this, context);
         }
@@ -58,18 +58,14 @@ public class TypeCheckingVisitor implements ASTVisitor<TypeContext> {
     }
 
     @Override
-    public void visit(ClassDeclaration classDeclaration, TypeContext context) {
+    public void visit(ClassDeclaration classDeclaration, TypeContext context) throws SemanticAnalysisException {
         this.variableSymbolTable.enterNewGlobalScope();
 
         // TODO Maybe encapsulate this more elegantly in a context
         this.currentClass = classDeclaration;
 
-        try {
-            this.variableSymbolTable.addAllDeclarations(classDeclaration.getFieldSymbolTable());
-        }
-        catch (RedeclarationException e) {
-            this.markError(e);
-        }
+        this.variableSymbolTable.addAllDeclarations(classDeclaration.getFieldSymbolTable());
+
 
         // Visit each method
         for (MethodDeclaration decl : classDeclaration.getMethodDeclarations()) {
@@ -80,7 +76,7 @@ public class TypeCheckingVisitor implements ASTVisitor<TypeContext> {
     }
 
     @Override
-    public void visit(FieldDeclaration fieldDeclaration, TypeContext context) {
+    public void visit(FieldDeclaration fieldDeclaration, TypeContext context) throws SemanticAnalysisException {
         // Set type of context
         context.setType(fieldDeclaration.getType());
 
@@ -88,7 +84,7 @@ public class TypeCheckingVisitor implements ASTVisitor<TypeContext> {
     }
 
     @Override
-    public void visit(MethodDeclaration methodDeclaration, TypeContext context) {
+    public void visit(MethodDeclaration methodDeclaration, TypeContext context) throws SemanticAnalysisException {
 
         // Method itself has already been set in class's symbol table when visiting class for the first time
 
@@ -107,14 +103,9 @@ public class TypeCheckingVisitor implements ASTVisitor<TypeContext> {
     }
 
     @Override
-    public void visit(ParameterDeclaration parameterDeclaration, TypeContext context) {
+    public void visit(ParameterDeclaration parameterDeclaration, TypeContext context) throws SemanticAnalysisException {
 
-        try {
-            this.variableSymbolTable.enterDeclaration(parameterDeclaration.getName(), parameterDeclaration);
-        }
-        catch (RedeclarationException e) {
-            this.markError(e);
-        }
+        this.variableSymbolTable.enterDeclaration(parameterDeclaration.getName(), parameterDeclaration);
 
         // set type of context
         if (context != null) {
@@ -123,7 +114,7 @@ public class TypeCheckingVisitor implements ASTVisitor<TypeContext> {
     }
 
     @Override
-    public void visit(IfStatement statement, TypeContext context) {
+    public void visit(IfStatement statement, TypeContext context) throws SemanticAnalysisException {
         // check type of condition
         TypeContext condition = new TypeContext();
 
@@ -132,7 +123,7 @@ public class TypeCheckingVisitor implements ASTVisitor<TypeContext> {
         this.variableSymbolTable.leaveCurrentScope();
 
         if (!condition.isBoolean()) {
-            this.markError("Condition in if statement not boolean");
+            throw new TypeMismatchException("Condition in if statement not boolean");
         }
 
         // visit statement if true
@@ -150,7 +141,7 @@ public class TypeCheckingVisitor implements ASTVisitor<TypeContext> {
     }
 
     @Override
-    public void visit(WhileStatement statement, TypeContext context) {
+    public void visit(WhileStatement statement, TypeContext context) throws SemanticAnalysisException {
         // check type of condition
         TypeContext condition = new TypeContext();
 
@@ -159,7 +150,7 @@ public class TypeCheckingVisitor implements ASTVisitor<TypeContext> {
         this.variableSymbolTable.leaveCurrentScope();
 
         if (!condition.isBoolean()) {
-            this.markError("Condition in while not boolean");
+            throw new TypeMismatchException("Condition in while not boolean");
         }
 
         // visit statement
@@ -169,31 +160,31 @@ public class TypeCheckingVisitor implements ASTVisitor<TypeContext> {
     }
 
     @Override
-    public void visit(ExpressionStatement statement, TypeContext context) {
+    public void visit(ExpressionStatement statement, TypeContext context) throws SemanticAnalysisException {
         statement.getExpression().accept(this, context);
     }
 
     @Override
-    public void visit(ReturnStatement statement, TypeContext context) {
+    public void visit(ReturnStatement statement, TypeContext context) throws SemanticAnalysisException {
         Expression exp = statement.getValue();
         TypeContext childContext = new TypeContext();
         if (context.isVoid()) {
             if (exp != null) {
                 // method should not have return value
-                this.markError("method should not return a value");
+                throw new TypeMismatchException("method should not return a value");
             }
         }
         else {
             // check that return type equals specified type
             if (exp == null) {
                 // missing return value
-                this.markError("missing return value");
+                throw new TypeMismatchException("missing return value");
             }
             else {
                 exp.accept(this, childContext);
 
                 if (!context.isCompatible(childContext)) {
-                    this.markError("Types do not match");
+                    throw new TypeMismatchException("Types do not match");
                 }
             }
         }
@@ -201,12 +192,12 @@ public class TypeCheckingVisitor implements ASTVisitor<TypeContext> {
     }
 
     @Override
-    public void visit(EmptyStatement statement, TypeContext context) {
+    public void visit(EmptyStatement statement, TypeContext context) throws SemanticAnalysisException {
         // nothing to do
     }
 
     @Override
-    public void visit(Block statement, TypeContext context) {
+    public void visit(Block statement, TypeContext context) throws SemanticAnalysisException {
         // Enter new scope and visit statements
 
         this.variableSymbolTable.enterNewLocalScope();
@@ -219,14 +210,9 @@ public class TypeCheckingVisitor implements ASTVisitor<TypeContext> {
     }
 
     @Override
-    public void visit(LocalVariableDeclarationStatement statement, TypeContext context) {
+    public void visit(LocalVariableDeclarationStatement statement, TypeContext context) throws SemanticAnalysisException {
 
-        try {
-            this.variableSymbolTable.enterDeclaration(statement.getName(), statement);
-        }
-        catch (RedeclarationException e) {
-            this.markError(e);
-        }
+        this.variableSymbolTable.enterDeclaration(statement.getName(), statement);
 
         if (context != null) {
             context.setType(statement.getType());
@@ -234,7 +220,7 @@ public class TypeCheckingVisitor implements ASTVisitor<TypeContext> {
     }
 
     @Override
-    public void visit(BinaryOperation expression, TypeContext context) {
+    public void visit(BinaryOperation expression, TypeContext context) throws SemanticAnalysisException {
         boolean isAssignment = false;
         switch (expression.getOperationType()) {
             case ADDITION:
@@ -276,7 +262,7 @@ public class TypeCheckingVisitor implements ASTVisitor<TypeContext> {
 
             // check that leftContext and rightContext are compatible
             if (!context.isCompatible(rightContext)) {
-                this.markError("Types do not match");
+                throw new TypeMismatchException("Types do not match");
             }
 
         }
@@ -290,12 +276,12 @@ public class TypeCheckingVisitor implements ASTVisitor<TypeContext> {
 
             if (expression.getType().getType() == Type.BOOLEAN
                     && (!leftContext.isBoolean() || !rightContext.isBoolean())) {
-                this.markError("Wrong expression type");
+                throw new TypeMismatchException("Wrong expression type");
             }
 
             else if (expression.getType().getType() == Type.INT
                     && (!leftContext.isArithmetic() || !rightContext.isArithmetic())) {
-                this.markError("Wrong expression type");
+                throw new TypeMismatchException("Wrong expression type");
             }
             else {
                 throw new IllegalStateException("unknown type");
@@ -305,7 +291,7 @@ public class TypeCheckingVisitor implements ASTVisitor<TypeContext> {
     }
 
     @Override
-    public void visit(UnaryOperation expression, TypeContext context) {
+    public void visit(UnaryOperation expression, TypeContext context) throws SemanticAnalysisException {
         TypeContext compare = null;
         boolean correctType = false;
         switch (expression.getOperationType()) {
@@ -324,31 +310,31 @@ public class TypeCheckingVisitor implements ASTVisitor<TypeContext> {
         }
 
         if (!correctType) {
-            this.markError("Incorrect type");
+            throw new TypeMismatchException("Incorrect type");
         }
 
         expression.accept(this, context);
 
         if (!compare.isCompatible(context)) {
-            this.markError("Types do not match");
+            throw new TypeMismatchException("Types do not match");
         }
 
     }
 
     @Override
-    public void visit(NullLiteral expression, TypeContext context) {
+    public void visit(NullLiteral expression, TypeContext context) throws SemanticAnalysisException {
         context.setNull();
         expression.getType().resolveTo(Type.NULL);
     }
 
     @Override
-    public void visit(BooleanLiteral expression, TypeContext context) {
+    public void visit(BooleanLiteral expression, TypeContext context) throws SemanticAnalysisException {
         context.setBoolean();
         expression.getType().resolveTo(Type.BOOLEAN);
     }
 
     @Override
-    public void visit(IntegerLiteral expression, TypeContext context) {
+    public void visit(IntegerLiteral expression, TypeContext context) throws SemanticAnalysisException {
         context.setArithmetic();
         String intValue = expression.getValue();
         // in order to check if intValue is a valid int we just try to get
@@ -357,14 +343,14 @@ public class TypeCheckingVisitor implements ASTVisitor<TypeContext> {
             Integer.parseInt(intValue);
         }
         catch (NumberFormatException e) {
-            this.markError("Not an int");
+            throw new TypeMismatchException("Not an int");
         }
 
         expression.getType().resolveTo(Type.INT);
     }
 
     @Override
-    public void visit(MethodInvocation expression, TypeContext context) {
+    public void visit(MethodInvocation expression, TypeContext context) throws SemanticAnalysisException {
 
         // First, visit context of the invocation
         TypeOfExpression methodTargetType;
@@ -409,7 +395,7 @@ public class TypeCheckingVisitor implements ASTVisitor<TypeContext> {
 
         if (methodDeclaration == null) {
             // TODO Make another exception for undeclared methods
-            this.markError(new UndeclaredUsageException(method.getName(), null));
+            throw new UndeclaredUsageException(method.getName(), null);
         }
 
         method.resolveTo(methodDeclaration);
@@ -424,7 +410,7 @@ public class TypeCheckingVisitor implements ASTVisitor<TypeContext> {
         int numberOfDeclaredParams = method.getDeclaration().getParameters().size();
 
         if (numberOfDeclaredParams != numberOfPassedParams) {
-            this.markError("Wrong number of parameters");
+            throw new TypeMismatchException("Wrong number of parameters");
         }
 
         // compare parameter types
@@ -440,7 +426,7 @@ public class TypeCheckingVisitor implements ASTVisitor<TypeContext> {
 
             // check expression type against parameter type
             if (!paramContext.isCompatible(typeContext)) {
-                this.markError("Invalid parameter type");
+                throw new TypeMismatchException("Invalid parameter type");
             }
             //set type of parameter expression
             else {
@@ -458,7 +444,7 @@ public class TypeCheckingVisitor implements ASTVisitor<TypeContext> {
     }
 
     @Override
-    public void visit(ExplicitFieldAccess expression, TypeContext context) {
+    public void visit(ExplicitFieldAccess expression, TypeContext context) throws SemanticAnalysisException {
         //get type of expression
         TypeContext childContext = new TypeContext();
         expression.getContext().accept(this, childContext);
@@ -483,7 +469,7 @@ public class TypeCheckingVisitor implements ASTVisitor<TypeContext> {
 
         if (fieldDeclaration == null) {
             // TODO Make another exception for undeclared fields
-            this.markError(new UndeclaredUsageException(contextTypeRef.getName(), null));
+            throw new UndeclaredUsageException(contextTypeRef.getName(), null);
         }
 
         expression.getReference().resolveTo(fieldDeclaration);
@@ -495,13 +481,13 @@ public class TypeCheckingVisitor implements ASTVisitor<TypeContext> {
     }
 
     @Override
-    public void visit(ArrayElementAccess expression, TypeContext context) {
+    public void visit(ArrayElementAccess expression, TypeContext context) throws SemanticAnalysisException {
         // Get Type of expression
         TypeContext childContext = new TypeContext();
         expression.getContext().accept(this, childContext);
         //check that type is array type
         if (childContext.getReference() != Reference.TYPE || childContext.getNumberOfDimensions() == 0) {
-            this.markError("not an error");
+            throw new TypeMismatchException("not an error");
         }
 
         //set parent context to type of array element
@@ -512,18 +498,15 @@ public class TypeCheckingVisitor implements ASTVisitor<TypeContext> {
     }
 
     @Override
-    public void visit(VariableAccess expression, TypeContext context) {
+    public void visit(VariableAccess expression, TypeContext context) throws SemanticAnalysisException {
 
         // Resolve name
         Optional<VariableDeclaration> declaration
                 = this.variableSymbolTable.getVisibleDeclarationForIdentifer(expression.getReference().getName());
 
         if (!declaration.isPresent()) {
-            this.markError(new UndeclaredUsageException(expression.getReference().getName(),
-                    expression.getReference().getLocation()));
-
-            // Bail from here
-            return;
+            throw new UndeclaredUsageException(expression.getReference().getName(),
+                    expression.getReference().getLocation());
         }
 
         expression.getReference().resolveTo(declaration.get());
@@ -541,12 +524,12 @@ public class TypeCheckingVisitor implements ASTVisitor<TypeContext> {
     }
 
     @Override
-    public void visit(CurrentContextAccess expression, TypeContext context) {
+    public void visit(CurrentContextAccess expression, TypeContext context) throws SemanticAnalysisException {
         //nothing to do
     }
 
     @Override
-    public void visit(NewObjectCreation expression, TypeContext context) {
+    public void visit(NewObjectCreation expression, TypeContext context) throws SemanticAnalysisException {
         //set type of expression
         String name = expression.getReference().getName();
         TokenLocation location = expression.getReference().getLocation();
@@ -556,7 +539,7 @@ public class TypeCheckingVisitor implements ASTVisitor<TypeContext> {
     }
 
     @Override
-    public void visit(NewArrayCreation expression, TypeContext context) {
+    public void visit(NewArrayCreation expression, TypeContext context) throws SemanticAnalysisException {
         //set type of expression
         String name = expression.getReference().getName();
         TokenLocation tokenLocation = expression.getReference().getLocation();
@@ -567,7 +550,7 @@ public class TypeCheckingVisitor implements ASTVisitor<TypeContext> {
         this.setExpressionType(expression, context);
     }
 
-    private void setExpressionType(Expression exp, TypeContext context) {
+    private void setExpressionType(Expression exp, TypeContext context) throws SemanticAnalysisException {
         switch (context.getReference()) {
             case ARTIHMETIC:
                 exp.getType().resolveTo(Type.INT);

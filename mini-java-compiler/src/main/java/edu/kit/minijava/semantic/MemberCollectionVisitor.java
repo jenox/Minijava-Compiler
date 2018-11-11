@@ -7,7 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class MemberCollectionVisitor implements ASTVisitor<MemberCollectionVisitor.Options> {
+public class MemberCollectionVisitor implements ASTVisitor<MemberCollectionVisitor.Options, SemanticAnalysisException> {
 
     public enum Options {}
 
@@ -35,7 +35,7 @@ public class MemberCollectionVisitor implements ASTVisitor<MemberCollectionVisit
     }
 
     @Override
-    public void visit(Program program, Options context) {
+    public void visit(Program program, Options context) throws SemanticAnalysisException {
 
         // Collect all defined classes first, then visit them each separately
         for (ClassDeclaration declaration : program.getClassDeclarations()) {
@@ -57,7 +57,7 @@ public class MemberCollectionVisitor implements ASTVisitor<MemberCollectionVisit
     }
 
     @Override
-    public void visit(ClassDeclaration classDeclaration, Options context) {
+    public void visit(ClassDeclaration classDeclaration, Options context) throws SemanticAnalysisException {
 
         // Collect methods and fields separately
         for (MethodDeclaration methodDeclaration : classDeclaration.getMethodDeclarations()) {
@@ -89,112 +89,112 @@ public class MemberCollectionVisitor implements ASTVisitor<MemberCollectionVisit
     // TODO Find a more elegant way to collect all members (do we even need a visitor here?)
 
     @Override
-    public void visit(FieldDeclaration fieldDeclaration, Options context) {
+    public void visit(FieldDeclaration fieldDeclaration, Options context) throws SemanticAnalysisException {
 
     }
 
     @Override
-    public void visit(MethodDeclaration methodDeclaration, Options context) {
+    public void visit(MethodDeclaration methodDeclaration, Options context) throws SemanticAnalysisException {
 
     }
 
     @Override
-    public void visit(ParameterDeclaration parameterDeclaration, Options context) {
+    public void visit(ParameterDeclaration parameterDeclaration, Options context) throws SemanticAnalysisException {
 
     }
 
     @Override
-    public void visit(Statement.IfStatement statement, Options context) {
+    public void visit(Statement.IfStatement statement, Options context) throws SemanticAnalysisException {
 
     }
 
     @Override
-    public void visit(Statement.WhileStatement statement, Options context) {
+    public void visit(Statement.WhileStatement statement, Options context) throws SemanticAnalysisException {
 
     }
 
     @Override
-    public void visit(Statement.ExpressionStatement statement, Options context) {
+    public void visit(Statement.ExpressionStatement statement, Options context) throws SemanticAnalysisException {
 
     }
 
     @Override
-    public void visit(Statement.ReturnStatement statement, Options context) {
+    public void visit(Statement.ReturnStatement statement, Options context) throws SemanticAnalysisException {
 
     }
 
     @Override
-    public void visit(Statement.EmptyStatement statement, Options context) {
+    public void visit(Statement.EmptyStatement statement, Options context) throws SemanticAnalysisException {
 
     }
 
     @Override
-    public void visit(Statement.Block statement, Options context) {
+    public void visit(Statement.Block statement, Options context) throws SemanticAnalysisException {
 
     }
 
     @Override
-    public void visit(Statement.LocalVariableDeclarationStatement statement, Options context) {
+    public void visit(Statement.LocalVariableDeclarationStatement statement, Options context) throws SemanticAnalysisException {
 
     }
 
     @Override
-    public void visit(Expression.BinaryOperation expression, Options context) {
+    public void visit(Expression.BinaryOperation expression, Options context) throws SemanticAnalysisException {
 
     }
 
     @Override
-    public void visit(Expression.UnaryOperation expression, Options context) {
+    public void visit(Expression.UnaryOperation expression, Options context) throws SemanticAnalysisException {
 
     }
 
     @Override
-    public void visit(Expression.NullLiteral expression, Options context) {
+    public void visit(Expression.NullLiteral expression, Options context) throws SemanticAnalysisException {
 
     }
 
     @Override
-    public void visit(Expression.BooleanLiteral expression, Options context) {
+    public void visit(Expression.BooleanLiteral expression, Options context) throws SemanticAnalysisException {
 
     }
 
     @Override
-    public void visit(Expression.IntegerLiteral expression, Options context) {
+    public void visit(Expression.IntegerLiteral expression, Options context) throws SemanticAnalysisException {
 
     }
 
     @Override
-    public void visit(Expression.MethodInvocation expression, Options context) {
+    public void visit(Expression.MethodInvocation expression, Options context) throws SemanticAnalysisException {
 
     }
 
     @Override
-    public void visit(Expression.ExplicitFieldAccess expression, Options context) {
+    public void visit(Expression.ExplicitFieldAccess expression, Options context) throws SemanticAnalysisException {
 
     }
 
     @Override
-    public void visit(Expression.ArrayElementAccess expression, Options context) {
+    public void visit(Expression.ArrayElementAccess expression, Options context) throws SemanticAnalysisException {
 
     }
 
     @Override
-    public void visit(Expression.VariableAccess expression, Options context) {
+    public void visit(Expression.VariableAccess expression, Options context) throws SemanticAnalysisException {
 
     }
 
     @Override
-    public void visit(Expression.CurrentContextAccess expression, Options context) {
+    public void visit(Expression.CurrentContextAccess expression, Options context) throws SemanticAnalysisException {
 
     }
 
     @Override
-    public void visit(Expression.NewObjectCreation expression, Options context) {
+    public void visit(Expression.NewObjectCreation expression, Options context) throws SemanticAnalysisException {
 
     }
 
     @Override
-    public void visit(Expression.NewArrayCreation expression, Options context) {
+    public void visit(Expression.NewArrayCreation expression, Options context) throws SemanticAnalysisException {
 
     }
 
