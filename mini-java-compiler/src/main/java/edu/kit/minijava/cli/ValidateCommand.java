@@ -36,6 +36,10 @@ public class ValidateCommand extends Command {
                 }
             }
 
+            for (Expression expression : new Collector(program).instancesOfClass(Expression.class)) {
+                System.out.println(expression + ": " + expression.getType());
+            }
+
             return 0;
         }
         catch (ParserException exception) {
