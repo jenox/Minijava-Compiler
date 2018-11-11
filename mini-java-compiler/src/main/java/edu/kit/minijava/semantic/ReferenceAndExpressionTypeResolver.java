@@ -225,7 +225,7 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<Void> {
                 break;
             case EQUAL_TO:
             case NOT_EQUAL_TO:
-                assert expression.getRight().getType().isCompatibleWith(expression.getLeft().getType()) :
+                assert expression.getRight().getType().canCheckForEqualityWith(expression.getLeft().getType()) :
                         "incompatible operand types for equality check";
                 expression.getType().resolveToBoolean();
                 break;
