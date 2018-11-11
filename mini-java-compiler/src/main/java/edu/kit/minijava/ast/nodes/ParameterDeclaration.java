@@ -31,4 +31,9 @@ public final class ParameterDeclaration implements VariableDeclaration, ASTNode 
     public <T, ExceptionType extends Throwable> void accept(ASTVisitor<T, ExceptionType> visitor, T context) throws ExceptionType {
         visitor.visit(this, context);
     }
+
+    @Override
+    public boolean canDeclarationBeShadowed() {
+        return false;
+    }
 }

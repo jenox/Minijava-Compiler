@@ -23,7 +23,7 @@ import java.util.Optional;
  */
 public class TypeCheckingVisitor implements ASTVisitor<TypeContext, SemanticAnalysisException> {
 
-    private AnnotatedSymbolTable<VariableDeclaration> variableSymbolTable = new AnnotatedSymbolTable<>();
+    private SymbolTable<VariableDeclaration> variableSymbolTable = new SymbolTable<>();
     private ClassDeclaration currentClass;
     private Program astRoot = null;
 
@@ -44,11 +44,11 @@ public class TypeCheckingVisitor implements ASTVisitor<TypeContext, SemanticAnal
 
     @Override
     public void visit(ClassDeclaration classDeclaration, TypeContext context) throws SemanticAnalysisException {
-        this.variableSymbolTable.enterNewGlobalScope();
+        this.variableSymbolTable.enterNewScope();
 
         // TODO Encapsulate the current class context more elegantly in a context var
         this.currentClass = classDeclaration;
-        this.variableSymbolTable.addAllDeclarations(classDeclaration.getFieldSymbolTable());
+        this.variableSymbolTable.enterAllDeclarations(classDeclaration.getFieldSymbolTable());
 
         // Visit each method
         for (MethodDeclaration decl : classDeclaration.getMethodDeclarations()) {
@@ -72,7 +72,7 @@ public class TypeCheckingVisitor implements ASTVisitor<TypeContext, SemanticAnal
         // Method itself has already been set in class's symbol table when visiting class for the first time
 
         // Resolve parameter declarations and add to symbol table
-        this.variableSymbolTable.enterNewLocalScope();
+        this.variableSymbolTable.enterNewScope();
 
         // Visit method parameters and set declarations
         for (ParameterDeclaration declaration : methodDeclaration.getParameters()) {
@@ -93,7 +93,7 @@ public class TypeCheckingVisitor implements ASTVisitor<TypeContext, SemanticAnal
 
         this.variableSymbolTable.enterDeclaration(parameterDeclaration.getName(), parameterDeclaration);
 
-        // set type of context
+        // Set type of context
         if (context != null) {
             context.setType(parameterDeclaration.getType());
         }
@@ -101,10 +101,10 @@ public class TypeCheckingVisitor implements ASTVisitor<TypeContext, SemanticAnal
 
     @Override
     public void visit(IfStatement statement, TypeContext context) throws SemanticAnalysisException {
-        // check type of condition
+        // Check type of condition
         TypeContext condition = new TypeContext();
 
-        this.variableSymbolTable.enterNewLocalScope();
+        this.variableSymbolTable.enterNewScope();
         statement.getCondition().accept(this, condition);
         this.variableSymbolTable.leaveCurrentScope();
 
@@ -112,15 +112,15 @@ public class TypeCheckingVisitor implements ASTVisitor<TypeContext, SemanticAnal
             throw new TypeMismatchException("Condition in if statement not boolean");
         }
 
-        // visit statement if true
-        this.variableSymbolTable.enterNewLocalScope();
+        // Visit statement if true
+        this.variableSymbolTable.enterNewScope();
         statement.getStatementIfTrue().accept(this, context);
         this.variableSymbolTable.leaveCurrentScope();
 
-        // visit statement if false
+        // Visit statement if false
         Statement falseStatement = statement.getStatementIfFalse();
         if (falseStatement != null) {
-            this.variableSymbolTable.enterNewLocalScope();
+            this.variableSymbolTable.enterNewScope();
             falseStatement.accept(this, context);
             this.variableSymbolTable.leaveCurrentScope();
         }
@@ -131,7 +131,7 @@ public class TypeCheckingVisitor implements ASTVisitor<TypeContext, SemanticAnal
         // check type of condition
         TypeContext condition = new TypeContext();
 
-        this.variableSymbolTable.enterNewLocalScope();
+        this.variableSymbolTable.enterNewScope();
         statement.getCondition().accept(this, condition);
         this.variableSymbolTable.leaveCurrentScope();
 
@@ -140,7 +140,7 @@ public class TypeCheckingVisitor implements ASTVisitor<TypeContext, SemanticAnal
         }
 
         // visit statement
-        this.variableSymbolTable.enterNewLocalScope();
+        this.variableSymbolTable.enterNewScope();
         statement.getStatementWhileTrue().accept(this, context);
         this.variableSymbolTable.leaveCurrentScope();
     }
@@ -187,7 +187,7 @@ public class TypeCheckingVisitor implements ASTVisitor<TypeContext, SemanticAnal
     public void visit(Block statement, TypeContext context) throws SemanticAnalysisException {
         // Enter new scope and visit statements
 
-        this.variableSymbolTable.enterNewLocalScope();
+        this.variableSymbolTable.enterNewScope();
 
         for (Statement s : statement.getStatements()) {
             s.accept(this, context);
@@ -513,7 +513,7 @@ public class TypeCheckingVisitor implements ASTVisitor<TypeContext, SemanticAnal
 
         // Resolve name
         Optional<VariableDeclaration> declaration
-                = this.variableSymbolTable.getVisibleDeclarationForIdentifer(expression.getReference().getName());
+                = this.variableSymbolTable.getVisibleDeclarationForIdentifier(expression.getReference().getName());
 
         if (!declaration.isPresent()) {
             throw new UndeclaredUsageException(expression.getReference().getName(),

@@ -158,6 +158,11 @@ public abstract class Statement implements ASTNode {
             return this.type;
         }
 
+        @Override
+        public boolean canDeclarationBeShadowed() {
+            return false;
+        }
+
         public String getName() {
             return this.name;
         }

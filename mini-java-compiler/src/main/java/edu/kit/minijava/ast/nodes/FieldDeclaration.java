@@ -19,6 +19,11 @@ public final class FieldDeclaration implements VariableDeclaration, MemberDeclar
         return this.type;
     }
 
+    @Override
+    public boolean canDeclarationBeShadowed() {
+        return true;
+    }
+
     public String getName() {
         return this.name;
     }
