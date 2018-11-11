@@ -69,15 +69,13 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<ClassDeclarat
     protected void visit(MethodDeclaration methodDeclaration, ClassDeclaration context) {
         if (!this.hasCollectedDeclarationsForUseBeforeDeclare) {
             this.resolve(methodDeclaration.getReturnType());
+            methodDeclaration.getParameters().forEach(node -> node.accept(this, context));
             return;
         }
 
         this.symbolTable.enterNewScope();
 
-        for (ParameterDeclaration parameterDeclaration : methodDeclaration.getParameters()) {
-            parameterDeclaration.accept(this, context);
-        }
-
+        methodDeclaration.getParameters().forEach(node -> node.accept(this, context));
         methodDeclaration.getBody().accept(this, context);
 
         this.symbolTable.leaveCurrentScope();
@@ -85,7 +83,10 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<ClassDeclarat
 
     @Override
     protected void visit(ParameterDeclaration parameterDeclaration, ClassDeclaration context) {
-        this.resolve(parameterDeclaration.getType());
+        if (!this.hasCollectedDeclarationsForUseBeforeDeclare) {
+            this.resolve(parameterDeclaration.getType());
+            return;
+        }
 
         this.symbolTable.enterDeclaration(parameterDeclaration);
     }
@@ -150,11 +151,64 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<ClassDeclarat
     protected void visit(Expression.BinaryOperation expression, ClassDeclaration context) {
         expression.getLeft().accept(this, context);
         expression.getRight().accept(this, context);
+
+        switch (expression.getOperationType()) {
+            case MULTIPLICATION:
+            case DIVISION:
+            case MODULO:
+            case ADDITION:
+            case SUBTRACTION:
+                assert expression.getLeft().getType().isInteger() : "can only use numeric operations on integers";
+                assert expression.getRight().getType().isInteger() : "can only use numeric operations on integers";
+                expression.getType().resolveToInteger();
+                break;
+            case LESS_THAN:
+            case LESS_THAN_OR_EQUAL_TO:
+            case GREATER_THAN:
+            case GREATER_THAN_OR_EQUAL_TO:
+                assert expression.getLeft().getType().isInteger() : "can only use comparison operations on integers";
+                assert expression.getRight().getType().isInteger() : "can only use comparison operations on integers";
+                expression.getType().resolveToBoolean();
+                break;
+            case EQUAL_TO:
+            case NOT_EQUAL_TO:
+                assert expression.getRight().getType().isCompatibleWith(expression.getLeft().getType()) :
+                        "incompatible operand types";
+                expression.getType().resolveToBoolean();
+                break;
+            case LOGICAL_AND:
+            case LOGICAL_OR:
+                assert expression.getLeft().getType().isBoolean() : "can only use logical operations on booleans";
+                assert expression.getRight().getType().isBoolean() : "can only use logical operations on booleans";
+                expression.getType().resolveToBoolean();
+                break;
+            case ASSIGNMENT:
+                assert expression.getRight().getType().isCompatibleWith(expression.getLeft().getType()) :
+                        "incompatible operand types";
+                assert expression.getLeft().getType().isAssignable() : "cannot assign rvalue";
+                expression.getType().resolveTo(expression.getLeft().getType(), false);
+                break;
+        }
     }
 
     @Override
     protected void visit(Expression.UnaryOperation expression, ClassDeclaration context) {
         expression.getOther().accept(this, context);
+
+        switch (expression.getOperationType()) {
+            case LOGICAL_NEGATION:
+                assert expression.getOther().getType().isBoolean() : "can only use logical negation on booleans";
+
+                expression.getType().resolveToBoolean();
+
+                break;
+            case NUMERIC_NEGATION:
+                assert expression.getOther().getType().isInteger() : "can only use numeric negation on integers";
+
+                expression.getType().resolveToInteger();
+
+                break;
+        }
     }
 
     @Override
@@ -164,12 +218,12 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<ClassDeclarat
 
     @Override
     protected void visit(Expression.BooleanLiteral expression, ClassDeclaration context) {
-        expression.getType().resolveTo(PrimitiveTypeDeclaration.BOOLEAN);
+        expression.getType().resolveToBoolean();
     }
 
     @Override
     protected void visit(Expression.IntegerLiteral expression, ClassDeclaration context) {
-        expression.getType().resolveTo(PrimitiveTypeDeclaration.INTEGER);
+        expression.getType().resolveToInteger();
     }
 
     @Override
@@ -200,11 +254,18 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<ClassDeclarat
             methodDeclaration = this.checker.getInstanceMethodDeclaration(methodName, context);
         }
 
-        expression.getReference().resolveTo(methodDeclaration);
-        expression.getType().resolveTo(methodDeclaration.getReturnType());
+        // TODO: check parameter types!!
 
-        System.out.println("method access " + expression.getReference());
-        System.out.println();
+        List<TypeOfExpression> argumentTypes = expression.getReference().getArgumentTypes();
+        List<TypeReference> parameterTypes = methodDeclaration.getParameterTypes();
+
+        assert argumentTypes.size() == parameterTypes.size() : "incorrect number of arguments";
+        for (int index = 0; index < argumentTypes.size(); index += 1) {
+            assert argumentTypes.get(index).isCompatibleWith(parameterTypes.get(index)) : "incompatible argument type";
+        }
+
+        expression.getReference().resolveTo(methodDeclaration);
+        expression.getType().resolveTo(methodDeclaration.getReturnType(), false);
     }
 
     @Override
@@ -228,7 +289,9 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<ClassDeclarat
         FieldDeclaration fieldDeclaration = this.checker.getFieldDeclaration(fieldName , classDeclaration);
 
         expression.getReference().resolveTo(fieldDeclaration);
-        expression.getType().resolveTo(fieldDeclaration.getType());
+
+        // TODO: Is `this.f().x = 42;` valid?
+        expression.getType().resolveTo(fieldDeclaration.getType(), true);
     }
 
     @Override
@@ -240,7 +303,8 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<ClassDeclarat
         assert type.getDeclaration().isPresent() : "context of array access must be array";
         assert type.getNumberOfDimensions() >= 1 : "context of array access must be array";
 
-        expression.getType().resolveTo(type.getDeclaration().get(), type.getNumberOfDimensions() - 1);
+        // TODO: Is `this.f()[23] = 42;` valid?
+        expression.getType().resolveTo(type.getDeclaration().get(), type.getNumberOfDimensions() - 1, true);
     }
 
     @Override
@@ -252,19 +316,19 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<ClassDeclarat
 
         expression.getReference().resolveTo(declaration.get());
 
-        expression.getType().resolveTo(declaration.get().getType());
+        expression.getType().resolveTo(declaration.get().getType(), true);
     }
 
     @Override
     protected void visit(Expression.CurrentContextAccess expression, ClassDeclaration context) {
-        expression.getType().resolveTo(context);
+        expression.getType().resolveTo(context, false);
     }
 
     @Override
     protected void visit(Expression.NewObjectCreation expression, ClassDeclaration context) {
         this.resolve(expression.getReference());
 
-        expression.getType().resolveTo(expression.getReference());
+        expression.getType().resolveTo(expression.getReference(), false);
     }
 
     @Override
@@ -278,7 +342,7 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<ClassDeclarat
 
         this.resolve(expression.getReference());
 
-        expression.getType().resolveTo(expression.getReference(), expression.getNumberOfDimensions());
+        expression.getType().resolveTo(expression.getReference(), expression.getNumberOfDimensions(), false);
     }
 
 
