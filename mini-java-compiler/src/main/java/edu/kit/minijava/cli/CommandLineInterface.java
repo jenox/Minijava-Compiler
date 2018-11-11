@@ -22,6 +22,9 @@ public class CommandLineInterface {
             case "--print-ast":
                 command = new ParserCommand(true);
                 break;
+            case "--check":
+                command = new SemanticAnalysisCommand();
+                break;
             default:
                 CommandLineInterface.printErrorAndExit();
                 return;
