@@ -1,4 +1,4 @@
-package edu.kit.minijava.semantic.typechecking;
+package edu.kit.minijava.semantic;
 
 public enum Reference {
     BOOLEAN,

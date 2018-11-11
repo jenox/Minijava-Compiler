@@ -1,4 +1,4 @@
-package edu.kit.minijava.semantic.typechecking;
+package edu.kit.minijava.semantic;
 
 import edu.kit.minijava.ast.references.TypeReference;
 

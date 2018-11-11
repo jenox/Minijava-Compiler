@@ -5,7 +5,7 @@ import edu.kit.minijava.parser.*;
 import edu.kit.minijava.ast.nodes.Program;
 import edu.kit.minijava.semantic.MemberCollectionVisitor;
 import edu.kit.minijava.semantic.SemanticAnalysisException;
-import edu.kit.minijava.semantic.typechecking.TypeCheckingVisitor;
+import edu.kit.minijava.semantic.TypeCheckingVisitor;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;

@@ -1,4 +1,4 @@
-package edu.kit.minijava.semantic.typechecking;
+package edu.kit.minijava.semantic;
 
 import edu.kit.minijava.ast.nodes.*;
 import edu.kit.minijava.ast.nodes.Expression.*;
@@ -6,11 +6,7 @@ import edu.kit.minijava.ast.nodes.Statement.*;
 import edu.kit.minijava.ast.references.*;
 import edu.kit.minijava.ast.references.TypeOfExpression.Type;
 import edu.kit.minijava.lexer.TokenLocation;
-import edu.kit.minijava.semantic.*;
-import org.omg.IOP.CodecPackage.TypeMismatch;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 
 /**
