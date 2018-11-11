@@ -19,7 +19,7 @@ ClassReference      :: __name__
     Eine Klassenreferenz. __name__ ist vom Typ String.
 FieldReference      :: TypeOfExpression __name__
     Eine Attributreferenz. TypeOfExpression repräsentiert den Typ des aufrufenden Objekts.
-MethodReference     :: TypeOfExpression __name__ TypeOfExpression*
+MethodReference     :: TypeOfExpression? __name__ TypeOfExpression*
     Eine Methodenreferenz. TypeOfExpression repräsentiert den Typ des aufrufenden Objekts. Die hinteren TypeOfExpressions sind die Typen der Argumente.
 TypeReference       :: __name__ __numberOfDimensions__
     Eine Typreferenz. __name__ ist vom Typ String. __numberOfDimensions__ ist vom Typ int und entspricht der Anzahl der zusätzlichen Dimensionen, welche ein Array haben kann.
@@ -87,7 +87,7 @@ VariableAccess       :: __variableName__
 NewObjectCreation    :: __className__
     Objekterstellung. __className__ ist vom Typ String.
 NewArrayCreation     :: BasicTypeReference Expression __numberOfDimensions__
-    Arrayerstellung. Die BasicTypeReference ist Typ des Arrays. Der Expression ist die Größe der ersten Dimension und die __numberOfDimensions__ ist die Anzahl der anderen Dimensionen.
+    Arrayerstellung. Die BasicTypeReference ist Typ des Arrays. Der Expression ist die Größe der ersten Dimension und die __numberOfDimensions__ ist die Anzahl der Dimensionen.
 
 Statement = IfStatement                         | 
             WhileStatement                      |
@@ -102,7 +102,7 @@ WhileStatement                    :: Expression Statement
     While-Statement. Der Expression ist die Condition, welche überprüft wird. Das Statement ist für den True-Fall.
 ExpressionStatement               :: Expression
     Expression-Statement.
-ReturnStatement                   :: Expression
+ReturnStatement                   :: Expression?
     Return-Statement. Der Expression entspricht dem Ausdruck der zurückgegeben wird.
 Block                             :: Statement*
     Block, welcher aus mehreren Statements bestehen kann.
