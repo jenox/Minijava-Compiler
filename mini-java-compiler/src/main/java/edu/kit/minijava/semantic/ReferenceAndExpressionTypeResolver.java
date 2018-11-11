@@ -16,11 +16,23 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<ClassDeclarat
     private final ClassAndMemberNameConflictChecker checker;
     private final SymbolTable symbolTable;
 
+    private boolean hasCollectedDeclarationsForUseBeforeDeclare = false;
+
 
     // MARK: - Traversal
 
     @Override
     protected void visit(Program program, ClassDeclaration context) {
+
+        // Pass 1: collect declarations
+
+        for (ClassDeclaration classDeclaration : program.getClassDeclarations()) {
+            classDeclaration.accept(this, context);
+        }
+
+        // Pass 2: resolve remaining types and references
+        this.hasCollectedDeclarationsForUseBeforeDeclare = true;
+
         for (ClassDeclaration classDeclaration : program.getClassDeclarations()) {
             classDeclaration.accept(this, context);
         }
@@ -37,7 +49,7 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<ClassDeclarat
         }
 
         for (MethodDeclaration methodDeclaration : classDeclaration.getMethodDeclarations()) {
-            methodDeclaration .accept(this, classDeclaration);
+            methodDeclaration.accept(this, classDeclaration);
         }
 
         this.symbolTable.leaveCurrentScope();
@@ -45,14 +57,20 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<ClassDeclarat
 
     @Override
     protected void visit(FieldDeclaration fieldDeclaration, ClassDeclaration context) {
-        this.resolve(fieldDeclaration.getType());
+        if (!this.hasCollectedDeclarationsForUseBeforeDeclare) {
+            this.resolve(fieldDeclaration.getType());
+            return;
+        }
 
         this.symbolTable.enterDeclaration(fieldDeclaration);
     }
 
     @Override
     protected void visit(MethodDeclaration methodDeclaration, ClassDeclaration context) {
-        this.resolve(methodDeclaration.getReturnType());
+        if (!this.hasCollectedDeclarationsForUseBeforeDeclare) {
+            this.resolve(methodDeclaration.getReturnType());
+            return;
+        }
 
         this.symbolTable.enterNewScope();
 
@@ -157,29 +175,72 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<ClassDeclarat
     @Override
     protected void visit(Expression.MethodInvocation expression, ClassDeclaration context) {
         expression.getContext().ifPresent(node -> node.accept(this, context));
+        expression.getArguments().forEach(node -> node.accept(this, context));
+
+        String methodName = expression.getReference().getName();
+        MethodDeclaration methodDeclaration;
+
+        if (expression.getContext().isPresent()) {
+            TypeOfExpression typeOfContext = expression.getContext().get().getType();
+
+            assert typeOfContext.getDeclaration().isPresent() : "cannot access method on expression of type null";
+            assert typeOfContext.getNumberOfDimensions() == 0 : "cannot access method on array";
+
+            BasicTypeDeclaration typeDeclaration = typeOfContext.getDeclaration().get();
+
+            assert typeDeclaration instanceof ClassDeclaration : "can only access methods on objects";
+
+            ClassDeclaration classDeclaration = (ClassDeclaration)typeDeclaration;
+
+            methodDeclaration = this.checker.getInstanceMethodDeclaration(methodName, classDeclaration);
+        }
+        else {
+            assert this.checker.getInstanceMethodDeclaration(methodName, context) != null : "use of undeclared method";
+
+            methodDeclaration = this.checker.getInstanceMethodDeclaration(methodName, context);
+        }
+
+        expression.getReference().resolveTo(methodDeclaration);
+        expression.getType().resolveTo(methodDeclaration.getReturnType());
 
         System.out.println("method access " + expression.getReference());
         System.out.println();
-
-        expression.getArguments().forEach(node -> node.accept(this, context));
     }
 
     @Override
     protected void visit(Expression.ExplicitFieldAccess expression, ClassDeclaration context) {
         expression.getContext().accept(this, context);
-//        expression.getReference()
 
-        System.out.println("field access " + expression.getReference());
-        System.out.println(expression.getContext());
-        System.out.println(expression.getContext().getType());
-        System.out.println(expression.getType());
-        System.out.println();
+        TypeOfExpression typeOfContext = expression.getContext().getType();
+
+        assert typeOfContext.getDeclaration().isPresent() : "cannot access field on expression of type null";
+        assert typeOfContext.getNumberOfDimensions() == 0 : "cannot access field on array";
+
+        BasicTypeDeclaration typeDeclaration = typeOfContext.getDeclaration().get();
+
+        assert typeDeclaration instanceof ClassDeclaration : "can only access fields on objects";
+
+        ClassDeclaration classDeclaration = (ClassDeclaration)typeDeclaration;
+        String fieldName = expression.getReference().getName();
+
+        assert this.checker.getFieldDeclaration(fieldName , classDeclaration) != null : "use of undeclared field";
+
+        FieldDeclaration fieldDeclaration = this.checker.getFieldDeclaration(fieldName , classDeclaration);
+
+        expression.getReference().resolveTo(fieldDeclaration);
+        expression.getType().resolveTo(fieldDeclaration.getType());
     }
 
     @Override
     protected void visit(Expression.ArrayElementAccess expression, ClassDeclaration context) {
         expression.getContext().accept(this, context);
         expression.getIndex().accept(this, context);
+
+        TypeOfExpression type = expression.getContext().getType();
+        assert type.getDeclaration().isPresent() : "context of array access must be array";
+        assert type.getNumberOfDimensions() >= 1 : "context of array access must be array";
+
+        expression.getType().resolveTo(type.getDeclaration().get(), type.getNumberOfDimensions() - 1);
     }
 
     @Override
