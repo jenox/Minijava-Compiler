@@ -21,14 +21,14 @@ import java.util.Optional;
  * - expressions set type of given context according to own type
  * - expressions check type of subexpressions
  */
-public class TypeCheckingVisitor implements ASTVisitor<TypeContext, SemanticAnalysisException> {
+public class DeclarationAndTypeChecker implements ASTVisitor<TypeContext, SemanticAnalysisException> {
 
     private SymbolTable<VariableDeclaration> variableSymbolTable = new SymbolTable<>();
     private ClassDeclaration currentClass;
     private Program astRoot = null;
 
 
-    public void checkTypes(Program program) throws SemanticAnalysisException {
+    public void resolveDeclarationsAndTypes(Program program) throws SemanticAnalysisException {
         this.astRoot = program;
 
         this.visit(program, null);
@@ -139,7 +139,7 @@ public class TypeCheckingVisitor implements ASTVisitor<TypeContext, SemanticAnal
             throw new TypeMismatchException("Condition in while not boolean");
         }
 
-        // visit statement
+        // Visit statement
         this.variableSymbolTable.enterNewScope();
         statement.getStatementWhileTrue().accept(this, context);
         this.variableSymbolTable.leaveCurrentScope();
@@ -158,14 +158,14 @@ public class TypeCheckingVisitor implements ASTVisitor<TypeContext, SemanticAnal
         if (context.isVoid()) {
             if (exp != null) {
                 // method should not have return value
-                throw new TypeMismatchException("method should not return a value");
+                throw new TypeMismatchException("Method should not return a value");
             }
         }
         else {
             // check that return type equals specified type
             if (exp == null) {
                 // missing return value
-                throw new TypeMismatchException("missing return value");
+                throw new TypeMismatchException("Missing return value");
             }
             else {
                 exp.accept(this, childContext);
@@ -296,9 +296,6 @@ public class TypeCheckingVisitor implements ASTVisitor<TypeContext, SemanticAnal
                 && (!leftContext.isArithmetic() || !rightContext.isArithmetic())) {
                 throw new TypeMismatchException("Wrong expression type");
             }
-//            else {
-//                throw new IllegalStateException("unknown type");
-//            }
         }
 
     }
@@ -375,14 +372,13 @@ public class TypeCheckingVisitor implements ASTVisitor<TypeContext, SemanticAnal
             methodTargetType = invocationContext.getType();
         }
         else {
-            // TODO Move this?
-            TypeReference contextType = new TypeReference(this.currentClass.getName(), 0, null);
+            TypeReference contextType = new TypeReference(
+                this.currentClass.getName(), 0, null);
             contextType.resolveTo(this.currentClass);
             methodTargetType = new TypeOfExpression();
             methodTargetType.resolveTo(contextType);
 
             // Make canonical representation
-            // TODO Do we need to keep this?
             expression.setContext(new CurrentContextAccess());
         }
 
@@ -407,7 +403,6 @@ public class TypeCheckingVisitor implements ASTVisitor<TypeContext, SemanticAnal
         MethodDeclaration methodDeclaration = classDeclaration.getMethodSymbolTable().get(method.getName());
 
         if (methodDeclaration == null) {
-            // TODO Make another exception for undeclared methods
             throw new UndeclaredUsageException(method.getName(), null);
         }
 
@@ -481,7 +476,6 @@ public class TypeCheckingVisitor implements ASTVisitor<TypeContext, SemanticAnal
         FieldDeclaration fieldDeclaration = classDeclaration.getFieldSymbolTable().get(contextTypeRef.getName());
 
         if (fieldDeclaration == null) {
-            // TODO Make another exception for undeclared fields
             throw new UndeclaredUsageException(contextTypeRef.getName(), null);
         }
 
@@ -504,8 +498,8 @@ public class TypeCheckingVisitor implements ASTVisitor<TypeContext, SemanticAnal
             throw new TypeMismatchException("Cannot access elements of non-array type.");
         }
 
-        //set parent context to type of array element
-        //type of array element has one dimension less than array itself
+        // Set parent context to type of array element
+        // Type of array element has one dimension less than array itself
         context.setType(childContext.getTypeRef());
         context.reduceDimension();
 
@@ -539,12 +533,12 @@ public class TypeCheckingVisitor implements ASTVisitor<TypeContext, SemanticAnal
 
     @Override
     public void visit(CurrentContextAccess expression, TypeContext context) throws SemanticAnalysisException {
-        //nothing to do
+
     }
 
     @Override
     public void visit(NewObjectCreation expression, TypeContext context) throws SemanticAnalysisException {
-        //set type of expression
+        // Set type of expression
         String name = expression.getReference().getName();
         TokenLocation location = expression.getReference().getLocation();
         TypeReference typeReference = new TypeReference(name, 0, location);
@@ -554,7 +548,7 @@ public class TypeCheckingVisitor implements ASTVisitor<TypeContext, SemanticAnal
 
     @Override
     public void visit(NewArrayCreation expression, TypeContext context) throws SemanticAnalysisException {
-        //set type of expression
+        // Set type of expression
         String name = expression.getReference().getName();
         TokenLocation tokenLocation = expression.getReference().getLocation();
         int numOfDims = expression.getNumberOfDimensions();

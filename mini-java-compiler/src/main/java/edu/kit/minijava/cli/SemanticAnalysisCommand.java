@@ -6,7 +6,7 @@ import edu.kit.minijava.parser.Parser;
 import edu.kit.minijava.parser.ParserException;
 import edu.kit.minijava.semantic.MemberCollector;
 import edu.kit.minijava.semantic.SemanticAnalysisException;
-import edu.kit.minijava.semantic.TypeCheckingVisitor;
+import edu.kit.minijava.semantic.DeclarationAndTypeChecker;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -32,8 +32,8 @@ public class SemanticAnalysisCommand extends Command {
             MemberCollector memberCollector = new MemberCollector();
             memberCollector.collectMembers(program);
 
-            TypeCheckingVisitor semanticChecker = new TypeCheckingVisitor();
-            semanticChecker.checkTypes(program);
+            DeclarationAndTypeChecker semanticChecker = new DeclarationAndTypeChecker();
+            semanticChecker.resolveDeclarationsAndTypes(program);
 
             return 0;
 
