@@ -1,9 +1,10 @@
 package edu.kit.minijava.cli;
 
-import edu.kit.minijava.lexer.*;
-import edu.kit.minijava.parser.*;
 import edu.kit.minijava.ast.nodes.Program;
-import edu.kit.minijava.semantic.MemberCollectionVisitor;
+import edu.kit.minijava.lexer.Lexer;
+import edu.kit.minijava.parser.Parser;
+import edu.kit.minijava.parser.ParserException;
+import edu.kit.minijava.semantic.MemberCollector;
 import edu.kit.minijava.semantic.SemanticAnalysisException;
 import edu.kit.minijava.semantic.TypeCheckingVisitor;
 
@@ -28,7 +29,7 @@ public class SemanticAnalysisCommand extends Command {
                 throw new AssertionError();
             }
 
-            MemberCollectionVisitor memberCollector = new MemberCollectionVisitor();
+            MemberCollector memberCollector = new MemberCollector();
             memberCollector.collectMembers(program);
 
             TypeCheckingVisitor semanticChecker = new TypeCheckingVisitor();

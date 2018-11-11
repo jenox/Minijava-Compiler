@@ -1,8 +1,10 @@
 package edu.kit.minijava.lexer;
 
-import java.io.*;
-import java.util.*;
-import java.util.function.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.BitSet;
+import java.util.function.BooleanSupplier;
 
 public class Lexer {
 
@@ -27,7 +29,7 @@ public class Lexer {
     }
 
     private char getCurrentCharacter() {
-        return (char)this.currentCharacter;
+        return (char) this.currentCharacter;
     }
 
     private char advance() throws IOException {
@@ -87,13 +89,13 @@ public class Lexer {
     }
 
     private static final BitSet NUMERIC_BITSET
-            = buildBitSet("0123456789");
+        = buildBitSet("0123456789");
     private static final BitSet ALPHANUMERIC_BITSET
-            = buildBitSet("_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789");
+        = buildBitSet("_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789");
     private static final BitSet SEPARATOR_BITSET
-            = buildBitSet("(){}[];,.");
+        = buildBitSet("(){}[];,.");
     private static final BitSet OPERATOR_BITSET
-            = buildBitSet("!=*+-/:<>?%&^~|");
+        = buildBitSet("!=*+-/:<>?%&^~|");
 
 
     private boolean isCurrentCharacterNumeric() {
@@ -223,70 +225,106 @@ public class Lexer {
         switch (operatorStart) {
             case '=':
                 switch (this.getCurrentCharacter()) {
-                    case '=':this.advance(); return "==";
-                    default: return "=";
+                    case '=':
+                        this.advance();
+                        return "==";
+                    default:
+                        return "=";
                 }
 
             case '!':
                 switch (this.getCurrentCharacter()) {
-                    case '=': this.advance(); return "!=";
-                    default: return "!";
+                    case '=':
+                        this.advance();
+                        return "!=";
+                    default:
+                        return "!";
                 }
 
             case '<':
                 switch (this.getCurrentCharacter()) {
-                    case '=': this.advance(); return "<=";
+                    case '=':
+                        this.advance();
+                        return "<=";
                     case '<':
                         this.advance();
                         switch (this.getCurrentCharacter()) {
-                            case '=': this.advance(); return "<<=";
-                            default: return "<<";
+                            case '=':
+                                this.advance();
+                                return "<<=";
+                            default:
+                                return "<<";
                         }
-                    default: return "<";
+                    default:
+                        return "<";
                 }
 
             case '>':
                 switch (this.getCurrentCharacter()) {
-                    case '=': this.advance(); return ">=";
+                    case '=':
+                        this.advance();
+                        return ">=";
                     case '>':
                         this.advance();
                         switch (this.getCurrentCharacter()) {
-                            case '=': this.advance(); return ">>=";
+                            case '=':
+                                this.advance();
+                                return ">>=";
                             case '>':
                                 this.advance();
                                 switch (this.getCurrentCharacter()) {
-                                    case '=': this.advance(); return ">>>=";
-                                    default: return ">>>";
+                                    case '=':
+                                        this.advance();
+                                        return ">>>=";
+                                    default:
+                                        return ">>>";
                                 }
-                            default: return ">>";
+                            default:
+                                return ">>";
                         }
-                    default: return ">";
+                    default:
+                        return ">";
                 }
 
             case '+':
                 switch (this.getCurrentCharacter()) {
-                    case '=': this.advance(); return "+=";
-                    case '+': this.advance(); return "++";
-                    default: return "+";
+                    case '=':
+                        this.advance();
+                        return "+=";
+                    case '+':
+                        this.advance();
+                        return "++";
+                    default:
+                        return "+";
                 }
 
             case '-':
                 switch (this.getCurrentCharacter()) {
-                    case '=': this.advance(); return "-=";
-                    case '-': this.advance(); return "--";
-                    default: return "-";
+                    case '=':
+                        this.advance();
+                        return "-=";
+                    case '-':
+                        this.advance();
+                        return "--";
+                    default:
+                        return "-";
                 }
 
             case '*':
                 switch (this.getCurrentCharacter()) {
-                    case '=': this.advance(); return "*=";
-                    default: return "*";
+                    case '=':
+                        this.advance();
+                        return "*=";
+                    default:
+                        return "*";
 
                 }
 
             case '/':
                 switch (this.getCurrentCharacter()) {
-                    case '=': this.advance(); return "/=";
+                    case '=':
+                        this.advance();
+                        return "/=";
                     case '*':
                         // Skip second start symbol for start of comment sequence
                         this.advance();
@@ -295,41 +333,62 @@ public class Lexer {
                         // Skip to the next token
                         return null;
 
-                    default: return "/";
+                    default:
+                        return "/";
                 }
 
             case '%':
                 switch (this.getCurrentCharacter()) {
-                    case '=': this.advance(); return "%=";
-                    default: return "%";
+                    case '=':
+                        this.advance();
+                        return "%=";
+                    default:
+                        return "%";
                 }
 
             case '|':
                 switch (this.getCurrentCharacter()) {
-                    case '=': this.advance(); return "|=";
-                    case '|': this.advance(); return "||";
-                    default: return "|";
+                    case '=':
+                        this.advance();
+                        return "|=";
+                    case '|':
+                        this.advance();
+                        return "||";
+                    default:
+                        return "|";
                 }
 
-            case '?': return "?";
-            case ':': return ":";
-            case '~': return "~";
+            case '?':
+                return "?";
+            case ':':
+                return ":";
+            case '~':
+                return "~";
 
             case '&':
                 switch (this.getCurrentCharacter()) {
-                    case '=': this.advance(); return "&=";
-                    case '&': this.advance(); return "&&";
-                    default: return "&";
+                    case '=':
+                        this.advance();
+                        return "&=";
+                    case '&':
+                        this.advance();
+                        return "&&";
+                    default:
+                        return "&";
                 }
 
             case '^':
                 switch (this.getCurrentCharacter()) {
-                    case '=': this.advance(); return "^=";
-                    default: return "^";
+                    case '=':
+                        this.advance();
+                        return "^=";
+                    default:
+                        return "^";
 
                 }
 
-            default: throw this.fail("Invalid operator prefix '" + operatorStart + "'");
+            default:
+                throw this.fail("Invalid operator prefix '" + operatorStart + "'");
         }
 
     }
@@ -373,118 +432,220 @@ public class Lexer {
 
     private TokenType keywordFromString(String string) {
         switch (string) {
-            case "abstract": return TokenType.ABSTRACT;
-            case "assert": return TokenType.ASSERT;
-            case "boolean": return TokenType.BOOLEAN;
-            case "break": return TokenType.BREAK;
-            case "byte": return TokenType.BYTE;
-            case "case": return TokenType.CASE;
-            case "catch": return TokenType.CATCH;
-            case "char": return TokenType.CHAR;
-            case "class": return TokenType.CLASS;
-            case "const": return TokenType.CONST;
-            case "continue": return TokenType.CONTINUE;
-            case "default": return TokenType.DEFAULT;
-            case "double": return TokenType.DOUBLE;
-            case "do": return TokenType.DO;
-            case "else": return TokenType.ELSE;
-            case "enum": return TokenType.ENUM;
-            case "extends": return TokenType.EXTENDS;
-            case "false": return TokenType.FALSE;
-            case "finally": return TokenType.FINALLY;
-            case "final": return TokenType.FINAL;
-            case "float": return TokenType.FLOAT;
-            case "for": return TokenType.FOR;
-            case "goto": return TokenType.GOTO;
-            case "if": return TokenType.IF;
-            case "implements": return TokenType.IMPLEMENTS;
-            case "import": return TokenType.IMPORT;
-            case "instanceof": return TokenType.INSTANCEOF;
-            case "interface": return TokenType.INTERFACE;
-            case "int": return TokenType.INT;
-            case "long": return TokenType.LONG;
-            case "native": return TokenType.NATIVE;
-            case "new": return TokenType.NEW;
-            case "null": return TokenType.NULL;
-            case "package": return TokenType.PACKAGE;
-            case "private": return TokenType.PRIVATE;
-            case "protected": return TokenType.PROTECTED;
-            case "public": return TokenType.PUBLIC;
-            case "return": return TokenType.RETURN;
-            case "short": return TokenType.SHORT;
-            case "static": return TokenType.STATIC;
-            case "strictfp": return TokenType.STRICTFP;
-            case "super": return TokenType.SUPER;
-            case "switch": return TokenType.SWITCH;
-            case "synchronized": return TokenType.SYNCHRONIZED;
-            case "this": return TokenType.THIS;
-            case "throws": return TokenType.THROWS;
-            case "throw": return TokenType.THROW;
-            case "transient": return TokenType.TRANSIENT;
-            case "true": return TokenType.TRUE;
-            case "try": return TokenType.TRY;
-            case "void": return TokenType.VOID;
-            case "volatile": return TokenType.VOLATILE;
-            case "while": return TokenType.WHILE;
-            default: return null;
+            case "abstract":
+                return TokenType.ABSTRACT;
+            case "assert":
+                return TokenType.ASSERT;
+            case "boolean":
+                return TokenType.BOOLEAN;
+            case "break":
+                return TokenType.BREAK;
+            case "byte":
+                return TokenType.BYTE;
+            case "case":
+                return TokenType.CASE;
+            case "catch":
+                return TokenType.CATCH;
+            case "char":
+                return TokenType.CHAR;
+            case "class":
+                return TokenType.CLASS;
+            case "const":
+                return TokenType.CONST;
+            case "continue":
+                return TokenType.CONTINUE;
+            case "default":
+                return TokenType.DEFAULT;
+            case "double":
+                return TokenType.DOUBLE;
+            case "do":
+                return TokenType.DO;
+            case "else":
+                return TokenType.ELSE;
+            case "enum":
+                return TokenType.ENUM;
+            case "extends":
+                return TokenType.EXTENDS;
+            case "false":
+                return TokenType.FALSE;
+            case "finally":
+                return TokenType.FINALLY;
+            case "final":
+                return TokenType.FINAL;
+            case "float":
+                return TokenType.FLOAT;
+            case "for":
+                return TokenType.FOR;
+            case "goto":
+                return TokenType.GOTO;
+            case "if":
+                return TokenType.IF;
+            case "implements":
+                return TokenType.IMPLEMENTS;
+            case "import":
+                return TokenType.IMPORT;
+            case "instanceof":
+                return TokenType.INSTANCEOF;
+            case "interface":
+                return TokenType.INTERFACE;
+            case "int":
+                return TokenType.INT;
+            case "long":
+                return TokenType.LONG;
+            case "native":
+                return TokenType.NATIVE;
+            case "new":
+                return TokenType.NEW;
+            case "null":
+                return TokenType.NULL;
+            case "package":
+                return TokenType.PACKAGE;
+            case "private":
+                return TokenType.PRIVATE;
+            case "protected":
+                return TokenType.PROTECTED;
+            case "public":
+                return TokenType.PUBLIC;
+            case "return":
+                return TokenType.RETURN;
+            case "short":
+                return TokenType.SHORT;
+            case "static":
+                return TokenType.STATIC;
+            case "strictfp":
+                return TokenType.STRICTFP;
+            case "super":
+                return TokenType.SUPER;
+            case "switch":
+                return TokenType.SWITCH;
+            case "synchronized":
+                return TokenType.SYNCHRONIZED;
+            case "this":
+                return TokenType.THIS;
+            case "throws":
+                return TokenType.THROWS;
+            case "throw":
+                return TokenType.THROW;
+            case "transient":
+                return TokenType.TRANSIENT;
+            case "true":
+                return TokenType.TRUE;
+            case "try":
+                return TokenType.TRY;
+            case "void":
+                return TokenType.VOID;
+            case "volatile":
+                return TokenType.VOLATILE;
+            case "while":
+                return TokenType.WHILE;
+            default:
+                return null;
         }
     }
 
     private TokenType operatorFromString(String string) {
         switch (string) {
-            case "!=": return TokenType.NOT_EQUAL_TO;
-            case "!": return TokenType.LOGICAL_NEGATION;
-            case "*=": return TokenType.MULTIPLY_AND_ASSIGN;
-            case "*": return TokenType.MULTIPLY;
-            case "++": return TokenType.INCREASE;
-            case "+=": return TokenType.PLUS_AND_ASSIGN;
-            case "+": return TokenType.PLUS;
-            case "-=": return TokenType.MINUS_AND_ASSIGN;
-            case "--": return TokenType.DECREASE;
-            case "-": return TokenType.MINUS;
-            case "/=": return TokenType.DIVIDE_AND_ASSIGN;
-            case "/": return TokenType.DIVIDE;
-            case ":": return TokenType.COLON;
-            case "<<=": return TokenType.SHIFT_LEFT_AND_ASSIGN;
-            case "<<": return TokenType.SHIFT_LEFT;
-            case "<=": return TokenType.LESS_THAN_OR_EQUAL_TO;
-            case "<": return TokenType.LESS_THAN;
-            case "==": return TokenType.EQUAL_TO;
-            case "=": return TokenType.ASSIGN;
-            case ">=": return TokenType.GREATER_THAN_OR_EQUAL_TO;
-            case ">>=": return TokenType.SHIFT_RIGHT_AND_ASSIGN;
-            case ">>>=": return TokenType.UNSIGNED_SHIFT_RIGHT_AND_ASSIGN;
-            case ">>>": return TokenType.UNSIGNED_SHIFT_RIGHT;
-            case ">>": return TokenType.SHIFT_RIGHT;
-            case ">": return TokenType.GREATER_THAN;
-            case "?": return TokenType.QUESTION_MARK;
-            case "%=": return TokenType.MODULO_AND_ASSIGN;
-            case "%": return TokenType.MODULO;
-            case "&=": return TokenType.BITWISE_AND_AND_ASSIGN;
-            case "&&": return TokenType.LOGICAL_AND;
-            case "&": return TokenType.BITWISE_AND;
-            case "^=": return TokenType.BITWISE_XOR_AND_ASSIGN;
-            case "^": return TokenType.BITWISE_XOR;
-            case "~": return TokenType.BITWISE_NOT;
-            case "|=": return TokenType.BITWISE_OR_AND_ASSIGN;
-            case "||": return TokenType.LOGICAL_OR;
-            case "|": return TokenType.BITWISE_OR;
-            default: return null;
+            case "!=":
+                return TokenType.NOT_EQUAL_TO;
+            case "!":
+                return TokenType.LOGICAL_NEGATION;
+            case "*=":
+                return TokenType.MULTIPLY_AND_ASSIGN;
+            case "*":
+                return TokenType.MULTIPLY;
+            case "++":
+                return TokenType.INCREASE;
+            case "+=":
+                return TokenType.PLUS_AND_ASSIGN;
+            case "+":
+                return TokenType.PLUS;
+            case "-=":
+                return TokenType.MINUS_AND_ASSIGN;
+            case "--":
+                return TokenType.DECREASE;
+            case "-":
+                return TokenType.MINUS;
+            case "/=":
+                return TokenType.DIVIDE_AND_ASSIGN;
+            case "/":
+                return TokenType.DIVIDE;
+            case ":":
+                return TokenType.COLON;
+            case "<<=":
+                return TokenType.SHIFT_LEFT_AND_ASSIGN;
+            case "<<":
+                return TokenType.SHIFT_LEFT;
+            case "<=":
+                return TokenType.LESS_THAN_OR_EQUAL_TO;
+            case "<":
+                return TokenType.LESS_THAN;
+            case "==":
+                return TokenType.EQUAL_TO;
+            case "=":
+                return TokenType.ASSIGN;
+            case ">=":
+                return TokenType.GREATER_THAN_OR_EQUAL_TO;
+            case ">>=":
+                return TokenType.SHIFT_RIGHT_AND_ASSIGN;
+            case ">>>=":
+                return TokenType.UNSIGNED_SHIFT_RIGHT_AND_ASSIGN;
+            case ">>>":
+                return TokenType.UNSIGNED_SHIFT_RIGHT;
+            case ">>":
+                return TokenType.SHIFT_RIGHT;
+            case ">":
+                return TokenType.GREATER_THAN;
+            case "?":
+                return TokenType.QUESTION_MARK;
+            case "%=":
+                return TokenType.MODULO_AND_ASSIGN;
+            case "%":
+                return TokenType.MODULO;
+            case "&=":
+                return TokenType.BITWISE_AND_AND_ASSIGN;
+            case "&&":
+                return TokenType.LOGICAL_AND;
+            case "&":
+                return TokenType.BITWISE_AND;
+            case "^=":
+                return TokenType.BITWISE_XOR_AND_ASSIGN;
+            case "^":
+                return TokenType.BITWISE_XOR;
+            case "~":
+                return TokenType.BITWISE_NOT;
+            case "|=":
+                return TokenType.BITWISE_OR_AND_ASSIGN;
+            case "||":
+                return TokenType.LOGICAL_OR;
+            case "|":
+                return TokenType.BITWISE_OR;
+            default:
+                return null;
         }
     }
 
     private TokenType separatorFromString(String string) {
         switch (string) {
-            case "(": return TokenType.OPENING_PARENTHESIS;
-            case ")": return TokenType.CLOSING_PARENTHESIS;
-            case "{": return TokenType.OPENING_BRACE;
-            case "}": return TokenType.CLOSING_BRACE;
-            case "[": return TokenType.OPENING_BRACKET;
-            case "]": return TokenType.CLOSING_BRACKET;
-            case ";": return TokenType.SEMICOLON;
-            case ",": return TokenType.COMMA;
-            case ".": return TokenType.PERIOD;
-            default: return null;
+            case "(":
+                return TokenType.OPENING_PARENTHESIS;
+            case ")":
+                return TokenType.CLOSING_PARENTHESIS;
+            case "{":
+                return TokenType.OPENING_BRACE;
+            case "}":
+                return TokenType.CLOSING_BRACE;
+            case "[":
+                return TokenType.OPENING_BRACKET;
+            case "]":
+                return TokenType.CLOSING_BRACKET;
+            case ";":
+                return TokenType.SEMICOLON;
+            case ",":
+                return TokenType.COMMA;
+            case ".":
+                return TokenType.PERIOD;
+            default:
+                return null;
         }
     }
 }

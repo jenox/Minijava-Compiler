@@ -1,10 +1,10 @@
 package edu.kit.minijava.ast.nodes;
 
 import edu.kit.minijava.ast.references.*;
-import edu.kit.minijava.lexer.*;
+import edu.kit.minijava.lexer.TokenLocation;
 
-import java.util.*;
-import java.util.stream.*;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public abstract class Expression implements ASTNode {
     private Expression() {
@@ -43,7 +43,8 @@ public abstract class Expression implements ASTNode {
         }
 
         @Override
-        public <T, ExceptionType extends Throwable> void accept(ASTVisitor<T, ExceptionType> visitor, T context) throws ExceptionType {
+        public <T, ExceptionType extends Throwable> void accept(ASTVisitor<T, ExceptionType> visitor, T context)
+            throws ExceptionType {
             visitor.visit(this, context);
         }
     }
@@ -68,7 +69,8 @@ public abstract class Expression implements ASTNode {
         }
 
         @Override
-        public <T, ExceptionType extends Throwable> void accept(ASTVisitor<T, ExceptionType> visitor, T context) throws ExceptionType {
+        public <T, ExceptionType extends Throwable> void accept(ASTVisitor<T, ExceptionType> visitor, T context)
+            throws ExceptionType {
             visitor.visit(this, context);
         }
     }
@@ -79,7 +81,8 @@ public abstract class Expression implements ASTNode {
         }
 
         @Override
-        public <T, ExceptionType extends Throwable> void accept(ASTVisitor<T, ExceptionType> visitor, T context) throws ExceptionType {
+        public <T, ExceptionType extends Throwable> void accept(ASTVisitor<T, ExceptionType> visitor, T context)
+            throws ExceptionType {
             visitor.visit(this, context);
         }
     }
@@ -98,7 +101,8 @@ public abstract class Expression implements ASTNode {
         }
 
         @Override
-        public <T, ExceptionType extends Throwable> void accept(ASTVisitor<T, ExceptionType> visitor, T context) throws ExceptionType {
+        public <T, ExceptionType extends Throwable> void accept(ASTVisitor<T, ExceptionType> visitor, T context)
+            throws ExceptionType {
             visitor.visit(this, context);
         }
     }
@@ -117,7 +121,8 @@ public abstract class Expression implements ASTNode {
         }
 
         @Override
-        public <T, ExceptionType extends Throwable> void accept(ASTVisitor<T, ExceptionType> visitor, T context) throws ExceptionType {
+        public <T, ExceptionType extends Throwable> void accept(ASTVisitor<T, ExceptionType> visitor, T context)
+            throws ExceptionType {
             visitor.visit(this, context);
         }
     }
@@ -161,7 +166,8 @@ public abstract class Expression implements ASTNode {
         }
 
         @Override
-        public <T, ExceptionType extends Throwable> void accept(ASTVisitor<T, ExceptionType> visitor, T context) throws ExceptionType {
+        public <T, ExceptionType extends Throwable> void accept(ASTVisitor<T, ExceptionType> visitor, T context)
+            throws ExceptionType {
             visitor.visit(this, context);
         }
     }
@@ -186,7 +192,8 @@ public abstract class Expression implements ASTNode {
         }
 
         @Override
-        public <T, ExceptionType extends Throwable> void accept(ASTVisitor<T, ExceptionType> visitor, T context) throws ExceptionType {
+        public <T, ExceptionType extends Throwable> void accept(ASTVisitor<T, ExceptionType> visitor, T context)
+            throws ExceptionType {
             visitor.visit(this, context);
         }
     }
@@ -211,7 +218,8 @@ public abstract class Expression implements ASTNode {
         }
 
         @Override
-        public <T, ExceptionType extends Throwable> void accept(ASTVisitor<T, ExceptionType> visitor, T context) throws ExceptionType {
+        public <T, ExceptionType extends Throwable> void accept(ASTVisitor<T, ExceptionType> visitor, T context)
+            throws ExceptionType {
             visitor.visit(this, context);
         }
     }
@@ -230,7 +238,8 @@ public abstract class Expression implements ASTNode {
         }
 
         @Override
-        public <T, ExceptionType extends Throwable> void accept(ASTVisitor<T, ExceptionType> visitor, T context) throws ExceptionType {
+        public <T, ExceptionType extends Throwable> void accept(ASTVisitor<T, ExceptionType> visitor, T context)
+            throws ExceptionType {
             visitor.visit(this, context);
         }
     }
@@ -241,7 +250,8 @@ public abstract class Expression implements ASTNode {
         }
 
         @Override
-        public <T, ExceptionType extends Throwable> void accept(ASTVisitor<T, ExceptionType> visitor, T context) throws ExceptionType {
+        public <T, ExceptionType extends Throwable> void accept(ASTVisitor<T, ExceptionType> visitor, T context)
+            throws ExceptionType {
             visitor.visit(this, context);
         }
     }
@@ -260,7 +270,8 @@ public abstract class Expression implements ASTNode {
         }
 
         @Override
-        public <T, ExceptionType extends Throwable> void accept(ASTVisitor<T, ExceptionType> visitor, T context) throws ExceptionType {
+        public <T, ExceptionType extends Throwable> void accept(ASTVisitor<T, ExceptionType> visitor, T context)
+            throws ExceptionType {
             visitor.visit(this, context);
         }
     }
@@ -291,7 +302,8 @@ public abstract class Expression implements ASTNode {
         }
 
         @Override
-        public <T, ExceptionType extends Throwable> void accept(ASTVisitor<T, ExceptionType> visitor, T context) throws ExceptionType {
+        public <T, ExceptionType extends Throwable> void accept(ASTVisitor<T, ExceptionType> visitor, T context)
+            throws ExceptionType {
             visitor.visit(this, context);
         }
     }

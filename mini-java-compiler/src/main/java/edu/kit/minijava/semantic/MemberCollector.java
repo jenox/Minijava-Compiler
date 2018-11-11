@@ -2,36 +2,16 @@ package edu.kit.minijava.semantic;
 
 import edu.kit.minijava.ast.nodes.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-public class MemberCollectionVisitor implements ASTVisitor<MemberCollectionVisitor.Options, SemanticAnalysisException> {
+public class MemberCollector implements ASTVisitor<MemberCollector.Options, SemanticAnalysisException> {
 
     public enum Options {}
-
-//    private SymbolTable<VariableDeclaration> variableSymbolTable = new SymbolTable<>();
-//    private Program astRoot = null;
-
-    private final List<SemanticAnalysisException> encounteredProblems = new ArrayList<>();
 
     public void collectMembers(Program program) throws SemanticAnalysisException {
         if (program == null) throw new IllegalArgumentException();
 
-//        this.astRoot = program;
-
-//        this.variableSymbolTable = new SymbolTable<>();
-
         program.getClassSymbolTable().clear();
 
         this.visit(program, null);
-
-        // Check whether any Exceptions were stored
-        if (!encounteredProblems.isEmpty()) {
-            // Throw the first exception that occurred while visiting the AST
-            throw encounteredProblems.get(0);
-        }
     }
 
     @Override
@@ -41,8 +21,7 @@ public class MemberCollectionVisitor implements ASTVisitor<MemberCollectionVisit
         for (ClassDeclaration declaration : program.getClassDeclarations()) {
 
             if (program.getClassSymbolTable().containsKey(declaration.getName())) {
-                encounteredProblems.add(new RedeclarationException(declaration, null));
-                return;
+                throw new RedeclarationException(declaration, null);
             }
 
             program.getClassSymbolTable().put(declaration.getName(), declaration);
@@ -51,7 +30,6 @@ public class MemberCollectionVisitor implements ASTVisitor<MemberCollectionVisit
         // Afterwards, visit each class separately:
         // We cannot interleave this because else not all defined types may be collected yet at this point.
         for (ClassDeclaration declaration : program.getClassDeclarations()) {
-
             this.visit(declaration, null);
         }
     }
@@ -65,8 +43,7 @@ public class MemberCollectionVisitor implements ASTVisitor<MemberCollectionVisit
             String methodName = methodDeclaration.getName();
 
             if (classDeclaration.getMethodSymbolTable().containsKey(methodName)) {
-                this.encounteredProblems.add(new RedeclarationException(methodDeclaration, methodDeclaration.getLocation()));
-                continue;
+                throw new RedeclarationException(methodDeclaration, methodDeclaration.getLocation());
             }
 
             classDeclaration.getMethodSymbolTable().put(methodName, methodDeclaration);
@@ -77,8 +54,7 @@ public class MemberCollectionVisitor implements ASTVisitor<MemberCollectionVisit
             String fieldName = fieldDeclaration.getName();
 
             if (classDeclaration.getMethodSymbolTable().containsKey(fieldName)) {
-                this.encounteredProblems.add(new RedeclarationException(fieldDeclaration, fieldDeclaration.getLocation()));
-                continue;
+                throw new RedeclarationException(fieldDeclaration, fieldDeclaration.getLocation());
             }
 
             classDeclaration.getFieldSymbolTable().put(fieldName, fieldDeclaration);
@@ -86,7 +62,7 @@ public class MemberCollectionVisitor implements ASTVisitor<MemberCollectionVisit
     }
 
     // All other methods do not need to do anything
-    // TODO Find a more elegant way to collect all members (do we even need a visitor here?)
+    // TODO Do we want to make implementing all methods in the visitor optional?
 
     @Override
     public void visit(FieldDeclaration fieldDeclaration, Options context) throws SemanticAnalysisException {
@@ -134,7 +110,8 @@ public class MemberCollectionVisitor implements ASTVisitor<MemberCollectionVisit
     }
 
     @Override
-    public void visit(Statement.LocalVariableDeclarationStatement statement, Options context) throws SemanticAnalysisException {
+    public void visit(Statement.LocalVariableDeclarationStatement statement, Options context)
+        throws SemanticAnalysisException {
 
     }
 

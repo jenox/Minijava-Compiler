@@ -1,9 +1,10 @@
 package edu.kit.minijava.ast.nodes;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
 
 public enum PrimitiveTypeDeclaration implements BasicTypeDeclaration {
-    
+
     INTEGER("int"),
     BOOLEAN("boolean"),
     VOID("void");

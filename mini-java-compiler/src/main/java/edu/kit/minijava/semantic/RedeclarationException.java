@@ -11,7 +11,8 @@ public class RedeclarationException extends SemanticAnalysisException {
     // TODO Extract this from the declarations themselves instead
     private final TokenLocation tokenLocation;
 
-    public RedeclarationException(String identifier, Declaration original, Declaration redeclaration, TokenLocation location) {
+    public RedeclarationException(String identifier, Declaration original, Declaration redeclaration,
+                                  TokenLocation location) {
         if (identifier == null) throw new IllegalArgumentException();
 
         // TODO Maybe don't allow this to be null also?
@@ -29,15 +30,15 @@ public class RedeclarationException extends SemanticAnalysisException {
     }
 
     public Declaration getOriginalDeclaration() {
-        return originalDeclaration;
+        return this.originalDeclaration;
     }
 
     public Declaration getRedeclaration() {
-        return redeclaration;
+        return this.redeclaration;
     }
 
     public TokenLocation getTokenLocation() {
-        return tokenLocation;
+        return this.tokenLocation;
     }
 
     public String getMessage() {

@@ -1,8 +1,11 @@
 package edu.kit.minijava.semantic;
 
-import edu.kit.minijava.ast.nodes.*;
+import edu.kit.minijava.ast.nodes.VariableDeclaration;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Stack;
 
 public class SymbolTable<T extends VariableDeclaration> {
 

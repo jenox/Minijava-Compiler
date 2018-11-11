@@ -3,23 +3,23 @@ package edu.kit.minijava.semantic;
 import edu.kit.minijava.ast.nodes.*;
 import edu.kit.minijava.ast.nodes.Expression.*;
 import edu.kit.minijava.ast.nodes.Statement.*;
-import edu.kit.minijava.ast.references.*;
+import edu.kit.minijava.ast.references.MethodReference;
+import edu.kit.minijava.ast.references.TypeOfExpression;
 import edu.kit.minijava.ast.references.TypeOfExpression.Type;
+import edu.kit.minijava.ast.references.TypeReference;
 import edu.kit.minijava.lexer.TokenLocation;
 
 import java.util.Optional;
 
 /**
- *
  * Visits nodes of AST to set declarations, check and set types.
- *
+ * <p>
  * TypeContext is used for passing type information to nodes in the following way
- *
+ * <p>
  * - statements pass context to child nodes, such that afterwards contexts contains type of child nodes
  * - statements check type of child nodes
  * - expressions set type of given context according to own type
  * - expressions check type of subexpressions
- *
  */
 public class TypeCheckingVisitor implements ASTVisitor<TypeContext, SemanticAnalysisException> {
 
@@ -197,7 +197,8 @@ public class TypeCheckingVisitor implements ASTVisitor<TypeContext, SemanticAnal
     }
 
     @Override
-    public void visit(LocalVariableDeclarationStatement statement, TypeContext context) throws SemanticAnalysisException {
+    public void visit(LocalVariableDeclarationStatement statement, TypeContext context)
+        throws SemanticAnalysisException {
 
         this.variableSymbolTable.enterDeclaration(statement.getName(), statement);
 
@@ -235,7 +236,8 @@ public class TypeCheckingVisitor implements ASTVisitor<TypeContext, SemanticAnal
             case ASSIGNMENT:
                 isAssignment = true;
                 break;
-            default: throw new IllegalStateException("unknown binary operator");
+            default:
+                throw new IllegalStateException("unknown binary operator");
         }
         if (isAssignment) {
             // get Type of left expression, which is a variable or a field
@@ -268,29 +270,30 @@ public class TypeCheckingVisitor implements ASTVisitor<TypeContext, SemanticAnal
                     case GREATER_THAN:
                     case GREATER_THAN_OR_EQUAL_TO:
                         if (!leftContext.isArithmetic() || !rightContext.isArithmetic()) {
-                            throw new TypeMismatchException("Wrong expression type: Comparison operators require arithmetic operands.");
+                            throw new TypeMismatchException(
+                                "Wrong expression type: Comparison operators require arithmetic operands.");
                         }
                         break;
                     case EQUAL_TO:
                     case NOT_EQUAL_TO:
-                        if(leftContext.isArithmetic() && rightContext.isArithmetic()) break;
-                        if(leftContext.isBoolean() && rightContext.isBoolean()) break;
+                        if (leftContext.isArithmetic() && rightContext.isArithmetic()) break;
+                        if (leftContext.isBoolean() && rightContext.isBoolean()) break;
 
                         // We fell through, types are not compatible
                         throw new TypeMismatchException("Wrong expression type");
                     case LOGICAL_AND:
                     case LOGICAL_OR:
-                        if(!leftContext.isBoolean() || !rightContext.isBoolean()) {
-                            throw new TypeMismatchException("Wrong expression type: Logical operators require boolean operands");
+                        if (!leftContext.isBoolean() || !rightContext.isBoolean()) {
+                            throw new TypeMismatchException(
+                                "Wrong expression type: Logical operators require boolean operands");
                         }
                         break;
                     default:
                         throw new IllegalStateException("Unknown boolean operator");
                 }
             }
-
             else if (expression.getType().getType() == Type.INT
-                    && (!leftContext.isArithmetic() || !rightContext.isArithmetic())) {
+                && (!leftContext.isArithmetic() || !rightContext.isArithmetic())) {
                 throw new TypeMismatchException("Wrong expression type");
             }
 //            else {
@@ -513,11 +516,11 @@ public class TypeCheckingVisitor implements ASTVisitor<TypeContext, SemanticAnal
 
         // Resolve name
         Optional<VariableDeclaration> declaration
-                = this.variableSymbolTable.getVisibleDeclarationForIdentifier(expression.getReference().getName());
+            = this.variableSymbolTable.getVisibleDeclarationForIdentifier(expression.getReference().getName());
 
         if (!declaration.isPresent()) {
             throw new UndeclaredUsageException(expression.getReference().getName(),
-                    expression.getReference().getLocation());
+                expression.getReference().getLocation());
         }
 
         expression.getReference().resolveTo(declaration.get());

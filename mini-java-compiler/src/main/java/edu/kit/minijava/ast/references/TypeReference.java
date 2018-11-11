@@ -1,7 +1,7 @@
 package edu.kit.minijava.ast.references;
 
-import edu.kit.minijava.ast.nodes.*;
-import edu.kit.minijava.lexer.*;
+import edu.kit.minijava.ast.nodes.BasicTypeDeclaration;
+import edu.kit.minijava.lexer.TokenLocation;
 
 public final class TypeReference extends SimpleReference<BasicTypeDeclaration> {
     public TypeReference(String name, int numberOfDimensions, TokenLocation location) {

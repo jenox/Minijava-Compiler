@@ -131,8 +131,8 @@ public class TypeContext {
         this.numberOfDimensions = this.numberOfDimensions > 0 ? this.numberOfDimensions - 1 : 0;
 
         // Convert back to primitive type if dimension reaches zero
-        if (numberOfDimensions == 0) {
-            switch(this.typeRef.getName()) {
+        if (this.numberOfDimensions == 0) {
+            switch (this.typeRef.getName()) {
                 case INT_NAME:
                     this.reference = Reference.ARTIHMETIC;
                     this.isNullAllowed = false;

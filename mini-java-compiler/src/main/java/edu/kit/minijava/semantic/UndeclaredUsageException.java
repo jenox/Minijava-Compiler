@@ -1,6 +1,6 @@
 package edu.kit.minijava.semantic;
 
-import edu.kit.minijava.lexer.*;
+import edu.kit.minijava.lexer.TokenLocation;
 
 public class UndeclaredUsageException extends SemanticAnalysisException {
 
@@ -20,7 +20,7 @@ public class UndeclaredUsageException extends SemanticAnalysisException {
     }
 
     public TokenLocation getTokenLocation() {
-        return tokenLocation;
+        return this.tokenLocation;
     }
 
     public String getMessage() {

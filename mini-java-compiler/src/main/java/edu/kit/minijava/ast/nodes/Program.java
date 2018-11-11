@@ -1,6 +1,9 @@
 package edu.kit.minijava.ast.nodes;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public final class Program implements ASTNode {
     public Program(List<ClassDeclaration> classDeclarations) {
@@ -22,7 +25,8 @@ public final class Program implements ASTNode {
     }
 
     @Override
-    public <T, ExceptionType extends Throwable> void accept(ASTVisitor<T, ExceptionType> visitor, T context) throws ExceptionType {
+    public <T, ExceptionType extends Throwable> void accept(ASTVisitor<T, ExceptionType> visitor, T context)
+        throws ExceptionType {
         visitor.visit(this, context);
     }
 }

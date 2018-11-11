@@ -1,7 +1,7 @@
 package edu.kit.minijava.ast.references;
 
-import edu.kit.minijava.ast.nodes.*;
-import edu.kit.minijava.lexer.*;
+import edu.kit.minijava.ast.nodes.ClassDeclaration;
+import edu.kit.minijava.lexer.TokenLocation;
 
 public final class ClassReference extends SimpleReference<ClassDeclaration> {
     public ClassReference(String name, TokenLocation location) {

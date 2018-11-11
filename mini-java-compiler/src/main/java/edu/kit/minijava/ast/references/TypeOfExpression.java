@@ -18,6 +18,7 @@ public class TypeOfExpression {
 
     /**
      * resolve type of expression to given type
+     *
      * @param type type expression should be resolved to
      */
     public void resolveTo(Type type) {
@@ -31,6 +32,7 @@ public class TypeOfExpression {
 
     /**
      * resolve type of expression
+     *
      * @param reference type of expression
      */
     public void resolveTo(TypeReference reference) {
