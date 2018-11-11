@@ -14,7 +14,6 @@ abstract class SimpleReference<DeclarationType> extends Reference {
     }
 
     public void resolveTo(DeclarationType declaration) {
-        if (this.isResolved()) throw new IllegalStateException();
         if (declaration == null) throw new IllegalArgumentException();
 
         this.declaration = declaration;

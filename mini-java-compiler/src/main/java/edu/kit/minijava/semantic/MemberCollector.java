@@ -53,7 +53,7 @@ public class MemberCollector implements ASTVisitor<MemberCollector.Options, Sema
         for (FieldDeclaration fieldDeclaration : classDeclaration.getFieldDeclarations()) {
             String fieldName = fieldDeclaration.getName();
 
-            if (classDeclaration.getMethodSymbolTable().containsKey(fieldName)) {
+            if (classDeclaration.getFieldSymbolTable().containsKey(fieldName)) {
                 throw new RedeclarationException(fieldDeclaration, fieldDeclaration.getLocation());
             }
 

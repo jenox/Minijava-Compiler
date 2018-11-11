@@ -472,13 +472,14 @@ public class DeclarationAndTypeChecker implements ASTVisitor<TypeContext, Semant
             throw new IllegalStateException("Field access with invalid type");
         }
 
-        FieldDeclaration fieldDeclaration = classDeclaration.getFieldSymbolTable().get(contextTypeRef.getName());
+        FieldDeclaration fieldDeclaration = classDeclaration.getFieldSymbolTable().get(expression.getReference().getName());
 
         if (fieldDeclaration == null) {
             throw new UndeclaredUsageException(contextTypeRef.getName(), null);
         }
 
         expression.getReference().resolveTo(fieldDeclaration);
+        expression.getType().resolveTo(fieldDeclaration.getType());
 
         //set parent context to type of accessed field
         TypeReference ref = expression.getReference().getDeclaration().getType();
@@ -532,7 +533,12 @@ public class DeclarationAndTypeChecker implements ASTVisitor<TypeContext, Semant
 
     @Override
     public void visit(CurrentContextAccess expression, TypeContext context) throws SemanticAnalysisException {
+        TypeReference contextType = new TypeReference(
+            this.currentClass.getName(), 0, null);
+        contextType.resolveTo(this.currentClass);
 
+        context.setType(contextType);
+        expression.getType().resolveTo(contextType);
     }
 
     @Override
