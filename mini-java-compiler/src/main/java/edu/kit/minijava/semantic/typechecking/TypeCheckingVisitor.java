@@ -7,6 +7,7 @@ import edu.kit.minijava.ast.references.*;
 import edu.kit.minijava.ast.references.TypeOfExpression.Type;
 import edu.kit.minijava.lexer.TokenLocation;
 import edu.kit.minijava.semantic.*;
+import org.omg.IOP.CodecPackage.TypeMismatch;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -97,7 +98,10 @@ public class TypeCheckingVisitor implements ASTVisitor<TypeContext, SemanticAnal
         }
 
         // Visit method body
-        methodDeclaration.getBody().accept(this, context);
+        TypeContext returnContext = new TypeContext();
+        returnContext.setType(methodDeclaration.getReturnType());
+
+        methodDeclaration.getBody().accept(this, returnContext);
 
         this.variableSymbolTable.leaveCurrentScope();
     }
@@ -161,7 +165,8 @@ public class TypeCheckingVisitor implements ASTVisitor<TypeContext, SemanticAnal
 
     @Override
     public void visit(ExpressionStatement statement, TypeContext context) throws SemanticAnalysisException {
-        statement.getExpression().accept(this, context);
+        TypeContext expression = new TypeContext();
+        statement.getExpression().accept(this, expression);
     }
 
     @Override
@@ -274,18 +279,41 @@ public class TypeCheckingVisitor implements ASTVisitor<TypeContext, SemanticAnal
             expression.getLeft().accept(this, leftContext);
             expression.getRight().accept(this, rightContext);
 
-            if (expression.getType().getType() == Type.BOOLEAN
-                    && (!leftContext.isBoolean() || !rightContext.isBoolean())) {
-                throw new TypeMismatchException("Wrong expression type");
+            if (expression.getType().getType() == Type.BOOLEAN) {
+                switch (expression.getOperationType()) {
+                    case LESS_THAN:
+                    case LESS_THAN_OR_EQUAL_TO:
+                    case GREATER_THAN:
+                    case GREATER_THAN_OR_EQUAL_TO:
+                        if (!leftContext.isArithmetic() || !rightContext.isArithmetic()) {
+                            throw new TypeMismatchException("Wrong expression type: Comparison operators require arithmetic operands.");
+                        }
+                        break;
+                    case EQUAL_TO:
+                    case NOT_EQUAL_TO:
+                        if(leftContext.isArithmetic() && rightContext.isArithmetic()) break;
+                        if(leftContext.isBoolean() && rightContext.isBoolean()) break;
+
+                        // We fell through, types are not compatible
+                        throw new TypeMismatchException("Wrong expression type");
+                    case LOGICAL_AND:
+                    case LOGICAL_OR:
+                        if(!leftContext.isBoolean() || !rightContext.isBoolean()) {
+                            throw new TypeMismatchException("Wrong expression type: Logical operators require boolean operands");
+                        }
+                        break;
+                    default:
+                        throw new IllegalStateException("Unknown boolean operator");
+                }
             }
 
             else if (expression.getType().getType() == Type.INT
                     && (!leftContext.isArithmetic() || !rightContext.isArithmetic())) {
                 throw new TypeMismatchException("Wrong expression type");
             }
-            else {
-                throw new IllegalStateException("unknown type");
-            }
+//            else {
+//                throw new IllegalStateException("unknown type");
+//            }
         }
 
     }
@@ -485,9 +513,10 @@ public class TypeCheckingVisitor implements ASTVisitor<TypeContext, SemanticAnal
         // Get Type of expression
         TypeContext childContext = new TypeContext();
         expression.getContext().accept(this, childContext);
-        //check that type is array type
+
+        // Check that type is array type
         if (childContext.getReference() != Reference.TYPE || childContext.getNumberOfDimensions() == 0) {
-            throw new TypeMismatchException("not an error");
+            throw new TypeMismatchException("Cannot access elements of non-array type.");
         }
 
         //set parent context to type of array element
@@ -513,7 +542,7 @@ public class TypeCheckingVisitor implements ASTVisitor<TypeContext, SemanticAnal
 
         //set type of expression
         TypeReference varRef = expression.getReference().getDeclaration().getType();
-        TypeContext varContext = new TypeContext(varRef);
+        TypeContext varContext = new TypeContext(varRef, varRef.getNumberOfDimensions());
         this.setExpressionType(expression, varContext);
 
         //set parent context
@@ -557,6 +586,7 @@ public class TypeCheckingVisitor implements ASTVisitor<TypeContext, SemanticAnal
                 break;
             case BOOLEAN:
                 exp.getType().resolveTo(Type.BOOLEAN);
+                break;
             case NULL:
                 exp.getType().resolveTo(Type.NULL);
                 break;

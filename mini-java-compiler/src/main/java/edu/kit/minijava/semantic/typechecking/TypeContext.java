@@ -8,7 +8,7 @@ public class TypeContext {
     public static final String BOOLEAN_NAME = "boolean";
 
     private Reference reference;
-    private boolean isNullAlowed;
+    private boolean isNullAllowed;
     private TypeReference typeRef;
     private int numberOfDimensions;
 
@@ -21,28 +21,35 @@ public class TypeContext {
     }
 
     public TypeContext(TypeReference ref, int numberOfDimensions) {
-        this(ref);
+        this.setType(ref);
+
         if (numberOfDimensions > 0) {
             this.reference = Reference.TYPE; //no primitive type
             this.numberOfDimensions = numberOfDimensions;
-            this.isNullAlowed = true;
+            this.isNullAllowed = true;
+            this.typeRef = ref;
         }
     }
 
     public TypeContext(TypeReference reference) {
         this.setType(reference);
+
     }
 
     public Reference getReference() {
         return this.reference;
     }
 
-    public boolean isNullAlowed() {
-        return this.isNullAlowed;
+    public boolean isNullAllowed() {
+        return this.isNullAllowed;
     }
 
     public int getNumberOfDimensions() {
         return this.numberOfDimensions;
+    }
+
+    public void setNumberOfDimensions(int numberOfDimensions) {
+        this.numberOfDimensions = numberOfDimensions;
     }
 
     public TypeReference getTypeRef() {
@@ -60,25 +67,25 @@ public class TypeContext {
         // if types are unequal the can still be compatible, if one value is NULL while the
         // other one accepts null
         else {
-            return (this.isNullAlowed && context.isNull() || (this.isNull() && context.isNullAlowed));
+            return (this.isNullAllowed && context.isNull() || (this.isNull() && context.isNullAllowed));
         }
     }
 
     public void setArithmetic() {
         this.reference = Reference.ARTIHMETIC;
-        this.isNullAlowed = false;
+        this.isNullAllowed = false;
         this.numberOfDimensions = 0;
     }
 
     public void setBoolean() {
         this.reference = Reference.BOOLEAN;
-        this.isNullAlowed = false;
+        this.isNullAllowed = false;
         this.numberOfDimensions = 0;
     }
 
     public void setNull() {
         this.reference = Reference.NULL;
-        this.isNullAlowed = true;
+        this.isNullAllowed = true;
         this.numberOfDimensions = 0;
     }
 
@@ -86,25 +93,59 @@ public class TypeContext {
 
         switch (ref.getName()) {
             case INT_NAME:
-                this.reference = Reference.ARTIHMETIC;
-                this.isNullAlowed = false;
-                this.numberOfDimensions = 0;
+                if (ref.getNumberOfDimensions() == 0) {
+                    this.reference = Reference.ARTIHMETIC;
+                    this.isNullAllowed = false;
+                    this.numberOfDimensions = 0;
+                }
+                else {
+                    this.reference = Reference.TYPE;
+                    this.isNullAllowed = true;
+                    this.numberOfDimensions = ref.getNumberOfDimensions();
+                    this.typeRef = ref;
+                }
                 break;
             case BOOLEAN_NAME:
-                this.reference = Reference.BOOLEAN;
-                this.isNullAlowed = false;
-                this.numberOfDimensions = 0;
+                if (ref.getNumberOfDimensions() == 0) {
+                    this.reference = Reference.BOOLEAN;
+                    this.isNullAllowed = false;
+                    this.numberOfDimensions = 0;
+                }
+                else {
+                    this.reference = Reference.TYPE;
+                    this.isNullAllowed = true;
+                    this.numberOfDimensions = ref.getNumberOfDimensions();
+                    this.typeRef = ref;
+                }
                 break;
             default:
                 this.reference = Reference.TYPE;
-                this.isNullAlowed = true;
+                this.isNullAllowed = true;
                 this.numberOfDimensions = ref.getNumberOfDimensions();
+                this.typeRef = ref;
         }
 
     }
 
     public void reduceDimension() {
         this.numberOfDimensions = this.numberOfDimensions > 0 ? this.numberOfDimensions - 1 : 0;
+
+        // Convert back to primitive type if dimension reaches zero
+        if (numberOfDimensions == 0) {
+            switch(this.typeRef.getName()) {
+                case INT_NAME:
+                    this.reference = Reference.ARTIHMETIC;
+                    this.isNullAllowed = false;
+                    break;
+                case BOOLEAN_NAME:
+                    this.reference = Reference.BOOLEAN;
+                    this.isNullAllowed = false;
+                    break;
+                default:
+                    // Nothing to change here
+                    break;
+            }
+        }
     }
 
     public boolean isBoolean() {

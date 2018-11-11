@@ -38,6 +38,8 @@ public class TypeOfExpression {
             throw new IllegalArgumentException();
         }
 
+        this.reference = reference;
+
         switch (reference.getName()) {
             case INT_NAME:
                 this.type = Type.INT;
