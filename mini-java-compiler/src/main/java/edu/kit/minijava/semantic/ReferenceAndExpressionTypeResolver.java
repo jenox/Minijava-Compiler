@@ -5,11 +5,11 @@ import edu.kit.minijava.ast.references.*;
 
 import java.util.*;
 
-public class ReferenceAndExpressionTypeResolver extends ASTVisitor<ClassDeclaration> {
+public class ReferenceAndExpressionTypeResolver extends ASTVisitor<Void> {
     public ReferenceAndExpressionTypeResolver(Program program, ClassAndMemberNameConflictChecker checker) {
         this.checker = checker;
 
-        program.accept(this);
+        program.accept(this, null);
     }
 
     private final ClassAndMemberNameConflictChecker checker;
@@ -23,7 +23,7 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<ClassDeclarat
     // MARK: - Traversal
 
     @Override
-    protected void visit(Program program, ClassDeclaration context) {
+    protected void visit(Program program, Void context) {
 
         // Pass 1: collect declarations
 
@@ -40,18 +40,18 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<ClassDeclarat
     }
 
     @Override
-    protected void visit(ClassDeclaration classDeclaration, ClassDeclaration context) {
+    protected void visit(ClassDeclaration classDeclaration, Void context) {
         assert this.symbolTable.getNumberOfScopes() == 0;
 
         this.classDeclarations.push(classDeclaration);
         this.symbolTable.enterNewScope();
 
         for (FieldDeclaration fieldDeclaration : classDeclaration.getFieldDeclarations()) {
-            fieldDeclaration.accept(this, classDeclaration);
+            fieldDeclaration.accept(this, context);
         }
 
         for (MethodDeclaration methodDeclaration : classDeclaration.getMethodDeclarations()) {
-            methodDeclaration.accept(this, classDeclaration);
+            methodDeclaration.accept(this, context);
         }
 
         this.symbolTable.leaveCurrentScope();
@@ -59,7 +59,7 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<ClassDeclarat
     }
 
     @Override
-    protected void visit(FieldDeclaration fieldDeclaration, ClassDeclaration context) {
+    protected void visit(FieldDeclaration fieldDeclaration, Void context) {
         if (!this.hasCollectedDeclarationsForUseBeforeDeclare) {
             this.resolve(fieldDeclaration.getType());
             return;
@@ -69,7 +69,7 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<ClassDeclarat
     }
 
     @Override
-    protected void visit(MethodDeclaration methodDeclaration, ClassDeclaration context) {
+    protected void visit(MethodDeclaration methodDeclaration, Void context) {
         if (!this.hasCollectedDeclarationsForUseBeforeDeclare) {
             this.resolve(methodDeclaration.getReturnType());
             methodDeclaration.getParameters().forEach(node -> node.accept(this, context));
@@ -87,7 +87,7 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<ClassDeclarat
     }
 
     @Override
-    protected void visit(ParameterDeclaration parameterDeclaration, ClassDeclaration context) {
+    protected void visit(ParameterDeclaration parameterDeclaration, Void context) {
         if (!this.hasCollectedDeclarationsForUseBeforeDeclare) {
             this.resolve(parameterDeclaration.getType());
             return;
@@ -97,7 +97,7 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<ClassDeclarat
     }
 
     @Override
-    protected void visit(Statement.IfStatement statement, ClassDeclaration context) {
+    protected void visit(Statement.IfStatement statement, Void context) {
         statement.getCondition().accept(this, context);
 
         assert statement.getCondition().getType().isBoolean() : "condition for if statement must be boolean";
@@ -107,7 +107,7 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<ClassDeclarat
     }
 
     @Override
-    protected void visit(Statement.WhileStatement statement, ClassDeclaration context) {
+    protected void visit(Statement.WhileStatement statement, Void context) {
         statement.getCondition().accept(this, context);
 
         assert statement.getCondition().getType().isBoolean() : "condition for while statement must be boolean";
@@ -116,14 +116,14 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<ClassDeclarat
     }
 
     @Override
-    protected void visit(Statement.ExpressionStatement statement, ClassDeclaration context) {
+    protected void visit(Statement.ExpressionStatement statement, Void context) {
         statement.getExpression().accept(this, context);
 
         assert statement.getExpression().isValidForStatement() : "not a statement";
     }
 
     @Override
-    protected void visit(Statement.ReturnStatement statement, ClassDeclaration context) {
+    protected void visit(Statement.ReturnStatement statement, Void context) {
         statement.getValue().ifPresent(node -> node.accept(this, context));
 
         TypeReference expectedReturnType = this.subroutineDeclarations.peek().getReturnType();
@@ -139,10 +139,10 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<ClassDeclarat
     }
 
     @Override
-    protected void visit(Statement.EmptyStatement statement, ClassDeclaration context) {}
+    protected void visit(Statement.EmptyStatement statement, Void context) {}
 
     @Override
-    protected void visit(Statement.LocalVariableDeclarationStatement statement, ClassDeclaration context) {
+    protected void visit(Statement.LocalVariableDeclarationStatement statement, Void context) {
         this.resolve(statement.getType());
 
         // Ensure existing declaration can be shadowed.
@@ -155,7 +155,7 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<ClassDeclarat
 
         // Ensure type of value matches (if present).
         if (statement.getValue().isPresent()) {
-            statement.getValue().get().accept(this);
+            statement.getValue().get().accept(this, context);
 
             assert statement.getValue().get().getType().isCompatibleWith(statement.getType()) :
                     "incompatible value for variable declaration";
@@ -163,7 +163,7 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<ClassDeclarat
     }
 
     @Override
-    protected void visit(Statement.Block block, ClassDeclaration context) {
+    protected void visit(Statement.Block block, Void context) {
         this.symbolTable.enterNewScope();
 
         for (Statement statement : block.getStatements()) {
@@ -174,7 +174,7 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<ClassDeclarat
     }
 
     @Override
-    protected void visit(Expression.BinaryOperation expression, ClassDeclaration context) {
+    protected void visit(Expression.BinaryOperation expression, Void context) {
         expression.getLeft().accept(this, context);
         expression.getRight().accept(this, context);
 
@@ -218,7 +218,7 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<ClassDeclarat
     }
 
     @Override
-    protected void visit(Expression.UnaryOperation expression, ClassDeclaration context) {
+    protected void visit(Expression.UnaryOperation expression, Void context) {
         expression.getOther().accept(this, context);
 
         switch (expression.getOperationType()) {
@@ -238,22 +238,22 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<ClassDeclarat
     }
 
     @Override
-    protected void visit(Expression.NullLiteral expression, ClassDeclaration context) {
+    protected void visit(Expression.NullLiteral expression, Void context) {
         expression.getType().resolveToNull();
     }
 
     @Override
-    protected void visit(Expression.BooleanLiteral expression, ClassDeclaration context) {
+    protected void visit(Expression.BooleanLiteral expression, Void context) {
         expression.getType().resolveToBoolean();
     }
 
     @Override
-    protected void visit(Expression.IntegerLiteral expression, ClassDeclaration context) {
+    protected void visit(Expression.IntegerLiteral expression, Void context) {
         expression.getType().resolveToInteger();
     }
 
     @Override
-    protected void visit(Expression.MethodInvocation expression, ClassDeclaration context) {
+    protected void visit(Expression.MethodInvocation expression, Void context) {
         expression.getContext().ifPresent(node -> node.accept(this, context));
         expression.getArguments().forEach(node -> node.accept(this, context));
 
@@ -272,15 +272,19 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<ClassDeclarat
 
             ClassDeclaration classDeclaration = (ClassDeclaration)typeDeclaration;
 
+            assert this.checker.getInstanceMethodDeclaration(methodName, classDeclaration) != null :
+                    "use of undeclared method";
+
             methodDeclaration = this.checker.getInstanceMethodDeclaration(methodName, classDeclaration);
         }
         else {
-            assert this.checker.getInstanceMethodDeclaration(methodName, context) != null : "use of undeclared method";
+            ClassDeclaration classDeclaration = this.classDeclarations.peek();
 
-            methodDeclaration = this.checker.getInstanceMethodDeclaration(methodName, context);
+            assert this.checker.getInstanceMethodDeclaration(methodName, classDeclaration) != null :
+                    "use of undeclared method";
+
+            methodDeclaration = this.checker.getInstanceMethodDeclaration(methodName, classDeclaration);
         }
-
-        // TODO: check parameter types!!
 
         List<TypeOfExpression> argumentTypes = expression.getReference().getArgumentTypes();
         List<TypeReference> parameterTypes = methodDeclaration.getParameterTypes();
@@ -295,7 +299,7 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<ClassDeclarat
     }
 
     @Override
-    protected void visit(Expression.ExplicitFieldAccess expression, ClassDeclaration context) {
+    protected void visit(Expression.ExplicitFieldAccess expression, Void context) {
         expression.getContext().accept(this, context);
 
         TypeOfExpression typeOfContext = expression.getContext().getType();
@@ -321,7 +325,7 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<ClassDeclarat
     }
 
     @Override
-    protected void visit(Expression.ArrayElementAccess expression, ClassDeclaration context) {
+    protected void visit(Expression.ArrayElementAccess expression, Void context) {
         expression.getContext().accept(this, context);
         expression.getIndex().accept(this, context);
 
@@ -334,7 +338,7 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<ClassDeclarat
     }
 
     @Override
-    protected void visit(Expression.VariableAccess expression, ClassDeclaration context) {
+    protected void visit(Expression.VariableAccess expression, Void context) {
         String name = expression.getReference().getName();
         Optional<VariableDeclaration> declaration = this.symbolTable.getVisibleDeclarationForName(name);
 
@@ -346,19 +350,19 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<ClassDeclarat
     }
 
     @Override
-    protected void visit(Expression.CurrentContextAccess expression, ClassDeclaration context) {
-        expression.getType().resolveTo(context, false);
+    protected void visit(Expression.CurrentContextAccess expression, Void context) {
+        expression.getType().resolveTo(this.classDeclarations.peek(), false);
     }
 
     @Override
-    protected void visit(Expression.NewObjectCreation expression, ClassDeclaration context) {
+    protected void visit(Expression.NewObjectCreation expression, Void context) {
         this.resolve(expression.getReference());
 
         expression.getType().resolveTo(expression.getReference(), false);
     }
 
     @Override
-    protected void visit(Expression.NewArrayCreation expression, ClassDeclaration context) {
+    protected void visit(Expression.NewArrayCreation expression, Void context) {
         expression.getPrimaryDimension().accept(this, context);
 
         TypeOfExpression primaryDimensionType = expression.getPrimaryDimension().getType();
