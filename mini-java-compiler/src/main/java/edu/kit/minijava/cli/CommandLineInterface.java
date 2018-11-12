@@ -22,7 +22,7 @@ public class CommandLineInterface {
             case "--print-ast":
                 command = new ParserCommand(true);
                 break;
-            case "--validate":
+            case "--check":
                 command = new ValidateCommand();
                 break;
             default:
