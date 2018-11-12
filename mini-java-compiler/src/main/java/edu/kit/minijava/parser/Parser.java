@@ -137,7 +137,7 @@ public final class Parser {
         if (this.lookahead(TokenType.STATIC)) {
             this.consume(TokenType.STATIC, "MainMethod");
 
-            Token returnTypeToken = this.consume(TokenType.VOID, "MainMethod");
+            this.consume(TokenType.VOID, "MainMethod");
             Token methodNameToken = this.consume(TokenType.IDENTIFIER, "MainMethod");
 
             this.consume(TokenType.OPENING_PARENTHESIS, "MainMethod");

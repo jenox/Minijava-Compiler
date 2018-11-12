@@ -13,7 +13,7 @@ public final class MainMethodDeclaration implements SubroutineDeclaration, Membe
         ParameterDeclaration parameter = new ParameterDeclaration(parameterType, parameterName, parameterLocation,
                 false);
 
-        this.returnType = new ImplicitTypeReference(PrimitiveTypeDeclaration.VOID, 0);;
+        this.returnType = new ImplicitTypeReference(PrimitiveTypeDeclaration.VOID, 0);
         this.name = name;
         this.argumentsParameter = parameter;
         this.body = body;

@@ -64,14 +64,6 @@ public class TypeOfExpression {
         this.resolveTo(declaration, reference.getNumberOfDimensions(), isAssignable);
     }
 
-    public final void resolveTo(BasicTypeReference reference, int numberOfDimensions, boolean isAssignable) {
-        this.resolveTo(reference.getDeclaration(), numberOfDimensions, isAssignable);
-    }
-
-    public final void resolveTo(ClassReference reference, boolean isAssignable) {
-        this.resolveTo(reference.getDeclaration(), 0, isAssignable);
-    }
-
     public final void resolveTo(TypeOfExpression type, boolean isAssignable) {
         if (type.getDeclaration().isPresent()) {
             this.resolveTo(type.getDeclaration().get(), type.getNumberOfDimensions(), isAssignable);
@@ -106,12 +98,6 @@ public class TypeOfExpression {
         return this.declaration == null;
     }
 
-    public final boolean isVoid() {
-        assert this.isResolved;
-
-        return this.declaration == PrimitiveTypeDeclaration.VOID && this.numberOfDimensions == 0;
-    }
-
     public final boolean isBoolean() {
         assert this.isResolved;
 
@@ -128,10 +114,6 @@ public class TypeOfExpression {
         assert this.isResolved;
 
         return this.declaration == null || this.declaration instanceof ClassDeclaration && this.numberOfDimensions == 0;
-    }
-
-    public final void resolveToVoid() {
-        this.resolveTo(PrimitiveTypeDeclaration.VOID, 0, false);
     }
 
     public final void resolveToBoolean() {
