@@ -36,6 +36,7 @@ public class Collector extends ASTVisitor<Void> {
     protected void visit(ClassDeclaration classDeclaration, Void context) {
         this.elements.add(classDeclaration);
 
+        classDeclaration.getMainMethodDeclarations().forEach(d -> d.accept(this));
         classDeclaration.getMethodDeclarations().forEach(d -> d.accept(this));
         classDeclaration.getFieldDeclarations().forEach(d -> d.accept(this));
     }
