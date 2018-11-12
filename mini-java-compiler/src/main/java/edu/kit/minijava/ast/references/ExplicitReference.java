@@ -3,12 +3,23 @@ package edu.kit.minijava.ast.references;
 import edu.kit.minijava.ast.nodes.*;
 import edu.kit.minijava.lexer.*;
 
-abstract class SimpleReference<DeclarationType extends Declaration> extends Reference {
-    SimpleReference(String name, TokenLocation location) {
-        super(name, location);
+public abstract class ExplicitReference<DeclarationType extends Declaration> extends Reference<DeclarationType> {
+    ExplicitReference(String name, TokenLocation location) {
+        this.name = name;
+        this.location = location;
     }
 
+    private final String name;
+    private final TokenLocation location;
     private DeclarationType declaration = null;
+
+    public final String getName() {
+        return this.name;
+    }
+
+    public final TokenLocation getLocation() {
+        return this.location;
+    }
 
     @Override
     public final boolean isResolved() {
@@ -27,5 +38,10 @@ abstract class SimpleReference<DeclarationType extends Declaration> extends Refe
         if (declaration == null) throw new IllegalArgumentException();
 
         this.declaration = declaration;
+    }
+
+    @Override
+    public String toString() {
+        return this.name + " at " + this.location;
     }
 }

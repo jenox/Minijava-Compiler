@@ -59,7 +59,9 @@ public class TypeOfExpression {
     }
 
     public final void resolveTo(TypeReference reference, boolean isAssignable) {
-        this.resolveTo(reference.getBasicTypeReference(), reference.getNumberOfDimensions(), isAssignable);
+        BasicTypeDeclaration declaration = reference.getBasicTypeReference().getDeclaration();
+
+        this.resolveTo(declaration, reference.getNumberOfDimensions(), isAssignable);
     }
 
     public final void resolveTo(BasicTypeReference reference, int numberOfDimensions, boolean isAssignable) {

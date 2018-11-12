@@ -5,7 +5,7 @@ import edu.kit.minijava.lexer.*;
 
 import java.util.*;
 
-public final class MethodReference extends SimpleReference<MethodDeclaration> {
+public final class MethodReference extends ExplicitReference<MethodDeclaration> {
     public MethodReference(String name, List<TypeOfExpression> argumentTypes,
                            TokenLocation location) {
         super(name, location);
