@@ -11,7 +11,7 @@ public class MemberCollector implements ASTVisitor<MemberCollector.Options, Sema
 
         program.getClassSymbolTable().clear();
 
-        this.visit(program, null);
+        program.accept(this, null);
     }
 
     @Override

@@ -29,7 +29,7 @@ public class DeclarationAndTypeChecker implements ASTVisitor<TypeContext, Semant
     public void resolveDeclarationsAndTypes(Program program) throws SemanticAnalysisException {
         this.astRoot = program;
 
-        this.visit(program, null);
+        program.accept(this, null);
     }
 
     @Override
