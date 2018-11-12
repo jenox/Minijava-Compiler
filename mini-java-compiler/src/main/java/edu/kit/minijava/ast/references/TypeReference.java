@@ -1,22 +1,26 @@
 package edu.kit.minijava.ast.references;
 
-import edu.kit.minijava.ast.nodes.*;
-import edu.kit.minijava.lexer.*;
-
-public final class TypeReference extends SimpleReference<BasicTypeDeclaration> {
-    public TypeReference(String name, int numberOfDimensions, TokenLocation location) {
-        super(name, location);
-
+public final class TypeReference {
+    public TypeReference(BasicTypeReference basicTypeReference, int numberOfDimensions) {
+        this.basicTypeReference = basicTypeReference;
         this.numberOfDimensions = numberOfDimensions;
     }
 
+    private final BasicTypeReference basicTypeReference;
     private final int numberOfDimensions;
+
+    public final BasicTypeReference getBasicTypeReference() {
+        return this.basicTypeReference;
+    }
 
     public final int getNumberOfDimensions() {
         return this.numberOfDimensions;
     }
 
+
+    // MARK: - Convenience Methods
+
     public final boolean isVoid() {
-        return this.getDeclaration() == PrimitiveTypeDeclaration.VOID && this.numberOfDimensions == 0;
+        return this.getBasicTypeReference().isVoid() && this.numberOfDimensions == 0;
     }
 }

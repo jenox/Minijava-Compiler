@@ -436,7 +436,7 @@ public final class PrettyPrinter extends ASTVisitor<PrettyPrinter.Options> {
     }
 
     private void print(TypeReference reference) {
-        this.print(reference.getName());
+        this.print(reference.getBasicTypeReference().getName());
 
         for (int index = 0; index < reference.getNumberOfDimensions(); index += 1) {
             this.print("[]");

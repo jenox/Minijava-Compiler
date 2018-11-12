@@ -59,7 +59,7 @@ public class TypeOfExpression {
     }
 
     public final void resolveTo(TypeReference reference, boolean isAssignable) {
-        this.resolveTo(reference.getDeclaration(), reference.getNumberOfDimensions(), isAssignable);
+        this.resolveTo(reference.getBasicTypeReference(), reference.getNumberOfDimensions(), isAssignable);
     }
 
     public final void resolveTo(BasicTypeReference reference, int numberOfDimensions, boolean isAssignable) {
@@ -150,16 +150,16 @@ public class TypeOfExpression {
             if (this.isNull()) return false;
 
             if (this.numberOfDimensions != reference.getNumberOfDimensions()) return false;
-            if (this.declaration != reference.getDeclaration()) return false;
+            if (this.declaration != reference.getBasicTypeReference().getDeclaration()) return false;
 
             return true;
         }
 
-        if (reference.getDeclaration() instanceof ClassDeclaration) {
-            return this.declaration == null || this.declaration == reference.getDeclaration();
+        if (reference.getBasicTypeReference().getDeclaration() instanceof ClassDeclaration) {
+            return this.declaration == null || this.declaration == reference.getBasicTypeReference().getDeclaration();
         }
         else {
-            return this.declaration == reference.getDeclaration();
+            return this.declaration == reference.getBasicTypeReference().getDeclaration();
         }
     }
 

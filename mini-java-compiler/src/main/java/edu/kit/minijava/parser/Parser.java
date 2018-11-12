@@ -162,9 +162,11 @@ public final class Parser {
 
             Statement.Block body = this.parseBlock();
 
-            TypeReference returnType = new TypeReference("void", 0, returnTypeToken.getLocation());
+            TypeReference returnType = new TypeReference(new BasicTypeReference("void",
+                    returnTypeToken.getLocation()), 0);
 
-            TypeReference parameterType = new TypeReference("String", 1, parameterTypeToken.getLocation());
+            TypeReference parameterType = new TypeReference(new BasicTypeReference("String",
+                    parameterTypeToken.getLocation()), 1);
             String parameterName = parameterNameToken.getText();
             TokenLocation parameterLocation = parameterNameToken.getLocation();
             ParameterDeclaration parameter = new ParameterDeclaration(parameterType, parameterName, parameterLocation);
@@ -617,10 +619,10 @@ public final class Parser {
     // MARK: - Parsing Types
 
     private TypeReference parseType() throws ParserException {
-        BasicTypeReference basicType = this.parseBasicType();
+        BasicTypeReference basicTypeReference = this.parseBasicType();
         int numberOfDimensions = this.parseOpeningAndClosingBrackets();
 
-        return new TypeReference(basicType.getName(), numberOfDimensions, basicType.getLocation());
+        return new TypeReference(basicTypeReference, numberOfDimensions);
     }
 
     private BasicTypeReference parseBasicType() throws ParserException {

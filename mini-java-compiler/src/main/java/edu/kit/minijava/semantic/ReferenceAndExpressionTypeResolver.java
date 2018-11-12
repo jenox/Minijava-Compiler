@@ -65,11 +65,11 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<Void> {
     @Override
     protected void visit(FieldDeclaration fieldDeclaration, Void context) {
         if (!this.hasCollectedDeclarationsForUseBeforeDeclare) {
-            String fieldTypeName = fieldDeclaration.getType().getName();
+            String fieldTypeName = fieldDeclaration.getType().getBasicTypeReference().getName();
             Optional<BasicTypeDeclaration> typeDeclaration = this.getBasicTypeNamed(fieldTypeName);
             assert typeDeclaration.isPresent() : "use of undeclared type in field";
             assert typeDeclaration.get() != PrimitiveTypeDeclaration.VOID : "field of type void is not allowed";
-            fieldDeclaration.getType().resolveTo(typeDeclaration.get());
+            fieldDeclaration.getType().getBasicTypeReference().resolveTo(typeDeclaration.get());
             return;
         }
 
@@ -79,7 +79,7 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<Void> {
     @Override
     protected void visit(MethodDeclaration methodDeclaration, Void context) {
         if (!this.hasCollectedDeclarationsForUseBeforeDeclare) {
-            String returnTypeName = methodDeclaration.getReturnType().getName();
+            String returnTypeName = methodDeclaration.getReturnType().getBasicTypeReference().getName();
             Optional<BasicTypeDeclaration> typeDeclaration  = this.getBasicTypeNamed(returnTypeName);
 
             assert typeDeclaration.isPresent() : "use of undeclared type in method";
@@ -88,7 +88,7 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<Void> {
                 assert typeDeclaration.get() != PrimitiveTypeDeclaration.VOID : "returning array of void not allowed";
             }
 
-            methodDeclaration.getReturnType().resolveTo(typeDeclaration.get());
+            methodDeclaration.getReturnType().getBasicTypeReference().resolveTo(typeDeclaration.get());
             methodDeclaration.getParameters().forEach(node -> node.accept(this, context));
             return;
         }
@@ -118,11 +118,11 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<Void> {
     @Override
     protected void visit(ParameterDeclaration parameterDeclaration, Void context) {
         if (!this.hasCollectedDeclarationsForUseBeforeDeclare) {
-            String parameterTypeName = parameterDeclaration.getType().getName();
+            String parameterTypeName = parameterDeclaration.getType().getBasicTypeReference().getName();
             Optional<BasicTypeDeclaration> typeDeclaration  = this.getBasicTypeNamed(parameterTypeName);
             assert typeDeclaration.isPresent() : "use of undeclared type in parameter";
             assert typeDeclaration.get() != PrimitiveTypeDeclaration.VOID : "void not allowed as parameter";
-            parameterDeclaration.getType().resolveTo(typeDeclaration.get());
+            parameterDeclaration.getType().getBasicTypeReference().resolveTo(typeDeclaration.get());
             return;
         }
 
@@ -186,10 +186,11 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<Void> {
     protected void visit(Statement.LocalVariableDeclarationStatement statement, Void context) {
 
         // Resolve type.
-        Optional<BasicTypeDeclaration> typeDeclaration = this.getBasicTypeNamed(statement.getType().getName());
+        String typeName = statement.getType().getBasicTypeReference().getName();
+        Optional<BasicTypeDeclaration> typeDeclaration = this.getBasicTypeNamed(typeName);
         assert typeDeclaration.isPresent() : "use of undeclared type in local var";
         assert typeDeclaration.get() != PrimitiveTypeDeclaration.VOID : "variable of type void not allowed";
-        statement.getType().resolveTo(typeDeclaration.get());
+        statement.getType().getBasicTypeReference().resolveTo(typeDeclaration.get());
 
         // Ensure existing declaration can be shadowed.
         this.symbolTable.getVisibleDeclarationForName(statement.getName()).ifPresent(previousDeclaration -> {

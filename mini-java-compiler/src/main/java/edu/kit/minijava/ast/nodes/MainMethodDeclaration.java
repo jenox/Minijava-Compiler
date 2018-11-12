@@ -9,8 +9,10 @@ import java.util.stream.*;
 public final class MainMethodDeclaration implements SubroutineDeclaration, MemberDeclaration, ASTNode {
     public MainMethodDeclaration(TypeReference returnType, String name, ParameterDeclaration parameter,
                                  Statement.Block body, TokenLocation location) {
-        assert returnType.getName().equals("void") && returnType.getNumberOfDimensions() == 0;
-        assert parameter.getType().getName().equals("String") && parameter.getType().getNumberOfDimensions() == 1;
+        assert returnType.getBasicTypeReference().getName().equals("void");
+        assert returnType.getNumberOfDimensions() == 0;
+        assert parameter.getType().getBasicTypeReference().getName().equals("String");
+        assert parameter.getType().getNumberOfDimensions() == 1;
 
         this.returnType = returnType;
         this.name = name;

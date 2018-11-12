@@ -7,4 +7,11 @@ public final class BasicTypeReference extends SimpleReference<BasicTypeDeclarati
     public BasicTypeReference(String name, TokenLocation location) {
         super(name, location);
     }
+
+
+    // MARK: - Convenience Methods
+
+    public final boolean isVoid() {
+        return this.getDeclaration() == PrimitiveTypeDeclaration.VOID;
+    }
 }
