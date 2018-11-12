@@ -204,6 +204,8 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<Void> {
                     "other declaration cant be shadowed";
         });
 
+        // TODO: Is `int x = x + 1` valid if `x` isn't a field? Definite Assignment? If it is a field, which `x` should
+        // TODO: we pick?
         this.symbolTable.enterDeclaration(statement);
 
         // Ensure type of value matches (if present).
