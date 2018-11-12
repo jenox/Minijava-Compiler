@@ -17,7 +17,7 @@ public abstract class Expression implements ASTNode {
         return this.type;
     }
 
-    public abstract boolean isValidForStatement();
+    public abstract boolean isValidForExpressionStatement();
 
     public static final class BinaryOperation extends Expression {
         public BinaryOperation(BinaryOperationType operationType, Expression left, Expression right) {
@@ -45,7 +45,7 @@ public abstract class Expression implements ASTNode {
         }
 
         @Override
-        public boolean isValidForStatement() {
+        public boolean isValidForExpressionStatement() {
             return this.operationType == BinaryOperationType.ASSIGNMENT;
         }
 
@@ -75,7 +75,7 @@ public abstract class Expression implements ASTNode {
         }
 
         @Override
-        public boolean isValidForStatement() {
+        public boolean isValidForExpressionStatement() {
             return false;
         }
 
@@ -91,7 +91,7 @@ public abstract class Expression implements ASTNode {
         }
 
         @Override
-        public boolean isValidForStatement() {
+        public boolean isValidForExpressionStatement() {
             return false;
         }
 
@@ -115,7 +115,7 @@ public abstract class Expression implements ASTNode {
         }
 
         @Override
-        public boolean isValidForStatement() {
+        public boolean isValidForExpressionStatement() {
             return false;
         }
 
@@ -139,7 +139,7 @@ public abstract class Expression implements ASTNode {
         }
 
         @Override
-        public boolean isValidForStatement() {
+        public boolean isValidForExpressionStatement() {
             return false;
         }
 
@@ -188,7 +188,7 @@ public abstract class Expression implements ASTNode {
         }
 
         @Override
-        public boolean isValidForStatement() {
+        public boolean isValidForExpressionStatement() {
             return true;
         }
 
@@ -218,7 +218,7 @@ public abstract class Expression implements ASTNode {
         }
 
         @Override
-        public boolean isValidForStatement() {
+        public boolean isValidForExpressionStatement() {
             return false;
         }
 
@@ -248,7 +248,7 @@ public abstract class Expression implements ASTNode {
         }
 
         @Override
-        public boolean isValidForStatement() {
+        public boolean isValidForExpressionStatement() {
             return false;
         }
 
@@ -272,7 +272,7 @@ public abstract class Expression implements ASTNode {
         }
 
         @Override
-        public boolean isValidForStatement() {
+        public boolean isValidForExpressionStatement() {
             return false;
         }
 
@@ -288,7 +288,7 @@ public abstract class Expression implements ASTNode {
         }
 
         @Override
-        public boolean isValidForStatement() {
+        public boolean isValidForExpressionStatement() {
             return false;
         }
 
@@ -312,8 +312,8 @@ public abstract class Expression implements ASTNode {
         }
 
         @Override
-        public boolean isValidForStatement() {
-            return true;
+        public boolean isValidForExpressionStatement() {
+            return false;
         }
 
         @Override
@@ -348,7 +348,7 @@ public abstract class Expression implements ASTNode {
         }
 
         @Override
-        public boolean isValidForStatement() {
+        public boolean isValidForExpressionStatement() {
             return false;
         }
 

@@ -167,7 +167,7 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<Void> {
     protected void visit(Statement.ExpressionStatement statement, Void context) {
         statement.getExpression().accept(this, context);
 
-        assert statement.getExpression().isValidForStatement() : "not a statement";
+        assert statement.getExpression().isValidForExpressionStatement() : "not a statement";
     }
 
     @Override
