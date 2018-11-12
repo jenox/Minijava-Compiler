@@ -88,6 +88,12 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<Void> {
         methodDeclaration.getParameters().forEach(node -> node.accept(this, context));
         methodDeclaration.getBody().accept(this, context);
 
+        if (!methodDeclaration.getReturnType().isVoid()) {
+            assert methodDeclaration.getBody().explicitlyReturns() : "must return a value on all paths";
+        }
+
+        assert !methodDeclaration.getBody().containsUnreachableStatements() : "contains unreachable statements";
+
         this.symbolTable.leaveCurrentScope();
         this.subroutineDeclarations.pop();
     }

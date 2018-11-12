@@ -8,6 +8,9 @@ public abstract class Statement implements ASTNode {
     private Statement() {
     }
 
+    public abstract boolean explicitlyReturns();
+    public abstract boolean containsUnreachableStatements();
+
     public static final class IfStatement extends Statement {
         public IfStatement(Expression condition, Statement statementIfTrue) {
             this.condition = condition;
@@ -38,6 +41,29 @@ public abstract class Statement implements ASTNode {
         }
 
         @Override
+        public boolean explicitlyReturns() {
+            if (this.statementIfFalse == null) {
+                return false;
+            }
+            else {
+                return this.statementIfTrue.explicitlyReturns() && this.statementIfFalse.explicitlyReturns();
+            }
+        }
+
+        @Override
+        public boolean containsUnreachableStatements() {
+            if (this.statementIfTrue.containsUnreachableStatements()) {
+                return true;
+            }
+            else if (this.statementIfFalse != null) {
+                return this.statementIfFalse.containsUnreachableStatements();
+            }
+            else {
+                return false;
+            }
+        }
+
+        @Override
         public <T> void accept(ASTVisitor<T> visitor, T context) {
             visitor.visit(this, context);
         }
@@ -61,6 +87,16 @@ public abstract class Statement implements ASTNode {
         }
 
         @Override
+        public boolean explicitlyReturns() {
+            return false;
+        }
+
+        @Override
+        public boolean containsUnreachableStatements() {
+            return this.statementWhileTrue.containsUnreachableStatements();
+        }
+
+        @Override
         public <T> void accept(ASTVisitor<T> visitor, T context) {
             visitor.visit(this, context);
         }
@@ -75,6 +111,16 @@ public abstract class Statement implements ASTNode {
 
         public Expression getExpression() {
             return this.expression;
+        }
+
+        @Override
+        public boolean explicitlyReturns() {
+            return false;
+        }
+
+        @Override
+        public boolean containsUnreachableStatements() {
+            return false;
         }
 
         @Override
@@ -99,6 +145,16 @@ public abstract class Statement implements ASTNode {
         }
 
         @Override
+        public boolean explicitlyReturns() {
+            return true;
+        }
+
+        @Override
+        public boolean containsUnreachableStatements() {
+            return false;
+        }
+
+        @Override
         public <T> void accept(ASTVisitor<T> visitor, T context) {
             visitor.visit(this, context);
         }
@@ -106,6 +162,16 @@ public abstract class Statement implements ASTNode {
 
     public static final class EmptyStatement extends Statement {
         public EmptyStatement() {
+        }
+
+        @Override
+        public boolean explicitlyReturns() {
+            return false;
+        }
+
+        @Override
+        public boolean containsUnreachableStatements() {
+            return false;
         }
 
         @Override
@@ -123,6 +189,28 @@ public abstract class Statement implements ASTNode {
 
         public List<Statement> getStatements() {
             return this.statements;
+        }
+
+        @Override
+        public boolean explicitlyReturns() {
+            for (Statement statement : this.statements) {
+                if (statement.explicitlyReturns()) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        @Override
+        public boolean containsUnreachableStatements() {
+            for (int index = 0; index < this.statements.size(); index += 1) {
+                if (this.statements.get(index).explicitlyReturns()) {
+                    return index + 1 < this.statements.size();
+                }
+            }
+
+            return false;
         }
 
         @Override
@@ -178,6 +266,16 @@ public abstract class Statement implements ASTNode {
 
         public TokenLocation getLocation() {
             return this.location;
+        }
+
+        @Override
+        public boolean explicitlyReturns() {
+            return false;
+        }
+
+        @Override
+        public boolean containsUnreachableStatements() {
+            return false;
         }
 
         @Override
