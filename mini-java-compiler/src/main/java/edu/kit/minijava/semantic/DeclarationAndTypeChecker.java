@@ -102,9 +102,7 @@ public class DeclarationAndTypeChecker implements ASTVisitor<TypeContext, Semant
         // Check type of condition
         TypeContext condition = new TypeContext();
 
-        this.variableSymbolTable.enterNewScope();
         statement.getCondition().accept(this, condition);
-        this.variableSymbolTable.leaveCurrentScope();
 
         if (!condition.isBoolean()) {
             throw new TypeMismatchException("Condition in if statement not boolean");
@@ -129,9 +127,7 @@ public class DeclarationAndTypeChecker implements ASTVisitor<TypeContext, Semant
         // check type of condition
         TypeContext condition = new TypeContext();
 
-        this.variableSymbolTable.enterNewScope();
         statement.getCondition().accept(this, condition);
-        this.variableSymbolTable.leaveCurrentScope();
 
         if (!condition.isBoolean()) {
             throw new TypeMismatchException("Condition in while not boolean");
