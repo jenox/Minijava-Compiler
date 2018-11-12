@@ -26,6 +26,16 @@ public class ValidateCommand extends Command {
             ClassAndMemberNameConflictChecker checker = new ClassAndMemberNameConflictChecker(program);
             new ReferenceAndExpressionTypeResolver(program, checker);
 
+            for (TypeReference reference : new Collector(program).instancesOfClass(TypeReference.class)) {
+                if (reference.getBasicTypeReference().isResolved()) {
+                    Declaration declaration = reference.getBasicTypeReference().getDeclaration();
+                    System.out.println("Reference " + reference + ": " + declaration);
+                }
+                else {
+                    System.out.println("Unresolved reference " + reference);
+                }
+            }
+
             for (Reference reference : new Collector(program).instancesOfClass(Reference.class)) {
                 if (reference.isResolved()) {
                     System.out.println("Reference " + reference + ": " + reference.getDeclaration());

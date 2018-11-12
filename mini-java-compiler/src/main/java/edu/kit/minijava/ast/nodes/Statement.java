@@ -167,6 +167,11 @@ public abstract class Statement implements ASTNode {
             return false;
         }
 
+        @Override
+        public boolean canBeAccessed() {
+            return true;
+        }
+
         public Optional<Expression> getValue() {
             return Optional.ofNullable(this.value);
         }

@@ -403,6 +403,7 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<Void> {
         Optional<VariableDeclaration> declaration = this.symbolTable.getVisibleDeclarationForName(name);
 
         assert declaration.isPresent() : "use of undeclared variable " + name;
+        assert declaration.get().canBeAccessed() : "variable may not be accessed. sorry.";
 
         expression.getReference().resolveTo(declaration.get());
         expression.getType().resolveTo(declaration.get().getType(), true);

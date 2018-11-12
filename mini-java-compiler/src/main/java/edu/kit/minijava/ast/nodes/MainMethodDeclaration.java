@@ -7,11 +7,11 @@ import java.util.*;
 public final class MainMethodDeclaration implements SubroutineDeclaration, MemberDeclaration, ASTNode {
     public MainMethodDeclaration(String name, Token argumentsParameterNameToken, Statement.Block body,
                                  TokenLocation location) {
-        // FIXME: builtin string?
-        ImplicitTypeReference parameterType = new ImplicitTypeReference(PrimitiveTypeDeclaration.VOID, 1);
+        ImplicitTypeReference parameterType = new ImplicitTypeReference(PrimitiveTypeDeclaration.STRING, 1);
         String parameterName = argumentsParameterNameToken.getText();
         TokenLocation parameterLocation = argumentsParameterNameToken.getLocation();
-        ParameterDeclaration parameter = new ParameterDeclaration(parameterType, parameterName, parameterLocation);
+        ParameterDeclaration parameter = new ParameterDeclaration(parameterType, parameterName, parameterLocation,
+                false);
 
         this.returnType = new ImplicitTypeReference(PrimitiveTypeDeclaration.VOID, 0);;
         this.name = name;
