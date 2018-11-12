@@ -9,15 +9,19 @@ public final class ClassAndMemberNameConflictChecker {
         this.classDeclarations = new HashMap<>();
         this.instanceMethodDeclarations = new HashMap<>();
         this.fieldDeclarations = new HashMap<>();
+        this.entryPointDeclaration = null;
 
         for (ClassDeclaration declaration : program.getClassDeclarations()) {
             this.add(declaration);
         }
+
+        assert this.entryPointDeclaration != null : "missing entry point declaration";
     }
 
     private final Map<String, ClassDeclaration> classDeclarations;
     private final Map<ClassDeclaration, Map<String, MethodDeclaration>> instanceMethodDeclarations;
     private final Map<ClassDeclaration, Map<String, FieldDeclaration>> fieldDeclarations;
+    private MainMethodDeclaration entryPointDeclaration;
 
     public ClassDeclaration getClassDeclaration(String name) {
         return this.classDeclarations.get(name);
@@ -53,6 +57,17 @@ public final class ClassAndMemberNameConflictChecker {
             }
 
             fieldDeclarations.put(fieldDeclaration.getName(), fieldDeclaration);
+        }
+
+        for (MainMethodDeclaration methodDeclaration : classDeclaration.getMainMethodDeclarations()) {
+            assert methodDeclaration.getName().equals("main") : "entry point must be named main";
+
+            if (this.entryPointDeclaration != null) {
+                assert false : "invalid redeclaration of entry point";
+            }
+            else {
+                this.entryPointDeclaration = methodDeclaration;
+            }
         }
 
         this.classDeclarations.put(classDeclaration.getName(), classDeclaration);
