@@ -340,6 +340,9 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<Void> {
             methodDeclaration = this.checker.getInstanceMethodDeclaration(methodName, classDeclaration);
         }
         else {
+            assert !(this.subroutineDeclarations.peek() instanceof MainMethodDeclaration) :
+                    "must not invoke methods on implicit this in main method";
+
             ClassDeclaration classDeclaration = this.classDeclarations.peek();
 
             assert this.checker.getInstanceMethodDeclaration(methodName, classDeclaration) != null :
@@ -413,6 +416,9 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<Void> {
 
     @Override
     protected void visit(Expression.CurrentContextAccess expression, Void context) {
+        assert !(this.subroutineDeclarations.peek() instanceof MainMethodDeclaration) :
+                "this must not be accessed in main method";
+
         expression.getType().resolveTo(this.classDeclarations.peek(), false);
     }
 
