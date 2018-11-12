@@ -171,7 +171,7 @@ public class Collector extends ASTVisitor<Void> {
         this.elements.add(expression);
 
         expression.getContext().ifPresent(e -> e.accept(this));
-        this.elements.add(expression.getReference());
+        this.elements.add(expression.getMethodReference());
         expression.getArguments().forEach(a -> a.accept(this));
     }
 
@@ -180,7 +180,7 @@ public class Collector extends ASTVisitor<Void> {
         this.elements.add(expression);
 
         expression.getContext().accept(this);
-        this.elements.add(expression.getReference());
+        this.elements.add(expression.getFieldReference());
     }
 
     @Override
@@ -195,7 +195,7 @@ public class Collector extends ASTVisitor<Void> {
     protected void visit(Expression.VariableAccess expression, Void context) {
         this.elements.add(expression);
 
-        this.elements.add(expression.getReference());
+        this.elements.add(expression.getVariableReference());
     }
 
     @Override
@@ -207,14 +207,14 @@ public class Collector extends ASTVisitor<Void> {
     protected void visit(Expression.NewObjectCreation expression, Void context) {
         this.elements.add(expression);
 
-        this.elements.add(expression.getReference());
+        this.elements.add(expression.getClassReference());
     }
 
     @Override
     protected void visit(Expression.NewArrayCreation expression, Void context) {
         this.elements.add(expression);
 
-        this.elements.add(expression.getReference());
+        this.elements.add(expression.getBasicTypeReference());
         expression.getPrimaryDimension().accept(this);
     }
 }

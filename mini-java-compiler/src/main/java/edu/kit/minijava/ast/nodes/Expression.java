@@ -157,7 +157,7 @@ public abstract class Expression implements ASTNode {
 
             this.context = null;
             this.arguments = arguments;
-            this.reference = new MethodReference(methodName, argumentTypes, location);
+            this.methodReference = new MethodReference(methodName, argumentTypes, location);
         }
 
         public MethodInvocation(Expression context, String methodName, List<Expression> arguments,
@@ -168,19 +168,19 @@ public abstract class Expression implements ASTNode {
 
             this.context = context;
             this.arguments = arguments;
-            this.reference = new MethodReference(context.type, methodName, argumentTypes, location);
+            this.methodReference = new MethodReference(context.type, methodName, argumentTypes, location);
         }
 
         private final Expression context; // nullable
-        private final MethodReference reference;
+        private final MethodReference methodReference;
         private final List<Expression> arguments;
 
         public Optional<Expression> getContext() {
             return Optional.ofNullable(this.context);
         }
 
-        public MethodReference getReference() {
-            return this.reference;
+        public MethodReference getMethodReference() {
+            return this.methodReference;
         }
 
         public List<Expression> getArguments() {
@@ -203,18 +203,18 @@ public abstract class Expression implements ASTNode {
             super();
 
             this.context = context;
-            this.reference = new FieldReference(context.type, fieldName, location);
+            this.fieldReference = new FieldReference(context.type, fieldName, location);
         }
 
         private final Expression context;
-        private final FieldReference reference;
+        private final FieldReference fieldReference;
 
         public Expression getContext() {
             return this.context;
         }
 
-        public FieldReference getReference() {
-            return this.reference;
+        public FieldReference getFieldReference() {
+            return this.fieldReference;
         }
 
         @Override
@@ -262,13 +262,13 @@ public abstract class Expression implements ASTNode {
         public VariableAccess(String variableName, TokenLocation location) {
             super();
 
-            this.reference = new VariableReference(variableName, location);
+            this.variableReference = new VariableReference(variableName, location);
         }
 
-        private final VariableReference reference;
+        private final VariableReference variableReference;
 
-        public VariableReference getReference() {
-            return this.reference;
+        public VariableReference getVariableReference() {
+            return this.variableReference;
         }
 
         @Override
@@ -302,13 +302,13 @@ public abstract class Expression implements ASTNode {
         public NewObjectCreation(String className, TokenLocation location) {
             super();
 
-            this.reference = new ClassReference(className, location);
+            this.classReference = new ClassReference(className, location);
         }
 
-        private final ClassReference reference;
+        private final ClassReference classReference;
 
-        public ClassReference getReference() {
-            return this.reference;
+        public ClassReference getClassReference() {
+            return this.classReference;
         }
 
         @Override
@@ -323,20 +323,21 @@ public abstract class Expression implements ASTNode {
     }
 
     public static final class NewArrayCreation extends Expression {
-        public NewArrayCreation(BasicTypeReference reference, Expression primaryDimension, int numberOfDimensions) {
+        public NewArrayCreation(BasicTypeReference basicTypeReference, Expression primaryDimension,
+                                int numberOfDimensions) {
             super();
 
-            this.reference = reference;
+            this.basicTypeReference = basicTypeReference;
             this.primaryDimension = primaryDimension;
             this.numberOfDimensions = numberOfDimensions;
         }
 
-        private final BasicTypeReference reference;
+        private final BasicTypeReference basicTypeReference;
         private final Expression primaryDimension;
         private final int numberOfDimensions;
 
-        public BasicTypeReference getReference() {
-            return this.reference;
+        public BasicTypeReference getBasicTypeReference() {
+            return this.basicTypeReference;
         }
 
         public Expression getPrimaryDimension() {

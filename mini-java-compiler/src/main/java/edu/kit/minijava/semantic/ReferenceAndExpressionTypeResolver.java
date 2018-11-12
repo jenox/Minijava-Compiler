@@ -325,7 +325,7 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<Void> {
         expression.getContext().ifPresent(node -> node.accept(this, context));
         expression.getArguments().forEach(node -> node.accept(this, context));
 
-        String methodName = expression.getReference().getName();
+        String methodName = expression.getMethodReference().getName();
         MethodDeclaration methodDeclaration;
 
         if (expression.getContext().isPresent()) {
@@ -357,7 +357,7 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<Void> {
             methodDeclaration = this.checker.getInstanceMethodDeclaration(methodName, classDeclaration);
         }
 
-        List<TypeOfExpression> argumentTypes = expression.getReference().getArgumentTypes();
+        List<TypeOfExpression> argumentTypes = expression.getMethodReference().getArgumentTypes();
         List<TypeReference> parameterTypes = methodDeclaration.getParameterTypes();
 
         assert argumentTypes.size() == parameterTypes.size() : "incorrect number of arguments";
@@ -365,7 +365,7 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<Void> {
             assert argumentTypes.get(index).isCompatibleWith(parameterTypes.get(index)) : "incompatible argument type";
         }
 
-        expression.getReference().resolveTo(methodDeclaration);
+        expression.getMethodReference().resolveTo(methodDeclaration);
         expression.getType().resolveTo(methodDeclaration.getReturnType(), false);
     }
 
@@ -383,13 +383,13 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<Void> {
         assert typeDeclaration instanceof ClassDeclaration : "can only access fields on objects";
 
         ClassDeclaration classDeclaration = (ClassDeclaration)typeDeclaration;
-        String fieldName = expression.getReference().getName();
+        String fieldName = expression.getFieldReference().getName();
 
         assert this.checker.getFieldDeclaration(fieldName , classDeclaration) != null : "use of undeclared field";
 
         FieldDeclaration fieldDeclaration = this.checker.getFieldDeclaration(fieldName , classDeclaration);
 
-        expression.getReference().resolveTo(fieldDeclaration);
+        expression.getFieldReference().resolveTo(fieldDeclaration);
 
         // TODO: Is `this.f().x = 42;` valid?
         expression.getType().resolveTo(fieldDeclaration.getType(), true);
@@ -410,13 +410,13 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<Void> {
 
     @Override
     protected void visit(Expression.VariableAccess expression, Void context) {
-        String name = expression.getReference().getName();
+        String name = expression.getVariableReference().getName();
         Optional<VariableDeclaration> declaration = this.symbolTable.getVisibleDeclarationForName(name);
 
         assert declaration.isPresent() : "use of undeclared variable " + name;
         assert declaration.get().canBeAccessed() : "variable may not be accessed. sorry.";
 
-        expression.getReference().resolveTo(declaration.get());
+        expression.getVariableReference().resolveTo(declaration.get());
         expression.getType().resolveTo(declaration.get().getType(), true);
     }
 
@@ -430,10 +430,10 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<Void> {
 
     @Override
     protected void visit(Expression.NewObjectCreation expression, Void context) {
-        Optional<ClassDeclaration> classDeclaration = this.getClassNamed(expression.getReference().getName());
+        Optional<ClassDeclaration> classDeclaration = this.getClassNamed(expression.getClassReference().getName());
         assert classDeclaration.isPresent() : "use of undeclared class";
 
-        expression.getReference().resolveTo(classDeclaration.get());
+        expression.getClassReference().resolveTo(classDeclaration.get());
         expression.getType().resolveTo(classDeclaration.get(), false);
     }
 
@@ -446,11 +446,12 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<Void> {
         assert primaryDimensionType.getDeclaration().get() == PrimitiveTypeDeclaration.INTEGER : "dim must be int";
         assert primaryDimensionType.getNumberOfDimensions() == 0 : "dim must be int";
 
-        Optional<BasicTypeDeclaration> typeDeclaration = this.getBasicTypeNamed(expression.getReference().getName());
+        String name = expression.getBasicTypeReference().getName();
+        Optional<BasicTypeDeclaration> typeDeclaration = this.getBasicTypeNamed(name);
         assert typeDeclaration.isPresent() : "use of undeclared type in new array";
         assert typeDeclaration.get() != PrimitiveTypeDeclaration.VOID : "array of void is not allowed";
 
-        expression.getReference().resolveTo(typeDeclaration.get());
+        expression.getBasicTypeReference().resolveTo(typeDeclaration.get());
         expression.getType().resolveTo(typeDeclaration.get(), expression.getNumberOfDimensions(), false);
     }
 

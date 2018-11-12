@@ -316,7 +316,7 @@ public final class PrettyPrinter extends ASTVisitor<PrettyPrinter.Options> {
             this.print(".");
         }
 
-        this.print(expression.getReference().getName());
+        this.print(expression.getMethodReference().getName());
         this.print("(");
 
         if (!expression.getArguments().isEmpty()) {
@@ -339,7 +339,7 @@ public final class PrettyPrinter extends ASTVisitor<PrettyPrinter.Options> {
         this.printOpeningParenthesis(context);
         expression.getContext().accept(this);
         this.print(".");
-        this.print(expression.getReference().getName());
+        this.print(expression.getFieldReference().getName());
         this.printClosingParenthesis(context);
     }
 
@@ -355,7 +355,7 @@ public final class PrettyPrinter extends ASTVisitor<PrettyPrinter.Options> {
 
     @Override
     protected void visit(Expression.VariableAccess expression, Options context) {
-        this.print(expression.getReference().getName());
+        this.print(expression.getVariableReference().getName());
     }
 
     @Override
@@ -367,7 +367,7 @@ public final class PrettyPrinter extends ASTVisitor<PrettyPrinter.Options> {
     protected void visit(Expression.NewObjectCreation expression, Options context) {
         this.printOpeningParenthesis(context);
         this.print("new ");
-        this.print(expression.getReference().getName());
+        this.print(expression.getClassReference().getName());
         this.print("()");
         this.printClosingParenthesis(context);
     }
@@ -376,7 +376,7 @@ public final class PrettyPrinter extends ASTVisitor<PrettyPrinter.Options> {
     protected void visit(Expression.NewArrayCreation expression, Options context) {
         this.printOpeningParenthesis(context);
         this.print("new ");
-        this.print(expression.getReference().getName());
+        this.print(expression.getBasicTypeReference().getName());
         this.print("[");
         expression.getPrimaryDimension().accept(this, Options.DO_NOT_PRINT_PARENTHESES_AROUND_EXPRESSION);
         this.print("]");
