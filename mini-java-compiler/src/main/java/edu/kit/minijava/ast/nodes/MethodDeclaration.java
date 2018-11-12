@@ -1,6 +1,5 @@
 package edu.kit.minijava.ast.nodes;
 
-import edu.kit.minijava.ast.references.*;
 import edu.kit.minijava.lexer.*;
 
 import java.util.*;
@@ -32,7 +31,7 @@ public final class MethodDeclaration implements SubroutineDeclaration, MemberDec
         return this.name;
     }
 
-    public List<ParameterDeclaration> getParameters() {
+    public List<? extends VariableDeclaration> getParameters() {
         return this.parameters;
     }
 

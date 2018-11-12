@@ -1,20 +1,19 @@
 package edu.kit.minijava.ast.nodes;
 
-import edu.kit.minijava.ast.references.*;
 import edu.kit.minijava.lexer.*;
 
 import java.util.*;
-import java.util.stream.*;
 
 public final class MainMethodDeclaration implements SubroutineDeclaration, MemberDeclaration, ASTNode {
-    public MainMethodDeclaration(TypeReference returnType, String name, ParameterDeclaration parameter,
-                                 Statement.Block body, TokenLocation location) {
-        assert returnType.getBasicTypeReference().getName().equals("void");
-        assert returnType.getNumberOfDimensions() == 0;
-        assert parameter.getType().getBasicTypeReference().getName().equals("String");
-        assert parameter.getType().getNumberOfDimensions() == 1;
+    public MainMethodDeclaration(String name, Token argumentsParameterNameToken, Statement.Block body,
+                                 TokenLocation location) {
+        // FIXME: builtin string?
+        ImplicitTypeReference parameterType = new ImplicitTypeReference(PrimitiveTypeDeclaration.VOID, 1);
+        String parameterName = argumentsParameterNameToken.getText();
+        TokenLocation parameterLocation = argumentsParameterNameToken.getLocation();
+        ParameterDeclaration parameter = new ParameterDeclaration(parameterType, parameterName, parameterLocation);
 
-        this.returnType = returnType;
+        this.returnType = new ImplicitTypeReference(PrimitiveTypeDeclaration.VOID, 0);;
         this.name = name;
         this.argumentsParameter = parameter;
         this.body = body;
@@ -37,7 +36,7 @@ public final class MainMethodDeclaration implements SubroutineDeclaration, Membe
         return this.name;
     }
 
-    public ParameterDeclaration getArgumentsParameter() {
+    public VariableDeclaration getArgumentsParameter() {
         return this.argumentsParameter;
     }
 

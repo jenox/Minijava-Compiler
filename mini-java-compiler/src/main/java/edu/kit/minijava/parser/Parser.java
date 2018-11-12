@@ -162,24 +162,15 @@ public final class Parser {
 
             Statement.Block body = this.parseBlock();
 
-            TypeReference returnType = new TypeReference(new BasicTypeReference("void",
-                    returnTypeToken.getLocation()), 0);
-
-            TypeReference parameterType = new TypeReference(new BasicTypeReference("String",
-                    parameterTypeToken.getLocation()), 1);
-            String parameterName = parameterNameToken.getText();
-            TokenLocation parameterLocation = parameterNameToken.getLocation();
-            ParameterDeclaration parameter = new ParameterDeclaration(parameterType, parameterName, parameterLocation);
-
             String methodName = methodNameToken.getText();
             TokenLocation methodLocation = methodNameToken.getLocation();
 
-            return new MainMethodDeclaration(returnType, methodName, parameter, body, methodLocation);
+            return new MainMethodDeclaration(methodName, parameterNameToken, body, methodLocation);
         }
 
         // ClassMember -> Method | Field
         else {
-            TypeReference type = this.parseType();
+            ExplicitTypeReference type = this.parseType();
             Token name = this.consume(TokenType.IDENTIFIER, "ClassMember");
 
             // ClassMember -> Field
@@ -229,7 +220,7 @@ public final class Parser {
     }
 
     private ParameterDeclaration parseParameter() throws ParserException {
-        TypeReference type = this.parseType();
+        ExplicitTypeReference type = this.parseType();
         Token token = this.consume(TokenType.IDENTIFIER, "Parameter");
 
         return new ParameterDeclaration(type, token.getText(), token.getLocation());
@@ -306,7 +297,7 @@ public final class Parser {
     }
 
     private Statement parseLocalVariableDeclarationStatement() throws ParserException {
-        TypeReference type = this.parseType();
+        ExplicitTypeReference type = this.parseType();
         Token name = this.consume(TokenType.IDENTIFIER, "LocalVariableDeclarationStatement");
 
         // LocalVariableDeclarationStatement -> Type "IDENTIFIER" "=" Expression ";"
@@ -618,11 +609,11 @@ public final class Parser {
 
     // MARK: - Parsing Types
 
-    private TypeReference parseType() throws ParserException {
+    private ExplicitTypeReference parseType() throws ParserException {
         BasicTypeReference basicTypeReference = this.parseBasicType();
         int numberOfDimensions = this.parseOpeningAndClosingBrackets();
 
-        return new TypeReference(basicTypeReference, numberOfDimensions);
+        return new ExplicitTypeReference(basicTypeReference, numberOfDimensions);
     }
 
     private BasicTypeReference parseBasicType() throws ParserException {

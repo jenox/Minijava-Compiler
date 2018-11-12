@@ -44,14 +44,14 @@ public class Collector extends ASTVisitor<Void> {
     protected void visit(FieldDeclaration fieldDeclaration, Void context) {
         this.elements.add(fieldDeclaration);
 
-        this.elements.add(fieldDeclaration.getType());
+        fieldDeclaration.getType().accept(this);
     }
 
     @Override
     protected void visit(MethodDeclaration methodDeclaration, Void context) {
         this.elements.add(methodDeclaration);
 
-        this.elements.add(methodDeclaration.getReturnType());
+        methodDeclaration.getReturnType().accept(this);
         methodDeclaration.getParameters().forEach(d -> d.accept(this));
         methodDeclaration.getBody().accept(this);
     }
@@ -60,7 +60,7 @@ public class Collector extends ASTVisitor<Void> {
     protected void visit(MainMethodDeclaration methodDeclaration, Void context) {
         this.elements.add(methodDeclaration);
 
-        this.elements.add(methodDeclaration.getReturnType());
+        methodDeclaration.getReturnType().accept(this);
         methodDeclaration.getArgumentsParameter().accept(this);
         methodDeclaration.getBody().accept(this);
     }
@@ -69,7 +69,17 @@ public class Collector extends ASTVisitor<Void> {
     protected void visit(ParameterDeclaration parameterDeclaration, Void context) {
         this.elements.add(parameterDeclaration);
 
-        this.elements.add(parameterDeclaration.getType());
+        parameterDeclaration.getType().accept(this);
+    }
+
+    @Override
+    protected void visit(ExplicitTypeReference reference, Void context) {
+        this.elements.add(reference);
+    }
+
+    @Override
+    protected void visit(ImplicitTypeReference reference, Void context) {
+        this.elements.add(reference);
     }
 
     @Override
@@ -112,7 +122,7 @@ public class Collector extends ASTVisitor<Void> {
     protected void visit(Statement.LocalVariableDeclarationStatement statement, Void context) {
         this.elements.add(statement);
 
-        this.elements.add(statement.getType());
+        statement.getType().accept(this);
         statement.getValue().ifPresent(v -> v.accept(this));
     }
 

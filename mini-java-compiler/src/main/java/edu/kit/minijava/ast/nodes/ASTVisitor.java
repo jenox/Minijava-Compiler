@@ -7,6 +7,8 @@ public abstract class ASTVisitor<T> {
     protected abstract void visit(MainMethodDeclaration methodDeclaration, T context);
     protected abstract void visit(MethodDeclaration methodDeclaration, T context);
     protected abstract void visit(ParameterDeclaration parameterDeclaration, T context);
+    protected abstract void visit(ExplicitTypeReference reference, T context);
+    protected abstract void visit(ImplicitTypeReference reference, T context);
 
     protected abstract void visit(Statement.IfStatement statement, T context);
     protected abstract void visit(Statement.WhileStatement statement, T context);

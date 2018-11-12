@@ -45,3 +45,4 @@ public abstract class ExplicitReference<DeclarationType extends Declaration> ext
         return this.name + " at " + this.location;
     }
 }
+

@@ -1,6 +1,5 @@
 package edu.kit.minijava.ast.nodes;
 
-import edu.kit.minijava.ast.references.*;
 import edu.kit.minijava.lexer.*;
 
 public final class FieldDeclaration implements VariableDeclaration, MemberDeclaration, ASTNode {

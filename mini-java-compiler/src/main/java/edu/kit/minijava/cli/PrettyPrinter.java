@@ -1,7 +1,6 @@
 package edu.kit.minijava.cli;
 
 import edu.kit.minijava.ast.nodes.*;
-import edu.kit.minijava.ast.references.*;
 
 import java.util.*;
 
@@ -72,7 +71,7 @@ public final class PrettyPrinter extends ASTVisitor<PrettyPrinter.Options> {
     @Override
     protected void visit(FieldDeclaration declaration, Options context) {
         this.print("public ");
-        this.print(declaration.getType());
+        declaration.getType().accept(this);
         this.print(" ");
         this.print(declaration.getName());
         this.println(";");
@@ -81,8 +80,7 @@ public final class PrettyPrinter extends ASTVisitor<PrettyPrinter.Options> {
     @Override
     protected void visit(MethodDeclaration declaration, Options context) {
         this.print("public ");
-
-        this.print(declaration.getReturnType());
+        declaration.getReturnType().accept(this);
         this.print(" ");
         this.print(declaration.getName());
         this.print("(");
@@ -90,7 +88,7 @@ public final class PrettyPrinter extends ASTVisitor<PrettyPrinter.Options> {
         if (!declaration.getParameterTypes().isEmpty()) {
             String separator = "";
 
-            for (ParameterDeclaration parameter : declaration.getParameters()) {
+            for (VariableDeclaration parameter : declaration.getParameters()) {
                 this.print(separator);
                 parameter.accept(this);
 
@@ -116,9 +114,23 @@ public final class PrettyPrinter extends ASTVisitor<PrettyPrinter.Options> {
 
     @Override
     protected void visit(ParameterDeclaration declaration, Options context) {
-        this.print(declaration.getType());
+        declaration.getType().accept(this);
         this.print(" ");
         this.print(declaration.getName());
+    }
+
+    @Override
+    protected void visit(ExplicitTypeReference reference, Options context) {
+        this.print(reference.getBasicTypeReference().getName());
+
+        for (int index = 0; index < reference.getNumberOfDimensions(); index += 1) {
+            this.print("[]");
+        }
+    }
+
+    @Override
+    protected void visit(ImplicitTypeReference reference, Options context) {
+        throw new AssertionError("This node should not be visited!");
     }
 
 
@@ -244,7 +256,7 @@ public final class PrettyPrinter extends ASTVisitor<PrettyPrinter.Options> {
 
     @Override
     protected void visit(Statement.LocalVariableDeclarationStatement statement, Options context) {
-        this.print(statement.getType());
+        statement.getType().accept(this);
         this.print(" ");
         this.print(statement.getName());
 
@@ -432,14 +444,6 @@ public final class PrettyPrinter extends ASTVisitor<PrettyPrinter.Options> {
 
         if (newline) {
             this.printNewline();
-        }
-    }
-
-    private void print(TypeReference reference) {
-        this.print(reference.getBasicTypeReference().getName());
-
-        for (int index = 0; index < reference.getNumberOfDimensions(); index += 1) {
-            this.print("[]");
         }
     }
 }

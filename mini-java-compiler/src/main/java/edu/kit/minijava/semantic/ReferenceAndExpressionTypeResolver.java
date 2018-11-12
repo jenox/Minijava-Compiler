@@ -65,11 +65,8 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<Void> {
     @Override
     protected void visit(FieldDeclaration fieldDeclaration, Void context) {
         if (!this.hasCollectedDeclarationsForUseBeforeDeclare) {
-            String fieldTypeName = fieldDeclaration.getType().getBasicTypeReference().getName();
-            Optional<BasicTypeDeclaration> typeDeclaration = this.getBasicTypeNamed(fieldTypeName);
-            assert typeDeclaration.isPresent() : "use of undeclared type in field";
-            assert typeDeclaration.get() != PrimitiveTypeDeclaration.VOID : "field of type void is not allowed";
-            fieldDeclaration.getType().getBasicTypeReference().resolveTo(typeDeclaration.get());
+            fieldDeclaration.getType().accept(this, context);
+            // TODO: void or array of void not allowed here
             return;
         }
 
@@ -79,16 +76,8 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<Void> {
     @Override
     protected void visit(MethodDeclaration methodDeclaration, Void context) {
         if (!this.hasCollectedDeclarationsForUseBeforeDeclare) {
-            String returnTypeName = methodDeclaration.getReturnType().getBasicTypeReference().getName();
-            Optional<BasicTypeDeclaration> typeDeclaration  = this.getBasicTypeNamed(returnTypeName);
-
-            assert typeDeclaration.isPresent() : "use of undeclared type in method";
-
-            if (methodDeclaration.getReturnType().getNumberOfDimensions() >= 1) {
-                assert typeDeclaration.get() != PrimitiveTypeDeclaration.VOID : "returning array of void not allowed";
-            }
-
-            methodDeclaration.getReturnType().getBasicTypeReference().resolveTo(typeDeclaration.get());
+            methodDeclaration.getReturnType().accept(this, context);
+            // TODO: array of void not allowed here
             methodDeclaration.getParameters().forEach(node -> node.accept(this, context));
             return;
         }
@@ -105,10 +94,17 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<Void> {
 
     @Override
     protected void visit(MainMethodDeclaration methodDeclaration, Void context) {
+        if (!this.hasCollectedDeclarationsForUseBeforeDeclare) {
+            methodDeclaration.getReturnType().accept(this, context);
+            methodDeclaration.getArgumentsParameter().accept(this, context);
+            return;
+        }
+
         this.subroutineDeclarations.push(methodDeclaration);
         this.symbolTable.enterNewScope();
 
-        // methodDeclaration.getArgumentsParameter().accept(this);
+        methodDeclaration.getReturnType().accept(this, context);
+        methodDeclaration.getArgumentsParameter().accept(this, context);
         methodDeclaration.getBody().accept(this, context);
 
         this.symbolTable.leaveCurrentScope();
@@ -118,11 +114,8 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<Void> {
     @Override
     protected void visit(ParameterDeclaration parameterDeclaration, Void context) {
         if (!this.hasCollectedDeclarationsForUseBeforeDeclare) {
-            String parameterTypeName = parameterDeclaration.getType().getBasicTypeReference().getName();
-            Optional<BasicTypeDeclaration> typeDeclaration  = this.getBasicTypeNamed(parameterTypeName);
-            assert typeDeclaration.isPresent() : "use of undeclared type in parameter";
-            assert typeDeclaration.get() != PrimitiveTypeDeclaration.VOID : "void not allowed as parameter";
-            parameterDeclaration.getType().getBasicTypeReference().resolveTo(typeDeclaration.get());
+            parameterDeclaration.getType().accept(this, context);
+            // TODO: void or array of void not allowed here
             return;
         }
 
@@ -135,6 +128,20 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<Void> {
         });
 
         this.symbolTable.enterDeclaration(parameterDeclaration);
+    }
+
+    @Override
+    protected void visit(ExplicitTypeReference reference, Void context) {
+        String typeName = reference.getBasicTypeReference().getName();
+        Optional<BasicTypeDeclaration> typeDeclaration = this.getBasicTypeNamed(typeName);
+        assert typeDeclaration.isPresent() : "use of undeclared type";
+
+        reference.getBasicTypeReference().resolveTo(typeDeclaration.get());
+    }
+
+    @Override
+    protected void visit(ImplicitTypeReference reference, Void context) {
+        // noop
     }
 
     @Override
@@ -186,11 +193,8 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<Void> {
     protected void visit(Statement.LocalVariableDeclarationStatement statement, Void context) {
 
         // Resolve type.
-        String typeName = statement.getType().getBasicTypeReference().getName();
-        Optional<BasicTypeDeclaration> typeDeclaration = this.getBasicTypeNamed(typeName);
-        assert typeDeclaration.isPresent() : "use of undeclared type in local var";
-        assert typeDeclaration.get() != PrimitiveTypeDeclaration.VOID : "variable of type void not allowed";
-        statement.getType().getBasicTypeReference().resolveTo(typeDeclaration.get());
+        statement.getType().accept(this, context);
+        // TODO: void or array of void not allowed here
 
         // Ensure existing declaration can be shadowed.
         this.symbolTable.getVisibleDeclarationForName(statement.getName()).ifPresent(previousDeclaration -> {
@@ -401,7 +405,6 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<Void> {
         assert declaration.isPresent() : "use of undeclared variable " + name;
 
         expression.getReference().resolveTo(declaration.get());
-
         expression.getType().resolveTo(declaration.get().getType(), true);
     }
 
