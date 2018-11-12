@@ -8,7 +8,7 @@ public enum PrimitiveTypeDeclaration implements BasicTypeDeclaration {
     BOOLEAN("boolean"),
     VOID("void");
 
-    private String typeName;
+    private final String typeName;
 
     PrimitiveTypeDeclaration(String typeName) {
         this.typeName = typeName;
