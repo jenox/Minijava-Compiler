@@ -1,0 +1,110 @@
+ASTNode = Program           | 
+          ClassDeclaration  | 
+          Expression        | 
+          Statement         | 
+          FieldDeclaration  | 
+          MethodDeclaration | 
+          ParameterDeclaration
+
+SimpleReference = BasicTypeReference  |
+                  ClassReference      |
+                  FieldReference      |
+                  MethodReference     |
+                  TypeReference       | 
+                  VariableReference
+
+BasicTypeReference  :: __name__
+    Eine Referenz auf einen BasicType. __name__ ist vom Typ String.
+ClassReference      :: __name__
+    Eine Klassenreferenz. __name__ ist vom Typ String.
+FieldReference      :: TypeOfExpression __name__
+    Eine Attributreferenz. TypeOfExpression repräsentiert den Typ des aufrufenden Objekts.
+MethodReference     :: TypeOfExpression? __name__ TypeOfExpression*
+    Eine Methodenreferenz. TypeOfExpression repräsentiert den Typ des aufrufenden Objekts. Die hinteren TypeOfExpressions sind die Typen der Argumente.
+TypeReference       :: __name__ __numberOfDimensions__
+    Eine Typreferenz. __name__ ist vom Typ String. __numberOfDimensions__ ist vom Typ int und entspricht der Anzahl der zusätzlichen Dimensionen, welche ein Array haben kann.
+VariableReference   :: __name__
+    Eine Variablenreferenz. __name__ ist vom Typ String.
+
+Program              :: ClassDeclaration*
+    Ein MiniJava-Programm. ClassDeclarations sind die Klassendeklarationen des Programms.
+ClassDeclaration     :: __name__ MethodDeclaration* FieldDeclaration*
+    Klassendeklaration. __name__ ist vom Typ String. MethodDeclarations sind die deklarierten Methoden der Klasse. FieldDeclarations sind die Attribute der Klasse.
+FieldDeclaration     :: TypeReference __name__
+    Attributdeklaration. TypeReference entspricht dem Typ des Attributs. __name__ ist vom Typ String.
+MethodDeclaration    :: __isStatic__ TypeReference __name__ ParameterDeclaration* Block
+    Methodendeklaration. __isStatic__ ist vom Typ boolean und sagt aus, ob die Methode statisch ist. TypeReference entspricht dem Rückgabetypen der Methode. __name__ ist vom Typ String. Die ParameterDeclarations sind die Parameter der Methode und Block entspricht den Statements in der Methode.
+ParameterDeclaration :: TypeReference __name__
+    Parameterdeklaration. TypeReference entspricht dem Typen des Parameters. __name__ ist vom Typ String.
+
+Expression = BinaryOperation         | 
+             UnaryOperation          | 
+             NullLiteral             | 
+             BooleanLiteral          | 
+             IntegerLiteral          | 
+             MethodInvocation        | 
+             ExplicitFieldAccess     | 
+             ArrayElementAccess      | 
+             VariableAccess          | 
+             CurrentContextAccess    | 
+             NewObjectCreation       | 
+             NewArrayCreation
+
+BynaryOperationType = MULTIPLICATION              |
+                      DIVISION                    |
+                      MODULO                      |
+                      ADDITION                    |
+                      SUBTRACTION                 |
+                      LESS_THAN                   |
+                      LESS_THAN_OR_EQUAL_TO       |
+                      GREATER_THAN                |
+                      GREATER_THAN_OR_EQUAL_TO    |
+                      EQUAL_TO                    |
+                      NOT_EQUAL_TO                |
+                      LOGICAL_AND                 |
+                      LOGICAL_OR                  |
+                      ASSIGNMENT
+
+UnaryOperationType =  LOGICAL_NEGATION |
+                      NUMERIC_NEGATION
+
+BinaryOperation      :: BinaryOperationType Expression Expression
+    Eine binäre Operation (Addition, ...).
+UnaryOperation       :: UnaryOperationType Expression
+    Eine unäre Operation (Negation, ...). 
+BooleanLiteral       :: __value__
+    Ein boolescher Wert.  __value__ ist vom Typ String.
+IntegerLiteral       :: __value__
+    Ein Integer-Wert. __value__ ist vom Typ String.
+MethodInvocation     :: Expression __methodName__ Expression*
+    Ein Methodenaufruf. Der erste Expression ist der Aufrufkontext. Die hinteren Expressions sind die Argumente. __methodName__ ist vom Typ String.
+ExplicitFieldAccess  :: Expression __fieldName__
+    Ein Attributaufruf. Der Expression ist der Aufrufkontext. __fieldName__ ist vom Typ String.
+ArrayElementAccess   :: Expression Expression
+    Zugriff auf ein Array-Element. Der erste Expression ist der Aufrufkontext. Der zweite ist der Index.
+VariableAccess       :: __variableName__
+    Zugriff auf eine Variable. __variableName__ ist vom Typ String.
+NewObjectCreation    :: __className__
+    Objekterstellung. __className__ ist vom Typ String.
+NewArrayCreation     :: BasicTypeReference Expression __numberOfDimensions__
+    Arrayerstellung. Die BasicTypeReference ist Typ des Arrays. Der Expression ist die Größe der ersten Dimension und die __numberOfDimensions__ ist die Anzahl der Dimensionen.
+
+Statement = IfStatement                         | 
+            WhileStatement                      |
+            ExpressionStatement                 |
+            ReturnStatement                     |
+            EmptyStatement                      |
+            Block                               
+
+IfStatement                       :: Expression Statement Statement?
+    If-Statement. Der Expression ist die Condition, welche überprüft wird. Das erste Statement ist für den True-Fall. Das optional zweite für den False-Fall.
+WhileStatement                    :: Expression Statement
+    While-Statement. Der Expression ist die Condition, welche überprüft wird. Das Statement ist für den True-Fall.
+ExpressionStatement               :: Expression
+    Expression-Statement.
+ReturnStatement                   :: Expression?
+    Return-Statement. Der Expression entspricht dem Ausdruck der zurückgegeben wird.
+Block                             :: Statement*
+    Block, welcher aus mehreren Statements bestehen kann.
+LocalVariableDeclarationStatement :: TypeReference __name__ Expression?
+    Variablendeklaration. TypeReference repräsentiert den Typen der Variable, __name__ den Namen und der Expression die mögliche Initialisierung.
