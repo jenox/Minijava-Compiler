@@ -4,6 +4,7 @@ public abstract class ASTVisitor<T> {
     protected abstract void visit(Program program, T context);
     protected abstract void visit(ClassDeclaration classDeclaration, T context);
     protected abstract void visit(FieldDeclaration fieldDeclaration, T context);
+    protected abstract void visit(MainMethodDeclaration methodDeclaration, T context);
     protected abstract void visit(MethodDeclaration methodDeclaration, T context);
     protected abstract void visit(ParameterDeclaration parameterDeclaration, T context);
 

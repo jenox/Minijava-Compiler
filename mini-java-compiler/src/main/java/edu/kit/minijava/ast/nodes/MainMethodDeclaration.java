@@ -6,19 +6,22 @@ import edu.kit.minijava.lexer.*;
 import java.util.*;
 import java.util.stream.*;
 
-public final class MethodDeclaration implements SubroutineDeclaration, MemberDeclaration, ASTNode {
-    public MethodDeclaration(TypeReference returnType, String name, List<ParameterDeclaration> parameters,
-                             Statement.Block body, TokenLocation location) {
+public final class MainMethodDeclaration implements SubroutineDeclaration, MemberDeclaration, ASTNode {
+    public MainMethodDeclaration(TypeReference returnType, String name, ParameterDeclaration parameter,
+                                 Statement.Block body, TokenLocation location) {
+        assert returnType.getName().equals("void") && returnType.getNumberOfDimensions() == 0;
+        assert parameter.getType().getName().equals("String") && parameter.getType().getNumberOfDimensions() == 1;
+
         this.returnType = returnType;
         this.name = name;
-        this.parameters = Collections.unmodifiableList(parameters);
+        this.argumentsParameter = parameter;
         this.body = body;
         this.location = location;
     }
 
     private final TypeReference returnType;
     private final String name;
-    private final List<ParameterDeclaration> parameters;
+    private final ParameterDeclaration argumentsParameter;
     private final Statement.Block body;
     private final TokenLocation location;
 
@@ -32,8 +35,8 @@ public final class MethodDeclaration implements SubroutineDeclaration, MemberDec
         return this.name;
     }
 
-    public List<ParameterDeclaration> getParameters() {
-        return this.parameters;
+    public ParameterDeclaration getArgumentsParameter() {
+        return this.argumentsParameter;
     }
 
     public Statement.Block getBody() {
@@ -46,7 +49,7 @@ public final class MethodDeclaration implements SubroutineDeclaration, MemberDec
 
     @Override
     public List<TypeReference> getParameterTypes() {
-        return this.parameters.stream().map(ParameterDeclaration::getType).collect(Collectors.toList());
+        return Collections.singletonList(this.argumentsParameter.getType());
     }
 
     @Override
@@ -56,6 +59,6 @@ public final class MethodDeclaration implements SubroutineDeclaration, MemberDec
 
     @Override
     public String toString() {
-        return "instance method '" + this.name + "' at " + this.location;
+        return "main method '" + this.name + "' at " + this.location;
     }
 }

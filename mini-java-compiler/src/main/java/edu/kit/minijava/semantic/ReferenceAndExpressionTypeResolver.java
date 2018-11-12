@@ -54,6 +54,10 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<Void> {
             methodDeclaration.accept(this, context);
         }
 
+        for (MainMethodDeclaration methodDeclaration : classDeclaration.getMainMethodDeclarations()) {
+            methodDeclaration.accept(this, context);
+        }
+
         this.symbolTable.leaveCurrentScope();
         this.classDeclarations.pop();
     }
@@ -93,6 +97,18 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<Void> {
         this.symbolTable.enterNewScope();
 
         methodDeclaration.getParameters().forEach(node -> node.accept(this, context));
+        methodDeclaration.getBody().accept(this, context);
+
+        this.symbolTable.leaveCurrentScope();
+        this.subroutineDeclarations.pop();
+    }
+
+    @Override
+    protected void visit(MainMethodDeclaration methodDeclaration, Void context) {
+        this.subroutineDeclarations.push(methodDeclaration);
+        this.symbolTable.enterNewScope();
+
+        // methodDeclaration.getArgumentsParameter().accept(this);
         methodDeclaration.getBody().accept(this, context);
 
         this.symbolTable.leaveCurrentScope();

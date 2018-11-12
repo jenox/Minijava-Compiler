@@ -5,15 +5,18 @@ import edu.kit.minijava.lexer.*;
 import java.util.*;
 
 public final class ClassDeclaration implements BasicTypeDeclaration, ASTNode {
-    public ClassDeclaration(String name, List<MethodDeclaration> methods, List<FieldDeclaration> fields,
+    public ClassDeclaration(String name, List<MainMethodDeclaration> mainMethodDeclarations,
+                            List<MethodDeclaration> methodDeclarations, List<FieldDeclaration> fieldDeclarations,
                             TokenLocation location) {
         this.name = name;
-        this.methodDeclarations = Collections.unmodifiableList(methods);
-        this.fieldDeclarations = Collections.unmodifiableList(fields);
+        this.mainMethodDeclarations = Collections.unmodifiableList(mainMethodDeclarations);
+        this.methodDeclarations = Collections.unmodifiableList(methodDeclarations);
+        this.fieldDeclarations = Collections.unmodifiableList(fieldDeclarations);
         this.location = location;
     }
 
     private final String name;
+    private final List<MainMethodDeclaration> mainMethodDeclarations;
     private final List<MethodDeclaration> methodDeclarations;
     private final List<FieldDeclaration> fieldDeclarations;
     private final TokenLocation location;
@@ -21,6 +24,10 @@ public final class ClassDeclaration implements BasicTypeDeclaration, ASTNode {
     @Override
     public String getName() {
         return this.name;
+    }
+
+    public List<MainMethodDeclaration> getMainMethodDeclarations() {
+        return this.mainMethodDeclarations;
     }
 
     @Override

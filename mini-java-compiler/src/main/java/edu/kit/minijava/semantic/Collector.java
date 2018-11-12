@@ -57,6 +57,15 @@ public class Collector extends ASTVisitor<Void> {
     }
 
     @Override
+    protected void visit(MainMethodDeclaration methodDeclaration, Void context) {
+        this.elements.add(methodDeclaration);
+
+        this.elements.add(methodDeclaration.getReturnType());
+        methodDeclaration.getArgumentsParameter().accept(this);
+        methodDeclaration.getBody().accept(this);
+    }
+
+    @Override
     protected void visit(ParameterDeclaration parameterDeclaration, Void context) {
         this.elements.add(parameterDeclaration);
 

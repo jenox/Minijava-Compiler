@@ -43,14 +43,23 @@ public final class PrettyPrinter extends ASTVisitor<PrettyPrinter.Options> {
         this.print(" ");
         this.beginBlock();
 
-        List<MethodDeclaration> methods = new ArrayList<>(declaration.getMethodDeclarations());
-        methods.sort(Comparator.comparing(MethodDeclaration::getName));
+        List<SubroutineDeclaration> methods = new ArrayList<>(declaration.getMethodDeclarations());
+        methods.addAll(declaration.getMainMethodDeclarations());
+        methods.sort(Comparator.comparing(SubroutineDeclaration::getName));
 
         List<FieldDeclaration> fields = new ArrayList<>(declaration.getFieldDeclarations());
         fields.sort(Comparator.comparing(FieldDeclaration::getName));
 
-        for (MethodDeclaration method : methods) {
-            method.accept(this);
+        for (SubroutineDeclaration method : methods) {
+            if (method instanceof MethodDeclaration) {
+                ((MethodDeclaration)method).accept(this);
+            }
+            else if (method instanceof MainMethodDeclaration) {
+                ((MainMethodDeclaration)method).accept(this);
+            }
+            else {
+                throw new AssertionError();
+            }
         }
 
         for (FieldDeclaration field : fields) {
@@ -73,10 +82,6 @@ public final class PrettyPrinter extends ASTVisitor<PrettyPrinter.Options> {
     protected void visit(MethodDeclaration declaration, Options context) {
         this.print("public ");
 
-        if (declaration.isStatic()) {
-            this.print("static ");
-        }
-
         this.print(declaration.getReturnType());
         this.print(" ");
         this.print(declaration.getName());
@@ -93,6 +98,17 @@ public final class PrettyPrinter extends ASTVisitor<PrettyPrinter.Options> {
             }
         }
 
+        this.print(") ");
+
+        declaration.getBody().accept(this);
+    }
+
+    @Override
+    protected void visit(MainMethodDeclaration declaration, Options context) {
+        this.print("public static void ");
+        this.print(declaration.getName());
+        this.print("(String[] ");
+        this.print(declaration.getArgumentsParameter().getName());
         this.print(") ");
 
         declaration.getBody().accept(this);

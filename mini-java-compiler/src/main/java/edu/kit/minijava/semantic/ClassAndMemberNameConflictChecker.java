@@ -40,8 +40,6 @@ public final class ClassAndMemberNameConflictChecker {
         Map<String, FieldDeclaration> fieldDeclarations = new HashMap<>();
 
         for (MethodDeclaration methodDeclaration : classDeclaration.getMethodDeclarations()) {
-            if (methodDeclaration.isStatic()) continue;
-
             if (instanceMethodDeclarations.containsKey(methodDeclaration.getName())) {
                 assert false : "invalid redeclaration of instance method " + methodDeclaration.getName();
             }
