@@ -23,8 +23,7 @@ public class ValidateCommand extends Command {
             Parser parser = new Parser(lexer);
             Program program = parser.parseProgram();
 
-            ClassAndMemberNameConflictChecker checker = new ClassAndMemberNameConflictChecker(program);
-            new ReferenceAndExpressionTypeResolver(program, checker);
+            new ReferenceAndExpressionTypeResolver(program);
 
             for (TypeReference reference : new Collector(program).instancesOfClass(TypeReference.class)) {
                 if (reference.getBasicTypeReference().isResolved()) {

@@ -5,19 +5,12 @@ import edu.kit.minijava.ast.references.*;
 
 import java.util.*;
 
-public class ReferenceAndExpressionTypeResolver extends ASTVisitor<Void> {
-    public ReferenceAndExpressionTypeResolver(Program program, ClassAndMemberNameConflictChecker checker) {
-        this.checker = checker;
-
+public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorBase {
+    public ReferenceAndExpressionTypeResolver(Program program) {
         program.accept(this, null);
+
+        assert this.getEntryPoint().isPresent() : "missing main method";
     }
-
-    private final ClassAndMemberNameConflictChecker checker;
-    private final SymbolTable symbolTable = new SymbolTable();
-    private final Stack<ClassDeclaration> classDeclarations = new Stack<>();
-    private final Stack<SubroutineDeclaration> subroutineDeclarations = new Stack<>();
-
-    private boolean hasCollectedDeclarationsForUseBeforeDeclare = false;
 
 
     // MARK: - Traversal
@@ -26,14 +19,13 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<Void> {
     protected void visit(Program program, Void context) {
 
         // Pass 1: collect declarations
-
         for (ClassDeclaration classDeclaration : program.getClassDeclarations()) {
             classDeclaration.accept(this, context);
         }
 
-        // Pass 2: resolve remaining types and references
-        this.hasCollectedDeclarationsForUseBeforeDeclare = true;
+        this.finishCollectingDeclarationsForUseBeforeDeclare();
 
+        // Pass 2: resolve remaining types and references
         for (ClassDeclaration classDeclaration : program.getClassDeclarations()) {
             classDeclaration.accept(this, context);
         }
@@ -41,10 +33,11 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<Void> {
 
     @Override
     protected void visit(ClassDeclaration classDeclaration, Void context) {
-        assert this.symbolTable.getNumberOfScopes() == 0;
+        if (this.isCollectingDeclarationsForUseBeforeDeclare()) {
+            this.registerClassDeclaration(classDeclaration);
+        }
 
-        this.classDeclarations.push(classDeclaration);
-        this.symbolTable.enterNewScope();
+        this.enterClassDeclaration(classDeclaration);
 
         for (FieldDeclaration fieldDeclaration : classDeclaration.getFieldDeclarations()) {
             fieldDeclaration.accept(this, context);
@@ -58,82 +51,75 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<Void> {
             methodDeclaration.accept(this, context);
         }
 
-        this.symbolTable.leaveCurrentScope();
-        this.classDeclarations.pop();
+        this.leaveCurrentClassDeclaration();
     }
 
     @Override
     protected void visit(FieldDeclaration fieldDeclaration, Void context) {
-        if (!this.hasCollectedDeclarationsForUseBeforeDeclare) {
+        if (this.isCollectingDeclarationsForUseBeforeDeclare()) {
+            this.registerFieldDeclaration(fieldDeclaration, this.getCurrentClassDeclaration());
+
             fieldDeclaration.getType().accept(this, context);
             // TODO: void or array of void not allowed here
-            return;
         }
-
-        this.symbolTable.enterDeclaration(fieldDeclaration);
+        else {
+            this.addVariableDeclarationToCurrentScope(fieldDeclaration);
+        }
     }
 
     @Override
     protected void visit(MethodDeclaration methodDeclaration, Void context) {
-        if (!this.hasCollectedDeclarationsForUseBeforeDeclare) {
+        if (this.isCollectingDeclarationsForUseBeforeDeclare()) {
+            this.registerMethodDeclaration(methodDeclaration, this.getCurrentClassDeclaration());
+
             methodDeclaration.getReturnType().accept(this, context);
             // TODO: array of void not allowed here
             methodDeclaration.getParameters().forEach(node -> node.accept(this, context));
-            return;
         }
+        else {
+            this.enterMethodDeclaration(methodDeclaration);
 
-        this.subroutineDeclarations.push(methodDeclaration);
-        this.symbolTable.enterNewScope();
+            methodDeclaration.getParameters().forEach(node -> node.accept(this, context));
+            methodDeclaration.getBody().accept(this, context);
 
-        methodDeclaration.getParameters().forEach(node -> node.accept(this, context));
-        methodDeclaration.getBody().accept(this, context);
+            if (!methodDeclaration.getReturnType().isVoid()) {
+                assert methodDeclaration.getBody().explicitlyReturns() : "must return a value on all paths";
+            }
 
-        if (!methodDeclaration.getReturnType().isVoid()) {
-            assert methodDeclaration.getBody().explicitlyReturns() : "must return a value on all paths";
+            assert !methodDeclaration.getBody().containsUnreachableStatements() : "contains unreachable statements";
+
+            this.leaveCurrentMethodDeclaration();
         }
-
-        assert !methodDeclaration.getBody().containsUnreachableStatements() : "contains unreachable statements";
-
-        this.symbolTable.leaveCurrentScope();
-        this.subroutineDeclarations.pop();
     }
 
     @Override
     protected void visit(MainMethodDeclaration methodDeclaration, Void context) {
-        if (!this.hasCollectedDeclarationsForUseBeforeDeclare) {
+        if (this.isCollectingDeclarationsForUseBeforeDeclare()) {
             methodDeclaration.getReturnType().accept(this, context);
             methodDeclaration.getArgumentsParameter().accept(this, context);
-            return;
+
+            this.setEntryPoint(methodDeclaration);
         }
+        else {
+            this.enterMethodDeclaration(methodDeclaration);
 
-        this.subroutineDeclarations.push(methodDeclaration);
-        this.symbolTable.enterNewScope();
+            methodDeclaration.getReturnType().accept(this, context);
+            methodDeclaration.getArgumentsParameter().accept(this, context);
+            methodDeclaration.getBody().accept(this, context);
 
-        methodDeclaration.getReturnType().accept(this, context);
-        methodDeclaration.getArgumentsParameter().accept(this, context);
-        methodDeclaration.getBody().accept(this, context);
-
-        this.symbolTable.leaveCurrentScope();
-        this.subroutineDeclarations.pop();
+            this.leaveCurrentMethodDeclaration();
+        }
     }
 
     @Override
     protected void visit(ParameterDeclaration parameterDeclaration, Void context) {
-        if (!this.hasCollectedDeclarationsForUseBeforeDeclare) {
+        if (this.isCollectingDeclarationsForUseBeforeDeclare()) {
             parameterDeclaration.getType().accept(this, context);
             // TODO: void or array of void not allowed here
-            return;
         }
-
-        // Ensure existing declaration can be shadowed.
-        this.symbolTable.getVisibleDeclarationForName(parameterDeclaration.getName()).ifPresent(previousDeclaration -> {
-            assert !this.symbolTable.isDeclarationInCurrentScope(previousDeclaration ) :
-                    "invalid parameter redeclaration";
-            assert previousDeclaration.canBeShadowedByVariableDeclarationInNestedScope() :
-                    "other declaration cant be shadowed";
-        });
-
-        this.symbolTable.enterDeclaration(parameterDeclaration);
+        else {
+            this.addVariableDeclarationToCurrentScope(parameterDeclaration);
+        }
     }
 
     @Override
@@ -180,7 +166,7 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<Void> {
     protected void visit(Statement.ReturnStatement statement, Void context) {
         statement.getValue().ifPresent(node -> node.accept(this, context));
 
-        TypeReference expectedReturnType = this.subroutineDeclarations.peek().getReturnType();
+        TypeReference expectedReturnType = this.getCurrentMethodDeclaration().getReturnType();
 
         if (statement.getValue().isPresent()) {
             TypeOfExpression actualReturnType = statement.getValue().get().getType();
@@ -202,17 +188,9 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<Void> {
         statement.getType().accept(this, context);
         // TODO: void or array of void not allowed here
 
-        // Ensure existing declaration can be shadowed.
-        this.symbolTable.getVisibleDeclarationForName(statement.getName()).ifPresent(previousDeclaration -> {
-            assert !this.symbolTable.isDeclarationInCurrentScope(previousDeclaration ) :
-                    "var already defined in current scope";
-            assert previousDeclaration.canBeShadowedByVariableDeclarationInNestedScope() :
-                    "other declaration cant be shadowed";
-        });
-
         // TODO: Is `int x = x + 1` valid if `x` isn't a field? Definite Assignment? If it is a field, which `x` should
         // TODO: we pick?
-        this.symbolTable.enterDeclaration(statement);
+        this.addVariableDeclarationToCurrentScope(statement);
 
         // Ensure type of value matches (if present).
         if (statement.getValue().isPresent()) {
@@ -225,14 +203,19 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<Void> {
 
     @Override
     protected void visit(Statement.Block block, Void context) {
-        this.symbolTable.enterNewScope();
+        this.enterNewVariableDeclarationScope();
 
         for (Statement statement : block.getStatements()) {
             statement.accept(this, context);
         }
 
-        this.symbolTable.leaveCurrentScope();
+        this.leaveCurrentVariableDeclarationScope();
     }
+
+
+    // MARK: - Expressions
+
+    // Before visiting an expression, its type is not resolved. After visiting an expression, its type must be resolved.
 
     @Override
     protected void visit(Expression.BinaryOperation expression, Void context) {
@@ -326,7 +309,7 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<Void> {
         expression.getArguments().forEach(node -> node.accept(this, context));
 
         String methodName = expression.getMethodReference().getName();
-        MethodDeclaration methodDeclaration;
+        Optional<MethodDeclaration> methodDeclaration;
 
         if (expression.getContext().isPresent()) {
             TypeOfExpression typeOfContext = expression.getContext().get().getType();
@@ -338,35 +321,27 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<Void> {
 
             assert typeDeclaration instanceof ClassDeclaration : "can only access methods on objects";
 
-            ClassDeclaration classDeclaration = (ClassDeclaration)typeDeclaration;
-
-            assert this.checker.getInstanceMethodDeclaration(methodName, classDeclaration) != null :
-                    "use of undeclared method";
-
-            methodDeclaration = this.checker.getInstanceMethodDeclaration(methodName, classDeclaration);
+            methodDeclaration = this.getMethodDeclarationForName(methodName, (ClassDeclaration)typeDeclaration);
         }
         else {
-            assert !(this.subroutineDeclarations.peek() instanceof MainMethodDeclaration) :
+            assert !(this.getCurrentMethodDeclaration() instanceof MainMethodDeclaration) :
                     "must not invoke methods on implicit this in main method";
 
-            ClassDeclaration classDeclaration = this.classDeclarations.peek();
-
-            assert this.checker.getInstanceMethodDeclaration(methodName, classDeclaration) != null :
-                    "use of undeclared method";
-
-            methodDeclaration = this.checker.getInstanceMethodDeclaration(methodName, classDeclaration);
+            methodDeclaration = this.getMethodDeclarationForName(methodName, this.getCurrentClassDeclaration());
         }
 
+        assert methodDeclaration.isPresent() : "use of undeclared method";
+
         List<TypeOfExpression> argumentTypes = expression.getMethodReference().getArgumentTypes();
-        List<TypeReference> parameterTypes = methodDeclaration.getParameterTypes();
+        List<TypeReference> parameterTypes = methodDeclaration.get().getParameterTypes();
 
         assert argumentTypes.size() == parameterTypes.size() : "incorrect number of arguments";
         for (int index = 0; index < argumentTypes.size(); index += 1) {
             assert argumentTypes.get(index).isCompatibleWith(parameterTypes.get(index)) : "incompatible argument type";
         }
 
-        expression.getMethodReference().resolveTo(methodDeclaration);
-        expression.getType().resolveTo(methodDeclaration.getReturnType(), false);
+        expression.getMethodReference().resolveTo(methodDeclaration.get());
+        expression.getType().resolveTo(methodDeclaration.get().getReturnType(), false);
     }
 
     @Override
@@ -385,14 +360,12 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<Void> {
         ClassDeclaration classDeclaration = (ClassDeclaration)typeDeclaration;
         String fieldName = expression.getFieldReference().getName();
 
-        assert this.checker.getFieldDeclaration(fieldName , classDeclaration) != null : "use of undeclared field";
+        Optional<FieldDeclaration> fieldDeclaration = this.getFieldDeclarationForName(fieldName, classDeclaration);
 
-        FieldDeclaration fieldDeclaration = this.checker.getFieldDeclaration(fieldName , classDeclaration);
+        assert fieldDeclaration.isPresent() : "use of undeclared field";
 
-        expression.getFieldReference().resolveTo(fieldDeclaration);
-
-        // TODO: Is `this.f().x = 42;` valid?
-        expression.getType().resolveTo(fieldDeclaration.getType(), true);
+        expression.getFieldReference().resolveTo(fieldDeclaration.get());
+        expression.getType().resolveTo(fieldDeclaration.get().getType(), true);
     }
 
     @Override
@@ -404,14 +377,13 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<Void> {
         assert type.getDeclaration().isPresent() : "context of array access must be array";
         assert type.getNumberOfDimensions() >= 1 : "context of array access must be array";
 
-        // TODO: Is `this.f()[23] = 42;` valid?
         expression.getType().resolveTo(type.getDeclaration().get(), type.getNumberOfDimensions() - 1, true);
     }
 
     @Override
     protected void visit(Expression.VariableAccess expression, Void context) {
         String name = expression.getVariableReference().getName();
-        Optional<VariableDeclaration> declaration = this.symbolTable.getVisibleDeclarationForName(name);
+        Optional<VariableDeclaration> declaration = this.getVariableDeclarationForName(name);
 
         assert declaration.isPresent() : "use of undeclared variable " + name;
         assert declaration.get().canBeAccessed() : "variable may not be accessed. sorry.";
@@ -422,15 +394,17 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<Void> {
 
     @Override
     protected void visit(Expression.CurrentContextAccess expression, Void context) {
-        assert !(this.subroutineDeclarations.peek() instanceof MainMethodDeclaration) :
+        assert !(this.getCurrentMethodDeclaration() instanceof MainMethodDeclaration) :
                 "this must not be accessed in main method";
 
-        expression.getType().resolveTo(this.classDeclarations.peek(), false);
+        expression.getType().resolveTo(this.getCurrentClassDeclaration(), false);
     }
 
     @Override
     protected void visit(Expression.NewObjectCreation expression, Void context) {
-        Optional<ClassDeclaration> classDeclaration = this.getClassNamed(expression.getClassReference().getName());
+        String className = expression.getClassReference().getName();
+        Optional<ClassDeclaration> classDeclaration = this.getClassDeclarationForName(className);
+
         assert classDeclaration.isPresent() : "use of undeclared class";
 
         expression.getClassReference().resolveTo(classDeclaration.get());
@@ -465,10 +439,6 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<Void> {
             }
         }
 
-        return Optional.ofNullable(this.getClassNamed(name).orElse(null));
-    }
-
-    private Optional<ClassDeclaration> getClassNamed(String name) {
-        return Optional.ofNullable(this.checker.getClassDeclaration(name));
+        return Optional.ofNullable(this.getClassDeclarationForName(name).orElse(null));
     }
 }
