@@ -3,18 +3,22 @@ package edu.kit.minijava.ast.nodes;
 import java.util.*;
 
 public enum PrimitiveTypeDeclaration implements BasicTypeDeclaration {
-    INTEGER,
-    BOOLEAN,
-    VOID;
+    INTEGER("int", true),
+    BOOLEAN("boolean", true),
+    VOID("void", true),
+    STRING("String", false);
+
+    PrimitiveTypeDeclaration(String name, boolean canBeReferencedByUser) {
+        this.name = name;
+        this.canBeReferencedByUser = canBeReferencedByUser;
+    }
+
+    private final String name;
+    private final boolean canBeReferencedByUser;
 
     @Override
     public String getName() {
-        switch (this) {
-            case INTEGER: return "int";
-            case BOOLEAN: return "boolean";
-            case VOID: return "void";
-            default: throw new AssertionError();
-        }
+        return this.name;
     }
 
     @Override
@@ -25,5 +29,9 @@ public enum PrimitiveTypeDeclaration implements BasicTypeDeclaration {
     @Override
     public List<FieldDeclaration> getFieldDeclarations() {
         return Collections.emptyList();
+    }
+
+    public boolean canBeReferencedByUser() {
+        return this.canBeReferencedByUser;
     }
 }

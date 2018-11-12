@@ -443,12 +443,13 @@ public class ReferenceAndExpressionTypeResolver extends ASTVisitor<Void> {
     // MARK: - Helpers
 
     private Optional<BasicTypeDeclaration> getBasicTypeNamed(String name) {
-        switch (name) {
-            case "void": return Optional.of(PrimitiveTypeDeclaration.VOID);
-            case "int": return Optional.of(PrimitiveTypeDeclaration.INTEGER);
-            case "boolean": return Optional.of(PrimitiveTypeDeclaration.BOOLEAN);
-            default: return Optional.ofNullable(this.getClassNamed(name).orElse(null));
+        for (PrimitiveTypeDeclaration type : PrimitiveTypeDeclaration.values()) {
+            if (name.equals(type.getName()) && type.canBeReferencedByUser()) {
+                return Optional.of(type);
+            }
         }
+
+        return Optional.ofNullable(this.getClassNamed(name).orElse(null));
     }
 
     private Optional<ClassDeclaration> getClassNamed(String name) {
