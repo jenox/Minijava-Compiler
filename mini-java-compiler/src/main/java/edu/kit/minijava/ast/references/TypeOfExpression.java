@@ -1,8 +1,8 @@
 package edu.kit.minijava.ast.references;
 
-import edu.kit.minijava.ast.nodes.*;
+import java.util.Optional;
 
-import java.util.*;
+import edu.kit.minijava.ast.nodes.*;
 
 public class TypeOfExpression {
 
@@ -33,7 +33,6 @@ public class TypeOfExpression {
     public final boolean isAssignable() {
         return this.isAssignable;
     }
-
 
     // MARK: - Resolution
 
@@ -99,13 +98,13 @@ public class TypeOfExpression {
         return this.declaration == PrimitiveTypeDeclaration.INTEGER && this.numberOfDimensions == 0;
     }
 
-    private boolean isNull() {
+    public final boolean isNull() {
         assert this.isResolved;
 
         return this.declaration == null;
     }
 
-    private boolean isObjectOrNull() {
+    public final boolean isObjectOrNull() {
         assert this.isResolved;
 
         return this.declaration == null || this.declaration instanceof ClassDeclaration && this.numberOfDimensions == 0;
