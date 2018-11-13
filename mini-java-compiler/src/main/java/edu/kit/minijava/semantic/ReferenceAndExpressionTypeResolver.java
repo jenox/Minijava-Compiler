@@ -16,6 +16,11 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
     public ReferenceAndExpressionTypeResolver(Program program) {
         program.accept(this, null);
 
+        finishCollectingDeclarationsForUseBeforeDeclare();
+
+        program.accept(this, null);
+
+
         assert this.getEntryPoint().isPresent() : "missing main method";
     }
 
@@ -24,42 +29,101 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
 
     @Override
     protected void visit(Program program, Void context) {
-        throw new UnsupportedOperationException();
+        for(ClassDeclaration clsDecl : program.getClassDeclarations())
+            clsDecl.accept(this, context);
     }
 
     @Override
     protected void visit(ClassDeclaration classDeclaration, Void context) {
-        throw new UnsupportedOperationException();
+        if(this.isCollectingDeclarationsForUseBeforeDeclare())
+            this.registerClassDeclaration(classDeclaration);
+
+        this.enterClassDeclaration(classDeclaration);
+
+        for(FieldDeclaration fldDecl : classDeclaration.getFieldDeclarations())
+            fldDecl.accept(this, context);
+
+        for(MethodDeclaration mthDecl : classDeclaration.getMethodDeclarations())
+            mthDecl.accept(this, context);
+
+        for(MainMethodDeclaration mainMthdDecl : classDeclaration.getMainMethodDeclarations())
+            mainMthdDecl.accept(this, context);
+
+        this.leaveCurrentClassDeclaration();
     }
 
+    // TODO: wir duerfen keine Felder vom Typ `void` oder vom Typ `void[]` deklarieren
     @Override
     protected void visit(FieldDeclaration fieldDeclaration, Void context) {
-        throw new UnsupportedOperationException();
+        if(this.isCollectingDeclarationsForUseBeforeDeclare())
+            this.registerFieldDeclaration(fieldDeclaration, this.getCurrentClassDeclaration());
+        else {
+           fieldDeclaration.getType().accept(this, context);
+           this.addVariableDeclarationToCurrentScope(fieldDeclaration);
+        }
     }
 
     @Override
     protected void visit(MethodDeclaration methodDeclaration, Void context) {
-        throw new UnsupportedOperationException();
+        if(this.isCollectingDeclarationsForUseBeforeDeclare())
+            this.registerMethodDeclaration(methodDeclaration, this.getCurrentClassDeclaration());
+        else {
+            methodDeclaration.getReturnType().accept(this, context);
+
+
+            // TODO: ueberpruefen, dass return type nicht ein `void[]` ist
+
+            for(VariableDeclaration paramDecl : methodDeclaration.getParameters())
+                paramDecl.accept(this, context);
+
+            this.enterMethodDeclaration(methodDeclaration);
+
+            methodDeclaration.getBody().accept(this, context);
+
+            // TODO: location zum assert-string hinzufuegen
+            // TODO: return type zum assert-string hinzufuegen
+            if(!methodDeclaration.getReturnType().isVoid())
+                assert methodDeclaration.getBody().explicitlyReturns() : "At least one path in the method body doesn't returns a value.";
+
+            this.leaveCurrentMethodDeclaration();
+        }
     }
 
     @Override
     protected void visit(MainMethodDeclaration methodDeclaration, Void context) {
-        throw new UnsupportedOperationException();
+        if(isCollectingDeclarationsForUseBeforeDeclare())
+            this.setEntryPoint(methodDeclaration);
+        else {
+            methodDeclaration.getReturnType().accept(this, context);
+            methodDeclaration.getArgumentsParameter().accept(this, context);
+
+
+            this.enterMethodDeclaration(methodDeclaration);
+            methodDeclaration.getBody().accept(this, context);
+            this.leaveCurrentMethodDeclaration();
+        }
     }
 
     @Override
     protected void visit(ParameterDeclaration parameterDeclaration, Void context) {
-        throw new UnsupportedOperationException();
+        parameterDeclaration.getType().accept(this, context);
+
+        // TODO: checken, dass Typ nicht `void` oder `void[]` ist
+
+        this.addVariableDeclarationToCurrentScope(parameterDeclaration);
     }
 
     @Override
     protected void visit(ExplicitTypeReference reference, Void context) {
-        throw new UnsupportedOperationException();
+        String name = reference.getBasicTypeReference().getName();
+        assert this.getBasicTypeDeclarationForName(name).isPresent() : "Use of undeclared type: `" + name + "`";
+
+        reference.getBasicTypeReference().resolveTo(this.getBasicTypeDeclarationForName(name).get());
     }
 
     @Override
     protected void visit(ImplicitTypeReference reference, Void context) {
-        throw new UnsupportedOperationException();
+        // NO-OP
     }
 
     @Override
