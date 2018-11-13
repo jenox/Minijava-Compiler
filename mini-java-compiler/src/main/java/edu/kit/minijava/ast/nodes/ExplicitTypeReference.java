@@ -22,16 +22,6 @@ public final class ExplicitTypeReference implements TypeReference {
     }
 
     @Override
-    public final boolean isVoid() {
-        if (this.basicTypeReference.getDeclaration() == PrimitiveTypeDeclaration.VOID) {
-            return this.numberOfDimensions == 0;
-        }
-        else {
-            return false;
-        }
-    }
-
-    @Override
     public <T> void accept(ASTVisitor<T> visitor, T context) {
         visitor.visit(this, context);
     }

@@ -27,16 +27,6 @@ public class ImplicitTypeReference implements TypeReference {
     }
 
     @Override
-    public boolean isVoid() {
-        if (this.basicTypeReference.getDeclaration() == PrimitiveTypeDeclaration.VOID) {
-            return this.numberOfDimensions == 0;
-        }
-        else {
-            return false;
-        }
-    }
-
-    @Override
     public String toString() {
         return this.basicTypeReference.toString();
     }
