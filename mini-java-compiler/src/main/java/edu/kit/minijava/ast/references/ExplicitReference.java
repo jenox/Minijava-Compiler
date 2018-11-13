@@ -3,6 +3,9 @@ package edu.kit.minijava.ast.references;
 import edu.kit.minijava.ast.nodes.*;
 import edu.kit.minijava.lexer.*;
 
+/**
+ * An explicit reference to a declaration in code, i.e. one that has a name and a location in the source code.
+ */
 public class ExplicitReference<DeclarationType extends Declaration> extends Reference<DeclarationType> {
     public ExplicitReference(String name, TokenLocation location) {
         this.name = name;

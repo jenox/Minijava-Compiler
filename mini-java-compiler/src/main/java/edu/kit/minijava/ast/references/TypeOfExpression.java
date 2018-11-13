@@ -114,69 +114,19 @@ public class TypeOfExpression {
 
     // MARK: - Compatibility
 
+    // FIXME: These are semantic properties, should not live in AST package.
+
     public boolean isCompatibleWithTypeReference(TypeReference reference) {
-        assert this.isResolved;
-
-        // either one is array
-        if (this.numberOfDimensions >= 1 || reference.getNumberOfDimensions() >= 1) {
-
-            // TODO: is `null` a valid value for arrays?
-            if (this.isNull()) return false;
-
-            if (this.numberOfDimensions != reference.getNumberOfDimensions()) return false;
-            if (this.declaration != reference.getBasicTypeReference().getDeclaration()) return false;
-
-            return true;
-        }
-
-        if (reference.getBasicTypeReference().getDeclaration() instanceof ClassDeclaration) {
-            return this.declaration == null || this.declaration == reference.getBasicTypeReference().getDeclaration();
-        }
-        else {
-            return this.declaration == reference.getBasicTypeReference().getDeclaration();
-        }
+        throw new UnsupportedOperationException();
     }
 
     public boolean isCompatibleWith(TypeOfExpression type) {
-        assert this.isResolved;
-
-        if (this.numberOfDimensions >= 1 || type.numberOfDimensions >= 1) {
-
-            // TODO: is `null` a valid value for arrays?
-            if (this.isNull()) return false;
-
-            if (this.numberOfDimensions != type.numberOfDimensions) return false;
-            if (this.declaration != type.declaration) return false;
-
-            return true;
-        }
-
-        if (type.declaration == null) {
-            return false;
-        }
-        else if (type.declaration instanceof ClassDeclaration) {
-            return this.declaration == null || this.declaration == type.declaration;
-        }
-        else {
-            return this.declaration == type.declaration;
-        }
+        throw new UnsupportedOperationException();
     }
 
     // must be commutative
     public boolean canCheckForEqualityWith(TypeOfExpression type) {
-        assert this.isResolved;
-
-        if (this.numberOfDimensions >= 1 || type.numberOfDimensions >= 1) {
-            // TODO: can we compare arrays?
-            return false;
-        }
-
-        if (this.isObjectOrNull() == type.isObjectOrNull()) {
-            return true;
-        }
-        else {
-            return this.declaration == type.declaration;
-        }
+        throw new UnsupportedOperationException();
     }
 
 

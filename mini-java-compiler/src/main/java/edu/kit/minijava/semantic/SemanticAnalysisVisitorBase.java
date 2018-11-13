@@ -128,6 +128,16 @@ abstract class SemanticAnalysisVisitorBase extends ASTVisitor<Void> {
         this.fieldDeclarations.get(classDeclaration).put(fieldDeclaration.getName(), fieldDeclaration);
     }
 
+    Optional<BasicTypeDeclaration> getBasicTypeDeclarationForName(String name) {
+        for (PrimitiveTypeDeclaration type : PrimitiveTypeDeclaration.values()) {
+            if (name.equals(type.getName()) && type.canBeReferencedByUser()) {
+                return Optional.of(type);
+            }
+        }
+
+        return Optional.ofNullable(this.getClassDeclarationForName(name).orElse(null));
+    }
+
     Optional<ClassDeclaration> getClassDeclarationForName(String name) {
         return Optional.ofNullable(this.classDeclarations.get(name));
     }
