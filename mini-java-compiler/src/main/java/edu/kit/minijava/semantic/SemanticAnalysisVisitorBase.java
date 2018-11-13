@@ -182,8 +182,10 @@ abstract class SemanticAnalysisVisitorBase extends ASTVisitor<Void> {
     /** Generally not commutative. */
     static boolean canAssignTypeOfExpressionToTypeOfExpression(TypeOfExpression type, TypeOfExpression other) {
 
-        // must not be called if `other` is null
-        assert other.getDeclaration().isPresent();
+        // null type is not assignable
+        if (!other.getDeclaration().isPresent()) {
+            return false;
+        }
 
         // type is not null
         if (type.getDeclaration().isPresent()) {
@@ -232,8 +234,9 @@ abstract class SemanticAnalysisVisitorBase extends ASTVisitor<Void> {
             // left is primitive type
             else {
 
-                // right is not null. must be same basic type.
+                // right is not null. must be same basic type, but not void.
                 if (right.getDeclaration().isPresent()) {
+                    if (left.getDeclaration().get() == PrimitiveTypeDeclaration.VOID) return false;
                     if (right.getDeclaration().get() != left.getDeclaration().get()) return false;
                     if (right.getNumberOfDimensions() != 0) return false;
 
