@@ -128,17 +128,31 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
 
     @Override
     protected void visit(Statement.IfStatement statement, Void context) {
-        throw new UnsupportedOperationException();
+        statement.getCondition().accept(this, context);
+        assert statement.getCondition().getType().isBoolean() : "TODO";
+        
+        //visit branches 
+        //TODO: how to deal with return statements
+        statement.getStatementIfTrue().accept(this, context);
+        Optional<Statement> falseStmt = statement.getStatementIfFalse();
+        if (falseStmt.isPresent()) {
+        	falseStmt.get().accept(this, context);
+        }
+        
     }
 
     @Override
     protected void visit(Statement.WhileStatement statement, Void context) {
-        throw new UnsupportedOperationException();
+        //check condition
+    	statement.getCondition().accept(this, context);
+    	assert statement.getCondition().getType().isBoolean();
+    	//visit child
+    	statement.getStatementWhileTrue().accept(this, context);
     }
 
     @Override
     protected void visit(Statement.ExpressionStatement statement, Void context) {
-        throw new UnsupportedOperationException();
+        statement.getExpression().accept(this, context);
     }
 
     @Override
@@ -161,12 +175,64 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
 
     @Override
     protected void visit(Expression.BinaryOperation expression, Void context) {
-        throw new UnsupportedOperationException();
+        expression.getLeft().accept(this, context);
+        expression.getRight().accept(this, context);
+        
+        TypeOfExpression left = expression.getLeft().getType();
+        TypeOfExpression right = expression.getRight().getType();
+        
+        switch (expression.getOperationType()) {
+		case ADDITION:
+		case DIVISION:
+		case MODULO:
+		case MULTIPLICATION:
+		case SUBTRACTION:
+			assert expression.getLeft().getType().isInteger() : "should be int";
+			assert expression.getRight().getType().isInteger() : "should be int";
+			expression.getType().resolveToInteger();
+			break;
+		case LOGICAL_AND:
+		case LOGICAL_OR:
+			assert left.isBoolean();
+			assert right.isBoolean();
+			expression.getType().resolveToBoolean();
+			break;
+		case GREATER_THAN:
+		case LESS_THAN:
+		case LESS_THAN_OR_EQUAL_TO:
+		case GREATER_THAN_OR_EQUAL_TO:
+			assert left.isInteger() : "should be int";
+			assert right.isInteger() : "should be int";
+			expression.getType().resolveToBoolean();
+			break;
+		case EQUAL_TO:
+		case NOT_EQUAL_TO:
+			assert left.canCheckForEqualityWith(right);
+			expression.getType().resolveToBoolean();
+		case ASSIGNMENT:
+			assert left.isAssignable() : "not assignable";
+			assert right.isCompatibleWith(left) : "not compatible";
+			expression.getType().resolveToTypeOfExpression(left, false);
+		default:
+			assert false : "should not happen";
+		}
     }
 
     @Override
     protected void visit(Expression.UnaryOperation expression, Void context) {
-        throw new UnsupportedOperationException();
+        expression.getOther().accept(this, context);
+        
+        switch (expression.getOperationType()) {
+        case LOGICAL_NEGATION:
+        	assert expression.getType().isBoolean() : "expected boolean";
+        	expression.getType().resolveToBoolean();
+        	break;
+        case NUMERIC_NEGATION:
+        	assert expression.getType().isInteger() : "expected int";
+        	expression.getType().resolveToInteger();
+        	break;
+        default:  assert false;
+        }
     }
 
     @Override
@@ -206,12 +272,18 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
 
     @Override
     protected void visit(Expression.CurrentContextAccess expression, Void context) {
-        throw new UnsupportedOperationException();
+        assert !(getCurrentMethodDeclaration() instanceof MainMethodDeclaration) : "";
+        expression.getType().resolveToInstanceOfClass(getCurrentClassDeclaration(), false);
+
     }
 
     @Override
     protected void visit(Expression.NewObjectCreation expression, Void context) {
-        throw new UnsupportedOperationException();
+    	String name = expression.getClassReference().getName();
+    	Optional<ClassDeclaration> classDecl = this.getClassDeclarationForName(name);
+    	assert classDecl.isPresent() : "";
+        expression.getType().resolveToInstanceOfClass(classDecl.get(), false);
+        expression.getClassReference().resolveTo(classDecl.get());
     }
 
     @Override
