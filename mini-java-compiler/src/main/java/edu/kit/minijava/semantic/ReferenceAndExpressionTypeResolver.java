@@ -1,10 +1,9 @@
 package edu.kit.minijava.semantic;
 
+import java.util.Optional;
+
 import edu.kit.minijava.ast.nodes.*;
-import edu.kit.minijava.ast.references.*;
-
-import java.util.*;
-
+import edu.kit.minijava.ast.references.TypeOfExpression;
 
 /**
  * Because MiniJava allows use-before-declare, we need two passes: one for collecting class, method and fiel
@@ -16,38 +15,40 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
     public ReferenceAndExpressionTypeResolver(Program program) {
         program.accept(this, null);
 
-        finishCollectingDeclarationsForUseBeforeDeclare();
+        this.finishCollectingDeclarationsForUseBeforeDeclare();
 
         program.accept(this, null);
 
-
         assert this.getEntryPoint().isPresent() : "missing main method";
     }
-
 
     // MARK: - Traversal
 
     @Override
     protected void visit(Program program, Void context) {
-        for(ClassDeclaration clsDecl : program.getClassDeclarations())
+        for (ClassDeclaration clsDecl : program.getClassDeclarations()) {
             clsDecl.accept(this, context);
+        }
     }
 
     @Override
     protected void visit(ClassDeclaration classDeclaration, Void context) {
-        if(this.isCollectingDeclarationsForUseBeforeDeclare())
+        if (this.isCollectingDeclarationsForUseBeforeDeclare())
             this.registerClassDeclaration(classDeclaration);
 
         this.enterClassDeclaration(classDeclaration);
 
-        for(FieldDeclaration fldDecl : classDeclaration.getFieldDeclarations())
+        for (FieldDeclaration fldDecl : classDeclaration.getFieldDeclarations()) {
             fldDecl.accept(this, context);
+        }
 
-        for(MethodDeclaration mthDecl : classDeclaration.getMethodDeclarations())
+        for (MethodDeclaration mthDecl : classDeclaration.getMethodDeclarations()) {
             mthDecl.accept(this, context);
+        }
 
-        for(MainMethodDeclaration mainMthdDecl : classDeclaration.getMainMethodDeclarations())
+        for (MainMethodDeclaration mainMthdDecl : classDeclaration.getMainMethodDeclarations()) {
             mainMthdDecl.accept(this, context);
+        }
 
         this.leaveCurrentClassDeclaration();
     }
@@ -55,25 +56,24 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
     // TODO: wir duerfen keine Felder vom Typ `void` oder vom Typ `void[]` deklarieren
     @Override
     protected void visit(FieldDeclaration fieldDeclaration, Void context) {
-        if(this.isCollectingDeclarationsForUseBeforeDeclare())
+        if (this.isCollectingDeclarationsForUseBeforeDeclare())
             this.registerFieldDeclaration(fieldDeclaration, this.getCurrentClassDeclaration());
         else {
-           fieldDeclaration.getType().accept(this, context);
-           this.addVariableDeclarationToCurrentScope(fieldDeclaration);
+            fieldDeclaration.getType().accept(this, context);
+            this.addVariableDeclarationToCurrentScope(fieldDeclaration);
         }
     }
 
     @Override
     protected void visit(MethodDeclaration methodDeclaration, Void context) {
-        if(this.isCollectingDeclarationsForUseBeforeDeclare())
+        if (this.isCollectingDeclarationsForUseBeforeDeclare())
             this.registerMethodDeclaration(methodDeclaration, this.getCurrentClassDeclaration());
         else {
             methodDeclaration.getReturnType().accept(this, context);
 
-
             // TODO: ueberpruefen, dass return type nicht ein `void[]` ist
 
-            for(VariableDeclaration paramDecl : methodDeclaration.getParameters())
+            for (VariableDeclaration paramDecl : methodDeclaration.getParameters())
                 paramDecl.accept(this, context);
 
             this.enterMethodDeclaration(methodDeclaration);
@@ -82,21 +82,21 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
 
             // TODO: location zum assert-string hinzufuegen
             // TODO: return type zum assert-string hinzufuegen
-            if(!methodDeclaration.getReturnType().isVoid())
-                assert methodDeclaration.getBody().explicitlyReturns() : "At least one path in the method body doesn't returns a value.";
+            if (!methodDeclaration.getReturnType().isVoid())
+                assert methodDeclaration.getBody()
+                .explicitlyReturns() : "At least one path in the method body doesn't returns a value.";
 
-            this.leaveCurrentMethodDeclaration();
+                this.leaveCurrentMethodDeclaration();
         }
     }
 
     @Override
     protected void visit(MainMethodDeclaration methodDeclaration, Void context) {
-        if(isCollectingDeclarationsForUseBeforeDeclare())
+        if (this.isCollectingDeclarationsForUseBeforeDeclare())
             this.setEntryPoint(methodDeclaration);
         else {
             methodDeclaration.getReturnType().accept(this, context);
             methodDeclaration.getArgumentsParameter().accept(this, context);
-
 
             this.enterMethodDeclaration(methodDeclaration);
             methodDeclaration.getBody().accept(this, context);
@@ -130,24 +130,24 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
     protected void visit(Statement.IfStatement statement, Void context) {
         statement.getCondition().accept(this, context);
         assert statement.getCondition().getType().isBoolean() : "TODO";
-        
-        //visit branches 
-        //TODO: how to deal with return statements
+
+        // visit branches
+        // TODO: how to deal with return statements
         statement.getStatementIfTrue().accept(this, context);
         Optional<Statement> falseStmt = statement.getStatementIfFalse();
         if (falseStmt.isPresent()) {
-        	falseStmt.get().accept(this, context);
+            falseStmt.get().accept(this, context);
         }
-        
+
     }
 
     @Override
     protected void visit(Statement.WhileStatement statement, Void context) {
-        //check condition
-    	statement.getCondition().accept(this, context);
-    	assert statement.getCondition().getType().isBoolean();
-    	//visit child
-    	statement.getStatementWhileTrue().accept(this, context);
+        // check condition
+        statement.getCondition().accept(this, context);
+        assert statement.getCondition().getType().isBoolean();
+        // visit child
+        statement.getStatementWhileTrue().accept(this, context);
     }
 
     @Override
@@ -161,7 +161,8 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
     }
 
     @Override
-    protected void visit(Statement.EmptyStatement statement, Void context) {}
+    protected void visit(Statement.EmptyStatement statement, Void context) {
+    }
 
     @Override
     protected void visit(Statement.LocalVariableDeclarationStatement statement, Void context) {
@@ -177,61 +178,62 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
     protected void visit(Expression.BinaryOperation expression, Void context) {
         expression.getLeft().accept(this, context);
         expression.getRight().accept(this, context);
-        
+
         TypeOfExpression left = expression.getLeft().getType();
         TypeOfExpression right = expression.getRight().getType();
-        
+
         switch (expression.getOperationType()) {
-		case ADDITION:
-		case DIVISION:
-		case MODULO:
-		case MULTIPLICATION:
-		case SUBTRACTION:
-			assert expression.getLeft().getType().isInteger() : "should be int";
-			assert expression.getRight().getType().isInteger() : "should be int";
-			expression.getType().resolveToInteger();
-			break;
-		case LOGICAL_AND:
-		case LOGICAL_OR:
-			assert left.isBoolean();
-			assert right.isBoolean();
-			expression.getType().resolveToBoolean();
-			break;
-		case GREATER_THAN:
-		case LESS_THAN:
-		case LESS_THAN_OR_EQUAL_TO:
-		case GREATER_THAN_OR_EQUAL_TO:
-			assert left.isInteger() : "should be int";
-			assert right.isInteger() : "should be int";
-			expression.getType().resolveToBoolean();
-			break;
-		case EQUAL_TO:
-		case NOT_EQUAL_TO:
-			assert left.canCheckForEqualityWith(right);
-			expression.getType().resolveToBoolean();
-		case ASSIGNMENT:
-			assert left.isAssignable() : "not assignable";
-			assert right.isCompatibleWith(left) : "not compatible";
-			expression.getType().resolveToTypeOfExpression(left, false);
-		default:
-			assert false : "should not happen";
-		}
+            case ADDITION:
+            case DIVISION:
+            case MODULO:
+            case MULTIPLICATION:
+            case SUBTRACTION:
+                assert expression.getLeft().getType().isInteger() : "should be int";
+                assert expression.getRight().getType().isInteger() : "should be int";
+                expression.getType().resolveToInteger();
+                break;
+            case LOGICAL_AND:
+            case LOGICAL_OR:
+                assert left.isBoolean();
+                assert right.isBoolean();
+                expression.getType().resolveToBoolean();
+                break;
+            case GREATER_THAN:
+            case LESS_THAN:
+            case LESS_THAN_OR_EQUAL_TO:
+            case GREATER_THAN_OR_EQUAL_TO:
+                assert left.isInteger() : "should be int";
+                assert right.isInteger() : "should be int";
+                expression.getType().resolveToBoolean();
+                break;
+            case EQUAL_TO:
+            case NOT_EQUAL_TO:
+                assert left.canCheckForEqualityWith(right);
+                expression.getType().resolveToBoolean();
+            case ASSIGNMENT:
+                assert left.isAssignable() : "not assignable";
+                assert right.isCompatibleWith(left) : "not compatible";
+                expression.getType().resolveToTypeOfExpression(left, false);
+            default:
+                assert false : "should not happen";
+        }
     }
 
     @Override
     protected void visit(Expression.UnaryOperation expression, Void context) {
         expression.getOther().accept(this, context);
-        
+
         switch (expression.getOperationType()) {
-        case LOGICAL_NEGATION:
-        	assert expression.getType().isBoolean() : "expected boolean";
-        	expression.getType().resolveToBoolean();
-        	break;
-        case NUMERIC_NEGATION:
-        	assert expression.getType().isInteger() : "expected int";
-        	expression.getType().resolveToInteger();
-        	break;
-        default:  assert false;
+            case LOGICAL_NEGATION:
+                assert expression.getType().isBoolean() : "expected boolean";
+                expression.getType().resolveToBoolean();
+                break;
+            case NUMERIC_NEGATION:
+                assert expression.getType().isInteger() : "expected int";
+                expression.getType().resolveToInteger();
+                break;
+            default:
+                assert false;
         }
     }
 
@@ -272,16 +274,16 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
 
     @Override
     protected void visit(Expression.CurrentContextAccess expression, Void context) {
-        assert !(getCurrentMethodDeclaration() instanceof MainMethodDeclaration) : "";
-        expression.getType().resolveToInstanceOfClass(getCurrentClassDeclaration(), false);
+        assert !(this.getCurrentMethodDeclaration() instanceof MainMethodDeclaration) : "";
+        expression.getType().resolveToInstanceOfClass(this.getCurrentClassDeclaration(), false);
 
     }
 
     @Override
     protected void visit(Expression.NewObjectCreation expression, Void context) {
-    	String name = expression.getClassReference().getName();
-    	Optional<ClassDeclaration> classDecl = this.getClassDeclarationForName(name);
-    	assert classDecl.isPresent() : "";
+        String name = expression.getClassReference().getName();
+        Optional<ClassDeclaration> classDecl = this.getClassDeclarationForName(name);
+        assert classDecl.isPresent() : "";
         expression.getType().resolveToInstanceOfClass(classDecl.get(), false);
         expression.getClassReference().resolveTo(classDecl.get());
     }
