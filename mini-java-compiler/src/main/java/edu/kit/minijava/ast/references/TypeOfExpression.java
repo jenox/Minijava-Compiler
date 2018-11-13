@@ -117,24 +117,6 @@ public class TypeOfExpression {
     }
 
 
-    // MARK: - Compatibility
-
-    // FIXME: These are semantic properties, should not live in AST package.
-
-    public boolean isCompatibleWithTypeReference(TypeReference reference) {
-        throw new UnsupportedOperationException();
-    }
-
-    public boolean isCompatibleWith(TypeOfExpression type) {
-        throw new UnsupportedOperationException();
-    }
-
-    // must be commutative
-    public boolean canCheckForEqualityWith(TypeOfExpression type) {
-        throw new UnsupportedOperationException();
-    }
-
-
     // MARK: - Other
 
     @Override

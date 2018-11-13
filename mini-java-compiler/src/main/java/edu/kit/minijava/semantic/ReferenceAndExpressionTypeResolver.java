@@ -192,7 +192,7 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
         Optional<Expression> value = statement.getValue();
         if (value.isPresent()) {
             value.get().accept(this, context);
-            value.get().getType().isCompatibleWithTypeReference(statement.getType());
+            canAssignTypeOfExpressionToTypeReference(value.get().getType(), statement.getType());
         }
 
     }
@@ -240,11 +240,11 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
                 break;
             case EQUAL_TO:
             case NOT_EQUAL_TO:
-                assert left.canCheckForEqualityWith(right);
+                assert canCheckForEqualityWithTypesOfExpressions(left, right);
                 expression.getType().resolveToBoolean();
             case ASSIGNMENT:
                 assert left.isAssignable() : "not assignable";
-                assert right.isCompatibleWith(left) : "not compatible";
+                assert canAssignTypeOfExpressionToTypeOfExpression(right, left) : "not compatible";
                 expression.getType().resolveToTypeOfExpression(left, false);
             default:
                 assert false : "should not happen";
@@ -315,7 +315,7 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
             Expression paramExp = args.get(i);
             TypeReference paramType = params.get(i).getType();
             paramExp.accept(this, context);
-            paramExp.getType().isCompatibleWithTypeReference(paramType);
+            canAssignTypeOfExpressionToTypeReference(paramExp.getType(), paramType);
         }
 
         TypeReference returnType = expression.getMethodReference().getDeclaration().getReturnType();

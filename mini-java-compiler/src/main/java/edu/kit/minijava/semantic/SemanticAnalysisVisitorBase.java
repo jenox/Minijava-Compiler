@@ -1,6 +1,7 @@
 package edu.kit.minijava.semantic;
 
 import edu.kit.minijava.ast.nodes.*;
+import edu.kit.minijava.ast.references.*;
 
 import java.util.*;
 
@@ -148,5 +149,121 @@ abstract class SemanticAnalysisVisitorBase extends ASTVisitor<Void> {
 
     Optional<FieldDeclaration> getFieldDeclarationForName(String name, ClassDeclaration container) {
         return Optional.ofNullable(this.fieldDeclarations.get(container).get(name));
+    }
+
+
+    // MARK: - Compatibility
+
+    // TODO: we should have unit tests for those
+
+    static boolean canAssignTypeOfExpressionToTypeReference(TypeOfExpression type, TypeReference reference) {
+
+        // type is not null
+        if (type.getDeclaration().isPresent()) {
+
+            // must be same basic type and number of dimensions
+            if (type.getDeclaration().get() != reference.getBasicTypeReference().getDeclaration()) return false;
+            if (type.getNumberOfDimensions() != reference.getNumberOfDimensions()) return false;
+
+            return true;
+        }
+
+        // type is null
+        else {
+            if (reference.getNumberOfDimensions() >= 1) {
+                return true;
+            }
+            else {
+                return reference.getBasicTypeReference().getDeclaration() instanceof ClassDeclaration;
+            }
+        }
+    }
+
+    /** Generally not commutative. */
+    static boolean canAssignTypeOfExpressionToTypeOfExpression(TypeOfExpression type, TypeOfExpression other) {
+
+        // must not be called if `other` is null
+        assert other.getDeclaration().isPresent();
+
+        // type is not null
+        if (type.getDeclaration().isPresent()) {
+
+            // must be same basic type and number of dimensions
+            if (type.getDeclaration().get() != other.getDeclaration().get()) return false;
+            if (type.getNumberOfDimensions() != other.getNumberOfDimensions()) return false;
+
+            return true;
+        }
+
+        // type is null
+        else {
+            if (other.getNumberOfDimensions() >= 1) {
+                return true;
+            }
+            else {
+                return other.getDeclaration().get() instanceof ClassDeclaration;
+            }
+        }
+    }
+
+    /** Should be commutative. */
+    static boolean canCheckForEqualityWithTypesOfExpressions(TypeOfExpression left, TypeOfExpression right) {
+
+        // left is not null
+        if (left.getDeclaration().isPresent()) {
+
+            // left is array or instance of some class
+            if (left.getNumberOfDimensions() >= 1 || left.getDeclaration().get() instanceof ClassDeclaration) {
+
+                // right is not null. must be (array of) same basic type and dimension.
+                if (right.getDeclaration().isPresent()) {
+                    if (right.getDeclaration().get() != left.getDeclaration().get()) return false;
+                    if (right.getNumberOfDimensions() != left.getNumberOfDimensions()) return false;
+
+                    return true;
+                }
+
+                // right is null. valid.
+                else {
+                    return true;
+                }
+            }
+
+            // left is primitive type
+            else {
+
+                // right is not null. must be same basic type.
+                if (right.getDeclaration().isPresent()) {
+                    if (right.getDeclaration().get() != left.getDeclaration().get()) return false;
+                    if (right.getNumberOfDimensions() != 0) return false;
+
+                    return true;
+                }
+
+                // right is null. invalid.
+                else {
+                    return false;
+                }
+            }
+        }
+
+        // left is null
+        else {
+
+            // right is not null. must be array or instance of some class.
+            if (right.getDeclaration().isPresent()) {
+                if (right.getNumberOfDimensions() >= 1) {
+                    return true;
+                }
+                else {
+                    return right.getDeclaration().get() instanceof ClassDeclaration;
+                }
+            }
+
+            // right is null. valid.
+            else {
+                return true;
+            }
+        }
     }
 }
