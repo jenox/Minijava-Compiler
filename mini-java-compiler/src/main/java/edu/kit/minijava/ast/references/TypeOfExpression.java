@@ -110,6 +110,12 @@ public class TypeOfExpression {
         return this.declaration == null || this.declaration instanceof ClassDeclaration && this.numberOfDimensions == 0;
     }
 
+    public final boolean isArrayType() {
+        assert this.isResolved;
+
+        return this.numberOfDimensions > 0;
+    }
+
 
     // MARK: - Compatibility
 

@@ -1,6 +1,6 @@
 package edu.kit.minijava.semantic;
 
-import java.util.Optional;
+import java.util.*;
 
 import edu.kit.minijava.ast.nodes.*;
 import edu.kit.minijava.ast.references.TypeOfExpression;
@@ -138,11 +138,15 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
         assert statement.getCondition().getType().isBoolean() : "TODO";
 
         // visit branches
-        // TODO: how to deal with return statements
+        this.enterNewVariableDeclarationScope();
         statement.getStatementIfTrue().accept(this, context);
+        this.leaveCurrentVariableDeclarationScope();
+
         Optional<Statement> falseStmt = statement.getStatementIfFalse();
         if (falseStmt.isPresent()) {
+            this.enterNewVariableDeclarationScope();
             falseStmt.get().accept(this, context);
+            this.leaveCurrentVariableDeclarationScope();
         }
 
     }
@@ -153,31 +157,53 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
         statement.getCondition().accept(this, context);
         assert statement.getCondition().getType().isBoolean();
         // visit child
+        this.enterNewVariableDeclarationScope();
         statement.getStatementWhileTrue().accept(this, context);
+        this.leaveCurrentVariableDeclarationScope();
     }
 
     @Override
     protected void visit(Statement.ExpressionStatement statement, Void context) {
         statement.getExpression().accept(this, context);
+        // TODO: check for not-a-statement
     }
 
     @Override
     protected void visit(Statement.ReturnStatement statement, Void context) {
-        throw new UnsupportedOperationException();
+        // get method return type
+        Optional<Expression> returnValue = statement.getValue();
+        TypeReference returnType = this.getCurrentMethodDeclaration().getReturnType();
+        if (returnType.isVoid()) {
+            assert !returnValue.isPresent() : "TODO";
+        }
+
     }
 
     @Override
     protected void visit(Statement.EmptyStatement statement, Void context) {
+        // NO-OP
     }
 
     @Override
     protected void visit(Statement.LocalVariableDeclarationStatement statement, Void context) {
-        throw new UnsupportedOperationException();
+        // add variable to symbol table
+        statement.getType().accept(this, context);
+        this.addVariableDeclarationToCurrentScope(statement);
+        Optional<Expression> value = statement.getValue();
+        if (value.isPresent()) {
+            value.get().accept(this, context);
+            value.get().getType().isCompatibleWithTypeReference(statement.getType());
+        }
+
     }
 
     @Override
     protected void visit(Statement.Block block, Void context) {
-        throw new UnsupportedOperationException();
+        this.enterNewVariableDeclarationScope();
+        for (Statement statement : block.getStatements()) {
+            statement.accept(this, context);
+        }
+        this.leaveCurrentVariableDeclarationScope();
     }
 
     @Override
@@ -250,37 +276,103 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
 
     @Override
     protected void visit(Expression.BooleanLiteral expression, Void context) {
-        throw new UnsupportedOperationException();
+        expression.getType().resolveToBoolean();
     }
 
     @Override
     protected void visit(Expression.IntegerLiteral expression, Void context) {
-        throw new UnsupportedOperationException();
+        // TODO: check if valid integer
+        expression.getType().resolveToInteger();
     }
 
     @Override
     protected void visit(Expression.MethodInvocation expression, Void context) {
-        throw new UnsupportedOperationException();
+        Optional<Expression> mContext = expression.getContext();
+        ClassDeclaration classDecl = null;
+        if (mContext.isPresent()) {
+            mContext.get().accept(this, context);
+            TypeOfExpression expType = mContext.get().getType();
+            // TODO: set classDecl
+            assert !expType.isNull() : "TODO";
+            assert expType.isArrayType() : "TODO";
+        }
+        else {
+            classDecl = this.getCurrentClassDeclaration();
+        }
+
+        // resolve declaration
+        Optional<MethodDeclaration> mDecl = this.getMethodDeclarationForName(expression.getMethodReference().getName(),
+                classDecl);
+        assert mDecl.isPresent();
+        expression.getMethodReference().resolveTo(mDecl.get());
+
+        // check parameter
+        List<? extends VariableDeclaration> params = expression.getMethodReference().getDeclaration().getParameters();
+        List<Expression> args = expression.getArguments();
+        assert params.size() == args.size() : "TODO";
+
+        for (int i = 0; i < params.size(); i++) {
+            Expression paramExp = args.get(i);
+            TypeReference paramType = params.get(i).getType();
+            paramExp.accept(this, context);
+            paramExp.getType().isCompatibleWithTypeReference(paramType);
+        }
+
+        TypeReference returnType = expression.getMethodReference().getDeclaration().getReturnType();
+        expression.getType().resolveToTypeReference(returnType, false);
+
+        // TODO: check that method is not static
+
     }
 
     @Override
     protected void visit(Expression.ExplicitFieldAccess expression, Void context) {
-        throw new UnsupportedOperationException();
+        // resolve field declaration
+        ClassDeclaration classDecl = null;
+        String name = expression.getFieldReference().getName();
+        expression.getContext().accept(this, context);
+        // TODO: set classDecl and name
+        Optional<FieldDeclaration> fieldDecl = this.getFieldDeclarationForName(name, classDecl);
+        assert fieldDecl.isPresent() : "TODO";
+        expression.getFieldReference().resolveTo(fieldDecl.get());
+
+        assert fieldDecl.get().canBeAccessed() : "TODO";
+        assert fieldDecl.get().getType().getNumberOfDimensions() == 0 : "accesing arrayType";
+        expression.getType().resolveToTypeReference(fieldDecl.get().getType(), true);// TODO: assignable = true?
+        // TODO: missing checks?
     }
 
     @Override
     protected void visit(Expression.ArrayElementAccess expression, Void context) {
-        throw new UnsupportedOperationException();
+        expression.getContext().accept(this, context);
+        assert expression.getContext().getType().isArrayType() : "TODO";
+
+        // check index
+        expression.getIndex().accept(this, context);
+        assert expression.getIndex().getType().isInteger() : "TODO";
+
+        // set expression type
+        // TODO: declaration alreade set?
+        Optional<BasicTypeDeclaration> decl = expression.getContext().getType().getDeclaration();
+        int numOfDims = expression.getContext().getType().getNumberOfDimensions() - 1;
+        expression.getType().resolveToArrayOf(decl.get(), numOfDims, true); // assignable = true?
+
     }
 
     @Override
     protected void visit(Expression.VariableAccess expression, Void context) {
-        throw new UnsupportedOperationException();
+        String name = expression.getVariableReference().getName();
+        Optional<VariableDeclaration> var = this.getVariableDeclarationForName(name);
+        assert var.isPresent() : "TODO";
+        expression.getVariableReference().resolveTo(var.get());
+        expression.getType().resolveToTypeReference(var.get().getType(), true);
+
+        //TODO: check that variable can be accessed
     }
 
     @Override
     protected void visit(Expression.CurrentContextAccess expression, Void context) {
-        assert !(this.getCurrentMethodDeclaration() instanceof MainMethodDeclaration) : "";
+        assert !(this.getCurrentMethodDeclaration() instanceof MainMethodDeclaration) : "TODO";
         expression.getType().resolveToInstanceOfClass(this.getCurrentClassDeclaration(), false);
 
     }
@@ -289,7 +381,7 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
     protected void visit(Expression.NewObjectCreation expression, Void context) {
         String name = expression.getClassReference().getName();
         Optional<ClassDeclaration> classDecl = this.getClassDeclarationForName(name);
-        assert classDecl.isPresent() : "";
+        assert classDecl.isPresent() : "TODO";
         expression.getType().resolveToInstanceOfClass(classDecl.get(), false);
         expression.getClassReference().resolveTo(classDecl.get());
     }
