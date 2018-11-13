@@ -571,7 +571,7 @@ public final class Parser {
 
             // PrimaryExpression -> NewArrayExpression -> "new" BasicType "[" Expression "]" { "[" "]" }
             else {
-                BasicTypeReference basicType = this.parseBasicType();
+                ExplicitReference<BasicTypeDeclaration> basicType = this.parseBasicType();
                 this.consume(TokenType.OPENING_BRACKET, "NewArrayExpression");
                 Expression expression = this.parseExpression(0);
                 this.consume(TokenType.CLOSING_BRACKET, "NewArrayExpression");
@@ -610,40 +610,40 @@ public final class Parser {
     // MARK: - Parsing Types
 
     private ExplicitTypeReference parseType() throws ParserException {
-        BasicTypeReference basicTypeReference = this.parseBasicType();
+        ExplicitReference<BasicTypeDeclaration> basicTypeReference = this.parseBasicType();
         int numberOfDimensions = this.parseOpeningAndClosingBrackets();
 
         return new ExplicitTypeReference(basicTypeReference, numberOfDimensions);
     }
 
-    private BasicTypeReference parseBasicType() throws ParserException {
+    private ExplicitReference<BasicTypeDeclaration> parseBasicType() throws ParserException {
 
         // BasicType -> "IDENTIFIER"
         if (this.lookahead(TokenType.IDENTIFIER)) {
             Token token = this.consume(TokenType.IDENTIFIER, null);
 
-            return new BasicTypeReference(token.getText(), token.getLocation());
+            return new ExplicitReference<>(token.getText(), token.getLocation());
         }
 
         // BasicType -> "int"
         else if (this.lookahead(TokenType.INT)) {
             Token token = this.consume(TokenType.INT, null);
 
-            return new BasicTypeReference(token.getText(), token.getLocation());
+            return new ExplicitReference<>(token.getText(), token.getLocation());
         }
 
         // BasicType -> "boolean"
         else if (this.lookahead(TokenType.BOOLEAN)) {
             Token token = this.consume(TokenType.BOOLEAN, null);
 
-            return new BasicTypeReference(token.getText(), token.getLocation());
+            return new ExplicitReference<>(token.getText(), token.getLocation());
         }
 
         // BasicType -> "void"
         else if (this.lookahead(TokenType.VOID)) {
             Token token = this.consume(TokenType.VOID, null);
 
-            return new BasicTypeReference(token.getText(), token.getLocation());
+            return new ExplicitReference<>(token.getText(), token.getLocation());
         }
 
         else {

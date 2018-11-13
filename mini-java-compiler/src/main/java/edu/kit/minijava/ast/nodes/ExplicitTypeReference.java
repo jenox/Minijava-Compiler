@@ -3,16 +3,16 @@ package edu.kit.minijava.ast.nodes;
 import edu.kit.minijava.ast.references.*;
 
 public final class ExplicitTypeReference implements TypeReference {
-    public ExplicitTypeReference(BasicTypeReference basicTypeReference, int numberOfDimensions) {
+    public ExplicitTypeReference(ExplicitReference<BasicTypeDeclaration> basicTypeReference, int numberOfDimensions) {
         this.basicTypeReference = basicTypeReference;
         this.numberOfDimensions = numberOfDimensions;
     }
 
-    private final BasicTypeReference basicTypeReference;
+    private final ExplicitReference<BasicTypeDeclaration> basicTypeReference;
     private final int numberOfDimensions;
 
     @Override
-    public final BasicTypeReference getBasicTypeReference() {
+    public final ExplicitReference<BasicTypeDeclaration> getBasicTypeReference() {
         return this.basicTypeReference;
     }
 
@@ -23,7 +23,12 @@ public final class ExplicitTypeReference implements TypeReference {
 
     @Override
     public final boolean isVoid() {
-        return this.getBasicTypeReference().isVoid() && this.numberOfDimensions == 0;
+        if (this.basicTypeReference.getDeclaration() == PrimitiveTypeDeclaration.VOID) {
+            return this.numberOfDimensions == 0;
+        }
+        else {
+            return false;
+        }
     }
 
     @Override

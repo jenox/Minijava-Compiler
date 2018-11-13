@@ -3,8 +3,8 @@ package edu.kit.minijava.ast.references;
 import edu.kit.minijava.ast.nodes.*;
 import edu.kit.minijava.lexer.*;
 
-public abstract class ExplicitReference<DeclarationType extends Declaration> extends Reference<DeclarationType> {
-    ExplicitReference(String name, TokenLocation location) {
+public class ExplicitReference<DeclarationType extends Declaration> extends Reference<DeclarationType> {
+    public ExplicitReference(String name, TokenLocation location) {
         this.name = name;
         this.location = location;
     }

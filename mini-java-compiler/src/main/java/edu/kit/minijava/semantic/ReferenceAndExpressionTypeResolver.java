@@ -171,7 +171,7 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
         if (statement.getValue().isPresent()) {
             TypeOfExpression actualReturnType = statement.getValue().get().getType();
 
-            assert actualReturnType.isCompatibleWith(expectedReturnType) : "invalid return value";
+            assert actualReturnType.isCompatibleWithTypeReference(expectedReturnType) : "invalid return value";
         }
         else {
             assert expectedReturnType.isVoid() : "must return value from non-void function";
@@ -196,7 +196,7 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
         if (statement.getValue().isPresent()) {
             statement.getValue().get().accept(this, context);
 
-            assert statement.getValue().get().getType().isCompatibleWith(statement.getType()) :
+            assert statement.getValue().get().getType().isCompatibleWithTypeReference(statement.getType()) :
                     "incompatible value for variable declaration";
         }
     }
@@ -256,7 +256,7 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
                 assert expression.getRight().getType().isCompatibleWith(expression.getLeft().getType()) :
                         "incompatible operand types for assignment" + expression.getLeft() + expression.getRight();
                 assert expression.getLeft().getType().isAssignable() : "cannot assign rvalue";
-                expression.getType().resolveTo(expression.getLeft().getType(), false);
+                expression.getType().resolveToTypeOfExpression(expression.getLeft().getType(), false);
                 break;
         }
     }
@@ -332,16 +332,17 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
 
         assert methodDeclaration.isPresent() : "use of undeclared method";
 
-        List<TypeOfExpression> argumentTypes = expression.getMethodReference().getArgumentTypes();
+        List<TypeOfExpression> argumentTypes = expression.getArgumentTypes();
         List<TypeReference> parameterTypes = methodDeclaration.get().getParameterTypes();
 
         assert argumentTypes.size() == parameterTypes.size() : "incorrect number of arguments";
         for (int index = 0; index < argumentTypes.size(); index += 1) {
-            assert argumentTypes.get(index).isCompatibleWith(parameterTypes.get(index)) : "incompatible argument type";
+            assert argumentTypes.get(index).isCompatibleWithTypeReference(parameterTypes.get(index)) :
+                    "incompatible argument type";
         }
 
         expression.getMethodReference().resolveTo(methodDeclaration.get());
-        expression.getType().resolveTo(methodDeclaration.get().getReturnType(), false);
+        expression.getType().resolveToTypeReference(methodDeclaration.get().getReturnType(), false);
     }
 
     @Override
@@ -365,7 +366,7 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
         assert fieldDeclaration.isPresent() : "use of undeclared field";
 
         expression.getFieldReference().resolveTo(fieldDeclaration.get());
-        expression.getType().resolveTo(fieldDeclaration.get().getType(), true);
+        expression.getType().resolveToTypeReference(fieldDeclaration.get().getType(), true);
     }
 
     @Override
@@ -377,7 +378,7 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
         assert type.getDeclaration().isPresent() : "context of array access must be array";
         assert type.getNumberOfDimensions() >= 1 : "context of array access must be array";
 
-        expression.getType().resolveTo(type.getDeclaration().get(), type.getNumberOfDimensions() - 1, true);
+        expression.getType().resolveToArrayOf(type.getDeclaration().get(), type.getNumberOfDimensions() - 1, true);
     }
 
     @Override
@@ -389,7 +390,7 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
         assert declaration.get().canBeAccessed() : "variable may not be accessed. sorry.";
 
         expression.getVariableReference().resolveTo(declaration.get());
-        expression.getType().resolveTo(declaration.get().getType(), true);
+        expression.getType().resolveToTypeReference(declaration.get().getType(), true);
     }
 
     @Override
@@ -397,7 +398,7 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
         assert !(this.getCurrentMethodDeclaration() instanceof MainMethodDeclaration) :
                 "this must not be accessed in main method";
 
-        expression.getType().resolveTo(this.getCurrentClassDeclaration(), false);
+        expression.getType().resolveToInstanceOfClass(this.getCurrentClassDeclaration(), false);
     }
 
     @Override
@@ -408,7 +409,7 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
         assert classDeclaration.isPresent() : "use of undeclared class";
 
         expression.getClassReference().resolveTo(classDeclaration.get());
-        expression.getType().resolveTo(classDeclaration.get(), false);
+        expression.getType().resolveToInstanceOfClass(classDeclaration.get(), false);
     }
 
     @Override
@@ -426,7 +427,7 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
         assert typeDeclaration.get() != PrimitiveTypeDeclaration.VOID : "array of void is not allowed";
 
         expression.getBasicTypeReference().resolveTo(typeDeclaration.get());
-        expression.getType().resolveTo(typeDeclaration.get(), expression.getNumberOfDimensions(), false);
+        expression.getType().resolveToArrayOf(typeDeclaration.get(), expression.getNumberOfDimensions(), false);
     }
 
 

@@ -153,38 +153,38 @@ public abstract class Expression implements ASTNode {
         public MethodInvocation(String methodName, List<Expression> arguments, TokenLocation location) {
             super();
 
-            List<TypeOfExpression> argumentTypes = arguments.stream().map(e -> e.type).collect(Collectors.toList());
-
             this.context = null;
             this.arguments = arguments;
-            this.methodReference = new MethodReference(methodName, argumentTypes, location);
+            this.methodReference = new ExplicitReference<>(methodName, location);
         }
 
         public MethodInvocation(Expression context, String methodName, List<Expression> arguments,
                                 TokenLocation location) {
             super();
 
-            List<TypeOfExpression> argumentTypes = arguments.stream().map(e -> e.type).collect(Collectors.toList());
-
             this.context = context;
             this.arguments = arguments;
-            this.methodReference = new MethodReference(context.type, methodName, argumentTypes, location);
+            this.methodReference = new ExplicitReference<>(methodName, location);
         }
 
         private final Expression context; // nullable
-        private final MethodReference methodReference;
+        private final ExplicitReference<MethodDeclaration> methodReference;
         private final List<Expression> arguments;
 
         public Optional<Expression> getContext() {
             return Optional.ofNullable(this.context);
         }
 
-        public MethodReference getMethodReference() {
+        public ExplicitReference<MethodDeclaration> getMethodReference() {
             return this.methodReference;
         }
 
         public List<Expression> getArguments() {
             return this.arguments;
+        }
+
+        public List<TypeOfExpression> getArgumentTypes() {
+            return this.arguments.stream().map(e -> e.type).collect(Collectors.toList());
         }
 
         @Override
@@ -203,17 +203,17 @@ public abstract class Expression implements ASTNode {
             super();
 
             this.context = context;
-            this.fieldReference = new FieldReference(context.type, fieldName, location);
+            this.fieldReference = new ExplicitReference<>(fieldName, location);
         }
 
         private final Expression context;
-        private final FieldReference fieldReference;
+        private final ExplicitReference<FieldDeclaration> fieldReference;
 
         public Expression getContext() {
             return this.context;
         }
 
-        public FieldReference getFieldReference() {
+        public ExplicitReference<FieldDeclaration> getFieldReference() {
             return this.fieldReference;
         }
 
@@ -262,12 +262,12 @@ public abstract class Expression implements ASTNode {
         public VariableAccess(String variableName, TokenLocation location) {
             super();
 
-            this.variableReference = new VariableReference(variableName, location);
+            this.variableReference = new ExplicitReference<>(variableName, location);
         }
 
-        private final VariableReference variableReference;
+        private final ExplicitReference<VariableDeclaration> variableReference;
 
-        public VariableReference getVariableReference() {
+        public ExplicitReference<VariableDeclaration> getVariableReference() {
             return this.variableReference;
         }
 
@@ -302,12 +302,12 @@ public abstract class Expression implements ASTNode {
         public NewObjectCreation(String className, TokenLocation location) {
             super();
 
-            this.classReference = new ClassReference(className, location);
+            this.classReference = new ExplicitReference<>(className, location);
         }
 
-        private final ClassReference classReference;
+        private final ExplicitReference<ClassDeclaration> classReference;
 
-        public ClassReference getClassReference() {
+        public ExplicitReference<ClassDeclaration> getClassReference() {
             return this.classReference;
         }
 
@@ -323,7 +323,7 @@ public abstract class Expression implements ASTNode {
     }
 
     public static final class NewArrayCreation extends Expression {
-        public NewArrayCreation(BasicTypeReference basicTypeReference, Expression primaryDimension,
+        public NewArrayCreation(ExplicitReference<BasicTypeDeclaration> basicTypeReference, Expression primaryDimension,
                                 int numberOfDimensions) {
             super();
 
@@ -332,11 +332,11 @@ public abstract class Expression implements ASTNode {
             this.numberOfDimensions = numberOfDimensions;
         }
 
-        private final BasicTypeReference basicTypeReference;
+        private final ExplicitReference<BasicTypeDeclaration> basicTypeReference;
         private final Expression primaryDimension;
         private final int numberOfDimensions;
 
-        public BasicTypeReference getBasicTypeReference() {
+        public ExplicitReference<BasicTypeDeclaration> getBasicTypeReference() {
             return this.basicTypeReference;
         }
 
