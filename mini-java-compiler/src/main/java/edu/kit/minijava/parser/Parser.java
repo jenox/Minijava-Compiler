@@ -101,20 +101,24 @@ public final class Parser {
     private ClassDeclaration parseClassDeclaration() throws ParserException {
         this.consume(TokenType.CLASS, "ClassDeclaration");
 
-        String name = this.consume(TokenType.IDENTIFIER, "ClassDeclaration").getText();
-        List<MethodDeclaration> methods = new ArrayList<>();
+        Token token = this.consume(TokenType.IDENTIFIER, "ClassDeclaration");
         List<FieldDeclaration> fields = new ArrayList<>();
+        List<MethodDeclaration> methods = new ArrayList<>();
+        List<MainMethodDeclaration> mainMethods = new ArrayList<>();
 
         this.consume(TokenType.OPENING_BRACE, "ClassDeclaration");
 
         while (!this.lookahead(TokenType.CLOSING_BRACE)) {
             MemberDeclaration declaration = this.parseClassMember();
 
-            if (declaration instanceof MethodDeclaration) {
+            if (declaration instanceof FieldDeclaration) {
+                fields.add((FieldDeclaration)declaration);
+            }
+            else if (declaration instanceof MethodDeclaration) {
                 methods.add((MethodDeclaration)declaration);
             }
-            else if (declaration instanceof FieldDeclaration) {
-                fields.add((FieldDeclaration)declaration);
+            else if (declaration instanceof MainMethodDeclaration) {
+                mainMethods.add((MainMethodDeclaration)declaration);
             }
             else {
                 throw new AssertionError();
@@ -123,7 +127,7 @@ public final class Parser {
 
         this.consume(TokenType.CLOSING_BRACE, "ClassDeclaration");
 
-        return new ClassDeclaration(name, methods, fields);
+        return new ClassDeclaration(token.getText(), mainMethods, methods, fields, token.getLocation());
     }
 
     private MemberDeclaration parseClassMember() throws ParserException {
@@ -133,7 +137,7 @@ public final class Parser {
         if (this.lookahead(TokenType.STATIC)) {
             this.consume(TokenType.STATIC, "MainMethod");
 
-            Token voidToken = this.consume(TokenType.VOID, "MainMethod");
+            this.consume(TokenType.VOID, "MainMethod");
             Token methodNameToken = this.consume(TokenType.IDENTIFIER, "MainMethod");
 
             this.consume(TokenType.OPENING_PARENTHESIS, "MainMethod");
@@ -158,23 +162,15 @@ public final class Parser {
 
             Statement.Block body = this.parseBlock();
 
-            TypeReference returnType = new TypeReference("void", 0, voidToken.getLocation());
-
-            TypeReference parameterType = new TypeReference("String", 1, parameterTypeToken.getLocation());
-            String parameterName = parameterNameToken.getText();
-            TokenLocation parameterLocation = parameterNameToken.getLocation();
-            ParameterDeclaration parameter = new ParameterDeclaration(parameterType, parameterName, parameterLocation);
-            List<ParameterDeclaration> parameters = Collections.singletonList(parameter);
-
             String methodName = methodNameToken.getText();
             TokenLocation methodLocation = methodNameToken.getLocation();
 
-            return new MethodDeclaration(true, returnType, methodName, parameters, body, methodLocation);
+            return new MainMethodDeclaration(methodName, parameterNameToken, body, methodLocation);
         }
 
         // ClassMember -> Method | Field
         else {
-            TypeReference type = this.parseType();
+            ExplicitTypeReference type = this.parseType();
             Token name = this.consume(TokenType.IDENTIFIER, "ClassMember");
 
             // ClassMember -> Field
@@ -199,7 +195,7 @@ public final class Parser {
 
                 Statement.Block body = this.parseBlock();
 
-                return new MethodDeclaration(false, type, name.getText(), parameters, body, name.getLocation());
+                return new MethodDeclaration(type, name.getText(), parameters, body, name.getLocation());
             }
         }
     }
@@ -224,7 +220,7 @@ public final class Parser {
     }
 
     private ParameterDeclaration parseParameter() throws ParserException {
-        TypeReference type = this.parseType();
+        ExplicitTypeReference type = this.parseType();
         Token token = this.consume(TokenType.IDENTIFIER, "Parameter");
 
         return new ParameterDeclaration(type, token.getText(), token.getLocation());
@@ -301,7 +297,7 @@ public final class Parser {
     }
 
     private Statement parseLocalVariableDeclarationStatement() throws ParserException {
-        TypeReference type = this.parseType();
+        ExplicitTypeReference type = this.parseType();
         Token name = this.consume(TokenType.IDENTIFIER, "LocalVariableDeclarationStatement");
 
         // LocalVariableDeclarationStatement -> Type "IDENTIFIER" "=" Expression ";"
@@ -518,7 +514,7 @@ public final class Parser {
                 List<Expression> arguments = this.parseArguments();
                 this.consume(TokenType.CLOSING_PARENTHESIS, "PrimaryExpression");
 
-                return new Expression.MethodInvocation(null, token.getText(), arguments, token.getLocation());
+                return new Expression.MethodInvocation(token.getText(), arguments, token.getLocation());
             }
             else {
                 return new Expression.VariableAccess(token.getText(), token.getLocation());
@@ -575,7 +571,7 @@ public final class Parser {
 
             // PrimaryExpression -> NewArrayExpression -> "new" BasicType "[" Expression "]" { "[" "]" }
             else {
-                BasicTypeReference basicType = this.parseBasicType();
+                ExplicitReference<BasicTypeDeclaration> basicType = this.parseBasicType();
                 this.consume(TokenType.OPENING_BRACKET, "NewArrayExpression");
                 Expression expression = this.parseExpression(0);
                 this.consume(TokenType.CLOSING_BRACKET, "NewArrayExpression");
@@ -613,41 +609,41 @@ public final class Parser {
 
     // MARK: - Parsing Types
 
-    private TypeReference parseType() throws ParserException {
-        BasicTypeReference basicType = this.parseBasicType();
+    private ExplicitTypeReference parseType() throws ParserException {
+        ExplicitReference<BasicTypeDeclaration> basicTypeReference = this.parseBasicType();
         int numberOfDimensions = this.parseOpeningAndClosingBrackets();
 
-        return new TypeReference(basicType.getName(), numberOfDimensions, basicType.getLocation());
+        return new ExplicitTypeReference(basicTypeReference, numberOfDimensions);
     }
 
-    private BasicTypeReference parseBasicType() throws ParserException {
+    private ExplicitReference<BasicTypeDeclaration> parseBasicType() throws ParserException {
 
         // BasicType -> "IDENTIFIER"
         if (this.lookahead(TokenType.IDENTIFIER)) {
             Token token = this.consume(TokenType.IDENTIFIER, null);
 
-            return new BasicTypeReference(token.getText(), token.getLocation());
+            return new ExplicitReference<>(token.getText(), token.getLocation());
         }
 
         // BasicType -> "int"
         else if (this.lookahead(TokenType.INT)) {
             Token token = this.consume(TokenType.INT, null);
 
-            return new BasicTypeReference(token.getText(), token.getLocation());
+            return new ExplicitReference<>(token.getText(), token.getLocation());
         }
 
         // BasicType -> "boolean"
         else if (this.lookahead(TokenType.BOOLEAN)) {
             Token token = this.consume(TokenType.BOOLEAN, null);
 
-            return new BasicTypeReference(token.getText(), token.getLocation());
+            return new ExplicitReference<>(token.getText(), token.getLocation());
         }
 
         // BasicType -> "void"
         else if (this.lookahead(TokenType.VOID)) {
             Token token = this.consume(TokenType.VOID, null);
 
-            return new BasicTypeReference(token.getText(), token.getLocation());
+            return new ExplicitReference<>(token.getText(), token.getLocation());
         }
 
         else {

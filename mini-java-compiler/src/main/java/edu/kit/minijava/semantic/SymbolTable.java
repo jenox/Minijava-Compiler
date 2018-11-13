@@ -4,36 +4,32 @@ import edu.kit.minijava.ast.nodes.*;
 
 import java.util.*;
 
-public class SymbolTable {
+// TODO: Put this logic straight into SemanticAnalysisBase?
+class SymbolTable {
     SymbolTable() {
     }
 
     private final Stack<Map<String, VariableDeclaration>> scopes = new Stack<>();
 
-    public void enterNewScope() {
+    void enterNewScope() {
         this.scopes.push(new HashMap<>());
     }
 
-    public void leaveCurrentScope() {
+    void leaveCurrentScope() {
         assert !this.scopes.isEmpty();
 
         this.scopes.pop();
     }
 
-    public void enterDeclaration(String identifier, VariableDeclaration declaration) {
+    void enterDeclaration(VariableDeclaration declaration) {
         assert !this.scopes.isEmpty();
 
-        // TODO: make this a checked exception (redefinition in same scope)
-        assert !this.scopes.peek().containsKey(identifier);
-
-        // TODO: where to we catch other invalid redeclarations?
-
-        this.scopes.peek().put(identifier, declaration);
+        this.scopes.peek().put(declaration.getName(), declaration);
     }
 
-    public Optional<VariableDeclaration> getVisibleDeclarationForIdentifer(String identifier) {
+    Optional<VariableDeclaration> getVisibleDeclarationForName(String name) {
         for (int i = this.scopes.size() - 1; i >= 0; i--) {
-            VariableDeclaration declaration = this.scopes.get(i).get(identifier);
+            VariableDeclaration declaration = this.scopes.get(i).get(name);
 
             if (declaration != null) {
                 return Optional.of(declaration);
@@ -41,5 +37,9 @@ public class SymbolTable {
         }
 
         return Optional.empty();
+    }
+
+    boolean isDeclarationInCurrentScope(VariableDeclaration declaration) {
+        return this.scopes.peek().containsValue(declaration);
     }
 }

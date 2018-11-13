@@ -17,6 +17,8 @@ public abstract class Expression implements ASTNode {
         return this.type;
     }
 
+    public abstract boolean isValidForExpressionStatement();
+
     public static final class BinaryOperation extends Expression {
         public BinaryOperation(BinaryOperationType operationType, Expression left, Expression right) {
             super();
@@ -40,6 +42,11 @@ public abstract class Expression implements ASTNode {
 
         public Expression getRight() {
             return this.right;
+        }
+
+        @Override
+        public boolean isValidForExpressionStatement() {
+            return this.operationType == BinaryOperationType.ASSIGNMENT;
         }
 
         @Override
@@ -68,6 +75,11 @@ public abstract class Expression implements ASTNode {
         }
 
         @Override
+        public boolean isValidForExpressionStatement() {
+            return false;
+        }
+
+        @Override
         public <T> void accept(ASTVisitor<T> visitor, T context) {
             visitor.visit(this, context);
         }
@@ -76,6 +88,11 @@ public abstract class Expression implements ASTNode {
     public static final class NullLiteral extends Expression {
         public NullLiteral() {
             super();
+        }
+
+        @Override
+        public boolean isValidForExpressionStatement() {
+            return false;
         }
 
         @Override
@@ -98,6 +115,11 @@ public abstract class Expression implements ASTNode {
         }
 
         @Override
+        public boolean isValidForExpressionStatement() {
+            return false;
+        }
+
+        @Override
         public <T> void accept(ASTVisitor<T> visitor, T context) {
             visitor.visit(this, context);
         }
@@ -117,43 +139,57 @@ public abstract class Expression implements ASTNode {
         }
 
         @Override
+        public boolean isValidForExpressionStatement() {
+            return false;
+        }
+
+        @Override
         public <T> void accept(ASTVisitor<T> visitor, T context) {
             visitor.visit(this, context);
         }
     }
 
     public static final class MethodInvocation extends Expression {
+        public MethodInvocation(String methodName, List<Expression> arguments, TokenLocation location) {
+            super();
+
+            this.context = null;
+            this.arguments = arguments;
+            this.methodReference = new ExplicitReference<>(methodName, location);
+        }
+
         public MethodInvocation(Expression context, String methodName, List<Expression> arguments,
                                 TokenLocation location) {
             super();
 
-            List<TypeOfExpression> argumentTypes = arguments.stream().map(e -> e.type).collect(Collectors.toList());
-
             this.context = context;
             this.arguments = arguments;
-
-            if (context != null) {
-                this.reference = new MethodReference(context.type, methodName, argumentTypes, location);
-            }
-            else {
-                this.reference = new MethodReference(null, methodName, argumentTypes, location);
-            }
+            this.methodReference = new ExplicitReference<>(methodName, location);
         }
 
         private final Expression context; // nullable
-        private final MethodReference reference;
+        private final ExplicitReference<MethodDeclaration> methodReference;
         private final List<Expression> arguments;
 
-        public Expression getContext() {
-            return this.context;
+        public Optional<Expression> getContext() {
+            return Optional.ofNullable(this.context);
         }
 
-        public MethodReference getReference() {
-            return this.reference;
+        public ExplicitReference<MethodDeclaration> getMethodReference() {
+            return this.methodReference;
         }
 
         public List<Expression> getArguments() {
             return this.arguments;
+        }
+
+        public List<TypeOfExpression> getArgumentTypes() {
+            return this.arguments.stream().map(e -> e.type).collect(Collectors.toList());
+        }
+
+        @Override
+        public boolean isValidForExpressionStatement() {
+            return true;
         }
 
         @Override
@@ -167,18 +203,23 @@ public abstract class Expression implements ASTNode {
             super();
 
             this.context = context;
-            this.reference = new FieldReference(context.type, fieldName, location);
+            this.fieldReference = new ExplicitReference<>(fieldName, location);
         }
 
         private final Expression context;
-        private final FieldReference reference;
+        private final ExplicitReference<FieldDeclaration> fieldReference;
 
         public Expression getContext() {
             return this.context;
         }
 
-        public FieldReference getReference() {
-            return this.reference;
+        public ExplicitReference<FieldDeclaration> getFieldReference() {
+            return this.fieldReference;
+        }
+
+        @Override
+        public boolean isValidForExpressionStatement() {
+            return false;
         }
 
         @Override
@@ -207,6 +248,11 @@ public abstract class Expression implements ASTNode {
         }
 
         @Override
+        public boolean isValidForExpressionStatement() {
+            return false;
+        }
+
+        @Override
         public <T> void accept(ASTVisitor<T> visitor, T context) {
             visitor.visit(this, context);
         }
@@ -216,13 +262,18 @@ public abstract class Expression implements ASTNode {
         public VariableAccess(String variableName, TokenLocation location) {
             super();
 
-            this.reference = new VariableReference(variableName, location);
+            this.variableReference = new ExplicitReference<>(variableName, location);
         }
 
-        private final VariableReference reference;
+        private final ExplicitReference<VariableDeclaration> variableReference;
 
-        public VariableReference getReference() {
-            return this.reference;
+        public ExplicitReference<VariableDeclaration> getVariableReference() {
+            return this.variableReference;
+        }
+
+        @Override
+        public boolean isValidForExpressionStatement() {
+            return false;
         }
 
         @Override
@@ -237,6 +288,11 @@ public abstract class Expression implements ASTNode {
         }
 
         @Override
+        public boolean isValidForExpressionStatement() {
+            return false;
+        }
+
+        @Override
         public <T> void accept(ASTVisitor<T> visitor, T context) {
             visitor.visit(this, context);
         }
@@ -246,13 +302,18 @@ public abstract class Expression implements ASTNode {
         public NewObjectCreation(String className, TokenLocation location) {
             super();
 
-            this.reference = new ClassReference(className, location);
+            this.classReference = new ExplicitReference<>(className, location);
         }
 
-        private final ClassReference reference;
+        private final ExplicitReference<ClassDeclaration> classReference;
 
-        public ClassReference getReference() {
-            return this.reference;
+        public ExplicitReference<ClassDeclaration> getClassReference() {
+            return this.classReference;
+        }
+
+        @Override
+        public boolean isValidForExpressionStatement() {
+            return false;
         }
 
         @Override
@@ -262,20 +323,21 @@ public abstract class Expression implements ASTNode {
     }
 
     public static final class NewArrayCreation extends Expression {
-        public NewArrayCreation(BasicTypeReference reference, Expression primaryDimension, int numberOfDimensions) {
+        public NewArrayCreation(ExplicitReference<BasicTypeDeclaration> basicTypeReference, Expression primaryDimension,
+                                int numberOfDimensions) {
             super();
 
-            this.reference = reference;
+            this.basicTypeReference = basicTypeReference;
             this.primaryDimension = primaryDimension;
             this.numberOfDimensions = numberOfDimensions;
         }
 
-        private final BasicTypeReference reference;
+        private final ExplicitReference<BasicTypeDeclaration> basicTypeReference;
         private final Expression primaryDimension;
         private final int numberOfDimensions;
 
-        public BasicTypeReference getReference() {
-            return this.reference;
+        public ExplicitReference<BasicTypeDeclaration> getBasicTypeReference() {
+            return this.basicTypeReference;
         }
 
         public Expression getPrimaryDimension() {
@@ -284,6 +346,11 @@ public abstract class Expression implements ASTNode {
 
         public int getNumberOfDimensions() {
             return this.numberOfDimensions;
+        }
+
+        @Override
+        public boolean isValidForExpressionStatement() {
+            return false;
         }
 
         @Override

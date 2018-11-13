@@ -4,6 +4,7 @@ import java.io.*;
 
 class EchoCommand extends Command {
 
+    @Override
     public int execute(String path) {
         try {
             FileInputStream stream = new FileInputStream(path);

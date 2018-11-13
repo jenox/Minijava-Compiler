@@ -1,15 +1,13 @@
 package edu.kit.minijava.ast.nodes;
 
-import edu.kit.minijava.ast.references.*;
 import edu.kit.minijava.lexer.*;
 
 import java.util.*;
 import java.util.stream.*;
 
 public final class MethodDeclaration implements SubroutineDeclaration, MemberDeclaration, ASTNode {
-    public MethodDeclaration(boolean isStatic, TypeReference returnType, String name,
-                             List<ParameterDeclaration> parameters, Statement.Block body, TokenLocation location) {
-        this.isStatic = isStatic;
+    public MethodDeclaration(TypeReference returnType, String name, List<ParameterDeclaration> parameters,
+                             Statement.Block body, TokenLocation location) {
         this.returnType = returnType;
         this.name = name;
         this.parameters = Collections.unmodifiableList(parameters);
@@ -17,27 +15,23 @@ public final class MethodDeclaration implements SubroutineDeclaration, MemberDec
         this.location = location;
     }
 
-    private final boolean isStatic;
     private final TypeReference returnType;
     private final String name;
     private final List<ParameterDeclaration> parameters;
     private final Statement.Block body;
     private final TokenLocation location;
 
-    public boolean isStatic() {
-        return this.isStatic;
-    }
-
     @Override
     public TypeReference getReturnType() {
         return this.returnType;
     }
 
+    @Override
     public String getName() {
         return this.name;
     }
 
-    public List<ParameterDeclaration> getParameters() {
+    public List<? extends VariableDeclaration> getParameters() {
         return this.parameters;
     }
 
@@ -57,5 +51,10 @@ public final class MethodDeclaration implements SubroutineDeclaration, MemberDec
     @Override
     public <T> void accept(ASTVisitor<T> visitor, T context) {
         visitor.visit(this, context);
+    }
+
+    @Override
+    public String toString() {
+        return "instance method '" + this.name + "' at " + this.location;
     }
 }

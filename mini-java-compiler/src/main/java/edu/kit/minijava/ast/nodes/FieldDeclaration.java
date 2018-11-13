@@ -1,6 +1,5 @@
 package edu.kit.minijava.ast.nodes;
 
-import edu.kit.minijava.ast.references.*;
 import edu.kit.minijava.lexer.*;
 
 public final class FieldDeclaration implements VariableDeclaration, MemberDeclaration, ASTNode {
@@ -19,6 +18,7 @@ public final class FieldDeclaration implements VariableDeclaration, MemberDeclar
         return this.type;
     }
 
+    @Override
     public String getName() {
         return this.name;
     }
@@ -28,7 +28,22 @@ public final class FieldDeclaration implements VariableDeclaration, MemberDeclar
     }
 
     @Override
+    public boolean canBeShadowedByVariableDeclarationInNestedScope() {
+        return true;
+    }
+
+    @Override
+    public boolean canBeAccessed() {
+        return true;
+    }
+
+    @Override
     public <T> void accept(ASTVisitor<T> visitor, T context) {
         visitor.visit(this, context);
+    }
+
+    @Override
+    public String toString() {
+        return "field '" + this.name + "' at " + this.location;
     }
 }
