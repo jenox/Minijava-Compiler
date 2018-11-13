@@ -33,8 +33,9 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
 
     @Override
     protected void visit(ClassDeclaration classDeclaration, Void context) {
-        if (this.isCollectingDeclarationsForUseBeforeDeclare())
+        if (this.isCollectingDeclarationsForUseBeforeDeclare()) {
             this.registerClassDeclaration(classDeclaration);
+        }
 
         this.enterClassDeclaration(classDeclaration);
 
@@ -56,8 +57,9 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
     // TODO: wir duerfen keine Felder vom Typ `void` oder vom Typ `void[]` deklarieren
     @Override
     protected void visit(FieldDeclaration fieldDeclaration, Void context) {
-        if (this.isCollectingDeclarationsForUseBeforeDeclare())
+        if (this.isCollectingDeclarationsForUseBeforeDeclare()) {
             this.registerFieldDeclaration(fieldDeclaration, this.getCurrentClassDeclaration());
+        }
         else {
             fieldDeclaration.getType().accept(this, context);
             this.addVariableDeclarationToCurrentScope(fieldDeclaration);
@@ -66,15 +68,17 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
 
     @Override
     protected void visit(MethodDeclaration methodDeclaration, Void context) {
-        if (this.isCollectingDeclarationsForUseBeforeDeclare())
+        if (this.isCollectingDeclarationsForUseBeforeDeclare()) {
             this.registerMethodDeclaration(methodDeclaration, this.getCurrentClassDeclaration());
+        }
         else {
             methodDeclaration.getReturnType().accept(this, context);
 
             // TODO: ueberpruefen, dass return type nicht ein `void[]` ist
 
-            for (VariableDeclaration paramDecl : methodDeclaration.getParameters())
+            for (VariableDeclaration paramDecl : methodDeclaration.getParameters()) {
                 paramDecl.accept(this, context);
+            }
 
             this.enterMethodDeclaration(methodDeclaration);
 
@@ -82,18 +86,20 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
 
             // TODO: location zum assert-string hinzufuegen
             // TODO: return type zum assert-string hinzufuegen
-            if (!methodDeclaration.getReturnType().isVoid())
+            if (!methodDeclaration.getReturnType().isVoid()) {
                 assert methodDeclaration.getBody()
-                .explicitlyReturns() : "At least one path in the method body doesn't returns a value.";
+                        .explicitlyReturns() : "At least one path in the method body doesn't returns a value.";
+            }
 
-                this.leaveCurrentMethodDeclaration();
+            this.leaveCurrentMethodDeclaration();
         }
     }
 
     @Override
     protected void visit(MainMethodDeclaration methodDeclaration, Void context) {
-        if (this.isCollectingDeclarationsForUseBeforeDeclare())
+        if (this.isCollectingDeclarationsForUseBeforeDeclare()) {
             this.setEntryPoint(methodDeclaration);
+        }
         else {
             methodDeclaration.getReturnType().accept(this, context);
             methodDeclaration.getArgumentsParameter().accept(this, context);
