@@ -107,7 +107,7 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
 
     @Override
     protected void visit(Expression.NullLiteral expression, Void context) {
-        throw new UnsupportedOperationException();
+        expression.getType().resolveToNull();
     }
 
     @Override
