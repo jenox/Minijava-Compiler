@@ -18,4 +18,9 @@ public class ImplicitReference<DeclarationType extends Declaration> extends Refe
     public final DeclarationType getDeclaration() {
         return this.declaration;
     }
+
+    @Override
+    public String toString() {
+        return "#implicit";
+    }
 }

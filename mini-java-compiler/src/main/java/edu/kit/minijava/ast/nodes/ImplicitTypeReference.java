@@ -35,4 +35,9 @@ public class ImplicitTypeReference implements TypeReference {
             return false;
         }
     }
+
+    @Override
+    public String toString() {
+        return this.basicTypeReference.toString();
+    }
 }

@@ -30,4 +30,9 @@ public final class ExplicitTypeReference implements TypeReference {
     public <T> void accept(ASTVisitor<T> visitor, T context) {
         visitor.visit(this, context);
     }
+
+    @Override
+    public String toString() {
+        return this.basicTypeReference.toString();
+    }
 }
