@@ -15,9 +15,18 @@ public interface TypeReference extends ASTNode {
         }
     }
 
-    default boolean isArrayOfVoid() {
+    default boolean isDimensionalVoid() {
         if (this.getBasicTypeReference().getDeclaration() == PrimitiveTypeDeclaration.VOID) {
             return this.getNumberOfDimensions() >= 1;
+        }
+        else {
+            return false;
+        }
+    }
+
+    default boolean isArrayOfString() {
+        if (this.getBasicTypeReference().getDeclaration() == PrimitiveTypeDeclaration.STRING) {
+            return this.getNumberOfDimensions() == 1;
         }
         else {
             return false;

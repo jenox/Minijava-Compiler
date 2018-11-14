@@ -135,7 +135,8 @@ public class Tests {
 
     private void assertCanBeAssignedBy(boolean expected, TypeReference left, TypeOfExpression right) {
         String message = "Can " + left + " be assigned by " + right + "?";
-        Assert.assertEquals(message, expected, SemanticAnalysisVisitorBase.canAssignTypeOfExpressionToTypeReference(right, left));
+        boolean actual = SemanticAnalysisVisitorBase.canAssignTypeOfExpressionToTypeReference(right, left);
+        Assert.assertEquals(message, expected, actual);
     }
 
 
@@ -192,7 +193,8 @@ public class Tests {
 
     private void assertCanBeAssignedBy(boolean expected, TypeOfExpression left, TypeOfExpression right) {
         String message = "Can " + left + " be assigned by " + right + "?";
-        Assert.assertEquals(message, expected, SemanticAnalysisVisitorBase.canAssignTypeOfExpressionToTypeOfExpression(right, left));
+        boolean actual = SemanticAnalysisVisitorBase.canAssignTypeOfExpressionToTypeOfExpression(right, left);
+        Assert.assertEquals(message, expected, actual);
     }
 
 
@@ -266,6 +268,7 @@ public class Tests {
 
     private void assertCanCheckForEquality(boolean expected, TypeOfExpression left, TypeOfExpression right) {
         String message = "Can check for equality with " + left + " and " + right + "?";
-        Assert.assertEquals(message, expected, SemanticAnalysisVisitorBase.canCheckForEqualityWithTypesOfExpressions(left, right));
+        boolean actual = SemanticAnalysisVisitorBase.canCheckForEqualityWithTypesOfExpressions(left, right);
+        Assert.assertEquals(message, expected, actual);
     }
 }
