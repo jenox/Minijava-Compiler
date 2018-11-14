@@ -12,16 +12,28 @@ abstract class SemanticAnalysisVisitorBase extends ASTVisitor<Void> {
 
     // MARK: - General State
 
-    private boolean isCollectingDeclarationsForUseBeforeDeclare = true;
+    private int currentTraversalNumber = 0;
     private final Stack<ClassDeclaration> currentClassDeclarations = new Stack<>();
     private final Stack<SubroutineDeclaration> currentMethodDeclarations = new Stack<>();
 
-    boolean isCollectingDeclarationsForUseBeforeDeclare() {
-        return this.isCollectingDeclarationsForUseBeforeDeclare;
+    boolean isCollectingClassDeclarations() {
+        return this.currentTraversalNumber == 0;
     }
 
-    void finishCollectingDeclarationsForUseBeforeDeclare() {
-        this.isCollectingDeclarationsForUseBeforeDeclare = false;
+    void finishCollectingClassDeclarations() {
+        assert this.isCollectingClassDeclarations();
+
+        this.currentTraversalNumber += 1;
+    }
+
+    boolean isCollectingClassMemberDeclarations() {
+        return this.currentTraversalNumber == 1;
+    }
+
+    void finishCollectingClassMemberDeclarations() {
+        assert this.isCollectingClassMemberDeclarations();
+
+        this.currentTraversalNumber += 1;
     }
 
     ClassDeclaration getCurrentClassDeclaration() {

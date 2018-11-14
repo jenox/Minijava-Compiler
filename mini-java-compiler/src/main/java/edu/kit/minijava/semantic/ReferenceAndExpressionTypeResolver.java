@@ -6,7 +6,7 @@ import edu.kit.minijava.ast.nodes.*;
 import edu.kit.minijava.ast.references.TypeOfExpression;
 
 /**
- * Because MiniJava allows use-before-declare, we need two passes: one for collecting class, method and fiel
+ * Because MiniJava allows use-before-declare, we need two passes: one for collecting class, method and field
  * declarations and one to resolve all references and expression types.
  *
  * Before visiting an expression, its type is not resolved. After visiting an expression, its type must be resolved.
@@ -15,7 +15,11 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
     public ReferenceAndExpressionTypeResolver(Program program) {
         program.accept(this, null);
 
-        this.finishCollectingDeclarationsForUseBeforeDeclare();
+        this.finishCollectingClassDeclarations();
+
+        program.accept(this, null);
+
+        this.finishCollectingClassMemberDeclarations();
 
         program.accept(this, null);
 
@@ -33,41 +37,39 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
 
     @Override
     protected void visit(ClassDeclaration classDeclaration, Void context) {
-        if (this.isCollectingDeclarationsForUseBeforeDeclare()) {
+        if (this.isCollectingClassDeclarations()) {
             this.registerClassDeclaration(classDeclaration);
         }
+        else {
+            this.enterClassDeclaration(classDeclaration);
 
-        this.enterClassDeclaration(classDeclaration);
+            classDeclaration.getFieldDeclarations().forEach(node -> node.accept(this, context));
+            classDeclaration.getMethodDeclarations().forEach(node -> node.accept(this, context));
+            classDeclaration.getMainMethodDeclarations().forEach(node -> node.accept(this, context));
 
-        classDeclaration.getFieldDeclarations().forEach(node -> node.accept(this, context));
-        classDeclaration.getMethodDeclarations().forEach(node -> node.accept(this, context));
-        classDeclaration.getMainMethodDeclarations().forEach(node -> node.accept(this, context));
-
-        this.leaveCurrentClassDeclaration();
+            this.leaveCurrentClassDeclaration();
+        }
     }
 
     @Override
     protected void visit(FieldDeclaration fieldDeclaration, Void context) {
-        if (this.isCollectingDeclarationsForUseBeforeDeclare()) {
-            this.registerFieldDeclaration(fieldDeclaration, this.getCurrentClassDeclaration());
-        }
-        else {
+        if (this.isCollectingClassMemberDeclarations()) {
             fieldDeclaration.getType().accept(this, context);
 
             // Field types must not be void or array of void.
             assert !(fieldDeclaration.getType().isVoid() || fieldDeclaration.getType().isDimensionalVoid()) :
                     "field must not be void or array of void";
 
+            this.registerFieldDeclaration(fieldDeclaration, this.getCurrentClassDeclaration());
+        }
+        else {
             this.addVariableDeclarationToCurrentScope(fieldDeclaration);
         }
     }
 
     @Override
     protected void visit(MethodDeclaration methodDeclaration, Void context) {
-        if (this.isCollectingDeclarationsForUseBeforeDeclare()) {
-            this.registerMethodDeclaration(methodDeclaration, this.getCurrentClassDeclaration());
-        }
-        else {
+        if (this.isCollectingClassMemberDeclarations()) {
             this.enterMethodDeclaration(methodDeclaration);
 
             methodDeclaration.getReturnType().accept(this, context);
@@ -76,6 +78,16 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
             assert !methodDeclaration.getReturnType().isDimensionalVoid() : "must not be array of void";
 
             methodDeclaration.getParameters().forEach(node -> node.accept(this, context));
+
+            this.leaveCurrentMethodDeclaration();
+            this.registerMethodDeclaration(methodDeclaration, this.getCurrentClassDeclaration());
+        }
+        else {
+            this.enterMethodDeclaration(methodDeclaration);
+
+            // Parameter types are already resolved, but we need to add the variable declarations to current scope.
+            methodDeclaration.getParameters().forEach(node -> node.accept(this, context));
+
             methodDeclaration.getBody().accept(this, context);
 
             // Non-void methods must return a value.
@@ -92,20 +104,30 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
 
     @Override
     protected void visit(MainMethodDeclaration methodDeclaration, Void context) {
-        if (this.isCollectingDeclarationsForUseBeforeDeclare()) {
+        if (this.isCollectingClassMemberDeclarations()) {
+            this.enterMethodDeclaration(methodDeclaration);
+
+            // Main method must be named main.
+            assert methodDeclaration.getName().equals("main") : "invalid main method name";
+
+            methodDeclaration.getReturnType().accept(this, context);
+
+            // Main method must return void, but AST doesn't guarantee it.
+            assert methodDeclaration.getReturnType().isVoid() : "must be void";
+
+            methodDeclaration.getArgumentsParameter().accept(this, context);
+
+            // Main method must take array of strings, but AST doesn't guarantee it.
+            assert methodDeclaration.getArgumentsParameter().getType().isArrayOfString() : "must be array of string";
+
+            this.leaveCurrentMethodDeclaration();
             this.setEntryPoint(methodDeclaration);
         }
         else {
             this.enterMethodDeclaration(methodDeclaration);
 
-            methodDeclaration.getReturnType().accept(this, context);
+            // Parameter types are already resolved, but we need to add the variable declarations to current scope.
             methodDeclaration.getArgumentsParameter().accept(this, context);
-
-            // Main method must return void, but AST doesn't guarantee it.
-            assert methodDeclaration.getReturnType().isVoid() : "must be void";
-
-            // Main method must take array of strings, but AST doesn't guarantee it.
-            assert methodDeclaration.getArgumentsParameter().getType().isArrayOfString() : "must be array of string";
 
             methodDeclaration.getBody().accept(this, context);
 
@@ -115,13 +137,16 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
 
     @Override
     protected void visit(ParameterDeclaration parameterDeclaration, Void context) {
-        parameterDeclaration.getType().accept(this, context);
+        if (this.isCollectingClassMemberDeclarations()) {
+            parameterDeclaration.getType().accept(this, context);
 
-        // Parameter types must not be void or array of void.
-        assert !(parameterDeclaration.getType().isVoid() || parameterDeclaration.getType().isDimensionalVoid()) :
-                "parameter must not be void or array of void";
-
-        this.addVariableDeclarationToCurrentScope(parameterDeclaration);
+            // Parameter types must not be void or array of void.
+            assert !(parameterDeclaration.getType().isVoid() || parameterDeclaration.getType().isDimensionalVoid()) :
+                    "parameter must not be void or array of void";
+        }
+        else {
+            this.addVariableDeclarationToCurrentScope(parameterDeclaration);
+        }
     }
 
     @Override

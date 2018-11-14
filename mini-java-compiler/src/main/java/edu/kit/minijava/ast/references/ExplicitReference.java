@@ -31,13 +31,13 @@ public class ExplicitReference<DeclarationType extends Declaration> extends Refe
 
     @Override
     public final DeclarationType getDeclaration() {
-        if (!this.isResolved()) throw new IllegalStateException();
+        if (!this.isResolved()) throw new IllegalStateException("Attempt to follow unresolved reference.");
 
         return this.declaration;
     }
 
     public final void resolveTo(DeclarationType declaration) {
-        if (this.isResolved()) throw new IllegalStateException();
+        if (this.isResolved()) throw new IllegalStateException("Attempt to resolve already resolved reference.");
         if (declaration == null) throw new IllegalArgumentException();
 
         this.declaration = declaration;
