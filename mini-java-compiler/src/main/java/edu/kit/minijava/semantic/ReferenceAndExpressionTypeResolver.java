@@ -3,7 +3,7 @@ package edu.kit.minijava.semantic;
 import java.util.*;
 
 import edu.kit.minijava.ast.nodes.*;
-import edu.kit.minijava.ast.references.TypeOfExpression;
+import edu.kit.minijava.ast.references.*;
 
 /**
  * Because MiniJava allows use-before-declare, we need two passes: one for collecting class, method and field
@@ -13,6 +13,20 @@ import edu.kit.minijava.ast.references.TypeOfExpression;
  */
 public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorBase {
     public ReferenceAndExpressionTypeResolver(Program program) {
+        this.enterNewVariableDeclarationScope();
+
+        // Install standard library declarations.
+        this.addVariableDeclarationToCurrentScope(CompilerMagic.SYSTEM_VARIABLE);
+        this.registerClassDeclaration(CompilerMagic.SYSTEM);
+        this.registerClassDeclaration(CompilerMagic.SYSTEM_IN);
+        this.registerClassDeclaration(CompilerMagic.SYSTEM_OUT);
+        this.registerFieldDeclaration(CompilerMagic.IN, CompilerMagic.SYSTEM);
+        this.registerFieldDeclaration(CompilerMagic.OUT, CompilerMagic.SYSTEM);
+        this.registerMethodDeclaration(CompilerMagic.PRINTLN, CompilerMagic.SYSTEM_OUT);
+        this.registerMethodDeclaration(CompilerMagic.FLUSH, CompilerMagic.SYSTEM_OUT);
+        this.registerMethodDeclaration(CompilerMagic.WRITE, CompilerMagic.SYSTEM_OUT);
+        this.registerMethodDeclaration(CompilerMagic.READ, CompilerMagic.SYSTEM_IN);
+
         program.accept(this, null);
 
         this.finishCollectingClassDeclarations();
@@ -24,6 +38,8 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
         program.accept(this, null);
 
         assert this.getEntryPoint().isPresent() : "missing main method";
+
+        this.leaveCurrentVariableDeclarationScope();
     }
 
     // MARK: - Traversal
@@ -56,7 +72,7 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
         if (this.isCollectingClassMemberDeclarations()) {
             fieldDeclaration.getType().accept(this, context);
 
-            // Field types must not be void or array of void.
+            // Field types must not be of type void or array of void.
             assert !(fieldDeclaration.getType().isVoid() || fieldDeclaration.getType().isDimensionalVoid()) :
                     fieldDeclaration + " must not be void or array of void";
 
@@ -146,7 +162,7 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
         if (this.isCollectingClassMemberDeclarations()) {
             parameterDeclaration.getType().accept(this, context);
 
-            // Parameter types must not be void or array of void.
+            // Parameter types must not be of type void or array of void.
             assert !(parameterDeclaration.getType().isVoid() || parameterDeclaration.getType().isDimensionalVoid()) :
                     parameterDeclaration + " must not be void or array of void";
         }
