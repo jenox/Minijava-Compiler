@@ -260,6 +260,11 @@ public abstract class Statement implements ASTNode {
             return true;
         }
 
+        @Override
+        public boolean isFinal() {
+            return false;
+        }
+
         public Optional<Expression> getValue() {
             return Optional.ofNullable(this.value);
         }

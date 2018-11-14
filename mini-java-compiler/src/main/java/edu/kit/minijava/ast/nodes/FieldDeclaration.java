@@ -3,13 +3,15 @@ package edu.kit.minijava.ast.nodes;
 import edu.kit.minijava.lexer.*;
 
 public final class FieldDeclaration implements VariableDeclaration, MemberDeclaration, ASTNode {
-    public FieldDeclaration(TypeReference type, String name, TokenLocation location) {
+    public FieldDeclaration(TypeReference type, boolean isFinal, String name, TokenLocation location) {
         this.type = type;
+        this.isFinal = isFinal;
         this.name = name;
         this.location = location;
     }
 
     private final TypeReference type;
+    private final boolean isFinal;
     private final String name;
     private final TokenLocation location;
 
@@ -35,6 +37,11 @@ public final class FieldDeclaration implements VariableDeclaration, MemberDeclar
     @Override
     public boolean canBeAccessed() {
         return true;
+    }
+
+    @Override
+    public boolean isFinal() {
+        return this.isFinal;
     }
 
     @Override

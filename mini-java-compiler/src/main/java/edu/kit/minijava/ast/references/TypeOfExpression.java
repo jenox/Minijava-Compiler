@@ -74,6 +74,10 @@ public class TypeOfExpression {
         this.resolveToArrayOf(declaration, reference.getNumberOfDimensions(), isAssignable);
     }
 
+    public final void resolveToVariableDeclaration(VariableDeclaration declaration) {
+        this.resolveToTypeReference(declaration.getType(), !declaration.isFinal());
+    }
+
     public final void resolveToTypeOfExpression(TypeOfExpression type, boolean isAssignable) {
         if (type.getDeclaration().isPresent()) {
             this.resolveToArrayOf(type.getDeclaration().get(), type.getNumberOfDimensions(), isAssignable);

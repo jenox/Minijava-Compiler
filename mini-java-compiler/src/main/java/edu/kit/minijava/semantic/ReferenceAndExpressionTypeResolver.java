@@ -492,7 +492,7 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
                 "use of undeclared field " + fieldName + " in " + this.getCurrentMethodDeclaration();
 
         expression.getFieldReference().resolveTo(fieldDeclaration.get());
-        expression.getType().resolveToTypeReference(fieldDeclaration.get().getType(), true);
+        expression.getType().resolveToVariableDeclaration(fieldDeclaration.get());
     }
 
     @Override
@@ -534,7 +534,7 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
                 variableDeclaration.get() + " may not be accessed in " + this.getCurrentMethodDeclaration();
 
         expression.getVariableReference().resolveTo(variableDeclaration.get());
-        expression.getType().resolveToTypeReference(variableDeclaration.get().getType(), true);
+        expression.getType().resolveToVariableDeclaration(variableDeclaration.get());
     }
 
     @Override
