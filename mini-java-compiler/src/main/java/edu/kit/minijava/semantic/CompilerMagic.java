@@ -19,30 +19,30 @@ class CompilerMagic {
 
     static final VariableDeclaration SYSTEM_VARIABLE;
 
-    static <T> List<T> list(T... elements) {
-        return Arrays.asList(elements);
-    }
-
     static {
         TypeReference voidReference = new ImplicitTypeReference(PrimitiveTypeDeclaration.VOID, 0);
         TypeReference integerReference = new ImplicitTypeReference(PrimitiveTypeDeclaration.INTEGER, 0);
         ParameterDeclaration integerParameter = new ParameterDeclaration(integerReference, null, null);
 
-        PRINTLN = new MethodDeclaration(voidReference, "println", list(integerParameter), null, null);
-        WRITE = new MethodDeclaration(voidReference, "write", list(integerParameter), null, null);
-        FLUSH = new MethodDeclaration(voidReference, "flush", list(), null, null);
-        READ = new MethodDeclaration(integerReference, "read", list(), null, null);
+        PRINTLN = new MethodDeclaration(voidReference, "println", Collections.singletonList(integerParameter), null,
+                null);
+        WRITE = new MethodDeclaration(voidReference, "write", Collections.singletonList(integerParameter), null, null);
+        FLUSH = new MethodDeclaration(voidReference, "flush", Collections.emptyList(), null, null);
+        READ = new MethodDeclaration(integerReference, "read", Collections.emptyList(), null, null);
 
-        SYSTEM_OUT = new ClassDeclaration("#SystemOut", list(), list(FLUSH, WRITE, PRINTLN), list(), null);
-        SYSTEM_IN = new ClassDeclaration("#SystemIn", list(), list(READ), list(), null);
+        SYSTEM_OUT = new ClassDeclaration("#SystemOut", Collections.emptyList(), Arrays.asList(FLUSH, WRITE, PRINTLN),
+                Collections.emptyList(),null);
+        SYSTEM_IN = new ClassDeclaration("#SystemIn", Collections.emptyList(), Collections.singletonList(READ),
+                Collections.emptyList(),null);
 
         OUT = new FieldDeclaration(new ImplicitTypeReference(SYSTEM_OUT, 0), "out", null);
         IN = new FieldDeclaration(new ImplicitTypeReference(SYSTEM_IN, 0), "in", null);
 
-        SYSTEM = new ClassDeclaration("#System", list(), list(), list(OUT, IN), null);
+        SYSTEM = new ClassDeclaration("#System", Collections.emptyList(), Collections.emptyList(),
+                Arrays.asList(OUT, IN),null);
 
         SYSTEM_VARIABLE = new VariableDeclaration() {
-            private TypeReference reference = new ImplicitTypeReference(SYSTEM, 0);
+            private final TypeReference reference = new ImplicitTypeReference(SYSTEM, 0);
 
             @Override
             public String getName() {
