@@ -77,6 +77,11 @@ abstract class SemanticAnalysisVisitorBase extends ASTVisitor<Void> {
      * Sets the program's entry point. Throws if the entry point has previously been configured.
      */
     void setEntryPoint(MainMethodDeclaration declaration) {
+
+        // Check whether a non-static method with the same name already exists in the current class
+        assert !this.methodDeclarations.get(this.currentClassDeclarations.peek()).containsKey(declaration.getName()) :
+            "invalid redeclaration of method " + declaration.getName() + " as static";
+
         assert this.entryPoint == null : "invalid redeclaration of entry point";
 
         this.entryPoint = declaration;
@@ -130,6 +135,10 @@ abstract class SemanticAnalysisVisitorBase extends ASTVisitor<Void> {
     void registerMethodDeclaration(MethodDeclaration methodDeclaration, ClassDeclaration classDeclaration) {
         assert !this.methodDeclarations.get(classDeclaration).containsKey(methodDeclaration.getName()) :
                 "invalid redeclaration of method";
+
+        // Check that no entry point with the same name already exists
+        assert this.entryPoint == null || !methodDeclaration.getName().equals(this.entryPoint.getName()) :
+            "invalid redeclaration of static method " + this.entryPoint.getName();
 
         this.methodDeclarations.get(classDeclaration).put(methodDeclaration.getName(), methodDeclaration);
     }
