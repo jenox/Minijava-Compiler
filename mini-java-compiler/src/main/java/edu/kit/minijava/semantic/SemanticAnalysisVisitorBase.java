@@ -1,6 +1,7 @@
 package edu.kit.minijava.semantic;
 
 import edu.kit.minijava.ast.nodes.*;
+import edu.kit.minijava.ast.references.*;
 
 import java.util.*;
 
@@ -11,16 +12,28 @@ abstract class SemanticAnalysisVisitorBase extends ASTVisitor<Void> {
 
     // MARK: - General State
 
-    private boolean isCollectingDeclarationsForUseBeforeDeclare = true;
+    private int currentTraversalNumber = 0;
     private final Stack<ClassDeclaration> currentClassDeclarations = new Stack<>();
     private final Stack<SubroutineDeclaration> currentMethodDeclarations = new Stack<>();
 
-    boolean isCollectingDeclarationsForUseBeforeDeclare() {
-        return this.isCollectingDeclarationsForUseBeforeDeclare;
+    boolean isCollectingClassDeclarations() {
+        return this.currentTraversalNumber == 0;
     }
 
-    void finishCollectingDeclarationsForUseBeforeDeclare() {
-        this.isCollectingDeclarationsForUseBeforeDeclare = false;
+    void finishCollectingClassDeclarations() {
+        assert this.isCollectingClassDeclarations();
+
+        this.currentTraversalNumber += 1;
+    }
+
+    boolean isCollectingClassMemberDeclarations() {
+        return this.currentTraversalNumber == 1;
+    }
+
+    void finishCollectingClassMemberDeclarations() {
+        assert this.isCollectingClassMemberDeclarations();
+
+        this.currentTraversalNumber += 1;
     }
 
     ClassDeclaration getCurrentClassDeclaration() {
@@ -64,6 +77,11 @@ abstract class SemanticAnalysisVisitorBase extends ASTVisitor<Void> {
      * Sets the program's entry point. Throws if the entry point has previously been configured.
      */
     void setEntryPoint(MainMethodDeclaration declaration) {
+
+        // Check whether a non-static method with the same name already exists in the current class
+        assert !this.methodDeclarations.get(this.currentClassDeclarations.peek()).containsKey(declaration.getName()) :
+            "invalid redeclaration of method " + declaration.getName() + " as static";
+
         assert this.entryPoint == null : "invalid redeclaration of entry point";
 
         this.entryPoint = declaration;
@@ -118,6 +136,10 @@ abstract class SemanticAnalysisVisitorBase extends ASTVisitor<Void> {
         assert !this.methodDeclarations.get(classDeclaration).containsKey(methodDeclaration.getName()) :
                 "invalid redeclaration of method";
 
+        // Check that no entry point with the same name already exists
+        assert this.entryPoint == null || !methodDeclaration.getName().equals(this.entryPoint.getName()) :
+            "invalid redeclaration of static method " + this.entryPoint.getName();
+
         this.methodDeclarations.get(classDeclaration).put(methodDeclaration.getName(), methodDeclaration);
     }
 
@@ -148,5 +170,124 @@ abstract class SemanticAnalysisVisitorBase extends ASTVisitor<Void> {
 
     Optional<FieldDeclaration> getFieldDeclarationForName(String name, ClassDeclaration container) {
         return Optional.ofNullable(this.fieldDeclarations.get(container).get(name));
+    }
+
+
+    // MARK: - Compatibility
+
+    // TODO: we should have unit tests for those
+
+    static boolean canAssignTypeOfExpressionToTypeReference(TypeOfExpression type, TypeReference reference) {
+
+        // type is not null
+        if (type.getDeclaration().isPresent()) {
+
+            // must be same basic type and number of dimensions
+            if (type.getDeclaration().get() != reference.getBasicTypeReference().getDeclaration()) return false;
+            if (type.getNumberOfDimensions() != reference.getNumberOfDimensions()) return false;
+
+            return true;
+        }
+
+        // type is null
+        else {
+            if (reference.getNumberOfDimensions() >= 1) {
+                return true;
+            }
+            else {
+                return reference.getBasicTypeReference().getDeclaration() instanceof ClassDeclaration;
+            }
+        }
+    }
+
+    /** Generally not commutative. */
+    static boolean canAssignTypeOfExpressionToTypeOfExpression(TypeOfExpression type, TypeOfExpression other) {
+
+        // null type is not assignable
+        if (!other.getDeclaration().isPresent()) {
+            return false;
+        }
+
+        // type is not null
+        if (type.getDeclaration().isPresent()) {
+
+            // must be same basic type and number of dimensions
+            if (type.getDeclaration().get() != other.getDeclaration().get()) return false;
+            if (type.getNumberOfDimensions() != other.getNumberOfDimensions()) return false;
+
+            return true;
+        }
+
+        // type is null
+        else {
+            if (other.getNumberOfDimensions() >= 1) {
+                return true;
+            }
+            else {
+                return other.getDeclaration().get() instanceof ClassDeclaration;
+            }
+        }
+    }
+
+    /** Should be commutative. */
+    static boolean canCheckForEqualityWithTypesOfExpressions(TypeOfExpression left, TypeOfExpression right) {
+
+        // left is not null
+        if (left.getDeclaration().isPresent()) {
+
+            // left is array or instance of some class
+            if (left.getNumberOfDimensions() >= 1 || left.getDeclaration().get() instanceof ClassDeclaration) {
+
+                // right is not null. must be (array of) same basic type and dimension.
+                if (right.getDeclaration().isPresent()) {
+                    if (right.getDeclaration().get() != left.getDeclaration().get()) return false;
+                    if (right.getNumberOfDimensions() != left.getNumberOfDimensions()) return false;
+
+                    return true;
+                }
+
+                // right is null. valid.
+                else {
+                    return true;
+                }
+            }
+
+            // left is primitive type
+            else {
+
+                // right is not null. must be same basic type, but not void.
+                if (right.getDeclaration().isPresent()) {
+                    if (left.getDeclaration().get() == PrimitiveTypeDeclaration.VOID) return false;
+                    if (right.getDeclaration().get() != left.getDeclaration().get()) return false;
+                    if (right.getNumberOfDimensions() != 0) return false;
+
+                    return true;
+                }
+
+                // right is null. invalid.
+                else {
+                    return false;
+                }
+            }
+        }
+
+        // left is null
+        else {
+
+            // right is not null. must be array or instance of some class.
+            if (right.getDeclaration().isPresent()) {
+                if (right.getNumberOfDimensions() >= 1) {
+                    return true;
+                }
+                else {
+                    return right.getDeclaration().get() instanceof ClassDeclaration;
+                }
+            }
+
+            // right is null. valid.
+            else {
+                return true;
+            }
+        }
     }
 }

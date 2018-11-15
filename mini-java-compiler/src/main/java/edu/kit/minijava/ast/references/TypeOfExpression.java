@@ -1,8 +1,8 @@
 package edu.kit.minijava.ast.references;
 
-import edu.kit.minijava.ast.nodes.*;
+import java.util.Optional;
 
-import java.util.*;
+import edu.kit.minijava.ast.nodes.*;
 
 public class TypeOfExpression {
 
@@ -33,7 +33,6 @@ public class TypeOfExpression {
     public final boolean isAssignable() {
         return this.isAssignable;
     }
-
 
     // MARK: - Resolution
 
@@ -75,6 +74,10 @@ public class TypeOfExpression {
         this.resolveToArrayOf(declaration, reference.getNumberOfDimensions(), isAssignable);
     }
 
+    public final void resolveToVariableDeclaration(VariableDeclaration declaration) {
+        this.resolveToTypeReference(declaration.getType(), !declaration.isFinal());
+    }
+
     public final void resolveToTypeOfExpression(TypeOfExpression type, boolean isAssignable) {
         if (type.getDeclaration().isPresent()) {
             this.resolveToArrayOf(type.getDeclaration().get(), type.getNumberOfDimensions(), isAssignable);
@@ -99,34 +102,22 @@ public class TypeOfExpression {
         return this.declaration == PrimitiveTypeDeclaration.INTEGER && this.numberOfDimensions == 0;
     }
 
-    private boolean isNull() {
+    public final boolean isNull() {
         assert this.isResolved;
 
         return this.declaration == null;
     }
 
-    private boolean isObjectOrNull() {
+    public final boolean isObjectOrNull() {
         assert this.isResolved;
 
         return this.declaration == null || this.declaration instanceof ClassDeclaration && this.numberOfDimensions == 0;
     }
 
+    public final boolean isArrayType() {
+        assert this.isResolved;
 
-    // MARK: - Compatibility
-
-    // FIXME: These are semantic properties, should not live in AST package.
-
-    public boolean isCompatibleWithTypeReference(TypeReference reference) {
-        throw new UnsupportedOperationException();
-    }
-
-    public boolean isCompatibleWith(TypeOfExpression type) {
-        throw new UnsupportedOperationException();
-    }
-
-    // must be commutative
-    public boolean canCheckForEqualityWith(TypeOfExpression type) {
-        throw new UnsupportedOperationException();
+        return this.numberOfDimensions > 0;
     }
 
 

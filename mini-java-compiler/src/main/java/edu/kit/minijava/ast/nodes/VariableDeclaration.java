@@ -13,4 +13,7 @@ public interface VariableDeclaration extends Declaration, ASTNode {
 
     /** Whether or not the variable can be read from or written to. */
     boolean canBeAccessed();
+
+    /** Whether or not the variable is in fact a constant. */
+    boolean isFinal();
 }
