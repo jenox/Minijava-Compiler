@@ -16,7 +16,7 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
         this.enterNewVariableDeclarationScope();
 
         // Install standard library declarations.
-        this.addVariableDeclarationToCurrentScope(CompilerMagic.SYSTEM_VARIABLE);
+        this.addGlobalVariableDeclaration(CompilerMagic.SYSTEM_VARIABLE);
         this.registerClassDeclaration(CompilerMagic.SYSTEM);
         this.registerClassDeclaration(CompilerMagic.SYSTEM_IN);
         this.registerClassDeclaration(CompilerMagic.SYSTEM_OUT);
@@ -524,6 +524,17 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
     protected void visit(Expression.VariableAccess expression, Void context) {
         String name = expression.getVariableReference().getName();
         Optional<VariableDeclaration> variableDeclaration = this.getVariableDeclarationForName(name);
+
+        if (!variableDeclaration.isPresent()) {
+            // Check for classes that might shadow global declarations.
+            // If we found a class, we can reject the program as it cannot have static fields or be
+            // accessed as a reference.
+            assert (!this.getClassDeclarationForName(name).isPresent()) :
+                "cannot access class with name " + name + " as reference";
+
+            // Retrieve global declarations
+            variableDeclaration = this.getGlobalVariableDeclarationForName(name);
+        }
 
         // Variable reference must be resolvable.
         assert variableDeclaration.isPresent() :
