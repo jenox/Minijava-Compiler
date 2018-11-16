@@ -113,9 +113,9 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
                         "must return a value from " + methodDeclaration;
             }
 
-            // Methods must not contain unreachable statements.
-            assert !methodDeclaration.getBody().containsUnreachableStatements() :
-                    methodDeclaration + " contains unreachable statements";
+            // NOTE: At this point, we could also check for unreachable code in the method.
+            // However, the MiniJava language specification does not permit the rejection of programs that contain
+            // unreachable code as required by the Java specification.
 
             this.leaveCurrentMethodDeclaration();
         }
