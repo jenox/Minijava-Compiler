@@ -544,6 +544,12 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
         assert variableDeclaration.get().canBeAccessed() :
                 variableDeclaration.get() + " may not be accessed in " + this.getCurrentMethodDeclaration();
 
+        // Check whether we are trying to access a field (which is always non-static since we do not support
+        // static fields) from a static context.
+        assert !(this.getCurrentMethodDeclaration() instanceof MainMethodDeclaration
+            && variableDeclaration.get() instanceof FieldDeclaration) :
+            "cannot access non-static field " + variableDeclaration.get().getName() + " from static context";
+
         expression.getVariableReference().resolveTo(variableDeclaration.get());
         expression.getType().resolveToVariableDeclaration(variableDeclaration.get());
     }
