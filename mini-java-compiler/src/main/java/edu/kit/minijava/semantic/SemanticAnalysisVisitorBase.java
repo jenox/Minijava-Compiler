@@ -15,6 +15,7 @@ abstract class SemanticAnalysisVisitorBase extends ASTVisitor<Void> {
     private int currentTraversalNumber = 0;
     private final Stack<ClassDeclaration> currentClassDeclarations = new Stack<>();
     private final Stack<SubroutineDeclaration> currentMethodDeclarations = new Stack<>();
+    private final Map<String, VariableDeclaration> globalVariableDeclarations = new HashMap<>();
 
     boolean isCollectingClassDeclarations() {
         return this.currentTraversalNumber == 0;
@@ -117,6 +118,14 @@ abstract class SemanticAnalysisVisitorBase extends ASTVisitor<Void> {
         this.symbolTable.leaveCurrentScope();
     }
 
+    void addGlobalVariableDeclaration(VariableDeclaration declaration) {
+        assert !this.globalVariableDeclarations.containsKey(declaration.getName()) : "invalid global redeclaration";
+        this.globalVariableDeclarations.put(declaration.getName(), declaration);
+    }
+
+    Optional<VariableDeclaration> getGlobalVariableDeclarationForName(String name) {
+        return Optional.ofNullable(this.globalVariableDeclarations.get(name));
+    }
 
     // MARK: - Method and Field Reference Resolution
 
