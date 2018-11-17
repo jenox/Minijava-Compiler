@@ -8,25 +8,30 @@ public abstract class Statement implements ASTNode {
     private Statement() {
     }
 
+    public abstract TokenLocation getLocation();
     public abstract boolean explicitlyReturns();
     public abstract boolean containsUnreachableStatements();
 
     public static final class IfStatement extends Statement {
-        public IfStatement(Expression condition, Statement statementIfTrue) {
+        public IfStatement(Expression condition, Statement statementIfTrue, TokenLocation location) {
             this.condition = condition;
             this.statementIfTrue = statementIfTrue;
             this.statementIfFalse = null;
+            this.location = location;
         }
 
-        public IfStatement(Expression condition, Statement statementIfTrue, Statement statementIfFalse) {
+        public IfStatement(Expression condition, Statement statementIfTrue, Statement statementIfFalse,
+                           TokenLocation location) {
             this.condition = condition;
             this.statementIfTrue = statementIfTrue;
             this.statementIfFalse = statementIfFalse;
+            this.location = location;
         }
 
         private final Expression condition;
         private final Statement statementIfTrue;
         private final Statement statementIfFalse; //nullable
+        private final TokenLocation location;
 
         public Expression getCondition() {
             return this.condition;
@@ -38,6 +43,11 @@ public abstract class Statement implements ASTNode {
 
         public Optional<Statement> getStatementIfFalse() {
             return Optional.ofNullable(this.statementIfFalse);
+        }
+
+        @Override
+        public TokenLocation getLocation() {
+            return this.location;
         }
 
         @Override
@@ -70,13 +80,15 @@ public abstract class Statement implements ASTNode {
     }
 
     public static final class WhileStatement extends Statement {
-        public WhileStatement(Expression condition, Statement statementWhileTrue) {
+        public WhileStatement(Expression condition, Statement statementWhileTrue, TokenLocation location) {
             this.condition = condition;
             this.statementWhileTrue = statementWhileTrue;
+            this.location = location;
         }
 
         private final Expression condition;
         private final Statement statementWhileTrue;
+        private final TokenLocation location;
 
         public Expression getCondition() {
             return this.condition;
@@ -84,6 +96,11 @@ public abstract class Statement implements ASTNode {
 
         public Statement getStatementWhileTrue() {
             return this.statementWhileTrue;
+        }
+
+        @Override
+        public TokenLocation getLocation() {
+            return this.location;
         }
 
         @Override
@@ -103,14 +120,21 @@ public abstract class Statement implements ASTNode {
     }
 
     public static final class ExpressionStatement extends Statement {
-        public ExpressionStatement(Expression expression) {
+        public ExpressionStatement(Expression expression, TokenLocation location) {
             this.expression = expression;
+            this.location = location;
         }
 
         private final Expression expression;
+        private final TokenLocation location;
 
         public Expression getExpression() {
             return this.expression;
+        }
+
+        @Override
+        public TokenLocation getLocation() {
+            return this.location;
         }
 
         @Override
@@ -130,18 +154,26 @@ public abstract class Statement implements ASTNode {
     }
 
     public static final class ReturnStatement extends Statement {
-        public ReturnStatement() {
+        public ReturnStatement(TokenLocation location) {
             this.value = null;
+            this.location = location;
         }
 
-        public ReturnStatement(Expression value) {
+        public ReturnStatement(Expression value, TokenLocation location) {
             this.value = value;
+            this.location = location;
         }
 
         private final Expression value; // nullable
+        private final TokenLocation location;
 
         public Optional<Expression> getValue() {
             return Optional.ofNullable(this.value);
+        }
+
+        @Override
+        public TokenLocation getLocation() {
+            return this.location;
         }
 
         @Override
@@ -161,7 +193,15 @@ public abstract class Statement implements ASTNode {
     }
 
     public static final class EmptyStatement extends Statement {
-        public EmptyStatement() {
+        public EmptyStatement(TokenLocation location) {
+            this.location = location;
+        }
+
+        private final TokenLocation location;
+
+        @Override
+        public TokenLocation getLocation() {
+            return this.location;
         }
 
         @Override
@@ -181,14 +221,21 @@ public abstract class Statement implements ASTNode {
     }
 
     public static final class Block extends Statement {
-        public Block(List<Statement> statements) {
+        public Block(List<Statement> statements, TokenLocation location) {
             this.statements = Collections.unmodifiableList(statements);
+            this.location = location;
         }
 
         private final List<Statement> statements;
+        private final TokenLocation location;
 
         public List<Statement> getStatements() {
             return this.statements;
+        }
+
+        @Override
+        public TokenLocation getLocation() {
+            return this.location;
         }
 
         @Override
@@ -269,6 +316,7 @@ public abstract class Statement implements ASTNode {
             return Optional.ofNullable(this.value);
         }
 
+        @Override
         public TokenLocation getLocation() {
             return this.location;
         }
