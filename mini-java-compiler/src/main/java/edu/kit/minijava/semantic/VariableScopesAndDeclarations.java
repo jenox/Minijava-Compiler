@@ -40,10 +40,12 @@ public class VariableScopesAndDeclarations {
         this.scopes.add(scope);
     }
 
-    public void removeLastScope() {
+    public void removeScope(int scope) {
         assert this.scopes.size() > 0;
 
         int last = this.scopes.size() - 1;
+
+        assert this.scopes.get(last) == scope : "not current scope";
         this.variableDeclaration.remove(last);
         this.scopes.remove(last);
     }

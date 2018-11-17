@@ -29,7 +29,7 @@ class SymbolTable {
 
             for (String var : definedVars) {
                 VariableScopesAndDeclarations scope = this.nameToDeclarations.get(var);
-                scope.removeLastScope();
+                scope.removeScope(this.currentScope);
 
                 if (scope.isEmpty()) {
                     this.nameToDeclarations.remove(var);
@@ -47,6 +47,18 @@ class SymbolTable {
 
     void enterDeclaration(VariableDeclaration declaration) {
         String name = declaration.getName();
+
+        // add name to scopeToNames
+        if (this.scopeToNames.containsKey(this.currentScope)) {
+            this.scopeToNames.get(this.currentScope).add(name);
+        }
+        else {
+            HashSet<String> set = new HashSet<>();
+            set.add(name);
+            this.scopeToNames.put(this.currentScope, set);
+        }
+
+        //add declaration
         if (this.nameToDeclarations.containsKey(name)) {
             VariableScopesAndDeclarations scope = this.nameToDeclarations.get(name);
             scope.addVariableDeclaration(declaration, this.currentScope);
@@ -57,15 +69,6 @@ class SymbolTable {
             VariableScopesAndDeclarations scope = new VariableScopesAndDeclarations(declaration, this.currentScope);
             this.nameToDeclarations.put(name, scope);
 
-            // add name to scopeToNames
-            if (this.scopeToNames.containsKey(scope)) {
-                this.scopeToNames.get(scope).add(name);
-            }
-            else {
-                HashSet<String> set = new HashSet<>();
-                set.add(name);
-                this.scopeToNames.put(this.currentScope, set);
-            }
         }
     }
 
