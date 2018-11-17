@@ -177,7 +177,7 @@ public final class Parser {
             if (this.lookahead(TokenType.SEMICOLON)) {
                 this.consume(TokenType.SEMICOLON, "Field");
 
-                return new FieldDeclaration(type, name.getText(), name.getLocation());
+                return new FieldDeclaration(type, false, name.getText(), name.getLocation());
             }
 
             // ClassMember -> Method

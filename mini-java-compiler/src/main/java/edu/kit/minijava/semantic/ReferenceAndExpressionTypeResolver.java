@@ -16,7 +16,7 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
         this.enterNewVariableDeclarationScope();
 
         // Install standard library declarations.
-        this.addVariableDeclarationToCurrentScope(CompilerMagic.SYSTEM_VARIABLE);
+        this.addGlobalVariableDeclaration(CompilerMagic.SYSTEM_VARIABLE);
         this.registerClassDeclaration(CompilerMagic.SYSTEM);
         this.registerClassDeclaration(CompilerMagic.SYSTEM_IN);
         this.registerClassDeclaration(CompilerMagic.SYSTEM_OUT);
@@ -113,9 +113,9 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
                         "must return a value from " + methodDeclaration;
             }
 
-            // Methods must not contain unreachable statements.
-            assert !methodDeclaration.getBody().containsUnreachableStatements() :
-                    methodDeclaration + " contains unreachable statements";
+            // NOTE: At this point, we could also check for unreachable code in the method.
+            // However, the MiniJava language specification does not permit the rejection of programs that contain
+            // unreachable code as required by the Java specification.
 
             this.leaveCurrentMethodDeclaration();
         }
@@ -492,7 +492,7 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
                 "use of undeclared field " + fieldName + " in " + this.getCurrentMethodDeclaration();
 
         expression.getFieldReference().resolveTo(fieldDeclaration.get());
-        expression.getType().resolveToTypeReference(fieldDeclaration.get().getType(), true);
+        expression.getType().resolveToVariableDeclaration(fieldDeclaration.get());
     }
 
     @Override
@@ -525,6 +525,17 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
         String name = expression.getVariableReference().getName();
         Optional<VariableDeclaration> variableDeclaration = this.getVariableDeclarationForName(name);
 
+        if (!variableDeclaration.isPresent()) {
+            // Check for classes that might shadow global declarations.
+            // If we found a class, we can reject the program as it cannot have static fields or be
+            // accessed as a reference.
+            assert (!this.getClassDeclarationForName(name).isPresent()) :
+                "cannot access class with name " + name + " as reference";
+
+            // Retrieve global declarations
+            variableDeclaration = this.getGlobalVariableDeclarationForName(name);
+        }
+
         // Variable reference must be resolvable.
         assert variableDeclaration.isPresent() :
                 "use of undeclared variable " + name + " in " + this.getCurrentMethodDeclaration();
@@ -533,8 +544,14 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
         assert variableDeclaration.get().canBeAccessed() :
                 variableDeclaration.get() + " may not be accessed in " + this.getCurrentMethodDeclaration();
 
+        // Check whether we are trying to access a field (which is always non-static since we do not support
+        // static fields) from a static context.
+        assert !(this.getCurrentMethodDeclaration() instanceof MainMethodDeclaration
+            && variableDeclaration.get() instanceof FieldDeclaration) :
+            "cannot access non-static field " + variableDeclaration.get().getName() + " from static context";
+
         expression.getVariableReference().resolveTo(variableDeclaration.get());
-        expression.getType().resolveToTypeReference(variableDeclaration.get().getType(), true);
+        expression.getType().resolveToVariableDeclaration(variableDeclaration.get());
     }
 
     @Override

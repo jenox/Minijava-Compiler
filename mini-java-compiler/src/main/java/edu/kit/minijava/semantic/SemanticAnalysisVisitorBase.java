@@ -15,6 +15,7 @@ abstract class SemanticAnalysisVisitorBase extends ASTVisitor<Void> {
     private int currentTraversalNumber = 0;
     private final Stack<ClassDeclaration> currentClassDeclarations = new Stack<>();
     private final Stack<SubroutineDeclaration> currentMethodDeclarations = new Stack<>();
+    private final Map<String, VariableDeclaration> globalVariableDeclarations = new HashMap<>();
 
     boolean isCollectingClassDeclarations() {
         return this.currentTraversalNumber == 0;
@@ -77,6 +78,11 @@ abstract class SemanticAnalysisVisitorBase extends ASTVisitor<Void> {
      * Sets the program's entry point. Throws if the entry point has previously been configured.
      */
     void setEntryPoint(MainMethodDeclaration declaration) {
+
+        // Check whether a non-static method with the same name already exists in the current class
+        assert !this.methodDeclarations.get(this.currentClassDeclarations.peek()).containsKey(declaration.getName()) :
+            "invalid redeclaration of method " + declaration.getName() + " as static";
+
         assert this.entryPoint == null : "invalid redeclaration of entry point";
 
         this.entryPoint = declaration;
@@ -112,6 +118,14 @@ abstract class SemanticAnalysisVisitorBase extends ASTVisitor<Void> {
         this.symbolTable.leaveCurrentScope();
     }
 
+    void addGlobalVariableDeclaration(VariableDeclaration declaration) {
+        assert !this.globalVariableDeclarations.containsKey(declaration.getName()) : "invalid global redeclaration";
+        this.globalVariableDeclarations.put(declaration.getName(), declaration);
+    }
+
+    Optional<VariableDeclaration> getGlobalVariableDeclarationForName(String name) {
+        return Optional.ofNullable(this.globalVariableDeclarations.get(name));
+    }
 
     // MARK: - Method and Field Reference Resolution
 
@@ -130,6 +144,10 @@ abstract class SemanticAnalysisVisitorBase extends ASTVisitor<Void> {
     void registerMethodDeclaration(MethodDeclaration methodDeclaration, ClassDeclaration classDeclaration) {
         assert !this.methodDeclarations.get(classDeclaration).containsKey(methodDeclaration.getName()) :
                 "invalid redeclaration of method";
+
+        // Check that no entry point with the same name already exists
+        assert this.entryPoint == null || !methodDeclaration.getName().equals(this.entryPoint.getName()) :
+            "invalid redeclaration of static method " + this.entryPoint.getName();
 
         this.methodDeclarations.get(classDeclaration).put(methodDeclaration.getName(), methodDeclaration);
     }

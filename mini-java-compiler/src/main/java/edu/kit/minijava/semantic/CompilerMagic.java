@@ -35,8 +35,8 @@ class CompilerMagic {
         SYSTEM_IN = new ClassDeclaration("#SystemIn", Collections.emptyList(), Collections.singletonList(READ),
                 Collections.emptyList(),null);
 
-        OUT = new FieldDeclaration(new ImplicitTypeReference(SYSTEM_OUT, 0), "out", null);
-        IN = new FieldDeclaration(new ImplicitTypeReference(SYSTEM_IN, 0), "in", null);
+        OUT = new FieldDeclaration(new ImplicitTypeReference(SYSTEM_OUT, 0), true, "out", null);
+        IN = new FieldDeclaration(new ImplicitTypeReference(SYSTEM_IN, 0), true, "in", null);
 
         SYSTEM = new ClassDeclaration("#System", Collections.emptyList(), Collections.emptyList(),
                 Arrays.asList(OUT, IN),null);
@@ -61,6 +61,11 @@ class CompilerMagic {
 
             @Override
             public boolean canBeShadowedByVariableDeclarationInNestedScope() {
+                return true;
+            }
+
+            @Override
+            public boolean isFinal() {
                 return true;
             }
 
