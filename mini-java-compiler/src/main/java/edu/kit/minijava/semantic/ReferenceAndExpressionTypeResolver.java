@@ -360,7 +360,7 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
         switch (expression.getOperationType()) {
             case LOGICAL_NEGATION:
                 // Operand for logical negation must be boolean.
-                assert expression.getType().isBoolean() :
+                assert expression.getOther().getType().isBoolean() :
                         "expected boolean in " + this.getCurrentMethodDeclaration();
 
                 expression.getType().resolveToBoolean();
@@ -368,7 +368,7 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
                 break;
             case NUMERIC_NEGATION:
                 // Operand for numeric negation must be integer.
-                assert expression.getType().isInteger() :
+                assert expression.getOther().getType().isInteger() :
                         "expected int in" + this.getCurrentMethodDeclaration();
 
                 expression.getType().resolveToInteger();
