@@ -15,7 +15,7 @@ abstract class SemanticAnalysisVisitorBase extends ASTVisitor<Void> {
     private int currentTraversalNumber = 0;
     private final Stack<ClassDeclaration> currentClassDeclarations = new Stack<>();
     private final Stack<SubroutineDeclaration> currentMethodDeclarations = new Stack<>();
-    private final HashMap<String, VariableDeclaration> globalVariableDeclarations = new HashMap<>();
+    private final Map<String, VariableDeclaration> globalVariableDeclarations = new HashMap<>();
 
     boolean isCollectingClassDeclarations() {
         return this.currentTraversalNumber == 0;
