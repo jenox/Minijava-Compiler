@@ -12,7 +12,7 @@ import edu.kit.minijava.ast.references.*;
  * Before visiting an expression, its type is not resolved. After visiting an expression, its type must be resolved.
  */
 public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorBase {
-    public ReferenceAndExpressionTypeResolver(Program program) {
+    public ReferenceAndExpressionTypeResolver(Program program) throws SemanticException {
         this.enterNewVariableDeclarationScope();
 
         // Install standard library declarations.
@@ -27,15 +27,21 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
         this.registerMethodDeclaration(CompilerMagic.WRITE, CompilerMagic.SYSTEM_OUT);
         this.registerMethodDeclaration(CompilerMagic.READ, CompilerMagic.SYSTEM_IN);
 
-        program.accept(this, null);
+        try {
+            // First pass: collect classes
+            program.accept(this, null);
+            this.finishCollectingClassDeclarations();
 
-        this.finishCollectingClassDeclarations();
+            // Second pass: collect class members (fields/methods)
+            program.accept(this, null);
+            this.finishCollectingClassMemberDeclarations();
 
-        program.accept(this, null);
-
-        this.finishCollectingClassMemberDeclarations();
-
-        program.accept(this, null);
+            // Third pass: check declarations
+            program.accept(this, null);
+        }
+        catch (WrappedSemanticException exception) {
+            throw exception.getException();
+        }
 
         assert this.getEntryPoint().isPresent() : "missing main method";
 

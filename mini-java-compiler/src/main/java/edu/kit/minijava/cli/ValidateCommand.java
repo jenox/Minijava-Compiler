@@ -50,7 +50,7 @@ public class ValidateCommand extends Command {
 
             return 0;
         }
-        catch (ParserException exception) {
+        catch (ParserException | SemanticException exception) {
             System.err.println("error: " + exception.getLocalizedMessage());
 
             return 1;

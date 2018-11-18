@@ -77,13 +77,22 @@ abstract class SemanticAnalysisVisitorBase extends ASTVisitor<Void> {
     /**
      * Sets the program's entry point. Throws if the entry point has previously been configured.
      */
-    void setEntryPoint(MainMethodDeclaration declaration) {
+    void setEntryPoint(MainMethodDeclaration declaration) throws RedeclarationException {
 
         // Check whether a non-static method with the same name already exists in the current class
-        assert !this.methodDeclarations.get(this.currentClassDeclarations.peek()).containsKey(declaration.getName()) :
-            "invalid redeclaration of method " + declaration.getName() + " as static";
+        assert !this.currentClassDeclarations.empty();
 
-        assert this.entryPoint == null : "invalid redeclaration of entry point";
+        MethodDeclaration previousDeclaration
+            = this.methodDeclarations.get(this.currentClassDeclarations.peek()).get(declaration.getName());
+
+        if (previousDeclaration != null) {
+            // TODO Explain that redeclaration is as a static method?
+            throw new RedeclarationException(declaration.getName(), declaration.getLocation(), previousDeclaration);
+        }
+
+        if (this.entryPoint != null) {
+            throw new RedeclarationException(declaration.getName(), declaration.getLocation(), this.entryPoint);
+        }
 
         this.entryPoint = declaration;
     }
@@ -103,6 +112,8 @@ abstract class SemanticAnalysisVisitorBase extends ASTVisitor<Void> {
      */
     void addVariableDeclarationToCurrentScope(VariableDeclaration declaration) {
         this.symbolTable.getVisibleDeclarationForName(declaration.getName()).ifPresent(previousDeclaration -> {
+
+
             assert !this.symbolTable.isDeclarationInCurrentScope(declaration) : "invalid redeclaration";
             assert previousDeclaration.canBeShadowedByVariableDeclarationInNestedScope() : "cannot shadow prev decl";
         });
