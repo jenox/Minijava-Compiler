@@ -16,9 +16,9 @@ public class TypeMismatchException extends SemanticException {
 
     private String actualTypeName; // nullable
     private TokenLocation location; // nullable
-    private String purpose;
+    private String purpose; // nullable
     private String context; // nullable
-    private String[] expectedTypeNames;
+    private String[] expectedTypeNames;  // nullable
 
     public String getActualTypeName() {
         return this.actualTypeName;
@@ -74,7 +74,7 @@ public class TypeMismatchException extends SemanticException {
         }
 
         if (this.context != null) {
-            builder.append(" (in ");
+            builder.append(" (error in ");
             builder.append(this.context);
             builder.append(")");
         }

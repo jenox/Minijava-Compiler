@@ -4,7 +4,7 @@ import edu.kit.minijava.lexer.TokenLocation;
 
 public class SemanticException extends Exception {
     public SemanticException() {
-        super();
+        this(null, null, null);
     }
 
     public SemanticException(String message) {
@@ -16,8 +16,6 @@ public class SemanticException extends Exception {
     }
 
     public SemanticException(String message, String context, TokenLocation location) {
-        if (message == null) throw new IllegalArgumentException();
-
         this.message = message;
         this.context = context;
         this.location = location;
@@ -30,6 +28,10 @@ public class SemanticException extends Exception {
     @Override
     public String getMessage() {
         StringBuilder builder = new StringBuilder();
+        if (this.message == null) {
+            return "Semantic error.";
+        }
+
         builder.append(this.message);
 
         if (this.location != null) {

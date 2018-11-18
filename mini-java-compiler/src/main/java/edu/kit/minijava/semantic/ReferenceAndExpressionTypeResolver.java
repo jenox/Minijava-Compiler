@@ -42,6 +42,7 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
             program.accept(this, null);
         }
         catch (WrappedSemanticException exception) {
+            // Unpack wrapped exception and rethrow as checked exception
             throw exception.getException();
         }
 

@@ -6,8 +6,8 @@ package edu.kit.minijava.semantic;
  */
 public class WrappedSemanticException extends RuntimeException {
     WrappedSemanticException(SemanticException exception) {
-        this.exception = exception;
         if (exception == null) throw new IllegalArgumentException();
+        this.exception = exception;
     }
 
     private SemanticException exception;
