@@ -27,6 +27,8 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
         this.registerMethodDeclaration(CompilerMagic.WRITE, CompilerMagic.SYSTEM_OUT);
         this.registerMethodDeclaration(CompilerMagic.READ, CompilerMagic.SYSTEM_IN);
 
+        // Catch semantic exceptions which are wrapped in unchecked exceptions to not break
+        // visitor pattern and stream handling.
         try {
             // First pass: collect classes
             program.accept(this, null);
@@ -43,7 +45,9 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
             throw exception.getException();
         }
 
-        assert this.getEntryPoint().isPresent() : "missing main method";
+        if (!this.getEntryPoint().isPresent()) {
+            throw fail(new SemanticException("Missing main method."));
+        }
 
         this.leaveCurrentVariableDeclarationScope();
     }
@@ -79,8 +83,10 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
             fieldDeclaration.getType().accept(this, context);
 
             // Field types must not be of type void or array of void.
-            assert !(fieldDeclaration.getType().isVoid() || fieldDeclaration.getType().isDimensionalVoid()) :
-                    fieldDeclaration + " must not be void or array of void";
+            if (fieldDeclaration.getType().isVoid() || fieldDeclaration.getType().isDimensionalVoid()) {
+                throw fail(new SemanticException("Field type must not be void or array of void",
+                    fieldDeclaration.toString()));
+            }
 
             this.registerFieldDeclaration(fieldDeclaration, this.getCurrentClassDeclaration());
         }
@@ -97,8 +103,9 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
             methodDeclaration.getReturnType().accept(this, context);
 
             // Return type must not be array of void.
-            assert !methodDeclaration.getReturnType().isDimensionalVoid() :
-                    methodDeclaration + " must not return array of void";
+            if (methodDeclaration.getReturnType().isDimensionalVoid()) {
+                throw fail(new SemanticException("Method must not return array of void", methodDeclaration.toString()));
+            }
 
             methodDeclaration.getParameters().forEach(node -> node.accept(this, context));
 
@@ -114,9 +121,8 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
             methodDeclaration.getBody().accept(this, context);
 
             // Non-void methods must return a value.
-            if (!methodDeclaration.getReturnType().isVoid()) {
-                assert methodDeclaration.getBody().explicitlyReturns() :
-                        "must return a value from " + methodDeclaration;
+            if (!methodDeclaration.getReturnType().isVoid() && !methodDeclaration.getBody().explicitlyReturns()) {
+                throw fail(new SemanticException("Method must return a value", methodDeclaration.toString()));
             }
 
             // NOTE: At this point, we could also check for unreachable code in the method.
@@ -133,22 +139,27 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
             this.enterMethodDeclaration(methodDeclaration);
 
             // Main method must be named main.
-            assert methodDeclaration.getName().equals("main") :
-                    methodDeclaration + " must be named main";
+            if (!methodDeclaration.getName().equals("main")) {
+                throw fail(new SemanticException("Entry point must be named main", methodDeclaration.toString()));
+            }
 
             methodDeclaration.getReturnType().accept(this, context);
 
             // Main method must return void, but AST doesn't guarantee it.
-            assert methodDeclaration.getReturnType().isVoid() :
-                    methodDeclaration + " must return void";
+            if (!methodDeclaration.getReturnType().isVoid()) {
+                throw fail(new SemanticException("Main method must return void", methodDeclaration.toString()));
+            }
 
             methodDeclaration.getArgumentsParameter().accept(this, context);
 
             // Main method must take array of strings, but AST doesn't guarantee it.
-            assert methodDeclaration.getArgumentsParameter().getType().isArrayOfString() :
-                    methodDeclaration + " must take array of string";
+            if (!methodDeclaration.getArgumentsParameter().getType().isArrayOfString()) {
+                throw fail(new SemanticException("Main method expects String[] as parameter type",
+                                                 methodDeclaration.toString()));
+            }
 
             this.leaveCurrentMethodDeclaration();
+
             this.setEntryPoint(methodDeclaration);
         }
         else {
@@ -169,8 +180,10 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
             parameterDeclaration.getType().accept(this, context);
 
             // Parameter types must not be of type void or array of void.
-            assert !(parameterDeclaration.getType().isVoid() || parameterDeclaration.getType().isDimensionalVoid()) :
-                    parameterDeclaration + " must not be void or array of void";
+            if (parameterDeclaration.getType().isVoid() || parameterDeclaration.getType().isDimensionalVoid()) {
+                throw fail(new SemanticException("Method parameter type must not be void or array of void",
+                    parameterDeclaration.toString()));
+            }
         }
         else {
             this.addVariableDeclarationToCurrentScope(parameterDeclaration);
@@ -183,8 +196,10 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
         Optional<BasicTypeDeclaration> declaration = this.getBasicTypeDeclarationForName(name);
 
         // Type reference must be resolvable.
-        assert declaration.isPresent() :
-                "use of undeclared type " + name + " at " + reference.getBasicTypeReference().getLocation();
+        if (!declaration.isPresent()) {
+            throw fail(new SemanticException("Use of undeclared type " + name + " at "
+                + reference.getBasicTypeReference().getLocation() + "."));
+        }
 
         reference.getBasicTypeReference().resolveTo(declaration.get());
     }
@@ -199,8 +214,10 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
         statement.getCondition().accept(this, context);
 
         // Condition for if statement must be boolean.
-        assert statement.getCondition().getType().isBoolean() :
-                "condition for if statement must be boolean in " + this.getCurrentMethodDeclaration();
+        if (!statement.getCondition().getType().isBoolean()) {
+            throw fail(new TypeMismatchException(null, statement.getCondition().getLocation(),
+                "condition for if statement", null, "boolean"));
+        }
 
         // AST doesn't guarantee child statements not being local variable declaration, only ASTs vended from Parser do.
         this.enterNewVariableDeclarationScope();
@@ -216,8 +233,10 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
         statement.getCondition().accept(this, context);
 
         // Condition for while statement must be boolean.
-        assert statement.getCondition().getType().isBoolean() :
-                "condition for while statement must be boolean in " + this.getCurrentMethodDeclaration();
+        if (!statement.getCondition().getType().isBoolean()) {
+            throw fail(new TypeMismatchException(null, statement.getCondition().getLocation(),
+                "condition for while statement", null, "boolean"));
+        }
 
         // AST doesn't guarantee child statements not being local variable declaration, only ASTs vended from Parser do.
         this.enterNewVariableDeclarationScope();
@@ -230,8 +249,10 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
         statement.getExpression().accept(this, context);
 
         // Expression must be valid for expression statement.
-        assert statement.getExpression().isValidForExpressionStatement() :
-                "not a statement in " + this.getCurrentMethodDeclaration();
+        if (!statement.getExpression().isValidForExpressionStatement()) {
+            throw fail(new SemanticException("Not a statement", "in " + this.getCurrentMethodDeclaration().toString(),
+                statement.getExpression().getLocation()));
+        }
     }
 
     @Override
@@ -244,13 +265,17 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
             TypeOfExpression actualReturnType = statement.getValue().get().getType();
 
             // Return value must be compatible with expected return type.
-            assert canAssignTypeOfExpressionToTypeReference(actualReturnType, expectedReturnType) :
-                    "invalid return value in " + this.getCurrentMethodDeclaration();
+            if (!canAssignTypeOfExpressionToTypeReference(actualReturnType, expectedReturnType)) {
+                throw fail(new TypeMismatchException(actualReturnType.toString(), statement.getLocation(),
+                    "return value", null, expectedReturnType.toString()));
+            }
         }
         else {
             // Plain return is only allowed in void methods.
-            assert expectedReturnType.isVoid() :
-                    "must return value from non-void function " + this.getCurrentMethodDeclaration();
+            if (!expectedReturnType.isVoid()) {
+                throw fail(new SemanticException("Must return value from non-void method",
+                    this.getCurrentMethodDeclaration().toString(), statement.getLocation()));
+            }
         }
     }
 
@@ -262,8 +287,11 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
         statement.getType().accept(this, context);
 
         // Variables must not be of type void or array of void.
-        assert !(statement.getType().isVoid() || statement.getType().isDimensionalVoid()) :
-                statement + " must not be void or array of void";
+
+        if (statement.getType().isVoid() || statement.getType().isDimensionalVoid()) {
+            throw fail(new SemanticException("Local variable type must not be void or array of void",
+                this.getCurrentMethodDeclaration().toString(), statement.getLocation()));
+        }
 
         // TODO: Is the variable declaration known when evaluating the initial value expression?
         this.addVariableDeclarationToCurrentScope(statement);
@@ -272,8 +300,10 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
             statement.getValue().get().accept(this, context);
 
             // Type of initial value must be compatible with variable declaration.
-            assert canAssignTypeOfExpressionToTypeReference(statement.getValue().get().getType(), statement.getType()) :
-                    "incompatible types for assignment in " + this.getCurrentMethodDeclaration();
+            if (!canAssignTypeOfExpressionToTypeReference(statement.getValue().get().getType(), statement.getType())) {
+                throw fail(new TypeMismatchException(statement.getValue().get().getType().toString(),
+                    statement.getLocation(), "assignment", null));
+            }
         }
     }
 
@@ -301,59 +331,82 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
             case ADDITION:
             case SUBTRACTION:
                 // Operands for numeric operations must be integers.
-                assert typeOfLeftOperand.isInteger() :
-                        "need int for numeric op in " + this.getCurrentMethodDeclaration();
-                assert typeOfRightOperand.isInteger() :
-                        "need int for numeric op in " + this.getCurrentMethodDeclaration();
+                if (!typeOfLeftOperand.isInteger()) {
+                    throw fail(new TypeMismatchException(typeOfLeftOperand.toString(), expression.getLocation(),
+                        "numeric operation", this.getCurrentMethodDeclaration().toString(), "int"));
+                }
+
+                if (!typeOfRightOperand.isInteger()) {
+                    throw fail(new TypeMismatchException(typeOfRightOperand.toString(), expression.getLocation(),
+                        "numeric operation", this.getCurrentMethodDeclaration().toString(), "int"));
+                }
 
                 expression.getType().resolveToInteger();
-
                 break;
+
             case LOGICAL_AND:
             case LOGICAL_OR:
-                // Operands for logical operations must be integers.
-                assert typeOfLeftOperand.isBoolean() :
-                        "need boolean for logic op in " + this.getCurrentMethodDeclaration();
-                assert typeOfRightOperand.isBoolean() :
-                        "need boolean for logic op in " + this.getCurrentMethodDeclaration();
+                // Operands for logical operations must be boolean.
+                if (!typeOfLeftOperand.isBoolean()) {
+                    throw fail(new TypeMismatchException(typeOfLeftOperand.toString(), expression.getLocation(),
+                        "logical operation", this.getCurrentMethodDeclaration().toString(), "boolean"));
+                }
+                if (!typeOfRightOperand.isBoolean()) {
+                    throw fail(new TypeMismatchException(typeOfRightOperand.toString(), expression.getLocation(),
+                        "logical operation", this.getCurrentMethodDeclaration().toString(), "boolean"));
+                }
 
                 expression.getType().resolveToBoolean();
-
                 break;
+
             case LESS_THAN:
             case LESS_THAN_OR_EQUAL_TO:
             case GREATER_THAN:
             case GREATER_THAN_OR_EQUAL_TO:
                 // Operands for numeric comparison must be integers.
-                assert typeOfLeftOperand.isInteger() :
-                        "need int for comparison in " + this.getCurrentMethodDeclaration();
-                assert typeOfRightOperand.isInteger() :
-                        "need int for comparison in " + this.getCurrentMethodDeclaration();
+                if (!typeOfLeftOperand.isInteger()) {
+                    throw fail(new TypeMismatchException(typeOfLeftOperand.toString(), expression.getLocation(),
+                        "comparison", this.getCurrentMethodDeclaration().toString(), "int"));
+                }
+                if (!typeOfRightOperand.isInteger()) {
+                    throw fail(new TypeMismatchException(typeOfRightOperand.toString(), expression.getLocation(),
+                        "comparison", this.getCurrentMethodDeclaration().toString(), "int"));
+                }
 
                 expression.getType().resolveToBoolean();
-
                 break;
+
             case EQUAL_TO:
             case NOT_EQUAL_TO:
                 // Left and right operands must be comparable.
-                assert canCheckForEqualityWithTypesOfExpressions(typeOfLeftOperand, typeOfRightOperand) :
-                        "incompatible operands for equality check in " + this.getCurrentMethodDeclaration();
+                if (!canCheckForEqualityWithTypesOfExpressions(typeOfLeftOperand, typeOfRightOperand)) {
+                    throw fail(new TypeMismatchException(null, expression.getLocation(),
+                        "equality check between " + typeOfLeftOperand.toString()
+                            + " and " + typeOfRightOperand.toString(),
+                        this.getCurrentMethodDeclaration().toString()));
+                }
 
                 expression.getType().resolveToBoolean();
-
                 break;
+
             case ASSIGNMENT:
                 // Left operand must be assignable.
-                assert typeOfLeftOperand.isAssignable() :
-                        "left side not assignable in " + this.getCurrentMethodDeclaration();
+                if (!typeOfLeftOperand.isAssignable()) {
+                    throw fail(new SemanticException("Left side not assignable ",
+                        this.getCurrentMethodDeclaration().toString(), expression.getLocation()));
+                }
 
                 // Left and right operands must be compatible.
-                assert canAssignTypeOfExpressionToTypeOfExpression(typeOfRightOperand, typeOfLeftOperand) :
-                        "incompatible operands for assignment in " + this.getCurrentMethodDeclaration();
+                if (!canAssignTypeOfExpressionToTypeOfExpression(typeOfRightOperand, typeOfLeftOperand)) {
+                    throw fail(new TypeMismatchException(null, expression.getLocation(),
+                        "attempted assignment of" + typeOfRightOperand.toString()
+                            + " to " + typeOfLeftOperand.toString(),
+                        this.getCurrentMethodDeclaration().toString()));
+                }
 
                 expression.getType().resolveToTypeOfExpression(typeOfLeftOperand, false);
-
                 break;
+
             default:
                 throw new AssertionError();
         }
@@ -366,20 +419,26 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
         switch (expression.getOperationType()) {
             case LOGICAL_NEGATION:
                 // Operand for logical negation must be boolean.
-                assert expression.getOther().getType().isBoolean() :
-                        "expected boolean in " + this.getCurrentMethodDeclaration();
+                if (!expression.getOther().getType().isBoolean()) {
+                    throw fail(new TypeMismatchException(expression.getOther().getType().toString(),
+                        expression.getLocation(), "logical negation", this.getCurrentMethodDeclaration().toString(),
+                        "boolean"));
+                }
 
                 expression.getType().resolveToBoolean();
-
                 break;
+
             case NUMERIC_NEGATION:
                 // Operand for numeric negation must be integer.
-                assert expression.getOther().getType().isInteger() :
-                        "expected int in" + this.getCurrentMethodDeclaration();
+                if (!expression.getOther().getType().isInteger()) {
+                    throw fail(new TypeMismatchException(expression.getOther().getType().toString(),
+                        expression.getLocation(), "numerical negation", this.getCurrentMethodDeclaration().toString(),
+                        "int"));
+                }
 
                 expression.getType().resolveToInteger();
-
                 break;
+
             default:
                 throw new AssertionError();
         }
@@ -403,8 +462,8 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
             Integer.parseInt(expression.getValue());
         }
         catch (NumberFormatException exception) {
-            assert false :
-                    "integer too big in " + this.getCurrentMethodDeclaration();
+            throw fail(new SemanticException("Integer literal too big", this.getCurrentMethodDeclaration().toString(),
+                expression.getLocation()));
         }
 
         expression.getType().resolveToInteger();
@@ -423,45 +482,60 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
             TypeOfExpression typeOfContext = expression.getContext().get().getType();
 
             // Methods cannot be invoked on null literal.
-            assert typeOfContext.getDeclaration().isPresent() :
-                    "cannot invoke method on null in " + this.getCurrentMethodDeclaration();
+            if (!typeOfContext.getDeclaration().isPresent()) {
+                throw fail(new SemanticException("Cannot invoke method on null",
+                    this.getCurrentMethodDeclaration().toString(), expression.getLocation()));
+            }
 
             // Methods cannot be invoked on arrays.
-            assert typeOfContext.getNumberOfDimensions() == 0 :
-                    "cannot invoke method on array in " + this.getCurrentMethodDeclaration();
+            if (typeOfContext.getNumberOfDimensions() != 0) {
+                throw fail(new SemanticException("Cannot invoke method on array",
+                    this.getCurrentMethodDeclaration().toString(), expression.getLocation()));
+            }
 
             BasicTypeDeclaration typeDeclaration = typeOfContext.getDeclaration().get();
 
             // Methods can only be invoked on objects.
-            assert typeDeclaration instanceof ClassDeclaration :
-                    "cannot invoke method on non-object in " + this.getCurrentMethodDeclaration();
+            if (!(typeDeclaration instanceof ClassDeclaration)) {
+                throw fail(new SemanticException("Cannot invoke method on non-object",
+                    this.getCurrentMethodDeclaration().toString(), expression.getLocation()));
+            }
 
             methodDeclaration = this.getMethodDeclarationForName(methodName, (ClassDeclaration)typeDeclaration);
         }
         else {
             // Must not invoke methods in static context.
-            assert !(this.getCurrentMethodDeclaration() instanceof MainMethodDeclaration) :
-                    "cant access this in " + this.getCurrentMethodDeclaration();
+            if (this.getCurrentMethodDeclaration() instanceof MainMethodDeclaration) {
+                throw fail(new SemanticException("Cannot access 'this' in static context",
+                    this.getCurrentMethodDeclaration().toString(), expression.getLocation()));
+            }
 
             methodDeclaration = this.getMethodDeclarationForName(methodName, this.getCurrentClassDeclaration());
         }
 
         // Method reference must be resolvable.
-        assert methodDeclaration.isPresent() :
-                "use of undeclared method " + methodName + " in " + this.getCurrentMethodDeclaration();
+        if (!methodDeclaration.isPresent()) {
+            throw fail(new SemanticException("Use of undeclared method '" + methodName + "'",
+                this.getCurrentMethodDeclaration().toString(), expression.getLocation()));
+        }
 
         List<TypeOfExpression> typesOfArguments = expression.getArgumentTypes();
         List<TypeReference> typesOfParameters = methodDeclaration.get().getParameterTypes();
 
         // Number of arguments must match.
-        assert typesOfArguments.size() == typesOfParameters.size() :
-                "incorrect number of arguments for " + methodDeclaration + " in " + this.getCurrentMethodDeclaration();
+        if (typesOfArguments.size() != typesOfParameters.size()) {
+            throw fail(new SemanticException("Incorrect number of arguments for " + methodDeclaration,
+                this.getCurrentMethodDeclaration().toString(), expression.getLocation()));
+        }
 
         for (int index = 0; index < typesOfArguments.size(); index += 1) {
 
             // Type of argument must be compatible.
-            assert canAssignTypeOfExpressionToTypeReference(typesOfArguments.get(index), typesOfParameters.get(index)) :
-                    "incompatible argument for " + methodDeclaration + " in " + this.getCurrentMethodDeclaration();
+            if (!canAssignTypeOfExpressionToTypeReference(typesOfArguments.get(index), typesOfParameters.get(index))) {
+                throw fail(new TypeMismatchException(typesOfArguments.get(index).toString(),
+                    expression.getLocation(), "method argument",
+                    this.getCurrentMethodDeclaration().toString(), typesOfParameters.get(index).toString()));
+            }
         }
 
         expression.getMethodReference().resolveTo(methodDeclaration.get());
@@ -476,26 +550,34 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
         TypeOfExpression typeOfContext = expression.getContext().getType();
 
         // Fields cannot be accessed on null literal.
-        assert typeOfContext.getDeclaration().isPresent() :
-                "cannot access field on null in " + this.getCurrentMethodDeclaration();
+        if (!typeOfContext.getDeclaration().isPresent()) {
+            throw fail(new SemanticException("Cannot access field on null",
+                this.getCurrentMethodDeclaration().toString(), expression.getLocation()));
+        }
 
         // Fields cannot be accessed on arrays.
-        assert typeOfContext.getNumberOfDimensions() == 0 :
-                "cannot access field on array in " + this.getCurrentMethodDeclaration();
+        if (typeOfContext.getNumberOfDimensions() != 0) {
+            throw fail(new SemanticException("Cannot access field on array",
+                this.getCurrentMethodDeclaration().toString(), expression.getLocation()));
+        }
 
         BasicTypeDeclaration typeDeclaration = typeOfContext.getDeclaration().get();
 
         // Fields can only be accessed on objects.
-        assert typeDeclaration instanceof ClassDeclaration :
-                "cannot access field on non-object in " + this.getCurrentMethodDeclaration();
+        if (!(typeDeclaration instanceof ClassDeclaration)) {
+            throw fail(new SemanticException("Cannot access field on non-object",
+                this.getCurrentMethodDeclaration().toString(), expression.getLocation()));
+        }
 
         String fieldName = expression.getFieldReference().getName();
         ClassDeclaration classDeclaration = (ClassDeclaration)typeDeclaration;
         Optional<FieldDeclaration> fieldDeclaration = this.getFieldDeclarationForName(fieldName, classDeclaration);
 
         // Field reference must be resolvable.
-        assert fieldDeclaration.isPresent() :
-                "use of undeclared field " + fieldName + " in " + this.getCurrentMethodDeclaration();
+        if (!fieldDeclaration.isPresent()) {
+            throw fail(new SemanticException("Use of undeclared field '" + fieldName + "'",
+                this.getCurrentMethodDeclaration().toString(), expression.getLocation()));
+        }
 
         expression.getFieldReference().resolveTo(fieldDeclaration.get());
         expression.getType().resolveToVariableDeclaration(fieldDeclaration.get());
@@ -509,16 +591,22 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
         TypeOfExpression typeOfContext = expression.getContext().getType();
 
         // Context must not be null literal.
-        assert typeOfContext.getDeclaration().isPresent() :
-                "context of array access must not be null in " + this.getCurrentMethodDeclaration();
+        if (!typeOfContext.getDeclaration().isPresent()) {
+            throw fail(new SemanticException("Context of array access must not be null",
+                this.getCurrentMethodDeclaration().toString(), expression.getLocation()));
+        }
 
         // Context must be an array of some sort.
-        assert typeOfContext.getNumberOfDimensions() >= 1 :
-                "context of array access must be array in " + this.getCurrentMethodDeclaration();
+        if (typeOfContext.getNumberOfDimensions() < 1) {
+            throw fail(new SemanticException("Context of array access must be array",
+                this.getCurrentMethodDeclaration().toString(), expression.getLocation()));
+        }
 
         // Array index must be an integer.
-        assert expression.getIndex().getType().isInteger() :
-                "array index must be integer in " + this.getCurrentMethodDeclaration();
+        if (!expression.getIndex().getType().isInteger()) {
+            throw fail(new TypeMismatchException(expression.getIndex().getType().toString(), expression.getLocation(),
+                "array index", this.getCurrentMethodDeclaration().toString(), "int"));
+        }
 
         BasicTypeDeclaration basicTypeDeclaration = typeOfContext.getDeclaration().get();
         int numberOfDimensions = typeOfContext.getNumberOfDimensions() - 1;
@@ -535,26 +623,36 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
             // Check for classes that might shadow global declarations.
             // If we found a class, we can reject the program as it cannot have static fields or be
             // accessed as a reference.
-            assert (!this.getClassDeclarationForName(name).isPresent()) :
-                "cannot access class with name " + name + " as reference";
+            if (this.getClassDeclarationForName(name).isPresent()) {
+                throw fail(new SemanticException("Cannot reference class with name '" + name + "' directly",
+                    this.getCurrentMethodDeclaration().toString(), expression.getLocation()));
+            }
 
             // Retrieve global declarations
             variableDeclaration = this.getGlobalVariableDeclarationForName(name);
         }
 
         // Variable reference must be resolvable.
-        assert variableDeclaration.isPresent() :
-                "use of undeclared variable " + name + " in " + this.getCurrentMethodDeclaration();
+        if (!variableDeclaration.isPresent()) {
+            throw fail(new SemanticException("Use of undeclared variable '" + name + "'",
+                this.getCurrentMethodDeclaration().toString(), expression.getLocation()));
+        }
 
         // Variable must be accessible. arguments parameter for main method is not accessible.
-        assert variableDeclaration.get().canBeAccessed() :
-                variableDeclaration.get() + " may not be accessed in " + this.getCurrentMethodDeclaration();
+        if (!variableDeclaration.get().canBeAccessed()) {
+            throw fail(new SemanticException("Variable '"
+                + variableDeclaration.get().getName() + "' may not be accessed",
+                this.getCurrentMethodDeclaration().toString(), expression.getLocation()));
+        }
 
         // Check whether we are trying to access a field (which is always non-static since we do not support
         // static fields) from a static context.
-        assert !(this.getCurrentMethodDeclaration() instanceof MainMethodDeclaration
-            && variableDeclaration.get() instanceof FieldDeclaration) :
-            "cannot access non-static field " + variableDeclaration.get().getName() + " from static context";
+        if (this.getCurrentMethodDeclaration() instanceof MainMethodDeclaration
+            && variableDeclaration.get() instanceof FieldDeclaration) {
+            throw fail(new SemanticException("Cannot access non-static field "
+                + variableDeclaration.get().getName() + " from static context",
+                this.getCurrentMethodDeclaration().toString(), expression.getLocation()));
+        }
 
         expression.getVariableReference().resolveTo(variableDeclaration.get());
         expression.getType().resolveToVariableDeclaration(variableDeclaration.get());
@@ -564,8 +662,10 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
     protected void visit(Expression.CurrentContextAccess expression, Void context) {
 
         // Current context may not be accessed in main methods.
-        assert !(this.getCurrentMethodDeclaration() instanceof MainMethodDeclaration) :
-                "must not access this in " + this.getCurrentMethodDeclaration();
+        if (this.getCurrentMethodDeclaration() instanceof MainMethodDeclaration) {
+            throw fail(new SemanticException("Cannot access 'this' in static context",
+                this.getCurrentMethodDeclaration().toString(), expression.getLocation()));
+        }
 
         expression.getType().resolveToInstanceOfClass(this.getCurrentClassDeclaration(), false);
     }
@@ -576,8 +676,10 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
         Optional<ClassDeclaration> classDeclaration = this.getClassDeclarationForName(className);
 
         // Class reference must ve resolvable.
-        assert classDeclaration.isPresent() :
-                "use of undeclared class " + className + " in " + this.getCurrentMethodDeclaration();
+        if (!classDeclaration.isPresent()) {
+            throw fail(new SemanticException("Use of undeclared class '" + className + "'",
+                this.getCurrentMethodDeclaration().toString(), expression.getLocation()));
+        }
 
         expression.getClassReference().resolveTo(classDeclaration.get());
         expression.getType().resolveToInstanceOfClass(classDeclaration.get(), false);
@@ -588,21 +690,29 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
         expression.getPrimaryDimension().accept(this, context);
 
         // Primary dimension must be integer.
-        assert expression.getPrimaryDimension().getType().isInteger() :
-                "primary dimension must be integer in " + this.getCurrentMethodDeclaration();
+        if (!expression.getPrimaryDimension().getType().isInteger()) {
+            throw fail(new TypeMismatchException(expression.getPrimaryDimension().getType().toString(),
+                expression.getLocation(), "primary array dimension",
+                this.getCurrentMethodDeclaration().toString(), "int"));
+        }
 
         String name = expression.getBasicTypeReference().getName();
         Optional<BasicTypeDeclaration> basicTypeDeclaration = this.getBasicTypeDeclarationForName(name);
 
         // Basic type reference must be resolvable.
-        assert basicTypeDeclaration.isPresent() :
-                "use of undeclared class " + name + " in " + this.getCurrentMethodDeclaration();
+        if (!basicTypeDeclaration.isPresent()) {
+            throw fail(new SemanticException("Use of undeclared class '" + name + "'",
+                this.getCurrentMethodDeclaration().toString(), expression.getLocation()));
+        }
 
         // Must not be array of void.
-        assert basicTypeDeclaration.get() != PrimitiveTypeDeclaration.VOID :
-                "array of void is not allowed in " + this.getCurrentMethodDeclaration();
+        if (basicTypeDeclaration.get() == PrimitiveTypeDeclaration.VOID) {
+            throw fail(new SemanticException("Array of void is not allowed",
+                this.getCurrentMethodDeclaration().toString(), expression.getLocation()));
+        }
 
         expression.getBasicTypeReference().resolveTo(basicTypeDeclaration.get());
-        expression.getType().resolveToArrayOf(basicTypeDeclaration.get(), expression.getNumberOfDimensions(), false);
+        expression.getType().resolveToArrayOf(basicTypeDeclaration.get(),
+            expression.getNumberOfDimensions(), false);
     }
 }
