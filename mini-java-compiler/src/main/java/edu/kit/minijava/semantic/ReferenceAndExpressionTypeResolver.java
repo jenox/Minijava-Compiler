@@ -197,8 +197,8 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
 
         // Type reference must be resolvable.
         if (!declaration.isPresent()) {
-            throw fail(new SemanticException("Use of undeclared type " + name + " at "
-                + reference.getBasicTypeReference().getLocation() + "."));
+            throw fail(new SemanticException("Use of undeclared type '" + name + "'", null,
+                reference.getBasicTypeReference().getLocation()));
         }
 
         reference.getBasicTypeReference().resolveTo(declaration.get());
@@ -215,7 +215,8 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
 
         // Condition for if statement must be boolean.
         if (!statement.getCondition().getType().isBoolean()) {
-            throw fail(new TypeMismatchException(null, statement.getCondition().getLocation(),
+            throw fail(new TypeMismatchException(statement.getCondition().getType().toString(),
+                statement.getCondition().getLocation(),
                 "condition for if statement", null, "boolean"));
         }
 
@@ -234,7 +235,8 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
 
         // Condition for while statement must be boolean.
         if (!statement.getCondition().getType().isBoolean()) {
-            throw fail(new TypeMismatchException(null, statement.getCondition().getLocation(),
+            throw fail(new TypeMismatchException(statement.getCondition().getType().toString(),
+                statement.getCondition().getLocation(),
                 "condition for while statement", null, "boolean"));
         }
 
@@ -267,7 +269,8 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
             // Return value must be compatible with expected return type.
             if (!canAssignTypeOfExpressionToTypeReference(actualReturnType, expectedReturnType)) {
                 throw fail(new TypeMismatchException(actualReturnType.toString(), statement.getLocation(),
-                    "return value", null, expectedReturnType.toString()));
+                    "return value", this.getCurrentMethodDeclaration().toString(),
+                    expectedReturnType.getBasicTypeReference().getDeclaration().getName()));
             }
         }
         else {
@@ -301,8 +304,10 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
 
             // Type of initial value must be compatible with variable declaration.
             if (!canAssignTypeOfExpressionToTypeReference(statement.getValue().get().getType(), statement.getType())) {
-                throw fail(new TypeMismatchException(statement.getValue().get().getType().toString(),
-                    statement.getLocation(), "assignment", null));
+                throw fail(new TypeMismatchException(null, statement.getLocation(),
+                    "attempted assignment of type " + statement.getValue().get().getType().toString()
+                        + " to " + statement.getType().toString(),
+                    this.getCurrentMethodDeclaration().toString()));
             }
         }
     }
@@ -333,12 +338,14 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
                 // Operands for numeric operations must be integers.
                 if (!typeOfLeftOperand.isInteger()) {
                     throw fail(new TypeMismatchException(typeOfLeftOperand.toString(), expression.getLocation(),
-                        "numeric operation", this.getCurrentMethodDeclaration().toString(), "int"));
+                        "numeric operation '" + expression.getOperationType().getOperatorSymbol() + "'",
+                        this.getCurrentMethodDeclaration().toString(), "int"));
                 }
 
                 if (!typeOfRightOperand.isInteger()) {
                     throw fail(new TypeMismatchException(typeOfRightOperand.toString(), expression.getLocation(),
-                        "numeric operation", this.getCurrentMethodDeclaration().toString(), "int"));
+                        "numeric operation '" + expression.getOperationType().getOperatorSymbol() + "'",
+                        this.getCurrentMethodDeclaration().toString(), "int"));
                 }
 
                 expression.getType().resolveToInteger();
@@ -349,11 +356,13 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
                 // Operands for logical operations must be boolean.
                 if (!typeOfLeftOperand.isBoolean()) {
                     throw fail(new TypeMismatchException(typeOfLeftOperand.toString(), expression.getLocation(),
-                        "logical operation", this.getCurrentMethodDeclaration().toString(), "boolean"));
+                        "logical operation '" + expression.getOperationType().getOperatorSymbol() + "'",
+                        this.getCurrentMethodDeclaration().toString(), "boolean"));
                 }
                 if (!typeOfRightOperand.isBoolean()) {
                     throw fail(new TypeMismatchException(typeOfRightOperand.toString(), expression.getLocation(),
-                        "logical operation", this.getCurrentMethodDeclaration().toString(), "boolean"));
+                        "logical operation '" + expression.getOperationType().getOperatorSymbol() + "'",
+                        this.getCurrentMethodDeclaration().toString(), "boolean"));
                 }
 
                 expression.getType().resolveToBoolean();
@@ -366,11 +375,13 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
                 // Operands for numeric comparison must be integers.
                 if (!typeOfLeftOperand.isInteger()) {
                     throw fail(new TypeMismatchException(typeOfLeftOperand.toString(), expression.getLocation(),
-                        "comparison", this.getCurrentMethodDeclaration().toString(), "int"));
+                        "comparison '" + expression.getOperationType().getOperatorSymbol() + "'",
+                        this.getCurrentMethodDeclaration().toString(), "int"));
                 }
                 if (!typeOfRightOperand.isInteger()) {
                     throw fail(new TypeMismatchException(typeOfRightOperand.toString(), expression.getLocation(),
-                        "comparison", this.getCurrentMethodDeclaration().toString(), "int"));
+                        "comparison '" + expression.getOperationType().getOperatorSymbol() + "'",
+                        this.getCurrentMethodDeclaration().toString(), "int"));
                 }
 
                 expression.getType().resolveToBoolean();
@@ -381,7 +392,7 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
                 // Left and right operands must be comparable.
                 if (!canCheckForEqualityWithTypesOfExpressions(typeOfLeftOperand, typeOfRightOperand)) {
                     throw fail(new TypeMismatchException(null, expression.getLocation(),
-                        "equality check between " + typeOfLeftOperand.toString()
+                        "equality check between types " + typeOfLeftOperand.toString()
                             + " and " + typeOfRightOperand.toString(),
                         this.getCurrentMethodDeclaration().toString()));
                 }
@@ -392,14 +403,14 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
             case ASSIGNMENT:
                 // Left operand must be assignable.
                 if (!typeOfLeftOperand.isAssignable()) {
-                    throw fail(new SemanticException("Left side not assignable ",
+                    throw fail(new SemanticException("Left side not assignable",
                         this.getCurrentMethodDeclaration().toString(), expression.getLocation()));
                 }
 
                 // Left and right operands must be compatible.
                 if (!canAssignTypeOfExpressionToTypeOfExpression(typeOfRightOperand, typeOfLeftOperand)) {
                     throw fail(new TypeMismatchException(null, expression.getLocation(),
-                        "attempted assignment of" + typeOfRightOperand.toString()
+                        "attempted assignment of type " + typeOfRightOperand.toString()
                             + " to " + typeOfLeftOperand.toString(),
                         this.getCurrentMethodDeclaration().toString()));
                 }
@@ -421,7 +432,8 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
                 // Operand for logical negation must be boolean.
                 if (!expression.getOther().getType().isBoolean()) {
                     throw fail(new TypeMismatchException(expression.getOther().getType().toString(),
-                        expression.getLocation(), "logical negation", this.getCurrentMethodDeclaration().toString(),
+                        expression.getLocation(), "logical negation",
+                        this.getCurrentMethodDeclaration().toString(),
                         "boolean"));
                 }
 
@@ -524,7 +536,9 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
 
         // Number of arguments must match.
         if (typesOfArguments.size() != typesOfParameters.size()) {
-            throw fail(new SemanticException("Incorrect number of arguments for " + methodDeclaration,
+            throw fail(new SemanticException("Received incorrect number of arguments"
+                + " (" + typesOfArguments.size() + " instead of " + typesOfParameters.size() + ")"
+                + " for call to method '" + methodDeclaration.get().getName() + "'",
                 this.getCurrentMethodDeclaration().toString(), expression.getLocation()));
         }
 
@@ -533,8 +547,11 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
             // Type of argument must be compatible.
             if (!canAssignTypeOfExpressionToTypeReference(typesOfArguments.get(index), typesOfParameters.get(index))) {
                 throw fail(new TypeMismatchException(typesOfArguments.get(index).toString(),
-                    expression.getLocation(), "method argument",
-                    this.getCurrentMethodDeclaration().toString(), typesOfParameters.get(index).toString()));
+                    expression.getLocation(),
+                    "method argument '" + methodDeclaration.get().getParameters().get(index).getName() + "'"
+                    + " for method '" + methodDeclaration.get().getName() + "'",
+                    this.getCurrentMethodDeclaration().toString(),
+                    typesOfParameters.get(index).getBasicTypeReference().getDeclaration().getName()));
             }
         }
 

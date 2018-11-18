@@ -55,15 +55,21 @@ public class TypeMismatchException extends SemanticException {
             builder.append(" at ");
             builder.append(this.location);
         }
-        builder.append(": ");
+
+        if (this.actualTypeName != null || this.expectedTypeNames.length > 0) {
+            builder.append(": ");
+        }
 
         if (this.actualTypeName != null) {
             builder.append("encountered ");
             builder.append(this.actualTypeName);
+            if (this.expectedTypeNames.length > 0) {
+                builder.append(", but ");
+            }
         }
 
-        if (this.expectedTypeNames != null && this.expectedTypeNames.length > 0) {
-            builder.append(", but expected ");
+        if (this.expectedTypeNames.length > 0) {
+            builder.append("expected ");
             builder.append(String.join(", ", this.expectedTypeNames));
         }
 

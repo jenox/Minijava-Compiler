@@ -38,7 +38,7 @@ public class SemanticException extends Exception {
         }
 
         if (this.context != null) {
-            builder.append(" (");
+            builder.append(" (error in ");
             builder.append(this.context);
             builder.append(")");
         }

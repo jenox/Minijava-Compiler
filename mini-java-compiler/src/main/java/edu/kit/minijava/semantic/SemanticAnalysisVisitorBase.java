@@ -86,7 +86,8 @@ abstract class SemanticAnalysisVisitorBase extends ASTVisitor<Void> {
             = this.methodDeclarations.get(this.currentClassDeclarations.peek()).get(declaration.getName());
 
         if (previousDeclaration != null) {
-            throw fail(new RedeclarationException(declaration.getName(), declaration.getLocation(), previousDeclaration));
+            throw fail(new RedeclarationException(declaration.getName(),
+                declaration.getLocation(), previousDeclaration));
         }
 
         if (this.entryPoint != null) {
