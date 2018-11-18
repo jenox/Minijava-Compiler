@@ -1,9 +1,17 @@
 package edu.kit.minijava.ast.nodes;
 
+import edu.kit.minijava.lexer.*;
+
 public interface VariableDeclaration extends Declaration, ASTNode {
 
     /** The name of the variable. */
     String getName();
+
+    /**
+     * The location of the declaration in the source code.
+     * May return null if the declaration is not explicitly contained in the source code.
+     */
+    TokenLocation getLocation();
 
     /** A reference to the type of the variable. */
     TypeReference getType();
