@@ -86,11 +86,11 @@ abstract class SemanticAnalysisVisitorBase extends ASTVisitor<Void> {
             = this.methodDeclarations.get(this.currentClassDeclarations.peek()).get(declaration.getName());
 
         if (previousDeclaration != null) {
-            fail(new RedeclarationException(declaration.getName(), declaration.getLocation(), previousDeclaration));
+            throw fail(new RedeclarationException(declaration.getName(), declaration.getLocation(), previousDeclaration));
         }
 
         if (this.entryPoint != null) {
-            fail(new RedeclarationException(declaration.getName(), declaration.getLocation(), this.entryPoint));
+            throw fail(new RedeclarationException(declaration.getName(), declaration.getLocation(), this.entryPoint));
         }
 
         this.entryPoint = declaration;
@@ -341,6 +341,6 @@ abstract class SemanticAnalysisVisitorBase extends ASTVisitor<Void> {
     }
 
     static WrappedSemanticException fail(SemanticException exception) {
-        throw new WrappedSemanticException(exception);
+        return new WrappedSemanticException(exception);
     }
 }

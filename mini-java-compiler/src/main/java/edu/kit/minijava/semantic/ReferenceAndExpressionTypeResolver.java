@@ -46,7 +46,7 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
         }
 
         if (!this.getEntryPoint().isPresent()) {
-            throw fail(new SemanticException("Missing main method."));
+            throw new SemanticException("Missing main method");
         }
 
         this.leaveCurrentVariableDeclarationScope();
