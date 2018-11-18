@@ -23,12 +23,7 @@ public class ValidateCommand extends Command {
             Parser parser = new Parser(lexer);
             Program program = parser.parseProgram();
 
-            long before = System.nanoTime();
             new ReferenceAndExpressionTypeResolver(program);
-            long after = System.nanoTime();
-            double delta = (after - before) / 1e9;
-
-            System.out.println(delta);
 
 //            for (TypeReference reference : new Collector(program).instancesOfClass(TypeReference.class)) {
 //                if (reference.getBasicTypeReference().isResolved()) {
