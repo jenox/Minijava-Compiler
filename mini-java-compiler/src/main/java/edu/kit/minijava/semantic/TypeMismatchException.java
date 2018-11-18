@@ -46,9 +46,9 @@ public class TypeMismatchException extends SemanticException {
 
         builder.append("Mismatching types");
 
-        if (this.context != null) {
+        if (this.purpose != null) {
             builder.append(" for ");
-            builder.append(this.context);
+            builder.append(this.purpose);
         }
 
         if (this.location != null) {
@@ -63,8 +63,7 @@ public class TypeMismatchException extends SemanticException {
         }
 
         if (this.expectedTypeNames != null && this.expectedTypeNames.length > 0) {
-            builder.append(", but");
-            builder.append("expected");
+            builder.append(", but expected ");
             builder.append(String.join(", ", this.expectedTypeNames));
         }
 
