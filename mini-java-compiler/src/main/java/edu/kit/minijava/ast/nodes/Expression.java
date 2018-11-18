@@ -17,20 +17,24 @@ public abstract class Expression implements ASTNode {
         return this.type;
     }
 
+    public abstract TokenLocation getLocation();
     public abstract boolean isValidForExpressionStatement();
 
     public static final class BinaryOperation extends Expression {
-        public BinaryOperation(BinaryOperationType operationType, Expression left, Expression right) {
+        public BinaryOperation(BinaryOperationType operationType, Expression left, Expression right,
+                               TokenLocation location) {
             super();
 
             this.operationType = operationType;
             this.left = left;
             this.right = right;
+            this.location = location;
         }
 
         private final BinaryOperationType operationType;
         private final Expression left;
         private final Expression right;
+        private final TokenLocation location;
 
         public BinaryOperationType getOperationType() {
             return this.operationType;
@@ -45,6 +49,11 @@ public abstract class Expression implements ASTNode {
         }
 
         @Override
+        public TokenLocation getLocation() {
+            return this.location;
+        }
+
+        @Override
         public boolean isValidForExpressionStatement() {
             return this.operationType == BinaryOperationType.ASSIGNMENT;
         }
@@ -56,15 +65,17 @@ public abstract class Expression implements ASTNode {
     }
 
     public static final class UnaryOperation extends Expression {
-        public UnaryOperation(UnaryOperationType operationType, Expression other) {
+        public UnaryOperation(UnaryOperationType operationType, Expression other, TokenLocation location) {
             super();
 
             this.operationType = operationType;
             this.other = other;
+            this.location = location;
         }
 
         private final UnaryOperationType operationType;
         private final Expression other;
+        private final TokenLocation location;
 
         public UnaryOperationType getOperationType() {
             return this.operationType;
@@ -72,6 +83,11 @@ public abstract class Expression implements ASTNode {
 
         public Expression getOther() {
             return this.other;
+        }
+
+        @Override
+        public TokenLocation getLocation() {
+            return this.location;
         }
 
         @Override
@@ -86,8 +102,17 @@ public abstract class Expression implements ASTNode {
     }
 
     public static final class NullLiteral extends Expression {
-        public NullLiteral() {
+        public NullLiteral(TokenLocation location) {
             super();
+
+            this.location = location;
+        }
+
+        private final TokenLocation location;
+
+        @Override
+        public TokenLocation getLocation() {
+            return this.location;
         }
 
         @Override
@@ -102,16 +127,23 @@ public abstract class Expression implements ASTNode {
     }
 
     public static final class BooleanLiteral extends Expression {
-        public BooleanLiteral(boolean value) {
+        public BooleanLiteral(boolean value, TokenLocation location) {
             super();
 
             this.value = value;
+            this.location = location;
         }
 
         private final boolean value;
+        private final TokenLocation location;
 
         public boolean getValue() {
             return this.value;
+        }
+
+        @Override
+        public TokenLocation getLocation() {
+            return this.location;
         }
 
         @Override
@@ -126,16 +158,23 @@ public abstract class Expression implements ASTNode {
     }
 
     public static final class IntegerLiteral extends Expression {
-        public IntegerLiteral(String value) {
+        public IntegerLiteral(String value, TokenLocation location) {
             super();
 
             this.value = value;
+            this.location = location;
         }
 
         private final String value;
+        private final TokenLocation location;
 
         public String getValue() {
             return this.value;
+        }
+
+        @Override
+        public TokenLocation getLocation() {
+            return this.location;
         }
 
         @Override
@@ -156,6 +195,7 @@ public abstract class Expression implements ASTNode {
             this.context = null;
             this.arguments = arguments;
             this.methodReference = new ExplicitReference<>(methodName, location);
+            this.location = location;
         }
 
         public MethodInvocation(Expression context, String methodName, List<Expression> arguments,
@@ -165,11 +205,13 @@ public abstract class Expression implements ASTNode {
             this.context = context;
             this.arguments = arguments;
             this.methodReference = new ExplicitReference<>(methodName, location);
+            this.location = location;
         }
 
         private final Expression context; // nullable
         private final ExplicitReference<MethodDeclaration> methodReference;
         private final List<Expression> arguments;
+        private final TokenLocation location;
 
         public Optional<Expression> getContext() {
             return Optional.ofNullable(this.context);
@@ -185,6 +227,11 @@ public abstract class Expression implements ASTNode {
 
         public List<TypeOfExpression> getArgumentTypes() {
             return this.arguments.stream().map(e -> e.type).collect(Collectors.toList());
+        }
+
+        @Override
+        public TokenLocation getLocation() {
+            return this.location;
         }
 
         @Override
@@ -204,10 +251,12 @@ public abstract class Expression implements ASTNode {
 
             this.context = context;
             this.fieldReference = new ExplicitReference<>(fieldName, location);
+            this.location = location;
         }
 
         private final Expression context;
         private final ExplicitReference<FieldDeclaration> fieldReference;
+        private final TokenLocation location;
 
         public Expression getContext() {
             return this.context;
@@ -215,6 +264,11 @@ public abstract class Expression implements ASTNode {
 
         public ExplicitReference<FieldDeclaration> getFieldReference() {
             return this.fieldReference;
+        }
+
+        @Override
+        public TokenLocation getLocation() {
+            return this.location;
         }
 
         @Override
@@ -229,15 +283,17 @@ public abstract class Expression implements ASTNode {
     }
 
     public static final class ArrayElementAccess extends Expression {
-        public ArrayElementAccess(Expression context, Expression index) {
+        public ArrayElementAccess(Expression context, Expression index, TokenLocation location) {
             super();
 
             this.context = context;
             this.index = index;
+            this.location = location;
         }
 
         private final Expression context;
         private final Expression index;
+        private final TokenLocation location;
 
         public Expression getContext() {
             return this.context;
@@ -245,6 +301,11 @@ public abstract class Expression implements ASTNode {
 
         public Expression getIndex() {
             return this.index;
+        }
+
+        @Override
+        public TokenLocation getLocation() {
+            return this.location;
         }
 
         @Override
@@ -263,12 +324,19 @@ public abstract class Expression implements ASTNode {
             super();
 
             this.variableReference = new ExplicitReference<>(variableName, location);
+            this.location = location;
         }
 
         private final ExplicitReference<VariableDeclaration> variableReference;
+        private final TokenLocation location;
 
         public ExplicitReference<VariableDeclaration> getVariableReference() {
             return this.variableReference;
+        }
+
+        @Override
+        public TokenLocation getLocation() {
+            return this.location;
         }
 
         @Override
@@ -283,8 +351,17 @@ public abstract class Expression implements ASTNode {
     }
 
     public static final class CurrentContextAccess extends Expression {
-        public CurrentContextAccess() {
+        public CurrentContextAccess(TokenLocation location) {
             super();
+
+            this.location = location;
+        }
+
+        private final TokenLocation location;
+
+        @Override
+        public TokenLocation getLocation() {
+            return this.location;
         }
 
         @Override
@@ -303,12 +380,19 @@ public abstract class Expression implements ASTNode {
             super();
 
             this.classReference = new ExplicitReference<>(className, location);
+            this.location = location;
         }
 
         private final ExplicitReference<ClassDeclaration> classReference;
+        private final TokenLocation location;
 
         public ExplicitReference<ClassDeclaration> getClassReference() {
             return this.classReference;
+        }
+
+        @Override
+        public TokenLocation getLocation() {
+            return this.location;
         }
 
         @Override
@@ -324,17 +408,19 @@ public abstract class Expression implements ASTNode {
 
     public static final class NewArrayCreation extends Expression {
         public NewArrayCreation(ExplicitReference<BasicTypeDeclaration> basicTypeReference, Expression primaryDimension,
-                                int numberOfDimensions) {
+                                int numberOfDimensions, TokenLocation location) {
             super();
 
             this.basicTypeReference = basicTypeReference;
             this.primaryDimension = primaryDimension;
             this.numberOfDimensions = numberOfDimensions;
+            this.location = location;
         }
 
         private final ExplicitReference<BasicTypeDeclaration> basicTypeReference;
         private final Expression primaryDimension;
         private final int numberOfDimensions;
+        private final TokenLocation location;
 
         public ExplicitReference<BasicTypeDeclaration> getBasicTypeReference() {
             return this.basicTypeReference;
@@ -346,6 +432,11 @@ public abstract class Expression implements ASTNode {
 
         public int getNumberOfDimensions() {
             return this.numberOfDimensions;
+        }
+
+        @Override
+        public TokenLocation getLocation() {
+            return this.location;
         }
 
         @Override

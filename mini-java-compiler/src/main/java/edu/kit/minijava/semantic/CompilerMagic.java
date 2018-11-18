@@ -1,6 +1,7 @@
 package edu.kit.minijava.semantic;
 
 import edu.kit.minijava.ast.nodes.*;
+import edu.kit.minijava.lexer.*;
 
 import java.util.*;
 
@@ -47,6 +48,11 @@ class CompilerMagic {
             @Override
             public String getName() {
                 return "System";
+            }
+
+            @Override
+            public TokenLocation getLocation() {
+                return null;
             }
 
             @Override

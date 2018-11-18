@@ -80,10 +80,19 @@ abstract class SemanticAnalysisVisitorBase extends ASTVisitor<Void> {
     void setEntryPoint(MainMethodDeclaration declaration) {
 
         // Check whether a non-static method with the same name already exists in the current class
-        assert !this.methodDeclarations.get(this.currentClassDeclarations.peek()).containsKey(declaration.getName()) :
-            "invalid redeclaration of method " + declaration.getName() + " as static";
+        assert !this.currentClassDeclarations.empty();
 
-        assert this.entryPoint == null : "invalid redeclaration of entry point";
+        MethodDeclaration previousDeclaration
+            = this.methodDeclarations.get(this.currentClassDeclarations.peek()).get(declaration.getName());
+
+        if (previousDeclaration != null) {
+            throw fail(new RedeclarationException(declaration.getName(),
+                declaration.getLocation(), previousDeclaration));
+        }
+
+        if (this.entryPoint != null) {
+            throw fail(new RedeclarationException(declaration.getName(), declaration.getLocation(), this.entryPoint));
+        }
 
         this.entryPoint = declaration;
     }
@@ -103,8 +112,17 @@ abstract class SemanticAnalysisVisitorBase extends ASTVisitor<Void> {
      */
     void addVariableDeclarationToCurrentScope(VariableDeclaration declaration) {
         this.symbolTable.getVisibleDeclarationForName(declaration.getName()).ifPresent(previousDeclaration -> {
-            assert !this.symbolTable.isDeclarationInCurrentScope(declaration) : "invalid redeclaration";
-            assert previousDeclaration.canBeShadowedByVariableDeclarationInNestedScope() : "cannot shadow prev decl";
+
+            if (this.symbolTable.isDeclarationInCurrentScope(declaration)) {
+                throw fail(new RedeclarationException(declaration.getName(),
+                    declaration.getLocation(), previousDeclaration));
+            }
+
+            if (!previousDeclaration.canBeShadowedByVariableDeclarationInNestedScope()) {
+                throw fail(new RedeclarationException(declaration.getName(),
+                    declaration.getLocation(), previousDeclaration,
+                    "cannot shadow previous declaration"));
+            }
         });
 
         this.symbolTable.enterDeclaration(declaration);
@@ -119,7 +137,13 @@ abstract class SemanticAnalysisVisitorBase extends ASTVisitor<Void> {
     }
 
     void addGlobalVariableDeclaration(VariableDeclaration declaration) {
-        assert !this.globalVariableDeclarations.containsKey(declaration.getName()) : "invalid global redeclaration";
+        VariableDeclaration globalDeclaration = this.globalVariableDeclarations.get(declaration.getName());
+
+        if (globalDeclaration != null) {
+            throw fail(new RedeclarationException(declaration.getName(), declaration.getLocation(), globalDeclaration,
+                "redeclaration of global"));
+        }
+
         this.globalVariableDeclarations.put(declaration.getName(), declaration);
     }
 
@@ -134,7 +158,11 @@ abstract class SemanticAnalysisVisitorBase extends ASTVisitor<Void> {
     private final Map<ClassDeclaration, Map<String, FieldDeclaration>> fieldDeclarations = new HashMap<>();
 
     void registerClassDeclaration(ClassDeclaration classDeclaration) {
-        assert !this.classDeclarations.containsKey(classDeclaration.getName()) : "invalid redeclaration of class";
+        ClassDeclaration previousDeclaration = this.classDeclarations.get(classDeclaration.getName());
+        if (previousDeclaration != null) {
+            throw fail(new RedeclarationException(classDeclaration.getName(),
+                classDeclaration.getLocation(), previousDeclaration));
+        }
 
         this.classDeclarations.put(classDeclaration.getName(), classDeclaration);
         this.methodDeclarations.put(classDeclaration, new HashMap<>());
@@ -142,19 +170,32 @@ abstract class SemanticAnalysisVisitorBase extends ASTVisitor<Void> {
     }
 
     void registerMethodDeclaration(MethodDeclaration methodDeclaration, ClassDeclaration classDeclaration) {
-        assert !this.methodDeclarations.get(classDeclaration).containsKey(methodDeclaration.getName()) :
-                "invalid redeclaration of method";
+        MethodDeclaration previousDeclaration
+            = this.methodDeclarations.get(classDeclaration).get(methodDeclaration.getName());
+        if (previousDeclaration != null) {
+            throw fail(new RedeclarationException(methodDeclaration.getName(),
+                                            methodDeclaration.getLocation(),
+                                            previousDeclaration));
+        }
 
         // Check that no entry point with the same name already exists
-        assert this.entryPoint == null || !methodDeclaration.getName().equals(this.entryPoint.getName()) :
-            "invalid redeclaration of static method " + this.entryPoint.getName();
+        if (this.entryPoint != null && methodDeclaration.getName().equals(this.entryPoint.getName())) {
+            throw fail(new RedeclarationException(methodDeclaration.getName(),
+                                            methodDeclaration.getLocation(),
+                                            this.entryPoint));
+        }
 
         this.methodDeclarations.get(classDeclaration).put(methodDeclaration.getName(), methodDeclaration);
     }
 
     void registerFieldDeclaration(FieldDeclaration fieldDeclaration, ClassDeclaration classDeclaration) {
-        assert !this.fieldDeclarations.get(classDeclaration).containsKey(fieldDeclaration.getName()) :
-                "invalid redeclaration of field";
+        FieldDeclaration previousDeclaration
+            = this.fieldDeclarations.get(classDeclaration).get(fieldDeclaration.getName());
+        if (previousDeclaration != null) {
+            throw fail(new RedeclarationException(fieldDeclaration.getName(),
+                                            fieldDeclaration.getLocation(),
+                                            previousDeclaration));
+        }
 
         this.fieldDeclarations.get(classDeclaration).put(fieldDeclaration.getName(), fieldDeclaration);
     }
@@ -298,5 +339,9 @@ abstract class SemanticAnalysisVisitorBase extends ASTVisitor<Void> {
                 return true;
             }
         }
+    }
+
+    static WrappedSemanticException fail(SemanticException exception) {
+        return new WrappedSemanticException(exception);
     }
 }

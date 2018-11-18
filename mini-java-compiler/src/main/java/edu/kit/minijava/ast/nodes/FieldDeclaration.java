@@ -25,6 +25,7 @@ public final class FieldDeclaration implements VariableDeclaration, MemberDeclar
         return this.name;
     }
 
+    @Override
     public TokenLocation getLocation() {
         return this.location;
     }

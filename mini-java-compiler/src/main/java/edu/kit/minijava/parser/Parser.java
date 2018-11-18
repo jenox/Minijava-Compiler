@@ -250,7 +250,7 @@ public final class Parser {
     }
 
     private Statement.Block parseBlock() throws ParserException {
-        this.consume(TokenType.OPENING_BRACE, "Block");
+        Token token = this.consume(TokenType.OPENING_BRACE, "Block");
 
         List<Statement> statements = new ArrayList<>();
 
@@ -260,7 +260,7 @@ public final class Parser {
 
         this.consume(TokenType.CLOSING_BRACE, "Block");
 
-        return new Statement.Block(statements);
+        return new Statement.Block(statements, token.getLocation());
     }
 
     private Statement parseBlockStatement() throws ParserException {
@@ -318,23 +318,23 @@ public final class Parser {
     }
 
     private Statement parseEmptyStatement() throws ParserException {
-        this.consume(TokenType.SEMICOLON, "EmptyStatement");
+        Token token = this.consume(TokenType.SEMICOLON, "EmptyStatement");
 
-        return new Statement.EmptyStatement();
+        return new Statement.EmptyStatement(token.getLocation());
     }
 
     private Statement parseWhileStatement() throws ParserException {
-        this.consume(TokenType.WHILE, "WhileStatement");
+        Token token = this.consume(TokenType.WHILE, "WhileStatement");
         this.consume(TokenType.OPENING_PARENTHESIS, "WhileStatement");
         Expression condition = this.parseExpression(0);
         this.consume(TokenType.CLOSING_PARENTHESIS, "WhileStatement");
         Statement statementWhileTrue = this.parseStatement();
 
-        return new Statement.WhileStatement(condition, statementWhileTrue);
+        return new Statement.WhileStatement(condition, statementWhileTrue, token.getLocation());
     }
 
     private Statement parseIfStatement() throws ParserException {
-        this.consume(TokenType.IF, "IfStatement");
+        Token token = this.consume(TokenType.IF, "IfStatement");
         this.consume(TokenType.OPENING_PARENTHESIS, "IfStatement");
         Expression condition = this.parseExpression(0);
         this.consume(TokenType.CLOSING_PARENTHESIS, "IfStatement");
@@ -346,31 +346,41 @@ public final class Parser {
 
             Statement statementIfFalse = this.parseStatement();
 
-            return new Statement.IfStatement(condition, statementIfTrue, statementIfFalse);
+            return new Statement.IfStatement(condition, statementIfTrue, statementIfFalse, token.getLocation());
         }
 
         // IfStatement -> "if" "(" Expression ")" Statement
         else {
-            return new Statement.IfStatement(condition, statementIfTrue);
+            return new Statement.IfStatement(condition, statementIfTrue, token.getLocation());
         }
     }
 
     private Statement parseExpressionStatement() throws ParserException {
-        Expression expression = this.parseExpression(0);
+        if (this.hasReachedEndOfInput()) {
+            Expression expression = this.parseExpression(0);
 
-        this.consume(TokenType.SEMICOLON, "ExpressionStatement");
+            // Parsing expression at EOF will throw.
+            throw new AssertionError();
+        }
+        else {
+            TokenLocation location = this.getCurrentToken().getLocation();
 
-        return new Statement.ExpressionStatement(expression);
+            Expression expression = this.parseExpression(0);
+
+            this.consume(TokenType.SEMICOLON, "ExpressionStatement");
+
+            return new Statement.ExpressionStatement(expression, location);
+        }
     }
 
     private Statement parseReturnStatement() throws ParserException {
-        this.consume(TokenType.RETURN, "ReturnStatement");
+        Token token = this.consume(TokenType.RETURN, "ReturnStatement");
 
         // ReturnStatement -> "return" ";"
         if (this.lookahead(TokenType.SEMICOLON)) {
             this.consume(TokenType.SEMICOLON, "ReturnStatement");
 
-            return new Statement.ReturnStatement();
+            return new Statement.ReturnStatement(token.getLocation());
         }
 
         // ReturnStatement -> "return" Expression ";"
@@ -378,26 +388,24 @@ public final class Parser {
             Expression value = this.parseExpression(0);
             this.consume(TokenType.SEMICOLON, "ReturnStatement");
 
-            return new Statement.ReturnStatement(value);
+            return new Statement.ReturnStatement(value, token.getLocation());
         }
     }
 
     // MARK: - Parsing Expressions
 
     private Expression parseExpression(int minimumPrecedence) throws ParserException {
-        Stack<TokenType> consumedPrefixOperators = new Stack<>();
+        Stack<Token> consumedPrefixOperationTokens = new Stack<>();
 
         // 1. Consume prefix operators
         consumePrefixOperators:
         while (!this.hasReachedEndOfInput()) {
             switch (this.getCurrentToken().getType()) {
                 case LOGICAL_NEGATION:
-                    this.consume(TokenType.LOGICAL_NEGATION, null);
-                    consumedPrefixOperators.push(TokenType.LOGICAL_NEGATION);
+                    consumedPrefixOperationTokens.push(this.consume(TokenType.LOGICAL_NEGATION, null));
                     break;
                 case MINUS:
-                    this.consume(TokenType.MINUS, null);
-                    consumedPrefixOperators.push(TokenType.MINUS);
+                    consumedPrefixOperationTokens.push(this.consume(TokenType.MINUS, null));
                     break;
                 default:
                     break consumePrefixOperators;
@@ -421,17 +429,22 @@ public final class Parser {
         }
 
         // 4. Apply consumed prefix operators now.
-        while (!consumedPrefixOperators.isEmpty()) {
-            switch (consumedPrefixOperators.pop()) {
+        while (!consumedPrefixOperationTokens.isEmpty()) {
+            Token token = consumedPrefixOperationTokens.pop();
+            UnaryOperationType operation;
+
+            switch (token.getType()) {
                 case LOGICAL_NEGATION:
-                    expression = new Expression.UnaryOperation(UnaryOperationType.LOGICAL_NEGATION, expression);
+                    operation = UnaryOperationType.LOGICAL_NEGATION;
                     break;
                 case MINUS:
-                    expression = new Expression.UnaryOperation(UnaryOperationType.NUMERIC_NEGATION, expression);
+                    operation = UnaryOperationType.NUMERIC_NEGATION;
                     break;
                 default:
                     throw new Error();
             }
+
+            expression = new Expression.UnaryOperation(operation, expression, token.getLocation());
         }
 
         // 5. Precedence climbing with 'atom' including prefix operators and postfix operations.
@@ -441,10 +454,8 @@ public final class Parser {
             if (operation == null || operation.getPrecedence() < minimumPrecedence) {
                 break;
             }
-            else {
-                this.consume(operation.getTokenType(), null);
-            }
 
+            Token token = this.consume(operation.getTokenType(), null);
             int precedence = operation.getPrecedence();
 
             if (operation.getAssociativity() == Associativity.LEFT_ASSOCIATIVE) {
@@ -453,7 +464,7 @@ public final class Parser {
 
             Expression rhs = this.parseExpression(precedence);
 
-            expression = operation.instantiate(expression, rhs);
+            expression = operation.instantiate(expression, rhs, token.getLocation());
         }
 
         return expression;
@@ -481,11 +492,11 @@ public final class Parser {
 
         // PostfixOperation -> ArrayAccess
         else if (this.lookahead(TokenType.OPENING_BRACKET)) {
-            this.consume(TokenType.OPENING_BRACKET, "ArrayAccess");
+            Token token = this.consume(TokenType.OPENING_BRACKET, "ArrayAccess");
             Expression index = this.parseExpression(0);
             this.consume(TokenType.CLOSING_BRACKET, "ArrayAccess");
 
-            return new Expression.ArrayElementAccess(context, index);
+            return new Expression.ArrayElementAccess(context, index, token.getLocation());
         }
 
         else {
@@ -523,37 +534,37 @@ public final class Parser {
 
         // PrimaryExpression -> Literal -> "INTEGER_LITERAL"
         else if (this.lookahead(TokenType.INTEGER_LITERAL)) {
-            String value = this.consume(TokenType.INTEGER_LITERAL, null).getText();
+            Token token = this.consume(TokenType.INTEGER_LITERAL, null);
 
-            return new Expression.IntegerLiteral(value);
+            return new Expression.IntegerLiteral(token.getText(), token.getLocation());
         }
 
         // PrimaryExpression -> Literal -> "null"
         else if (this.lookahead(TokenType.NULL)) {
-            this.consume(TokenType.NULL, null);
+            Token token = this.consume(TokenType.NULL, null);
 
-            return new Expression.NullLiteral();
+            return new Expression.NullLiteral(token.getLocation());
         }
 
         // PrimaryExpression -> Literal -> "true"
         else if (this.lookahead(TokenType.TRUE)) {
-            this.consume(TokenType.TRUE, null);
+            Token token = this.consume(TokenType.TRUE, null);
 
-            return new Expression.BooleanLiteral(true);
+            return new Expression.BooleanLiteral(true, token.getLocation());
         }
 
         // PrimaryExpression -> Literal -> "false"
         else if (this.lookahead(TokenType.FALSE)) {
-            this.consume(TokenType.FALSE, null);
+            Token token = this.consume(TokenType.FALSE, null);
 
-            return new Expression.BooleanLiteral(false);
+            return new Expression.BooleanLiteral(false, token.getLocation());
         }
 
         // PrimaryExpression -> "this"
         else if (this.lookahead(TokenType.THIS)) {
-            this.consume(TokenType.THIS, null);
+            Token token = this.consume(TokenType.THIS, null);
 
-            return new Expression.CurrentContextAccess();
+            return new Expression.CurrentContextAccess(token.getLocation());
         }
 
         // PrimaryExpression -> NewObjectExpression | NewArrayExpression
@@ -572,12 +583,12 @@ public final class Parser {
             // PrimaryExpression -> NewArrayExpression -> "new" BasicType "[" Expression "]" { "[" "]" }
             else {
                 ExplicitReference<BasicTypeDeclaration> basicType = this.parseBasicType();
-                this.consume(TokenType.OPENING_BRACKET, "NewArrayExpression");
+                Token token = this.consume(TokenType.OPENING_BRACKET, "NewArrayExpression");
                 Expression expression = this.parseExpression(0);
                 this.consume(TokenType.CLOSING_BRACKET, "NewArrayExpression");
                 int numberOfDimensions = 1 + this.parseOpeningAndClosingBrackets();
 
-                return new Expression.NewArrayCreation(basicType, expression, numberOfDimensions);
+                return new Expression.NewArrayCreation(basicType, expression, numberOfDimensions, token.getLocation());
             }
         }
 

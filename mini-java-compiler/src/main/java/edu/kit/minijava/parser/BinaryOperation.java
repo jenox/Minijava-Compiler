@@ -61,8 +61,8 @@ enum BinaryOperation {
         }
     }
 
-    Expression.BinaryOperation instantiate(Expression lhs, Expression rhs) {
-        return new Expression.BinaryOperation(this.getBinaryOperationType(), lhs, rhs);
+    Expression.BinaryOperation instantiate(Expression lhs, Expression rhs, TokenLocation location) {
+        return new Expression.BinaryOperation(this.getBinaryOperationType(), lhs, rhs, location);
     }
 
     static BinaryOperation forTokenType(TokenType tokenType) {

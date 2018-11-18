@@ -32,6 +32,7 @@ public final class ParameterDeclaration implements VariableDeclaration, ASTNode 
         return this.name;
     }
 
+    @Override
     public TokenLocation getLocation() {
         return this.location;
     }

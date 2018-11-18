@@ -11,4 +11,9 @@ public class PropagatedException extends ParserException {
     public Throwable getCause() {
         return this.cause;
     }
+
+    @Override
+    public String getMessage() {
+        return this.cause.getMessage();
+    }
 }

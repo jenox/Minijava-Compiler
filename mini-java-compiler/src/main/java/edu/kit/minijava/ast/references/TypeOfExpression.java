@@ -134,10 +134,10 @@ public class TypeOfExpression {
         }
         else {
             if (this.numberOfDimensions >= 1) {
-                return this.declaration + ", " + this.numberOfDimensions + " dimensions";
+                return this.declaration.getName() + ", " + this.numberOfDimensions + " dimensions";
             }
             else {
-                return this.declaration.toString();
+                return this.declaration.getName();
             }
         }
     }
