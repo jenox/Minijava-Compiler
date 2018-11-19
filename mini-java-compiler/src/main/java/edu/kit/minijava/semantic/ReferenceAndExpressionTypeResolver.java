@@ -264,21 +264,30 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
 
         TypeReference expectedReturnType = this.getCurrentMethodDeclaration().getReturnType();
 
-        if (statement.getValue().isPresent()) {
-            TypeOfExpression actualReturnType = statement.getValue().get().getType();
-
-            // Return value must be compatible with expected return type.
-            if (!canAssignTypeOfExpressionToTypeReference(actualReturnType, expectedReturnType)) {
-                throw fail(new TypeMismatchException(actualReturnType.toString(), statement.getLocation(),
-                    "return value", this.getCurrentMethodDeclaration().toString(),
-                    expectedReturnType.getBasicTypeReference().getDeclaration().getName()));
+        if (expectedReturnType.isVoid()) {
+            if (statement.getValue().isPresent()) {
+                throw fail(new SemanticException("Must not return value from void method",
+                        this.getCurrentMethodDeclaration().toString(), statement.getLocation()));
             }
         }
         else {
-            // Plain return is only allowed in void methods.
-            if (!expectedReturnType.isVoid()) {
-                throw fail(new SemanticException("Must return value from non-void method",
-                    this.getCurrentMethodDeclaration().toString(), statement.getLocation()));
+            if (statement.getValue().isPresent()) {
+                TypeOfExpression actualReturnType = statement.getValue().get().getType();
+
+                // Return value must be compatible with expected return type.
+                if (!canAssignTypeOfExpressionToTypeReference(actualReturnType, expectedReturnType)) {
+                    throw fail(new TypeMismatchException(actualReturnType.toString(), statement.getLocation(),
+                            "return value", this.getCurrentMethodDeclaration().toString(),
+                            expectedReturnType.getBasicTypeReference().getDeclaration().getName()));
+                }
+            }
+            else {
+
+                // Plain return is only allowed in void methods.
+                if (!expectedReturnType.isVoid()) {
+                    throw fail(new SemanticException("Must return value from non-void method",
+                            this.getCurrentMethodDeclaration().toString(), statement.getLocation()));
+                }
             }
         }
     }
