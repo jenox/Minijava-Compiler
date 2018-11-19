@@ -12,9 +12,18 @@ public abstract class Expression implements ASTNode {
     }
 
     private final TypeOfExpression type;
+    private int numberOfExplicitParentheses = 0;
 
     public TypeOfExpression getType() {
         return this.type;
+    }
+
+    public int getNumberOfExplicitParentheses() {
+        return this.numberOfExplicitParentheses;
+    }
+
+    public void setNumberOfExplicitParentheses(int numberOfExplicitParentheses) {
+        this.numberOfExplicitParentheses = numberOfExplicitParentheses;
     }
 
     public abstract TokenLocation getLocation();
