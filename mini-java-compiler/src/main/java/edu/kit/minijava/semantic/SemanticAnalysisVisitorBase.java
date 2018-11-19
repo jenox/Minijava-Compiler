@@ -5,7 +5,7 @@ import edu.kit.minijava.ast.references.*;
 
 import java.util.*;
 
-abstract class SemanticAnalysisVisitorBase extends ASTVisitor<Void> {
+abstract class SemanticAnalysisVisitorBase<T> extends ASTVisitor<T> {
     SemanticAnalysisVisitorBase() {
     }
 
