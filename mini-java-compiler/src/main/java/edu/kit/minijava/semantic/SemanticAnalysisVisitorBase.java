@@ -225,9 +225,10 @@ abstract class SemanticAnalysisVisitorBase extends ASTVisitor<Void> {
 
     // MARK: - Compatibility
 
-    // TODO: we should have unit tests for those
-
     static boolean canAssignTypeOfExpressionToTypeReference(TypeOfExpression type, TypeReference reference) {
+        if (reference.getBasicTypeReference().getDeclaration() == PrimitiveTypeDeclaration.VOID) {
+            return false;
+        }
 
         // type is not null
         if (type.getDeclaration().isPresent()) {
@@ -253,8 +254,8 @@ abstract class SemanticAnalysisVisitorBase extends ASTVisitor<Void> {
     /** Generally not commutative. */
     static boolean canAssignTypeOfExpressionToTypeOfExpression(TypeOfExpression type, TypeOfExpression other) {
 
-        // null type is not assignable
-        if (!other.getDeclaration().isPresent()) {
+        // null and void types are not assignable
+        if (!other.getDeclaration().isPresent() || other.getDeclaration().get() == PrimitiveTypeDeclaration.VOID) {
             return false;
         }
 
@@ -282,6 +283,14 @@ abstract class SemanticAnalysisVisitorBase extends ASTVisitor<Void> {
     /** Should be commutative. */
     static boolean canCheckForEqualityWithTypesOfExpressions(TypeOfExpression left, TypeOfExpression right) {
 
+        // void types cannot be compared for equality
+        if (left.getDeclaration().isPresent() && left.getDeclaration().get() == PrimitiveTypeDeclaration.VOID) {
+            return false;
+        }
+        else if (right.getDeclaration().isPresent() && right.getDeclaration().get() == PrimitiveTypeDeclaration.VOID) {
+            return false;
+        }
+
         // left is not null
         if (left.getDeclaration().isPresent()) {
 
@@ -305,9 +314,8 @@ abstract class SemanticAnalysisVisitorBase extends ASTVisitor<Void> {
             // left is primitive type
             else {
 
-                // right is not null. must be same basic type, but not void.
+                // right is not null. must be same basic type.
                 if (right.getDeclaration().isPresent()) {
-                    if (left.getDeclaration().get() == PrimitiveTypeDeclaration.VOID) return false;
                     if (right.getDeclaration().get() != left.getDeclaration().get()) return false;
                     if (right.getNumberOfDimensions() != 0) return false;
 

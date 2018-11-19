@@ -90,9 +90,9 @@ public class Tests {
     // MARK: - Type-Reference Compatibility
 
     @Test public void testVoidReferencesAssignment() {
-        this.assertCanBeAssignedOnlyBy(this.voidReference, this.voidType);
-        this.assertCanBeAssignedOnlyBy(this.voidReference1D, this.voidType1D, this.nullType);
-        this.assertCanBeAssignedOnlyBy(this.voidReference2D, this.voidType2D, this.nullType);
+        this.assertCanBeAssignedOnlyBy(this.voidReference);
+        this.assertCanBeAssignedOnlyBy(this.voidReference1D);
+        this.assertCanBeAssignedOnlyBy(this.voidReference2D);
     }
 
     @Test public void testIntegerReferencesAssignment() {
@@ -148,9 +148,9 @@ public class Tests {
     }
 
     @Test public void testVoidTypesAssignment() {
-        this.assertCanBeAssignedOnlyBy(this.voidType, this.voidType);
-        this.assertCanBeAssignedOnlyBy(this.voidType1D, this.voidType1D, this.nullType);
-        this.assertCanBeAssignedOnlyBy(this.voidType2D, this.voidType2D, this.nullType);
+        this.assertCanBeAssignedOnlyBy(this.voidType);
+        this.assertCanBeAssignedOnlyBy(this.voidType1D);
+        this.assertCanBeAssignedOnlyBy(this.voidType2D);
     }
 
     @Test public void testIntegerTypesAssignment() {
@@ -214,7 +214,6 @@ public class Tests {
     @Test public void testCanCheckNullTypeForEquality() {
         this.assertCanCompareExpressionsOnlyTo(this.nullType,
                 this.nullType,
-                this.voidType1D, this.voidType2D,
                 this.integerType1D, this.integerType2D,
                 this.booleanType1D, this.booleanType2D,
                 this.classXType, this.classXType1D, this.classXType2D,
@@ -224,8 +223,8 @@ public class Tests {
 
     @Test public void testCanCheckVoidTypesForEquality() {
         this.assertCanCompareExpressionsOnlyTo(this.voidType); // IMPORTANT! Can't compare void to void!
-        this.assertCanCompareExpressionsOnlyTo(this.voidType1D, this.nullType, this.voidType1D);
-        this.assertCanCompareExpressionsOnlyTo(this.voidType2D, this.nullType, this.voidType2D);
+        this.assertCanCompareExpressionsOnlyTo(this.voidType1D);
+        this.assertCanCompareExpressionsOnlyTo(this.voidType2D);
     }
 
     @Test public void testCanCheckIntegerTypesForEquality() {
