@@ -178,11 +178,13 @@ abstract class SemanticAnalysisVisitorBase<T> extends ASTVisitor<T> {
                                             previousDeclaration));
         }
 
-        // Check that no entry point with the same name already exists
-        if (this.entryPoint != null && methodDeclaration.getName().equals(this.entryPoint.getName())) {
-            throw fail(new RedeclarationException(methodDeclaration.getName(),
-                                            methodDeclaration.getLocation(),
-                                            this.entryPoint));
+        // Check that no static method with the same name exists in the same class
+        for (MainMethodDeclaration entryPoint : classDeclaration.getMainMethodDeclarations()) {
+            if (methodDeclaration.getName().equals(entryPoint.getName())) {
+                throw fail(new RedeclarationException(methodDeclaration.getName(),
+                        methodDeclaration.getLocation(),
+                        entryPoint));
+            }
         }
 
         this.methodDeclarations.get(classDeclaration).put(methodDeclaration.getName(), methodDeclaration);
