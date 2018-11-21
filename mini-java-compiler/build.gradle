@@ -13,6 +13,7 @@ repositories {
 
 dependencies {
     compile group: 'org.jetbrains', name: 'annotations', version: '15.0'
+    compile fileTree(dir: 'lib', include: ['*.jar'])
 	testCompile group: 'junit', name: 'junit', version: '4.12'
 }
 
@@ -28,6 +29,8 @@ jar {
     manifest {
         attributes 'Main-Class': 'edu.kit.minijava.cli.CommandLineInterface'
     }
+    
+    from configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
 }
 
 apply plugin: 'application'
@@ -42,3 +45,4 @@ checkstyle {
     sourceSets = []
     maxWarnings = 0
 }
+
