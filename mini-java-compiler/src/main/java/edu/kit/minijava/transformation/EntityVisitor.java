@@ -7,6 +7,7 @@ import edu.kit.minijava.ast.nodes.Statement.*;
 import com.sun.jna.Pointer;
 
 import edu.kit.minijava.ast.nodes.*;
+import firm.ArrayType;
 import firm.CompoundType;
 import firm.Entity;
 import firm.Firm;
@@ -115,25 +116,43 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 		BasicTypeDeclaration decl = reference.getBasicTypeReference().getDeclaration();
 		
 		switch((PrimitiveTypeDeclaration) decl) {
-		case BOOLEAN:
-			firmType = new PrimitiveType(Mode.getBs());
-			break;
 		case INTEGER:
 			firmType = new PrimitiveType(Mode.getIs());
-			break;
+			context.setType(firmType);
+			return;
 		case VOID:
-			firmType = new PrimitiveType(Mode.getBs());
-			break;
 		case STRING:
+		case BOOLEAN:
 			firmType = new PrimitiveType(Mode.getBs());
-			break;
+			context.setType(firmType);
+			return;
 		default: 
-			//check for other types
+			break;
 		}
+		
+		Type elementType = null;
+		String name = reference.getBasicTypeReference().getName();
 		
 		//check for array type
 		if (reference.getNumberOfDimensions() > 0) {
-			//TODO
+			
+			switch (name) {
+			case "boolean":
+			case "String":
+			case "void": elementType = new PrimitiveType(Mode.getBs());
+				break;
+			case "int":
+				elementType = new PrimitiveType(Mode.getIs());
+				break;
+			default:
+				elementType = new StructType(name);	
+			}
+			
+			firmType = new ArrayType(elementType, reference.getNumberOfDimensions());
+		} 
+		//user defined type
+		else {
+			firmType = new StructType(name);
 		}
 		
 		context.setType(firmType);
@@ -143,11 +162,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 	@Override
 	protected void visit(ImplicitTypeReference reference, EntityContext context) {
 		
-		Type firmType = null;
-		
-		//TODO:
-		
-		context.setType(firmType);
+		//TODO: genauso wie ExplicitTypeReference behandeln?
 		
 	}
 
