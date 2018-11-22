@@ -38,6 +38,14 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
         StructType structType = new StructType(classDeclaration.getName());
         Entity entity = new Entity(this.globalType, classDeclaration.getName(), structType);
 
+        for (MainMethodDeclaration mainMethodDeclaration : classDeclaration.getMainMethodDeclarations()) {
+            mainMethodDeclaration.accept(this, context);
+        }
+
+        for (MethodDeclaration methodDecl : classDeclaration.getMethodDeclarations()) {
+            methodDecl.accept(this, context);
+        }
+
     }
 
     @Override
@@ -50,22 +58,32 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
     @Override
     protected void visit(MainMethodDeclaration methodDeclaration, EntityContext context) {
 
-        Type[] parameterTypes = new Type[methodDeclaration.getParameterTypes().size()];
+        Type[] parameterTypes = new Type[0];
 
         int count = 0;
-        for (TypeReference ref : methodDeclaration.getParameterTypes()) {
+        /*for (TypeReference ref : methodDeclaration.getParameterTypes()) {
             EntityContext entContext = new EntityContext();
             ref.accept(this, entContext);
 
             parameterTypes[count] = entContext.getType();
             count++;
-        }
+        }*/
 
         Type voidType = new PrimitiveType(Mode.getBs());
         Type[] resultTypes = { voidType };
         MethodType mainMethodType = new MethodType(parameterTypes, resultTypes);
         Entity mainMethodEntity = new Entity(this.globalType, this.getUniqueMemberName(methodDeclaration.getName()),
-                mainMethodType);
+                        mainMethodType);
+
+        EntityContext varCountContext = new EntityContext();
+        methodDeclaration.getBody().accept(this, varCountContext);
+
+        Graph graph = new Graph(mainMethodEntity, varCountContext.getNumberOfLocalVars());
+        Construction construction = new Construction(graph);
+        construction.finish();
+        Dump.dumpGraph(graph, "after-construction");
+        System.out.println("Dumped graph for main-method");
+
     }
 
     @Override
@@ -88,7 +106,16 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
         MethodType methodType = new MethodType(parameterTypes, resultType);
         Entity methodEntity = new Entity(this.globalType, this.getUniqueMemberName(methodDeclaration.getName()),
-                methodType);
+                        methodType);
+
+        EntityContext varCountContext = new EntityContext();
+        methodDeclaration.getBody().accept(this, varCountContext);
+
+        Graph graph = new Graph(methodEntity, varCountContext.getNumberOfLocalVars());
+        Construction construction = new Construction(graph);
+        construction.finish();
+        Dump.dumpGraph(graph, "after-construction");
+        System.out.println("Dumped graph for method");
 
     }
 
@@ -102,6 +129,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
         Type firmType = null;
 
+        reference.isVoid();
         BasicTypeDeclaration decl = reference.getBasicTypeReference().getDeclaration();
 
         switch ((PrimitiveTypeDeclaration) decl) {
@@ -189,6 +217,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
     @Override
     protected void visit(LocalVariableDeclarationStatement statement, EntityContext context) {
         statement.getType().accept(this, context);
+        context.incrementLocalVarCount();
     }
 
     @Override
