@@ -1,4 +1,4 @@
-graph: { title: "ir graph of AttributeOrSystem.main"
+graph: { title: "ir graph of Eratosthenes.sieve"
 display_edge_labels: yes
 layoutalgorithm: mindepth //$ "Compilergraph"
 manhattan_edges: yes
@@ -41,11 +41,11 @@ colorentry 110: 127 127 127
 colorentry 111: 153 255 153
 colorentry 114: 153 153 255
 
-graph: { title: "g58" label: "AttributeOrSystem.main" status:clustered color:100
-info1: "entity AttributeOrSystem.main[51]
-  type:  method:method type[50]
+graph: { title: "g74" label: "Eratosthenes.sieve" status:clustered color:100
+info1: "entity Eratosthenes.sieve[67]
+  type:  method:method type[66]
   owner: segment:segment 'GlobalType'[21]
-  maximum node index:   10
+  maximum node index:   11
   additional prop: 
   calling convention: 
   vtable number:        4294967295
@@ -53,18 +53,18 @@ info1: "entity AttributeOrSystem.main[51]
   volatility:  volatility_non_volatile
   aligned:  align_is_aligned
   alignment:  0
-  ld_name: AttributeOrSystem.main
-  irg = 58
+  ld_name: Eratosthenes.sieve
+  irg = 74
 
 
 constraints:
 properties:"
-graph: { title: "n56" label: "Start Block  56" status:clustered color:101
- info1: "Start Block 56
+graph: { title: "n72" label: "Start Block  72" status:clustered color:101
+ info1: "Start Block 72
   index: 3
   mode:    BB
   visited: 1
-  irg:     AttributeOrSystem.main
+  irg:     Eratosthenes.sieve
   arity:   0
   pred nodes:
   Private Attributes:
@@ -73,45 +73,45 @@ graph: { title: "n56" label: "Start Block  56" status:clustered color:101
 "
 }
 
-node: {title: "n63" label: "Bad X 63"  info1: "Bad 63
-  index: 9
+node: {title: "n80" label: "Bad X 80"  info1: "Bad 80
+  index: 10
   mode:    X
   visited: 1
-  irg:     AttributeOrSystem.main
+  irg:     Eratosthenes.sieve
   arity:   0
   pred nodes:
-    -1:    Start Block 56
+    -1:    Start Block 72
   Private Attributes:
 "
 color:red}
-graph: { title: "n54" label: "End Block  54" status:clustered color:101
- info1: "End Block 54
+graph: { title: "n70" label: "End Block  70" status:clustered color:101
+ info1: "End Block 70
   index: 1
   mode:    BB
   visited: 1
-  irg:     AttributeOrSystem.main
+  irg:     Eratosthenes.sieve
   arity:   1
   pred nodes:
-     0:    Bad 63
+     0:    Bad 80
   Private Attributes:
   backedges:
   block visited: 1
   block marked: 0
 "
-node: {title: "n55" label: "End  55"  info1: "End 55
+node: {title: "n71" label: "End  71"  info1: "End 71
   index: 2
   mode:    X
   visited: 1
-  irg:     AttributeOrSystem.main
+  irg:     Eratosthenes.sieve
   arity:   0
   pred nodes:
-    -1:    End Block 54
+    -1:    End Block 70
   Private Attributes:
 "
 color:108}
 }
 
-edge: {sourcename: "n54" targetname: "n63" label: "0" class:13 priority:60 color:red}
+edge: {sourcename: "n70" targetname: "n80" label: "0" class:13 priority:60 color:red}
 }
 
 }

@@ -5,6 +5,8 @@ import edu.kit.minijava.ast.nodes.Expression.*;
 import edu.kit.minijava.ast.nodes.Program;
 import edu.kit.minijava.ast.nodes.Statement.*;
 import firm.*;
+import firm.nodes.Block;
+import firm.nodes.Node;
 
 public class EntityVisitor extends ASTVisitor<EntityContext> {
 
@@ -112,9 +114,24 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
         methodDeclaration.getBody().accept(this, varCountContext);
 
         Graph graph = new Graph(methodEntity, varCountContext.getNumberOfLocalVars());
+
         Construction construction = new Construction(graph);
+
+
+        Block oldBlock = construction.getCurrentBlock();
+        construction.setCurrentBlock(graph.getStartBlock());
+
+        for (int i = 0; i < parameterTypes.length; i++) {
+            Type paramType = parameterTypes[i];
+
+            Node node = construction.newProj(graph.getArgs(), paramType.getMode(), i);
+            node.setPred(i, construction.getGraph().getStartBlock());
+        }
+
+        construction.setCurrentBlock(oldBlock);
+        construction.getCurrentBlock().mature();
         construction.finish();
-        Dump.dumpGraph(graph, "after-construction");
+        Dump.dumpGraph(construction.getGraph(), "after-construction");
         System.out.println("Dumped graph for method");
 
     }
@@ -221,7 +238,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
     }
 
     @Override
-    protected void visit(Block block, EntityContext context) {
+    protected void visit(edu.kit.minijava.ast.nodes.Statement.Block block, EntityContext context) {
         // TODO Auto-generated method stub
 
     }
