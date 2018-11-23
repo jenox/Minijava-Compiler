@@ -7,12 +7,21 @@ import edu.kit.minijava.ast.nodes.Statement.*;
 import firm.*;
 import firm.nodes.Block;
 import firm.nodes.Node;
+import firm.nodes.NodeVisitor;
+import firm.nodes.Pin;
+
+import java.util.HashMap;
 
 public class EntityVisitor extends ASTVisitor<EntityContext> {
 
     private CompoundType globalType;
 
     private String currentClassName;
+
+    private HashMap<String, Integer> variableNums = new HashMap<>();
+    private HashMap<String, Entity> methodEntities = new HashMap<>();
+
+    // TODO: add isVariableCounting flag and change methods two discern between those two modes
 
     public void transform(Program program) {
         String[] targetOptions = { "pic=1" };
@@ -52,9 +61,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
     @Override
     protected void visit(FieldDeclaration fieldDeclaration, EntityContext context) {
-
-        // TODO
-
+        // TODO: fill this
     }
 
     @Override
@@ -86,6 +93,8 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
         Dump.dumpGraph(graph, "after-construction");
         System.out.println("Dumped graph for main-method");
 
+        // TODO: change main method to be like the other methods
+
     }
 
     @Override
@@ -109,14 +118,13 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
         MethodType methodType = new MethodType(parameterTypes, resultType);
         Entity methodEntity = new Entity(this.globalType, this.getUniqueMemberName(methodDeclaration.getName()),
                         methodType);
+        methodEntities.put(this.getUniqueMemberName(methodDeclaration.getName()), methodEntity);
 
         EntityContext varCountContext = new EntityContext();
         methodDeclaration.getBody().accept(this, varCountContext);
 
-        Graph graph = new Graph(methodEntity, varCountContext.getNumberOfLocalVars());
-
+        Graph graph = new Graph(methodEntity, parameterTypes.length + varCountContext.getNumberOfLocalVars());
         Construction construction = new Construction(graph);
-
 
         Block oldBlock = construction.getCurrentBlock();
         construction.setCurrentBlock(graph.getStartBlock());
@@ -125,20 +133,32 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
             Type paramType = parameterTypes[i];
 
             Node node = construction.newProj(graph.getArgs(), paramType.getMode(), i);
-            node.setPred(i, construction.getGraph().getStartBlock());
+            // TODO: add projection to start node
         }
 
-        construction.setCurrentBlock(oldBlock);
+        EntityContext nodeContext = new EntityContext(construction);
+        methodDeclaration.getBody().accept(this, nodeContext);
+
+        Node mem = construction.getCurrentMem();
+        // TODO: using body result, IS THIS CORRECT?
+        Node[] results = { nodeContext.getResult() };
+        //Node[] results = { construction.newConst(0, Mode.getBs()) };
+        Node returnNode = construction.newReturn(mem, results);
+        graph.getEndBlock().addPred(returnNode);
         construction.getCurrentBlock().mature();
+
+        construction.setCurrentBlock(oldBlock);
+
         construction.finish();
+
         Dump.dumpGraph(construction.getGraph(), "after-construction");
         System.out.println("Dumped graph for method");
-
     }
 
     @Override
     protected void visit(ParameterDeclaration parameterDeclaration, EntityContext context) {
         parameterDeclaration.getType().accept(this, context);
+        // TODO: make this analog to variable declaration
     }
 
     @Override
@@ -196,87 +216,192 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
     @Override
     protected void visit(ImplicitTypeReference reference, EntityContext context) {
-
-        // TODO: genauso wie ExplicitTypeReference behandeln?
-
+        // nothing to do here
     }
 
     @Override
     protected void visit(IfStatement statement, EntityContext context) {
-        // TODO Auto-generated method stub
+        statement.getCondition().accept(this, context);
+        Node selector = context.getResult();
 
+        // TODO: does table need to be set?
+        Node ifNode = context.getConstruction().newSwitch(selector, 2, null);
+        context.setResult(ifNode);
     }
 
     @Override
     protected void visit(WhileStatement statement, EntityContext context) {
-        // TODO Auto-generated method stub
+        statement.accept(this, context);
+        Node selector = context.getResult();
 
+        // TODO: does table need to be set?
+        Node whileNode = context.getConstruction().newSwitch(selector, 2, null);
+        context.setResult(whileNode);
     }
 
     @Override
     protected void visit(ExpressionStatement statement, EntityContext context) {
-        // TODO Auto-generated method stub
-
+        statement.getExpression().accept(this, context);
     }
 
     @Override
     protected void visit(ReturnStatement statement, EntityContext context) {
-        // TODO Auto-generated method stub
-
+        statement.getValue().ifPresent(e -> e.accept(this, context));
     }
 
     @Override
     protected void visit(EmptyStatement statement, EntityContext context) {
-        // TODO Auto-generated method stub
-
+        // nothing to do here
     }
 
     @Override
     protected void visit(LocalVariableDeclarationStatement statement, EntityContext context) {
         statement.getType().accept(this, context);
+        statement.getValue().ifPresent(e -> e.accept(this, context));
+
+        // use old variable count as our index
+        context.getConstruction().setVariable(context.getNumberOfLocalVars(), context.getResult());
+        variableNums.put(statement.getName(), context.getNumberOfLocalVars());
         context.incrementLocalVarCount();
     }
 
     @Override
     protected void visit(edu.kit.minijava.ast.nodes.Statement.Block block, EntityContext context) {
-        // TODO Auto-generated method stub
-
+        // TODO: does this order make sense or not?
+        Node blockNode = context.getConstruction().newBlock();
+        for (Statement stmt : block.getStatements()) {
+            stmt.accept(this, context);
+        }
+        context.setResult(blockNode);
     }
 
     @Override
     protected void visit(BinaryOperation expression, EntityContext context) {
-        // TODO Auto-generated method stub
+        expression.getLeft().accept(this, context);
+        Node left = context.getResult();
+        expression.getRight().accept(this, context);
+        Node right = context.getResult();
 
+        Node bin = null;
+        switch (expression.getOperationType()) {
+            case ADDITION:
+                bin = context.getConstruction().newAdd(left, right);
+                break;
+            case SUBTRACTION:
+                bin = context.getConstruction().newSub(left, right);
+                break;
+            case MULTIPLICATION:
+                bin = context.getConstruction().newMul(left, right);
+                break;
+            case LOGICAL_OR:
+                bin = context.getConstruction().newOr(left, right);
+                break;
+            case LOGICAL_AND:
+                bin = context.getConstruction().newAnd(left, right);
+                break;
+            case LESS_THAN:
+                bin = context.getConstruction().newCmp(left, right, Relation.Less);
+                break;
+            case LESS_THAN_OR_EQUAL_TO:
+                bin = context.getConstruction().newCmp(left, right, Relation.LessEqual);
+                break;
+            case GREATER_THAN:
+                bin = context.getConstruction().newCmp(left, right, Relation.Greater);
+                break;
+            case GREATER_THAN_OR_EQUAL_TO:
+                bin = context.getConstruction().newCmp(left, right, Relation.GreaterEqual);
+                break;
+            case EQUAL_TO:
+                bin = context.getConstruction().newCmp(left, right, Relation.Equal);
+                break;
+            case NOT_EQUAL_TO:
+                bin = context.getConstruction().newCmp(left, right, Relation.Equal.negated());
+                break;
+            case DIVISION:
+                // TODO: no idea where to get this pin state from
+                bin = context.getConstruction().newDiv(context.getConstruction().getCurrentMem(), left, right, null);
+                break;
+            case MODULO:
+                // TODO: no idea where to get this pin state from
+                bin = context.getConstruction().newMod(context.getConstruction().getCurrentMem(), left, right, null);
+                break;
+                // TODO: I dont know how to get assignment
+            default:
+                break;
+        }
+        context.setResult(bin);
     }
 
     @Override
     protected void visit(UnaryOperation expression, EntityContext context) {
         // TODO Auto-generated method stub
+        expression.getOther().accept(this, context);
+        Node otherNode = context.getResult();
 
+        Node uni = null;
+        switch (expression.getOperationType()) {
+            case LOGICAL_NEGATION:
+                uni = context.getConstruction().newNot(otherNode);
+                break;
+            case NUMERIC_NEGATION:
+                uni = context.getConstruction().newMinus(otherNode);
+                break;
+            default:
+                break;
+        }
+
+        context.setResult(uni);
     }
 
     @Override
     protected void visit(NullLiteral expression, EntityContext context) {
         // TODO Auto-generated method stub
-
     }
 
     @Override
     protected void visit(BooleanLiteral expression, EntityContext context) {
-        // TODO Auto-generated method stub
+        Node bool = null;
+        if (expression.getValue()) {
+            bool = context.getConstruction().newConst(TargetValue.getBTrue());
+        } else {
+            bool = context.getConstruction().newConst(TargetValue.getBTrue());
+        }
 
+        context.setResult(bool);
     }
 
     @Override
     protected void visit(IntegerLiteral expression, EntityContext context) {
-        // TODO Auto-generated method stub
-
+        TargetValue tarval = new TargetValue(Integer.valueOf(expression.getValue()), Mode.getIs());
+        Node lit = context.getConstruction().newConst(tarval);
+        context.setResult(lit);
     }
 
     @Override
     protected void visit(MethodInvocation expression, EntityContext context) {
-        // TODO Auto-generated method stub
+        Node argsSize = context.getConstruction().newConst(expression.getArguments().size(), Mode.getIs());
+        Node mem = context.getConstruction().getCurrentMem();
+        Node in = context.getConstruction().newAlloc(mem, argsSize, 0);
 
+        // TODO: should there be additional allocations here?
+        // TODO: and should they be added to `in`?
+        for (int i = 0; i < expression.getArguments().size(); i++) {
+            expression.getArguments().get(i).accept(this, context);
+        }
+
+        Entity methodEntity = methodEntities.get(expression.getMethodReference().getName());
+        Node callee = context.getConstruction().newAddress(methodEntity);
+        Node callNode = context.getConstruction().newCall(mem, callee, new Node[] { in }, methodEntity.getType());
+
+        int pn_Call_M = 0;
+        Node newStore = context.getConstruction().newProj(callNode, Mode.getM(), pn_Call_M);
+        context.getConstruction().setCurrentMem(newStore);
+
+        int pn_Call_T_result = 0;
+        Node tuple = context.getConstruction().newProj(callNode, Mode.getT(), pn_Call_T_result);
+        Node result = context.getConstruction().newProj(tuple, Mode.getIs(), 0);
+
+        context.setResult(result);
     }
 
     @Override
@@ -293,7 +418,13 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
     @Override
     protected void visit(VariableAccess expression, EntityContext context) {
+        int n = variableNums.get(expression.getVariableReference().getName());
 
+        Node mem = context.getConstruction().getCurrentMem();
+        // TODO: how to know, which mode to use?
+        // TODO: maybe derive the mode from the type of the expression?
+        Node var = context.getConstruction().getVariable(n, Mode.getIs());
+        context.setResult(var);
     }
 
     @Override
