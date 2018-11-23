@@ -19,7 +19,7 @@ public class EntityContext {
         this.result = result;
     }
 
-    private Node result;
+    private Node result = null;
 
     public Construction getConstruction() {
         return construction;

@@ -1,4 +1,4 @@
-package edu.kit.minijava.transformation;
+                    package edu.kit.minijava.transformation;
 
 import edu.kit.minijava.ast.nodes.*;
 import edu.kit.minijava.ast.nodes.Expression.*;
@@ -21,7 +21,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
     private HashMap<String, Integer> variableNums = new HashMap<>();
     private HashMap<String, Entity> methodEntities = new HashMap<>();
 
-    // TODO: add isVariableCounting flag and change methods two discern between those two modes
+    private boolean isVariableCounting = false;
 
     public void transform(Program program) {
         String[] targetOptions = { "pic=1" };
@@ -85,6 +85,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
                         mainMethodType);
 
         EntityContext varCountContext = new EntityContext();
+        this.isVariableCounting = true;
         methodDeclaration.getBody().accept(this, varCountContext);
 
         Graph graph = new Graph(mainMethodEntity, varCountContext.getNumberOfLocalVars());
@@ -141,8 +142,8 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
         Node mem = construction.getCurrentMem();
         // TODO: using body result, IS THIS CORRECT?
-        Node[] results = { nodeContext.getResult() };
-        //Node[] results = { construction.newConst(0, Mode.getBs()) };
+        //Node[] results = { nodeContext.getResult() };
+        Node[] results = { construction.newConst(0, Mode.getBs()) };
         Node returnNode = construction.newReturn(mem, results);
         graph.getEndBlock().addPred(returnNode);
         construction.getCurrentBlock().mature();
@@ -168,8 +169,9 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
         reference.isVoid();
         BasicTypeDeclaration decl = reference.getBasicTypeReference().getDeclaration();
+        PrimitiveTypeDeclaration decl_ = (PrimitiveTypeDeclaration) decl;
 
-        switch ((PrimitiveTypeDeclaration) decl) {
+        switch (decl_) {
         case INTEGER:
             firmType = new PrimitiveType(Mode.getIs());
             context.setType(firmType);
@@ -225,17 +227,24 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
         Node selector = context.getResult();
 
         // TODO: does table need to be set?
-        Node ifNode = context.getConstruction().newSwitch(selector, 2, null);
+        Node ifNode = null;
+
+        if (!this.isVariableCounting)
+            ifNode = context.getConstruction().newSwitch(selector, 2, null);
+
         context.setResult(ifNode);
     }
 
     @Override
     protected void visit(WhileStatement statement, EntityContext context) {
-        statement.accept(this, context);
         Node selector = context.getResult();
 
         // TODO: does table need to be set?
-        Node whileNode = context.getConstruction().newSwitch(selector, 2, null);
+        Node whileNode = null;
+
+        if (!this.isVariableCounting)
+            whileNode = context.getConstruction().newSwitch(selector, 2, null);
+
         context.setResult(whileNode);
     }
 
@@ -256,22 +265,30 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
     @Override
     protected void visit(LocalVariableDeclarationStatement statement, EntityContext context) {
-        statement.getType().accept(this, context);
+        //statement.getType().accept(this, context);
         statement.getValue().ifPresent(e -> e.accept(this, context));
 
         // use old variable count as our index
-        context.getConstruction().setVariable(context.getNumberOfLocalVars(), context.getResult());
-        variableNums.put(statement.getName(), context.getNumberOfLocalVars());
+        if (!this.isVariableCounting) {
+            context.getConstruction().setVariable(context.getNumberOfLocalVars(), context.getResult());
+            variableNums.put(statement.getName(), context.getNumberOfLocalVars());
+        }
+
         context.incrementLocalVarCount();
     }
 
     @Override
     protected void visit(edu.kit.minijava.ast.nodes.Statement.Block block, EntityContext context) {
         // TODO: does this order make sense or not?
-        Node blockNode = context.getConstruction().newBlock();
+        Node blockNode = null;
+
+        if (!this.isVariableCounting)
+            blockNode = context.getConstruction().newBlock();
+
         for (Statement stmt : block.getStatements()) {
             stmt.accept(this, context);
         }
+
         context.setResult(blockNode);
     }
 
@@ -283,52 +300,55 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
         Node right = context.getResult();
 
         Node bin = null;
-        switch (expression.getOperationType()) {
+
+        if (!this.isVariableCounting)
+            switch (expression.getOperationType()) {
             case ADDITION:
-                bin = context.getConstruction().newAdd(left, right);
-                break;
-            case SUBTRACTION:
-                bin = context.getConstruction().newSub(left, right);
-                break;
-            case MULTIPLICATION:
-                bin = context.getConstruction().newMul(left, right);
-                break;
-            case LOGICAL_OR:
-                bin = context.getConstruction().newOr(left, right);
-                break;
-            case LOGICAL_AND:
-                bin = context.getConstruction().newAnd(left, right);
-                break;
-            case LESS_THAN:
-                bin = context.getConstruction().newCmp(left, right, Relation.Less);
-                break;
-            case LESS_THAN_OR_EQUAL_TO:
-                bin = context.getConstruction().newCmp(left, right, Relation.LessEqual);
-                break;
-            case GREATER_THAN:
-                bin = context.getConstruction().newCmp(left, right, Relation.Greater);
-                break;
-            case GREATER_THAN_OR_EQUAL_TO:
-                bin = context.getConstruction().newCmp(left, right, Relation.GreaterEqual);
-                break;
-            case EQUAL_TO:
-                bin = context.getConstruction().newCmp(left, right, Relation.Equal);
-                break;
-            case NOT_EQUAL_TO:
-                bin = context.getConstruction().newCmp(left, right, Relation.Equal.negated());
-                break;
-            case DIVISION:
-                // TODO: no idea where to get this pin state from
-                bin = context.getConstruction().newDiv(context.getConstruction().getCurrentMem(), left, right, null);
-                break;
-            case MODULO:
-                // TODO: no idea where to get this pin state from
-                bin = context.getConstruction().newMod(context.getConstruction().getCurrentMem(), left, right, null);
-                break;
-                // TODO: I dont know how to get assignment
-            default:
-                break;
-        }
+                    bin = context.getConstruction().newAdd(left, right);
+                    break;
+                case SUBTRACTION:
+                    bin = context.getConstruction().newSub(left, right);
+                    break;
+                case MULTIPLICATION:
+                    bin = context.getConstruction().newMul(left, right);
+                    break;
+                case LOGICAL_OR:
+                    bin = context.getConstruction().newOr(left, right);
+                    break;
+                case LOGICAL_AND:
+                    bin = context.getConstruction().newAnd(left, right);
+                    break;
+                case LESS_THAN:
+                    bin = context.getConstruction().newCmp(left, right, Relation.Less);
+                    break;
+                case LESS_THAN_OR_EQUAL_TO:
+                    bin = context.getConstruction().newCmp(left, right, Relation.LessEqual);
+                    break;
+                case GREATER_THAN:
+                    bin = context.getConstruction().newCmp(left, right, Relation.Greater);
+                    break;
+                case GREATER_THAN_OR_EQUAL_TO:
+                    bin = context.getConstruction().newCmp(left, right, Relation.GreaterEqual);
+                    break;
+                case EQUAL_TO:
+                    bin = context.getConstruction().newCmp(left, right, Relation.Equal);
+                    break;
+                case NOT_EQUAL_TO:
+                    bin = context.getConstruction().newCmp(left, right, Relation.Equal.negated());
+                    break;
+                case DIVISION:
+                    // TODO: no idea where to get this pin state from
+                    bin = context.getConstruction().newDiv(context.getConstruction().getCurrentMem(), left, right, null);
+                    break;
+                case MODULO:
+                    // TODO: no idea where to get this pin state from
+                    bin = context.getConstruction().newMod(context.getConstruction().getCurrentMem(), left, right, null);
+                    break;
+                    // TODO: I dont know how to get assignment
+                default:
+                    break;
+            }
+
         context.setResult(bin);
     }
 
@@ -339,16 +359,18 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
         Node otherNode = context.getResult();
 
         Node uni = null;
-        switch (expression.getOperationType()) {
-            case LOGICAL_NEGATION:
-                uni = context.getConstruction().newNot(otherNode);
-                break;
-            case NUMERIC_NEGATION:
-                uni = context.getConstruction().newMinus(otherNode);
-                break;
-            default:
-                break;
-        }
+
+        if (!this.isVariableCounting)
+            switch (expression.getOperationType()) {
+                case LOGICAL_NEGATION:
+                    uni = context.getConstruction().newNot(otherNode);
+                    break;
+                case NUMERIC_NEGATION:
+                    uni = context.getConstruction().newMinus(otherNode);
+                    break;
+                default:
+                    break;
+            }
 
         context.setResult(uni);
     }
@@ -361,11 +383,13 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
     @Override
     protected void visit(BooleanLiteral expression, EntityContext context) {
         Node bool = null;
-        if (expression.getValue()) {
-            bool = context.getConstruction().newConst(TargetValue.getBTrue());
-        } else {
-            bool = context.getConstruction().newConst(TargetValue.getBTrue());
-        }
+
+        if (!this.isVariableCounting)
+            if (expression.getValue()) {
+                bool = context.getConstruction().newConst(TargetValue.getBTrue());
+            } else {
+                bool = context.getConstruction().newConst(TargetValue.getBTrue());
+            }
 
         context.setResult(bool);
     }
@@ -373,33 +397,40 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
     @Override
     protected void visit(IntegerLiteral expression, EntityContext context) {
         TargetValue tarval = new TargetValue(Integer.valueOf(expression.getValue()), Mode.getIs());
-        Node lit = context.getConstruction().newConst(tarval);
+        Node lit = null;
+
+        if(!this.isVariableCounting)
+            lit = context.getConstruction().newConst(tarval);
+
         context.setResult(lit);
     }
 
     @Override
     protected void visit(MethodInvocation expression, EntityContext context) {
-        Node argsSize = context.getConstruction().newConst(expression.getArguments().size(), Mode.getIs());
-        Node mem = context.getConstruction().getCurrentMem();
-        Node in = context.getConstruction().newAlloc(mem, argsSize, 0);
+        Node result = null;
+        if (!this.isVariableCounting) {
+            Node argsSize = context.getConstruction().newConst(expression.getArguments().size(), Mode.getIs());
+            Node mem = context.getConstruction().getCurrentMem();
+            Node in = context.getConstruction().newAlloc(mem, argsSize, 0);
 
-        // TODO: should there be additional allocations here?
-        // TODO: and should they be added to `in`?
-        for (int i = 0; i < expression.getArguments().size(); i++) {
-            expression.getArguments().get(i).accept(this, context);
+            // TODO: should there be additional allocations here?
+            // TODO: and should they be added to `in`?
+            for (int i = 0; i < expression.getArguments().size(); i++) {
+                expression.getArguments().get(i).accept(this, context);
+            }
+
+            Entity methodEntity = methodEntities.get(expression.getMethodReference().getName());
+            Node callee = context.getConstruction().newAddress(methodEntity);
+            Node callNode = context.getConstruction().newCall(mem, callee, new Node[] { in }, methodEntity.getType());
+
+            int pn_Call_M = 0;
+            Node newStore = context.getConstruction().newProj(callNode, Mode.getM(), pn_Call_M);
+            context.getConstruction().setCurrentMem(newStore);
+
+            int pn_Call_T_result = 0;
+            Node tuple = context.getConstruction().newProj(callNode, Mode.getT(), pn_Call_T_result);
+            result = context.getConstruction().newProj(tuple, Mode.getIs(), 0);
         }
-
-        Entity methodEntity = methodEntities.get(expression.getMethodReference().getName());
-        Node callee = context.getConstruction().newAddress(methodEntity);
-        Node callNode = context.getConstruction().newCall(mem, callee, new Node[] { in }, methodEntity.getType());
-
-        int pn_Call_M = 0;
-        Node newStore = context.getConstruction().newProj(callNode, Mode.getM(), pn_Call_M);
-        context.getConstruction().setCurrentMem(newStore);
-
-        int pn_Call_T_result = 0;
-        Node tuple = context.getConstruction().newProj(callNode, Mode.getT(), pn_Call_T_result);
-        Node result = context.getConstruction().newProj(tuple, Mode.getIs(), 0);
 
         context.setResult(result);
     }
@@ -418,12 +449,16 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
     @Override
     protected void visit(VariableAccess expression, EntityContext context) {
-        int n = variableNums.get(expression.getVariableReference().getName());
+        Node var = null;
 
-        Node mem = context.getConstruction().getCurrentMem();
-        // TODO: how to know, which mode to use?
-        // TODO: maybe derive the mode from the type of the expression?
-        Node var = context.getConstruction().getVariable(n, Mode.getIs());
+        if (!this.isVariableCounting) {
+            Node mem = context.getConstruction().getCurrentMem();
+            int n = variableNums.get(expression.getVariableReference().getName());
+            // TODO: how to know, which mode to use?
+            // TODO: maybe derive the mode from the type of the expression?
+            var = context.getConstruction().getVariable(n, Mode.getIs());
+        }
+
         context.setResult(var);
     }
 
