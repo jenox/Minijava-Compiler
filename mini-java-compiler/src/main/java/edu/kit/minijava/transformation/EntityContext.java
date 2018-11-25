@@ -2,6 +2,7 @@ package edu.kit.minijava.transformation;
 
 import firm.Construction;
 import firm.Graph;
+import firm.StructType;
 import firm.Type;
 import firm.nodes.Node;
 
@@ -10,6 +11,20 @@ public class EntityContext {
     private Type type;
     private int numberOfLocalVars;
     private Graph graph;
+    private Node result = null;
+    private Construction construction;
+    private StructType classType;
+
+    public StructType getClassType() {
+        return classType;
+    }
+
+    public void setClassType(StructType classType) {
+        this.classType = classType;
+    }
+
+
+
 
     public Node getResult() {
         return result;
@@ -19,13 +34,11 @@ public class EntityContext {
         this.result = result;
     }
 
-    private Node result = null;
 
     public Construction getConstruction() {
         return construction;
     }
 
-    private Construction construction;
 
     public EntityContext() {
         this.numberOfLocalVars = 0;
