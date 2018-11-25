@@ -15,6 +15,10 @@ public class EntityContext {
     private Construction construction;
     private StructType classType;
 
+    public void setNumberOfLocalVars(int numberOfLocalVars) {
+        this.numberOfLocalVars = numberOfLocalVars;
+    }
+
     public StructType getClassType() {
         return classType;
     }
@@ -24,6 +28,9 @@ public class EntityContext {
     }
 
 
+    public void setConstruction(Construction construction) {
+        this.construction = construction;
+    }
 
 
     public Node getResult() {
