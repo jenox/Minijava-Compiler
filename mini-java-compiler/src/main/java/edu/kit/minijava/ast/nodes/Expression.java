@@ -596,4 +596,92 @@ public abstract class Expression implements ASTNode {
             }
         }
     }
+
+    public static final class SystemOutFlushExpression extends Expression {
+        public SystemOutFlushExpression(TokenLocation location) {
+            this.location = location;
+        }
+
+        private final TokenLocation location;
+
+        @Override
+        public TokenLocation getLocation() {
+            return this.location;
+        }
+
+        @Override
+        public boolean isValidForExpressionStatement() {
+            return true;
+        }
+
+        @Override
+        public <T> void accept(ASTVisitor<T> visitor, T context) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void substituteExpression(Expression oldValue, Expression newValue) {}
+    }
+
+    public static final class SystemOutWriteExpression extends Expression {
+        public SystemOutWriteExpression(Expression argument, TokenLocation location) {
+            this.argument = argument;
+            this.location = location;
+        }
+
+        private Expression argument;
+        private final TokenLocation location;
+
+        public Expression getArgument() {
+            return this.argument;
+        }
+
+        @Override
+        public TokenLocation getLocation() {
+            return this.location;
+        }
+
+        @Override
+        public boolean isValidForExpressionStatement() {
+            return true;
+        }
+
+        @Override
+        public <T> void accept(ASTVisitor<T> visitor, T context) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void substituteExpression(Expression oldValue, Expression newValue) {
+            if (this.argument == oldValue) {
+                this.argument = newValue;
+            }
+        }
+    }
+
+    public static final class SystemInReadExpression extends Expression {
+        public SystemInReadExpression(TokenLocation location) {
+            this.location = location;
+        }
+
+        private final TokenLocation location;
+
+        @Override
+        public TokenLocation getLocation() {
+            return this.location;
+        }
+
+        @Override
+        public boolean isValidForExpressionStatement() {
+            return true;
+        }
+
+        @Override
+        public <T> void accept(ASTVisitor<T> visitor, T context) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void substituteExpression(Expression oldValue, Expression newValue) {}
+    }
 }

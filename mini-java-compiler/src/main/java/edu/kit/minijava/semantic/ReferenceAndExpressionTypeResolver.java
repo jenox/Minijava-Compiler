@@ -46,7 +46,8 @@ public class ReferenceAndExpressionTypeResolver extends
     enum Options {
         LITERALLY_PREFIXED_WITH_NUMERIC_NEGATION_SIGN,
         ALLOW_SYSTEM,
-        ALLOW_SYSTEM_OUT
+        ALLOW_SYSTEM_OUT,
+        ALLOW_SYSTEM_IN
     }
 
     // MARK: - Traversal
@@ -503,7 +504,12 @@ public class ReferenceAndExpressionTypeResolver extends
     protected void visit(Expression.MethodInvocation expression, Options options) {
         switch (expression.getMethodReference().getName()) {
             case "println":
+            case "flush":
+            case "write":
                 expression.getContext().ifPresent(node -> node.accept(this, Options.ALLOW_SYSTEM_OUT));
+                break;
+            case "read":
+                expression.getContext().ifPresent(node -> node.accept(this, Options.ALLOW_SYSTEM_IN));
                 break;
             default:
                 expression.getContext().ifPresent(node -> node.accept(this, null));
@@ -521,24 +527,62 @@ public class ReferenceAndExpressionTypeResolver extends
 
             // If type of context is not resolved, context is compiler magic.
             if (!typeOfContext.isResolved()) {
-                if (expression.getMethodReference().getName().equals("println")) {
+                TokenLocation location = expression.getContext().get().getLocation();
+                final Expression replacement;
 
-                    // TODO: error messages.
-                    assert expression.getArguments().size() == 1;
-                    assert expression.getArguments().get(0).getType().isInteger();
 
-                    TokenLocation location = expression.getContext().get().getLocation();
-                    Expression argument = expression.getArguments().get(0);
+                switch (expression.getMethodReference().getName()) {
+                    case "println": {
+                        // TODO: error messages.
+                        assert expression.getArguments().size() == 1;
+                        assert expression.getArguments().get(0).getType().isInteger();
 
-                    Expression replacement = new Expression.SystemOutPrintlnExpression(argument, location);
-                    replacement.getType().resolveToVoid();
+                        Expression argument = expression.getArguments().get(0);
 
-                    assert this.getPreviousNode().isPresent();
+                        replacement = new Expression.SystemOutPrintlnExpression(argument, location);
+                        replacement.getType().resolveToVoid();
 
-                    this.getPreviousNode().get().substituteExpression(expression, replacement);
+                        break;
+                    }
+                    case "flush": {
+                        // TODO: error messages.
+                        assert expression.getArguments().size() == 0;
 
-                    return;
+                        replacement = new Expression.SystemOutFlushExpression(location);
+                        replacement.getType().resolveToVoid();
+
+                        break;
+                    }
+                    case "write": {
+                        // TODO: error messages.
+                        assert expression.getArguments().size() == 1;
+                        assert expression.getArguments().get(0).getType().isInteger();
+
+                        Expression argument = expression.getArguments().get(0);
+
+                        replacement = new Expression.SystemOutWriteExpression(argument, location);
+                        replacement.getType().resolveToVoid();
+
+                        break;
+                    }
+                    case "read": {
+                        // TODO: error messages.
+                        assert expression.getArguments().size() == 0;
+
+                        replacement = new Expression.SystemInReadExpression(location);
+                        replacement.getType().resolveToInteger();
+
+                        break;
+                    }
+                    default:
+                        throw new AssertionError();
                 }
+
+                assert this.getPreviousNode().isPresent();
+
+                this.getPreviousNode().get().substituteExpression(expression, replacement);
+
+                return;
             }
 
             // Methods cannot be invoked on null literal.
@@ -610,6 +654,9 @@ public class ReferenceAndExpressionTypeResolver extends
     @Override
     protected void visit(Expression.ExplicitFieldAccess expression, Options options) {
         if (options == Options.ALLOW_SYSTEM_OUT && expression.getFieldReference().getName().equals("out")) {
+            expression.getContext().accept(this, Options.ALLOW_SYSTEM);
+        }
+        else if (options == Options.ALLOW_SYSTEM_IN && expression.getFieldReference().getName().equals("in")) {
             expression.getContext().accept(this, Options.ALLOW_SYSTEM);
         }
         else {
