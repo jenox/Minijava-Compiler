@@ -60,6 +60,9 @@ public final class ParameterDeclaration implements VariableDeclaration, ASTNode 
     }
 
     @Override
+    public void substituteExpression(Expression oldValue, Expression newValue) {}
+
+    @Override
     public String toString() {
         return "parameter '" + this.name + "' at " + this.location;
     }

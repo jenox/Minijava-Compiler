@@ -53,6 +53,9 @@ public final class FieldDeclaration implements VariableDeclaration, MemberDeclar
     }
 
     @Override
+    public void substituteExpression(Expression oldValue, Expression newValue) {}
+
+    @Override
     public String toString() {
         return "field '" + this.name + "' at " + this.location;
     }

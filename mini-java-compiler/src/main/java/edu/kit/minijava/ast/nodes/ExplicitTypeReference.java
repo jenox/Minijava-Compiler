@@ -29,6 +29,9 @@ public final class ExplicitTypeReference implements TypeReference {
     }
 
     @Override
+    public void substituteExpression(Expression oldValue, Expression newValue) {}
+
+    @Override
     public String toString() {
         return this.basicTypeReference.toString();
     }

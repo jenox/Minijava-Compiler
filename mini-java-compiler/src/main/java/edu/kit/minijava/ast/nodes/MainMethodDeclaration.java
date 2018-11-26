@@ -61,6 +61,9 @@ public final class MainMethodDeclaration implements SubroutineDeclaration, Membe
     }
 
     @Override
+    public void substituteExpression(Expression oldValue, Expression newValue) {}
+
+    @Override
     public String toString() {
         return "main method '" + this.name + "' at " + this.location;
     }

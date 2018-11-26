@@ -80,6 +80,9 @@ class CompilerMagic {
 
             @Override
             public <T> void accept(ASTVisitor<T> visitor, T context) {}
+
+            @Override
+            public void substituteExpression(Expression oldValue, Expression newValue) {}
         };
     }
 }

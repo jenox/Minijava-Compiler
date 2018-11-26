@@ -56,6 +56,9 @@ public final class MethodDeclaration implements SubroutineDeclaration, MemberDec
     }
 
     @Override
+    public void substituteExpression(Expression oldValue, Expression newValue) {}
+
+    @Override
     public String toString() {
         return "instance method '" + this.name + "' at " + this.location;
     }

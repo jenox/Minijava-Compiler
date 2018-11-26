@@ -21,4 +21,7 @@ public final class Program implements ASTNode {
         visitor.visit(this, context);
         visitor.didVisit(this);
     }
+
+    @Override
+    public void substituteExpression(Expression oldValue, Expression newValue) {}
 }

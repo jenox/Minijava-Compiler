@@ -52,6 +52,9 @@ public final class ClassDeclaration implements BasicTypeDeclaration, ASTNode {
     }
 
     @Override
+    public void substituteExpression(Expression oldValue, Expression newValue) {}
+
+    @Override
     public String toString() {
         return "class '" + this.name + "' at " + this.location;
     }
