@@ -560,4 +560,40 @@ public abstract class Expression implements ASTNode {
             }
         }
     }
+
+    public static final class SystemOutPrintlnExpression extends Expression {
+        public SystemOutPrintlnExpression(Expression argument, TokenLocation location) {
+            this.argument = argument;
+            this.location = location;
+        }
+
+        private Expression argument;
+        private final TokenLocation location;
+
+        public Expression getArgument() {
+            return this.argument;
+        }
+
+        @Override
+        public TokenLocation getLocation() {
+            return this.location;
+        }
+
+        @Override
+        public boolean isValidForExpressionStatement() {
+            return true;
+        }
+
+        @Override
+        public <T> void accept(ASTVisitor<T> visitor, T context) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void substituteExpression(Expression oldValue, Expression newValue) {
+            if (this.argument == oldValue) {
+                this.argument = newValue;
+            }
+        }
+    }
 }

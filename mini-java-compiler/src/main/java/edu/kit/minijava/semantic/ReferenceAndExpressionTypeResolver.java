@@ -2,6 +2,7 @@ package edu.kit.minijava.semantic;
 
 import java.util.*;
 
+import edu.kit.minijava.lexer.*;
 import edu.kit.minijava.ast.nodes.*;
 import edu.kit.minijava.ast.references.*;
 
@@ -43,7 +44,9 @@ public class ReferenceAndExpressionTypeResolver extends
     }
 
     enum Options {
-        LITERALLY_PREFIXED_WITH_NUMERIC_NEGATION_SIGN
+        LITERALLY_PREFIXED_WITH_NUMERIC_NEGATION_SIGN,
+        ALLOW_SYSTEM,
+        ALLOW_SYSTEM_OUT
     }
 
     // MARK: - Traversal
@@ -498,8 +501,16 @@ public class ReferenceAndExpressionTypeResolver extends
 
     @Override
     protected void visit(Expression.MethodInvocation expression, Options options) {
+        switch (expression.getMethodReference().getName()) {
+            case "println":
+                expression.getContext().ifPresent(node -> node.accept(this, Options.ALLOW_SYSTEM_OUT));
+                break;
+            default:
+                expression.getContext().ifPresent(node -> node.accept(this, null));
+                break;
 
-        expression.getContext().ifPresent(node -> node.accept(this, null));
+        }
+
         expression.getArguments().forEach(node -> node.accept(this, null));
 
         String methodName = expression.getMethodReference().getName();
@@ -507,6 +518,28 @@ public class ReferenceAndExpressionTypeResolver extends
 
         if (expression.getContext().isPresent()) {
             TypeOfExpression typeOfContext = expression.getContext().get().getType();
+
+            // If type of context is not resolved, context is compiler magic.
+            if (!typeOfContext.isResolved()) {
+                if (expression.getMethodReference().getName().equals("println")) {
+
+                    // TODO: error messages.
+                    assert expression.getArguments().size() == 1;
+                    assert expression.getArguments().get(0).getType().isInteger();
+
+                    TokenLocation location = expression.getContext().get().getLocation();
+                    Expression argument = expression.getArguments().get(0);
+
+                    Expression replacement = new Expression.SystemOutPrintlnExpression(argument, location);
+                    replacement.getType().resolveToVoid();
+
+                    assert this.getPreviousNode().isPresent();
+
+                    this.getPreviousNode().get().substituteExpression(expression, replacement);
+
+                    return;
+                }
+            }
 
             // Methods cannot be invoked on null literal.
             if (!typeOfContext.getDeclaration().isPresent()) {
@@ -576,10 +609,20 @@ public class ReferenceAndExpressionTypeResolver extends
 
     @Override
     protected void visit(Expression.ExplicitFieldAccess expression, Options options) {
-
-        expression.getContext().accept(this, null);
+        if (options == Options.ALLOW_SYSTEM_OUT && expression.getFieldReference().getName().equals("out")) {
+            expression.getContext().accept(this, Options.ALLOW_SYSTEM);
+        }
+        else {
+            expression.getContext().accept(this, null);
+        }
 
         TypeOfExpression typeOfContext = expression.getContext().getType();
+
+        // If type of context is not resolved, context is compiler magic, and parent node (who must have specified
+        // ALLOW_SYSTEM_X is prepared to deal with context of unresolved type.
+        if (!typeOfContext.isResolved()) {
+            return;
+        }
 
         // Fields cannot be accessed on null literal.
         if (!typeOfContext.getDeclaration().isPresent()) {
@@ -663,6 +706,13 @@ public class ReferenceAndExpressionTypeResolver extends
 
         // Variable reference must be resolvable.
         if (!variableDeclaration.isPresent()) {
+
+            // If we found a valid `System` reference, return without resolving type (we can't). Parent node is prepared
+            // to deal with expression of unresolved type.
+            if (options == Options.ALLOW_SYSTEM && expression.getVariableReference().getName().equals("System")) {
+                return;
+            }
+
             throw fail(new SemanticException("Use of undeclared variable '" + name + "'",
                 this.getCurrentMethodDeclaration().toString(), expression.getLocation()));
         }
