@@ -533,11 +533,18 @@ public class ReferenceAndExpressionTypeResolver extends
 
                 switch (expression.getMethodReference().getName()) {
                     case "println": {
-                        // TODO: error messages.
-                        assert expression.getArguments().size() == 1;
-                        assert expression.getArguments().get(0).getType().isInteger();
+                        if (expression.getArguments().size() != 1) {
+                            throw fail(new SemanticException("Incorrect number of arguments for System.out.println " +
+                                    "syscall", this.getCurrentMethodDeclaration().toString(), location));
+                        }
 
                         Expression argument = expression.getArguments().get(0);
+
+                        if (!expression.getArguments().get(0).getType().isInteger()) {
+                            throw fail(new SemanticException("Incompatible argument of type " + argument.getType() +
+                                    " for System.out.println syscall", this.getCurrentMethodDeclaration().toString(),
+                                    argument.getLocation()));
+                        }
 
                         replacement = new Expression.SystemOutPrintlnExpression(argument, location);
                         replacement.getType().resolveToVoid();
@@ -545,8 +552,10 @@ public class ReferenceAndExpressionTypeResolver extends
                         break;
                     }
                     case "flush": {
-                        // TODO: error messages.
-                        assert expression.getArguments().size() == 0;
+                        if (expression.getArguments().size() != 0) {
+                            throw fail(new SemanticException("Incorrect number of arguments for System.out.flush " +
+                                    "syscall", this.getCurrentMethodDeclaration().toString(), location));
+                        }
 
                         replacement = new Expression.SystemOutFlushExpression(location);
                         replacement.getType().resolveToVoid();
@@ -554,11 +563,18 @@ public class ReferenceAndExpressionTypeResolver extends
                         break;
                     }
                     case "write": {
-                        // TODO: error messages.
-                        assert expression.getArguments().size() == 1;
-                        assert expression.getArguments().get(0).getType().isInteger();
+                        if (expression.getArguments().size() != 1) {
+                            throw fail(new SemanticException("Incorrect number of arguments for System.out.write " +
+                                    "syscall", this.getCurrentMethodDeclaration().toString(), location));
+                        }
 
                         Expression argument = expression.getArguments().get(0);
+
+                        if (!expression.getArguments().get(0).getType().isInteger()) {
+                            throw fail(new SemanticException("Incompatible argument of type " + argument.getType() +
+                                    " for System.out.writesyscall", this.getCurrentMethodDeclaration().toString(),
+                                    argument.getLocation()));
+                        }
 
                         replacement = new Expression.SystemOutWriteExpression(argument, location);
                         replacement.getType().resolveToVoid();
@@ -566,8 +582,10 @@ public class ReferenceAndExpressionTypeResolver extends
                         break;
                     }
                     case "read": {
-                        // TODO: error messages.
-                        assert expression.getArguments().size() == 0;
+                        if (expression.getArguments().size() != 0) {
+                            throw fail(new SemanticException("Incorrect number of arguments for System.in.read syscall",
+                                    this.getCurrentMethodDeclaration().toString(), location));
+                        }
 
                         replacement = new Expression.SystemInReadExpression(location);
                         replacement.getType().resolveToInteger();
