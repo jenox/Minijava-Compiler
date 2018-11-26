@@ -54,7 +54,9 @@ public final class ParameterDeclaration implements VariableDeclaration, ASTNode 
 
     @Override
     public <T> void accept(ASTVisitor<T> visitor, T context) {
+        visitor.willVisit(this);
         visitor.visit(this, context);
+        visitor.didVisit(this);
     }
 
     @Override

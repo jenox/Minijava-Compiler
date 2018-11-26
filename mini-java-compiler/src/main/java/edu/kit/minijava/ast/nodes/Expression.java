@@ -73,7 +73,9 @@ public abstract class Expression implements ASTNode {
 
         @Override
         public <T> void accept(ASTVisitor<T> visitor, T context) {
+            visitor.willVisit(this);
             visitor.visit(this, context);
+            visitor.didVisit(this);
         }
     }
 
@@ -110,7 +112,9 @@ public abstract class Expression implements ASTNode {
 
         @Override
         public <T> void accept(ASTVisitor<T> visitor, T context) {
+            visitor.willVisit(this);
             visitor.visit(this, context);
+            visitor.didVisit(this);
         }
     }
 
@@ -135,7 +139,9 @@ public abstract class Expression implements ASTNode {
 
         @Override
         public <T> void accept(ASTVisitor<T> visitor, T context) {
+            visitor.willVisit(this);
             visitor.visit(this, context);
+            visitor.didVisit(this);
         }
     }
 
@@ -166,7 +172,9 @@ public abstract class Expression implements ASTNode {
 
         @Override
         public <T> void accept(ASTVisitor<T> visitor, T context) {
+            visitor.willVisit(this);
             visitor.visit(this, context);
+            visitor.didVisit(this);
         }
     }
 
@@ -197,7 +205,9 @@ public abstract class Expression implements ASTNode {
 
         @Override
         public <T> void accept(ASTVisitor<T> visitor, T context) {
+            visitor.willVisit(this);
             visitor.visit(this, context);
+            visitor.didVisit(this);
         }
     }
 
@@ -254,7 +264,9 @@ public abstract class Expression implements ASTNode {
 
         @Override
         public <T> void accept(ASTVisitor<T> visitor, T context) {
+            visitor.willVisit(this);
             visitor.visit(this, context);
+            visitor.didVisit(this);
         }
     }
 
@@ -291,7 +303,9 @@ public abstract class Expression implements ASTNode {
 
         @Override
         public <T> void accept(ASTVisitor<T> visitor, T context) {
+            visitor.willVisit(this);
             visitor.visit(this, context);
+            visitor.didVisit(this);
         }
     }
 
@@ -328,7 +342,9 @@ public abstract class Expression implements ASTNode {
 
         @Override
         public <T> void accept(ASTVisitor<T> visitor, T context) {
+            visitor.willVisit(this);
             visitor.visit(this, context);
+            visitor.didVisit(this);
         }
     }
 
@@ -359,7 +375,9 @@ public abstract class Expression implements ASTNode {
 
         @Override
         public <T> void accept(ASTVisitor<T> visitor, T context) {
+            visitor.willVisit(this);
             visitor.visit(this, context);
+            visitor.didVisit(this);
         }
     }
 
@@ -384,7 +402,9 @@ public abstract class Expression implements ASTNode {
 
         @Override
         public <T> void accept(ASTVisitor<T> visitor, T context) {
+            visitor.willVisit(this);
             visitor.visit(this, context);
+            visitor.didVisit(this);
         }
     }
 
@@ -415,7 +435,9 @@ public abstract class Expression implements ASTNode {
 
         @Override
         public <T> void accept(ASTVisitor<T> visitor, T context) {
+            visitor.willVisit(this);
             visitor.visit(this, context);
+            visitor.didVisit(this);
         }
     }
 
@@ -459,7 +481,9 @@ public abstract class Expression implements ASTNode {
 
         @Override
         public <T> void accept(ASTVisitor<T> visitor, T context) {
+            visitor.willVisit(this);
             visitor.visit(this, context);
+            visitor.didVisit(this);
         }
     }
 }

@@ -1,5 +1,7 @@
 package edu.kit.minijava.ast.nodes;
 
+import java.util.*;
+
 public abstract class ASTVisitor<T> {
     protected abstract void visit(Program program, T context);
     protected abstract void visit(ClassDeclaration classDeclaration, T context);
@@ -30,4 +32,24 @@ public abstract class ASTVisitor<T> {
     protected abstract void visit(Expression.CurrentContextAccess expression, T context);
     protected abstract void visit(Expression.NewObjectCreation expression, T context);
     protected abstract void visit(Expression.NewArrayCreation expression, T context);
+
+    private final Stack<ASTNode> nodes = new Stack<>();
+
+    protected final void willVisit(ASTNode node) {
+        this.nodes.push(node);
+    }
+    protected final void didVisit(ASTNode node) {
+        assert this.nodes.peek() == node;
+
+        this.nodes.pop();
+    }
+
+    protected final Optional<ASTNode> getPreviousNode() {
+        if (this.nodes.size() >= 2) {
+            return Optional.of(this.nodes.get(this.nodes.size() - 2));
+        }
+        else {
+            return Optional.empty();
+        }
+    }
 }
