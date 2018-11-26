@@ -586,7 +586,9 @@ public abstract class Expression implements ASTNode {
 
         @Override
         public <T> void accept(ASTVisitor<T> visitor, T context) {
-            throw new UnsupportedOperationException();
+            visitor.willVisit(this);
+            visitor.visit(this, context);
+            visitor.didVisit(this);
         }
 
         @Override
@@ -616,7 +618,9 @@ public abstract class Expression implements ASTNode {
 
         @Override
         public <T> void accept(ASTVisitor<T> visitor, T context) {
-            throw new UnsupportedOperationException();
+            visitor.willVisit(this);
+            visitor.visit(this, context);
+            visitor.didVisit(this);
         }
 
         @Override
@@ -648,7 +652,9 @@ public abstract class Expression implements ASTNode {
 
         @Override
         public <T> void accept(ASTVisitor<T> visitor, T context) {
-            throw new UnsupportedOperationException();
+            visitor.willVisit(this);
+            visitor.visit(this, context);
+            visitor.didVisit(this);
         }
 
         @Override
@@ -678,7 +684,9 @@ public abstract class Expression implements ASTNode {
 
         @Override
         public <T> void accept(ASTVisitor<T> visitor, T context) {
-            throw new UnsupportedOperationException();
+            visitor.willVisit(this);
+            visitor.visit(this, context);
+            visitor.didVisit(this);
         }
 
         @Override

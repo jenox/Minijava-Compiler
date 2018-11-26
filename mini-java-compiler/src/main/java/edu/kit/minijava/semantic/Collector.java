@@ -217,4 +217,28 @@ public class Collector extends ASTVisitor<Void> {
         this.elements.add(expression.getBasicTypeReference());
         expression.getPrimaryDimension().accept(this);
     }
+
+    @Override
+    protected void visit(Expression.SystemOutPrintlnExpression expression, Void context) {
+        this.elements.add(expression);
+
+        expression.getArgument().accept(this);
+    }
+
+    @Override
+    protected void visit(Expression.SystemOutFlushExpression expression, Void context) {
+        this.elements.add(expression);
+    }
+
+    @Override
+    protected void visit(Expression.SystemOutWriteExpression expression, Void context) {
+        this.elements.add(expression);
+
+        expression.getArgument().accept(this);
+    }
+
+    @Override
+    protected void visit(Expression.SystemInReadExpression expression, Void context) {
+        this.elements.add(expression);
+    }
 }

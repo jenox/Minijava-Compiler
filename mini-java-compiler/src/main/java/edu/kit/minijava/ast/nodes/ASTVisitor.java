@@ -32,6 +32,10 @@ public abstract class ASTVisitor<T> {
     protected abstract void visit(Expression.CurrentContextAccess expression, T context);
     protected abstract void visit(Expression.NewObjectCreation expression, T context);
     protected abstract void visit(Expression.NewArrayCreation expression, T context);
+    protected abstract void visit(Expression.SystemOutPrintlnExpression expression, T context);
+    protected abstract void visit(Expression.SystemOutFlushExpression expression, T context);
+    protected abstract void visit(Expression.SystemOutWriteExpression expression, T context);
+    protected abstract void visit(Expression.SystemInReadExpression expression, T context);
 
     private final Stack<ASTNode> nodes = new Stack<>();
 

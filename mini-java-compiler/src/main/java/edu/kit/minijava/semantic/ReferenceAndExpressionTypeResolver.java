@@ -841,4 +841,24 @@ public class ReferenceAndExpressionTypeResolver extends
         expression.getType().resolveToArrayOf(basicTypeDeclaration.get(),
             expression.getNumberOfDimensions(), false);
     }
+
+    @Override
+    protected void visit(Expression.SystemOutPrintlnExpression expression, Options context) {
+        assert false : "This node should not exist when performing semantic analysis.";
+    }
+
+    @Override
+    protected void visit(Expression.SystemOutFlushExpression expression, Options context) {
+        assert false : "This node should not exist when performing semantic analysis.";
+    }
+
+    @Override
+    protected void visit(Expression.SystemOutWriteExpression expression, Options context) {
+        assert false : "This node should not exist when performing semantic analysis.";
+    }
+
+    @Override
+    protected void visit(Expression.SystemInReadExpression expression, Options context) {
+        assert false : "This node should not exist when performing semantic analysis.";
+    }
 }
