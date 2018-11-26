@@ -303,7 +303,7 @@ public class ReferenceAndExpressionTypeResolver extends
                 this.getCurrentMethodDeclaration().toString(), statement.getLocation()));
         }
 
-        // TODO: Is the variable declaration known when evaluating the initial value expression?
+        // Variable declaration is already known when evaluating the initial value expression.
         this.addVariableDeclarationToCurrentScope(statement);
 
         if (statement.getValue().isPresent()) {
