@@ -136,20 +136,6 @@ abstract class SemanticAnalysisVisitorBase<T> extends ASTVisitor<T> {
         this.symbolTable.leaveCurrentScope();
     }
 
-    void addGlobalVariableDeclaration(VariableDeclaration declaration) {
-        VariableDeclaration globalDeclaration = this.globalVariableDeclarations.get(declaration.getName());
-
-        if (globalDeclaration != null) {
-            throw fail(new RedeclarationException(declaration.getName(), declaration.getLocation(), globalDeclaration,
-                "redeclaration of global"));
-        }
-
-        this.globalVariableDeclarations.put(declaration.getName(), declaration);
-    }
-
-    Optional<VariableDeclaration> getGlobalVariableDeclarationForName(String name) {
-        return Optional.ofNullable(this.globalVariableDeclarations.get(name));
-    }
 
     // MARK: - Method and Field Reference Resolution
 

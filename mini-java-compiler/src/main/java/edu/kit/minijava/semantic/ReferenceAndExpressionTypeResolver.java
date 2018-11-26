@@ -16,18 +16,6 @@ public class ReferenceAndExpressionTypeResolver extends
     public ReferenceAndExpressionTypeResolver(Program program) throws SemanticException {
         this.enterNewVariableDeclarationScope();
 
-        // Install standard library declarations.
-        this.addGlobalVariableDeclaration(CompilerMagic.SYSTEM_VARIABLE);
-        this.registerClassDeclaration(CompilerMagic.SYSTEM);
-        this.registerClassDeclaration(CompilerMagic.SYSTEM_IN);
-        this.registerClassDeclaration(CompilerMagic.SYSTEM_OUT);
-        this.registerFieldDeclaration(CompilerMagic.IN, CompilerMagic.SYSTEM);
-        this.registerFieldDeclaration(CompilerMagic.OUT, CompilerMagic.SYSTEM);
-        this.registerMethodDeclaration(CompilerMagic.PRINTLN, CompilerMagic.SYSTEM_OUT);
-        this.registerMethodDeclaration(CompilerMagic.FLUSH, CompilerMagic.SYSTEM_OUT);
-        this.registerMethodDeclaration(CompilerMagic.WRITE, CompilerMagic.SYSTEM_OUT);
-        this.registerMethodDeclaration(CompilerMagic.READ, CompilerMagic.SYSTEM_IN);
-
         // Catch semantic exceptions which are wrapped in unchecked exceptions to not break
         // visitor pattern and stream handling.
         try {
@@ -671,9 +659,6 @@ public class ReferenceAndExpressionTypeResolver extends
                 throw fail(new SemanticException("Cannot reference class with name '" + name + "' directly",
                     this.getCurrentMethodDeclaration().toString(), expression.getLocation()));
             }
-
-            // Retrieve global declarations
-            variableDeclaration = this.getGlobalVariableDeclarationForName(name);
         }
 
         // Variable reference must be resolvable.
