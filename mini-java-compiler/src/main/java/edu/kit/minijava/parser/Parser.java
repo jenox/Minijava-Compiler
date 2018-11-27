@@ -513,6 +513,9 @@ public final class Parser {
             Expression expression = this.parseExpression(0);
             this.consume(TokenType.CLOSING_PARENTHESIS, "PrimaryExpression");
 
+            // Mutable state not nice, but looping through number of explicit parentheses ain't prettier.
+            expression.setNumberOfExplicitParentheses(expression.getNumberOfExplicitParentheses() + 1);
+
             return expression;
         }
 

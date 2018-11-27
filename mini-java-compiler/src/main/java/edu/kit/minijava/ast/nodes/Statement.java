@@ -28,7 +28,7 @@ public abstract class Statement implements ASTNode {
             this.location = location;
         }
 
-        private final Expression condition;
+        private Expression condition;
         private final Statement statementIfTrue;
         private final Statement statementIfFalse; //nullable
         private final TokenLocation location;
@@ -75,7 +75,16 @@ public abstract class Statement implements ASTNode {
 
         @Override
         public <T> void accept(ASTVisitor<T> visitor, T context) {
+            visitor.willVisit(this);
             visitor.visit(this, context);
+            visitor.didVisit(this);
+        }
+
+        @Override
+        public void substituteExpression(Expression oldValue, Expression newValue) {
+            if (this.condition == oldValue) {
+                this.condition = newValue;
+            }
         }
     }
 
@@ -86,7 +95,7 @@ public abstract class Statement implements ASTNode {
             this.location = location;
         }
 
-        private final Expression condition;
+        private Expression condition;
         private final Statement statementWhileTrue;
         private final TokenLocation location;
 
@@ -115,7 +124,16 @@ public abstract class Statement implements ASTNode {
 
         @Override
         public <T> void accept(ASTVisitor<T> visitor, T context) {
+            visitor.willVisit(this);
             visitor.visit(this, context);
+            visitor.didVisit(this);
+        }
+
+        @Override
+        public void substituteExpression(Expression oldValue, Expression newValue) {
+            if (this.condition == oldValue) {
+                this.condition = newValue;
+            }
         }
     }
 
@@ -125,7 +143,7 @@ public abstract class Statement implements ASTNode {
             this.location = location;
         }
 
-        private final Expression expression;
+        private Expression expression;
         private final TokenLocation location;
 
         public Expression getExpression() {
@@ -149,7 +167,16 @@ public abstract class Statement implements ASTNode {
 
         @Override
         public <T> void accept(ASTVisitor<T> visitor, T context) {
+            visitor.willVisit(this);
             visitor.visit(this, context);
+            visitor.didVisit(this);
+        }
+
+        @Override
+        public void substituteExpression(Expression oldValue, Expression newValue) {
+            if (this.expression == oldValue) {
+                this.expression = newValue;
+            }
         }
     }
 
@@ -164,7 +191,7 @@ public abstract class Statement implements ASTNode {
             this.location = location;
         }
 
-        private final Expression value; // nullable
+        private Expression value; // nullable
         private final TokenLocation location;
 
         public Optional<Expression> getValue() {
@@ -188,7 +215,16 @@ public abstract class Statement implements ASTNode {
 
         @Override
         public <T> void accept(ASTVisitor<T> visitor, T context) {
+            visitor.willVisit(this);
             visitor.visit(this, context);
+            visitor.didVisit(this);
+        }
+
+        @Override
+        public void substituteExpression(Expression oldValue, Expression newValue) {
+            if (this.value == oldValue) {
+                this.value = newValue;
+            }
         }
     }
 
@@ -216,8 +252,13 @@ public abstract class Statement implements ASTNode {
 
         @Override
         public <T> void accept(ASTVisitor<T> visitor, T context) {
+            visitor.willVisit(this);
             visitor.visit(this, context);
+            visitor.didVisit(this);
         }
+
+        @Override
+        public void substituteExpression(Expression oldValue, Expression newValue) {}
     }
 
     public static final class Block extends Statement {
@@ -262,8 +303,13 @@ public abstract class Statement implements ASTNode {
 
         @Override
         public <T> void accept(ASTVisitor<T> visitor, T context) {
+            visitor.willVisit(this);
             visitor.visit(this, context);
+            visitor.didVisit(this);
         }
+
+        @Override
+        public void substituteExpression(Expression oldValue, Expression newValue) {}
     }
 
     public static final class LocalVariableDeclarationStatement extends Statement implements VariableDeclaration {
@@ -284,7 +330,7 @@ public abstract class Statement implements ASTNode {
 
         private final TypeReference type;
         private final String name;
-        private final Expression value; //nullable
+        private Expression value; //nullable
         private final TokenLocation location;
 
         @Override
@@ -333,7 +379,16 @@ public abstract class Statement implements ASTNode {
 
         @Override
         public <T> void accept(ASTVisitor<T> visitor, T context) {
+            visitor.willVisit(this);
             visitor.visit(this, context);
+            visitor.didVisit(this);
+        }
+
+        @Override
+        public void substituteExpression(Expression oldValue, Expression newValue) {
+            if (this.value == oldValue) {
+                this.value = newValue;
+            }
         }
 
         @Override

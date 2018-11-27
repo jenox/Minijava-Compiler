@@ -12,9 +12,22 @@ public abstract class Expression implements ASTNode {
     }
 
     private final TypeOfExpression type;
+    private int numberOfExplicitParentheses = 0;
 
     public TypeOfExpression getType() {
         return this.type;
+    }
+
+    public final int getNumberOfExplicitParentheses() {
+        return this.numberOfExplicitParentheses;
+    }
+
+    public final void setNumberOfExplicitParentheses(int numberOfExplicitParentheses) {
+        this.numberOfExplicitParentheses = numberOfExplicitParentheses;
+    }
+
+    public final boolean hasExplicitParentheses() {
+        return this.numberOfExplicitParentheses > 0;
     }
 
     public abstract TokenLocation getLocation();
@@ -32,8 +45,8 @@ public abstract class Expression implements ASTNode {
         }
 
         private final BinaryOperationType operationType;
-        private final Expression left;
-        private final Expression right;
+        private Expression left;
+        private Expression right;
         private final TokenLocation location;
 
         public BinaryOperationType getOperationType() {
@@ -60,7 +73,20 @@ public abstract class Expression implements ASTNode {
 
         @Override
         public <T> void accept(ASTVisitor<T> visitor, T context) {
+            visitor.willVisit(this);
             visitor.visit(this, context);
+            visitor.didVisit(this);
+        }
+
+        @Override
+        public void substituteExpression(Expression oldValue, Expression newValue) {
+            if (this.left == oldValue) {
+                this.left = newValue;
+            }
+
+            if (this.right == oldValue) {
+                this.right = newValue;
+            }
         }
     }
 
@@ -74,7 +100,7 @@ public abstract class Expression implements ASTNode {
         }
 
         private final UnaryOperationType operationType;
-        private final Expression other;
+        private Expression other;
         private final TokenLocation location;
 
         public UnaryOperationType getOperationType() {
@@ -97,7 +123,16 @@ public abstract class Expression implements ASTNode {
 
         @Override
         public <T> void accept(ASTVisitor<T> visitor, T context) {
+            visitor.willVisit(this);
             visitor.visit(this, context);
+            visitor.didVisit(this);
+        }
+
+        @Override
+        public void substituteExpression(Expression oldValue, Expression newValue) {
+            if (this.other == oldValue) {
+                this.other = newValue;
+            }
         }
     }
 
@@ -122,8 +157,13 @@ public abstract class Expression implements ASTNode {
 
         @Override
         public <T> void accept(ASTVisitor<T> visitor, T context) {
+            visitor.willVisit(this);
             visitor.visit(this, context);
+            visitor.didVisit(this);
         }
+
+        @Override
+        public void substituteExpression(Expression oldValue, Expression newValue) {}
     }
 
     public static final class BooleanLiteral extends Expression {
@@ -153,8 +193,13 @@ public abstract class Expression implements ASTNode {
 
         @Override
         public <T> void accept(ASTVisitor<T> visitor, T context) {
+            visitor.willVisit(this);
             visitor.visit(this, context);
+            visitor.didVisit(this);
         }
+
+        @Override
+        public void substituteExpression(Expression oldValue, Expression newValue) {}
     }
 
     public static final class IntegerLiteral extends Expression {
@@ -184,8 +229,13 @@ public abstract class Expression implements ASTNode {
 
         @Override
         public <T> void accept(ASTVisitor<T> visitor, T context) {
+            visitor.willVisit(this);
             visitor.visit(this, context);
+            visitor.didVisit(this);
         }
+
+        @Override
+        public void substituteExpression(Expression oldValue, Expression newValue) {}
     }
 
     public static final class MethodInvocation extends Expression {
@@ -208,7 +258,7 @@ public abstract class Expression implements ASTNode {
             this.location = location;
         }
 
-        private final Expression context; // nullable
+        private Expression context; // nullable
         private final ExplicitReference<MethodDeclaration> methodReference;
         private final List<Expression> arguments;
         private final TokenLocation location;
@@ -222,7 +272,7 @@ public abstract class Expression implements ASTNode {
         }
 
         public List<Expression> getArguments() {
-            return this.arguments;
+            return Collections.unmodifiableList(this.arguments);
         }
 
         public List<TypeOfExpression> getArgumentTypes() {
@@ -241,7 +291,22 @@ public abstract class Expression implements ASTNode {
 
         @Override
         public <T> void accept(ASTVisitor<T> visitor, T context) {
+            visitor.willVisit(this);
             visitor.visit(this, context);
+            visitor.didVisit(this);
+        }
+
+        @Override
+        public void substituteExpression(Expression oldValue, Expression newValue) {
+            if (this.context == oldValue) {
+                this.context = newValue;
+            }
+
+            for (int index = 0; index < this.arguments.size(); index += 1) {
+                if (this.arguments.get(index) == oldValue) {
+                    this.arguments.set(index, newValue);
+                }
+            }
         }
     }
 
@@ -254,7 +319,7 @@ public abstract class Expression implements ASTNode {
             this.location = location;
         }
 
-        private final Expression context;
+        private Expression context;
         private final ExplicitReference<FieldDeclaration> fieldReference;
         private final TokenLocation location;
 
@@ -278,7 +343,16 @@ public abstract class Expression implements ASTNode {
 
         @Override
         public <T> void accept(ASTVisitor<T> visitor, T context) {
+            visitor.willVisit(this);
             visitor.visit(this, context);
+            visitor.didVisit(this);
+        }
+
+        @Override
+        public void substituteExpression(Expression oldValue, Expression newValue) {
+            if (this.context == oldValue) {
+                this.context = newValue;
+            }
         }
     }
 
@@ -291,8 +365,8 @@ public abstract class Expression implements ASTNode {
             this.location = location;
         }
 
-        private final Expression context;
-        private final Expression index;
+        private Expression context;
+        private Expression index;
         private final TokenLocation location;
 
         public Expression getContext() {
@@ -315,7 +389,20 @@ public abstract class Expression implements ASTNode {
 
         @Override
         public <T> void accept(ASTVisitor<T> visitor, T context) {
+            visitor.willVisit(this);
             visitor.visit(this, context);
+            visitor.didVisit(this);
+        }
+
+        @Override
+        public void substituteExpression(Expression oldValue, Expression newValue) {
+            if (this.context == oldValue) {
+                this.context = newValue;
+            }
+
+            if (this.index == oldValue) {
+                this.index = newValue;
+            }
         }
     }
 
@@ -346,8 +433,13 @@ public abstract class Expression implements ASTNode {
 
         @Override
         public <T> void accept(ASTVisitor<T> visitor, T context) {
+            visitor.willVisit(this);
             visitor.visit(this, context);
+            visitor.didVisit(this);
         }
+
+        @Override
+        public void substituteExpression(Expression oldValue, Expression newValue) {}
     }
 
     public static final class CurrentContextAccess extends Expression {
@@ -371,8 +463,13 @@ public abstract class Expression implements ASTNode {
 
         @Override
         public <T> void accept(ASTVisitor<T> visitor, T context) {
+            visitor.willVisit(this);
             visitor.visit(this, context);
+            visitor.didVisit(this);
         }
+
+        @Override
+        public void substituteExpression(Expression oldValue, Expression newValue) {}
     }
 
     public static final class NewObjectCreation extends Expression {
@@ -402,8 +499,13 @@ public abstract class Expression implements ASTNode {
 
         @Override
         public <T> void accept(ASTVisitor<T> visitor, T context) {
+            visitor.willVisit(this);
             visitor.visit(this, context);
+            visitor.didVisit(this);
         }
+
+        @Override
+        public void substituteExpression(Expression oldValue, Expression newValue) {}
     }
 
     public static final class NewArrayCreation extends Expression {
@@ -418,7 +520,7 @@ public abstract class Expression implements ASTNode {
         }
 
         private final ExplicitReference<BasicTypeDeclaration> basicTypeReference;
-        private final Expression primaryDimension;
+        private Expression primaryDimension;
         private final int numberOfDimensions;
         private final TokenLocation location;
 
@@ -446,7 +548,148 @@ public abstract class Expression implements ASTNode {
 
         @Override
         public <T> void accept(ASTVisitor<T> visitor, T context) {
+            visitor.willVisit(this);
             visitor.visit(this, context);
+            visitor.didVisit(this);
         }
+
+        @Override
+        public void substituteExpression(Expression oldValue, Expression newValue) {
+            if (this.primaryDimension == oldValue) {
+                this.primaryDimension = newValue;
+            }
+        }
+    }
+
+    public static final class SystemOutPrintlnExpression extends Expression {
+        public SystemOutPrintlnExpression(Expression argument, TokenLocation location) {
+            this.argument = argument;
+            this.location = location;
+        }
+
+        private Expression argument;
+        private final TokenLocation location;
+
+        public Expression getArgument() {
+            return this.argument;
+        }
+
+        @Override
+        public TokenLocation getLocation() {
+            return this.location;
+        }
+
+        @Override
+        public boolean isValidForExpressionStatement() {
+            return true;
+        }
+
+        @Override
+        public <T> void accept(ASTVisitor<T> visitor, T context) {
+            visitor.willVisit(this);
+            visitor.visit(this, context);
+            visitor.didVisit(this);
+        }
+
+        @Override
+        public void substituteExpression(Expression oldValue, Expression newValue) {
+            if (this.argument == oldValue) {
+                this.argument = newValue;
+            }
+        }
+    }
+
+    public static final class SystemOutFlushExpression extends Expression {
+        public SystemOutFlushExpression(TokenLocation location) {
+            this.location = location;
+        }
+
+        private final TokenLocation location;
+
+        @Override
+        public TokenLocation getLocation() {
+            return this.location;
+        }
+
+        @Override
+        public boolean isValidForExpressionStatement() {
+            return true;
+        }
+
+        @Override
+        public <T> void accept(ASTVisitor<T> visitor, T context) {
+            visitor.willVisit(this);
+            visitor.visit(this, context);
+            visitor.didVisit(this);
+        }
+
+        @Override
+        public void substituteExpression(Expression oldValue, Expression newValue) {}
+    }
+
+    public static final class SystemOutWriteExpression extends Expression {
+        public SystemOutWriteExpression(Expression argument, TokenLocation location) {
+            this.argument = argument;
+            this.location = location;
+        }
+
+        private Expression argument;
+        private final TokenLocation location;
+
+        public Expression getArgument() {
+            return this.argument;
+        }
+
+        @Override
+        public TokenLocation getLocation() {
+            return this.location;
+        }
+
+        @Override
+        public boolean isValidForExpressionStatement() {
+            return true;
+        }
+
+        @Override
+        public <T> void accept(ASTVisitor<T> visitor, T context) {
+            visitor.willVisit(this);
+            visitor.visit(this, context);
+            visitor.didVisit(this);
+        }
+
+        @Override
+        public void substituteExpression(Expression oldValue, Expression newValue) {
+            if (this.argument == oldValue) {
+                this.argument = newValue;
+            }
+        }
+    }
+
+    public static final class SystemInReadExpression extends Expression {
+        public SystemInReadExpression(TokenLocation location) {
+            this.location = location;
+        }
+
+        private final TokenLocation location;
+
+        @Override
+        public TokenLocation getLocation() {
+            return this.location;
+        }
+
+        @Override
+        public boolean isValidForExpressionStatement() {
+            return true;
+        }
+
+        @Override
+        public <T> void accept(ASTVisitor<T> visitor, T context) {
+            visitor.willVisit(this);
+            visitor.visit(this, context);
+            visitor.didVisit(this);
+        }
+
+        @Override
+        public void substituteExpression(Expression oldValue, Expression newValue) {}
     }
 }
