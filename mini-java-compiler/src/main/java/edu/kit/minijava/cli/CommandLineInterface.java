@@ -10,33 +10,34 @@ public class CommandLineInterface {
         final Command command;
 
         switch (arguments[0]) {
-        case "--echo":
-            command = new EchoCommand();
-            break;
-        case "--lextest":
-            command = new LextestCommand();
-            break;
-        case "--parsetest":
-            command = new ParserCommand(false);
-            break;
-        case "--print-ast":
-            command = new ParserCommand(true);
-            break;
-        case "--check":
-            command = new ValidateCommand();
-            break;
-        case "--transform":
-            command = new TransformerCommand();
-            break;
-        default:
-            CommandLineInterface.printErrorAndExit();
-            return;
+            case "--echo":
+                command = new EchoCommand();
+                break;
+            case "--lextest":
+                command = new LextestCommand();
+                break;
+            case "--parsetest":
+                command = new ParserCommand(false);
+                break;
+            case "--print-ast":
+                command = new ParserCommand(true);
+                break;
+            case "--check":
+                command = new ValidateCommand();
+                break;
+            case "--transform":
+                command = new TransformerCommand();
+                break;
+            default:
+                CommandLineInterface.printErrorAndExit();
+                return;
         }
 
         int status = 0;
         try {
             status = command.execute(arguments[1]);
-        } catch (Throwable exception) {
+        }
+        catch (Throwable exception) {
             String message = exception.getLocalizedMessage();
 
             exception.printStackTrace();
@@ -44,12 +45,14 @@ public class CommandLineInterface {
                 System.err.println("error: something went terribly wrong!");
                 System.err.println();
                 exception.printStackTrace(System.err);
-            } else {
+            }
+            else {
                 System.err.println("error: " + message);
             }
 
             status = 255;
-        } finally {
+        }
+        finally {
             System.exit(status);
         }
     }
