@@ -1,4 +1,4 @@
-package edu.kit.minijava.transformation;
+    package edu.kit.minijava.transformation;
 
 import com.sun.jna.Pointer;
 import edu.kit.minijava.ast.nodes.*;
@@ -200,8 +200,11 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
                 return;
             case VOID:
             case STRING:
-            case BOOLEAN:
                 firmType = new PrimitiveType(Mode.getBs());
+                context.setType(firmType);
+                return;
+            case BOOLEAN:
+                firmType = new PrimitiveType(Mode.getb());
                 context.setType(firmType);
                 return;
             default:
@@ -336,11 +339,13 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
             Node[] results = {};
             Node mem = context.getConstruction().getCurrentMem();
 
-            if (context.getResult() != null)
+            // TODO: check this
+            if (context.getResult() != null) {
                 results = new Node[]{ context.getResult() };
 
-            Node returnNode = context.getConstruction().newReturn(mem, results);
-            context.getConstruction().getGraph().getEndBlock().addPred(returnNode);
+                Node returnNode = context.getConstruction().newReturn(mem, results);
+                context.getConstruction().getGraph().getEndBlock().addPred(returnNode);
+            }
         }
     }
 
@@ -437,30 +442,27 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
                     break;
                 case ASSIGNMENT:
                     // TODO: pruefen, ob VariableAccess (und dann Field oder Variable) oder ArrayElementAccess (und dann Field oder Variable)
-                    //switch (expression.getLeft()) {
-                    //    case :
-                    //        break;
-                    //    case ArrayElementAccess:
-                    //        break;
-                    //}
-                    //if (decl instanceof FieldDeclaration) {
-                    //    Entity field = entities.get(expression.getLeft().getType().getDeclaration().get());
-                    //    Node address = context.getConstruction().newAddress(field);
-                    //    mem = context.getConstruction().getCurrentMem();
-                    //    Mode mode = types.get(expression.getLeft().getType().getDeclaration().get()).getMode();
+                    expression.getLeft().accept(this, context);
+                    Declaration decl = context.getDecl();
 
-                    //    //Node load = context.getConstruction().newLoad(mem, address, mode);
-                    //    Node store = context.getConstruction().newStore(mem, address, right);
-                    //    Node newMem = context.getConstruction().newProj(store, Mode.getM(), Store.pnM);
+                    if (decl instanceof LocalVariableDeclarationStatement) {
+                        int num = variableNums.get(((LocalVariableDeclarationStatement) decl).getName());
+                        Node result = null;
+                        context.getConstruction().setVariable(num, right);
 
-                    //    context.setResult(newMem);
-                    //} else if (decl instanceof VariableDeclaration) {
-                    //    int num = variableNums.get(expression.getLeft().getType().getDeclaration().get());
-                    //    Node result = null;
-                    //        context.getConstruction().setVariable(num, right);
+                        bin = right;
+                    } else if (decl instanceof FieldDeclaration) {
+                        Entity field = entities.get(expression.getLeft().getType().getDeclaration().get());
+                        Node address = context.getConstruction().newAddress(field);
+                        mem = context.getConstruction().getCurrentMem();
+                        Mode mode = types.get(((FieldDeclaration) decl).getName()).getMode();
 
-                        //context.setResult(context.getConstruction().newUnknown(Mode.getANY()));
-                    //}
+                        //Node load = context.getConstruction().newLoad(mem, address, mode);
+                        Node store = context.getConstruction().newStore(mem, address, right);
+                        Node newMem = context.getConstruction().newProj(store, Mode.getM(), Store.pnM);
+
+                        bin = newMem;
+                    }
                 default:
                     break;
             }
@@ -505,7 +507,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
             if (expression.getValue()) {
                 bool = context.getConstruction().newConst(TargetValue.getBTrue());
             } else {
-                bool = context.getConstruction().newConst(TargetValue.getBTrue());
+                bool = context.getConstruction().newConst(TargetValue.getBFalse());
             }
 
         context.setResult(bool);
@@ -600,6 +602,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
             Type type = types.get(expression.getVariableReference().getName());
             Node getNode = context.getConstruction().getVariable(n, type.getMode());
             context.setResult(getNode);
+            context.setDecl(expression.getVariableReference().getDeclaration());
         }
 
     }
@@ -632,6 +635,26 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
             Node res = context.getConstruction().newAlloc(mem, size, alignment);
             context.setResult(res);
         }
+    }
+
+    @Override
+    protected void visit(SystemOutPrintlnExpression expression, EntityContext context) {
+
+    }
+
+    @Override
+    protected void visit(SystemOutFlushExpression expression, EntityContext context) {
+
+    }
+
+    @Override
+    protected void visit(SystemOutWriteExpression expression, EntityContext context) {
+
+    }
+
+    @Override
+    protected void visit(SystemInReadExpression expression, EntityContext context) {
+
     }
 
     public String getUniqueMemberName(String methodName) {

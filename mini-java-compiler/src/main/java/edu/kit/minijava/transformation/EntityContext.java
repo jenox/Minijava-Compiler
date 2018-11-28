@@ -1,5 +1,6 @@
 package edu.kit.minijava.transformation;
 
+import edu.kit.minijava.ast.nodes.Declaration;
 import firm.Construction;
 import firm.Graph;
 import firm.StructType;
@@ -14,6 +15,16 @@ public class EntityContext {
     private Node result = null;
     private Construction construction;
     private StructType classType;
+
+    public Declaration getDecl() {
+        return decl;
+    }
+
+    public void setDecl(Declaration decl) {
+        this.decl = decl;
+    }
+
+    private Declaration decl;
 
     public void setNumberOfLocalVars(int numberOfLocalVars) {
         this.numberOfLocalVars = numberOfLocalVars;
