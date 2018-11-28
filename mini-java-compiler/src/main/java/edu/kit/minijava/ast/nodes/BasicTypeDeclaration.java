@@ -12,4 +12,10 @@ public interface BasicTypeDeclaration extends Declaration {
 
     /** The fields declared by the type. */
     List<FieldDeclaration> getFieldDeclarations();
+
+    /**
+     * is this an instance of {@link ClassDeclaration}.
+     * @return true iff this is an {@link ClassDeclaration} object
+     */
+    public boolean isClassDeclaration();
 }

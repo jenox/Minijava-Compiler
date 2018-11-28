@@ -191,25 +191,27 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
         BasicTypeDeclaration decl = reference.getBasicTypeReference().getDeclaration();
 
-        // TODO: make this not blow up
-        PrimitiveTypeDeclaration decl_ = (PrimitiveTypeDeclaration) decl;
+        if (!decl.isClassDeclaration()) {
 
-        switch (decl_) {
-            case INTEGER:
-                firmType = new PrimitiveType(Mode.getIs());
-                context.setType(firmType);
-                return;
-            case VOID:
-            case STRING:
-                firmType = new PrimitiveType(Mode.getBs());
-                context.setType(firmType);
-                return;
-            case BOOLEAN:
-                firmType = new PrimitiveType(Mode.getb());
-                context.setType(firmType);
-                return;
-            default:
-                break;
+            PrimitiveTypeDeclaration decl_ = (PrimitiveTypeDeclaration) decl;
+
+            switch (decl_) {
+                case INTEGER:
+                    firmType = new PrimitiveType(Mode.getIs());
+                    context.setType(firmType);
+                    return;
+                case VOID:
+                case STRING:
+                    firmType = new PrimitiveType(Mode.getBs());
+                    context.setType(firmType);
+                    return;
+                case BOOLEAN:
+                    firmType = new PrimitiveType(Mode.getb());
+                    context.setType(firmType);
+                    return;
+                default:
+                    break;
+            }
         }
 
         Type elementType = null;
@@ -622,7 +624,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
     @Override
     protected void visit(CurrentContextAccess expression, EntityContext context) {
-        // TODO Auto-generated method stub
+        // nothing to do
     }
 
     @Override
