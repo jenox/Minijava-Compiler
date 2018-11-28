@@ -233,8 +233,11 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
                     elementType = new StructType(name);
             }
 
-            // TODO: call accept for firmtype
-            firmType = new ArrayType(elementType, reference.getNumberOfDimensions());
+            for (int i = 0; i < reference.getNumberOfDimensions(); i++) {
+                elementType = new ArrayType(elementType, 0);
+            }
+
+            firmType = elementType;
         }
         // user defined type
         else {
