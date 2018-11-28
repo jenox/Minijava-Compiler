@@ -2,6 +2,7 @@ package edu.kit.minijava.semantic;
 
 import java.util.*;
 
+import edu.kit.minijava.lexer.*;
 import edu.kit.minijava.ast.nodes.*;
 import edu.kit.minijava.ast.references.*;
 
@@ -11,21 +12,10 @@ import edu.kit.minijava.ast.references.*;
  *
  * Before visiting an expression, its type is not resolved. After visiting an expression, its type must be resolved.
  */
-public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorBase {
+public class ReferenceAndExpressionTypeResolver extends
+        SemanticAnalysisVisitorBase<ReferenceAndExpressionTypeResolver.Options> {
     public ReferenceAndExpressionTypeResolver(Program program) throws SemanticException {
         this.enterNewVariableDeclarationScope();
-
-        // Install standard library declarations.
-        this.addGlobalVariableDeclaration(CompilerMagic.SYSTEM_VARIABLE);
-        this.registerClassDeclaration(CompilerMagic.SYSTEM);
-        this.registerClassDeclaration(CompilerMagic.SYSTEM_IN);
-        this.registerClassDeclaration(CompilerMagic.SYSTEM_OUT);
-        this.registerFieldDeclaration(CompilerMagic.IN, CompilerMagic.SYSTEM);
-        this.registerFieldDeclaration(CompilerMagic.OUT, CompilerMagic.SYSTEM);
-        this.registerMethodDeclaration(CompilerMagic.PRINTLN, CompilerMagic.SYSTEM_OUT);
-        this.registerMethodDeclaration(CompilerMagic.FLUSH, CompilerMagic.SYSTEM_OUT);
-        this.registerMethodDeclaration(CompilerMagic.WRITE, CompilerMagic.SYSTEM_OUT);
-        this.registerMethodDeclaration(CompilerMagic.READ, CompilerMagic.SYSTEM_IN);
 
         // Catch semantic exceptions which are wrapped in unchecked exceptions to not break
         // visitor pattern and stream handling.
@@ -53,35 +43,42 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
         this.leaveCurrentVariableDeclarationScope();
     }
 
+    enum Options {
+        LITERALLY_PREFIXED_WITH_NUMERIC_NEGATION_SIGN,
+        ALLOW_SYSTEM,
+        ALLOW_SYSTEM_OUT,
+        ALLOW_SYSTEM_IN
+    }
+
     // MARK: - Traversal
 
     @Override
-    protected void visit(Program program, Void context) {
+    protected void visit(Program program, Options options) {
         for (ClassDeclaration clsDecl : program.getClassDeclarations()) {
-            clsDecl.accept(this, context);
+            clsDecl.accept(this, null);
         }
     }
 
     @Override
-    protected void visit(ClassDeclaration classDeclaration, Void context) {
+    protected void visit(ClassDeclaration classDeclaration, Options options) {
         if (this.isCollectingClassDeclarations()) {
             this.registerClassDeclaration(classDeclaration);
         }
         else {
             this.enterClassDeclaration(classDeclaration);
 
-            classDeclaration.getFieldDeclarations().forEach(node -> node.accept(this, context));
-            classDeclaration.getMethodDeclarations().forEach(node -> node.accept(this, context));
-            classDeclaration.getMainMethodDeclarations().forEach(node -> node.accept(this, context));
+            classDeclaration.getFieldDeclarations().forEach(node -> node.accept(this, null));
+            classDeclaration.getMethodDeclarations().forEach(node -> node.accept(this, null));
+            classDeclaration.getMainMethodDeclarations().forEach(node -> node.accept(this, null));
 
             this.leaveCurrentClassDeclaration();
         }
     }
 
     @Override
-    protected void visit(FieldDeclaration fieldDeclaration, Void context) {
+    protected void visit(FieldDeclaration fieldDeclaration, Options options) {
         if (this.isCollectingClassMemberDeclarations()) {
-            fieldDeclaration.getType().accept(this, context);
+            fieldDeclaration.getType().accept(this, null);
 
             // Field types must not be of type void or array of void.
             if (fieldDeclaration.getType().isVoid() || fieldDeclaration.getType().isDimensionalVoid()) {
@@ -97,18 +94,18 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
     }
 
     @Override
-    protected void visit(MethodDeclaration methodDeclaration, Void context) {
+    protected void visit(MethodDeclaration methodDeclaration, Options options) {
         if (this.isCollectingClassMemberDeclarations()) {
             this.enterMethodDeclaration(methodDeclaration);
 
-            methodDeclaration.getReturnType().accept(this, context);
+            methodDeclaration.getReturnType().accept(this, null);
 
             // Return type must not be array of void.
             if (methodDeclaration.getReturnType().isDimensionalVoid()) {
                 throw fail(new SemanticException("Method must not return array of void", methodDeclaration.toString()));
             }
 
-            methodDeclaration.getParameters().forEach(node -> node.accept(this, context));
+            methodDeclaration.getParameters().forEach(node -> node.accept(this, null));
 
             this.leaveCurrentMethodDeclaration();
             this.registerMethodDeclaration(methodDeclaration, this.getCurrentClassDeclaration());
@@ -117,9 +114,9 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
             this.enterMethodDeclaration(methodDeclaration);
 
             // Parameter types are already resolved, but we need to add the variable declarations to current scope.
-            methodDeclaration.getParameters().forEach(node -> node.accept(this, context));
+            methodDeclaration.getParameters().forEach(node -> node.accept(this, null));
 
-            methodDeclaration.getBody().accept(this, context);
+            methodDeclaration.getBody().accept(this, null);
 
             // Non-void methods must return a value.
             if (!methodDeclaration.getReturnType().isVoid() && !methodDeclaration.getBody().explicitlyReturns()) {
@@ -135,7 +132,7 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
     }
 
     @Override
-    protected void visit(MainMethodDeclaration methodDeclaration, Void context) {
+    protected void visit(MainMethodDeclaration methodDeclaration, Options options) {
         if (this.isCollectingClassMemberDeclarations()) {
             this.enterMethodDeclaration(methodDeclaration);
 
@@ -144,14 +141,14 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
                 throw fail(new SemanticException("Entry point must be named main", methodDeclaration.toString()));
             }
 
-            methodDeclaration.getReturnType().accept(this, context);
+            methodDeclaration.getReturnType().accept(this, null);
 
             // Main method must return void, but AST doesn't guarantee it.
             if (!methodDeclaration.getReturnType().isVoid()) {
                 throw fail(new SemanticException("Main method must return void", methodDeclaration.toString()));
             }
 
-            methodDeclaration.getArgumentsParameter().accept(this, context);
+            methodDeclaration.getArgumentsParameter().accept(this, null);
 
             // Main method must take array of strings, but AST doesn't guarantee it.
             if (!methodDeclaration.getArgumentsParameter().getType().isArrayOfString()) {
@@ -167,18 +164,18 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
             this.enterMethodDeclaration(methodDeclaration);
 
             // Parameter types are already resolved, but we need to add the variable declarations to current scope.
-            methodDeclaration.getArgumentsParameter().accept(this, context);
+            methodDeclaration.getArgumentsParameter().accept(this, null);
 
-            methodDeclaration.getBody().accept(this, context);
+            methodDeclaration.getBody().accept(this, null);
 
             this.leaveCurrentMethodDeclaration();
         }
     }
 
     @Override
-    protected void visit(ParameterDeclaration parameterDeclaration, Void context) {
+    protected void visit(ParameterDeclaration parameterDeclaration, Options options) {
         if (this.isCollectingClassMemberDeclarations()) {
-            parameterDeclaration.getType().accept(this, context);
+            parameterDeclaration.getType().accept(this, null);
 
             // Parameter types must not be of type void or array of void.
             if (parameterDeclaration.getType().isVoid() || parameterDeclaration.getType().isDimensionalVoid()) {
@@ -192,7 +189,7 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
     }
 
     @Override
-    protected void visit(ExplicitTypeReference reference, Void context) {
+    protected void visit(ExplicitTypeReference reference, Options options) {
         String name = reference.getBasicTypeReference().getName();
         Optional<BasicTypeDeclaration> declaration = this.getBasicTypeDeclarationForName(name);
 
@@ -206,13 +203,13 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
     }
 
     @Override
-    protected void visit(ImplicitTypeReference reference, Void context) {
+    protected void visit(ImplicitTypeReference reference, Options options) {
         // Implicit references are already resolved upon creation.
     }
 
     @Override
-    protected void visit(Statement.IfStatement statement, Void context) {
-        statement.getCondition().accept(this, context);
+    protected void visit(Statement.IfStatement statement, Options options) {
+        statement.getCondition().accept(this, null);
 
         // Condition for if statement must be boolean.
         if (!statement.getCondition().getType().isBoolean()) {
@@ -223,16 +220,16 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
 
         // AST doesn't guarantee child statements not being local variable declaration, only ASTs vended from Parser do.
         this.enterNewVariableDeclarationScope();
-        statement.getStatementIfTrue().accept(this, context);
+        statement.getStatementIfTrue().accept(this, null);
         this.leaveCurrentVariableDeclarationScope();
         this.enterNewVariableDeclarationScope();
-        statement.getStatementIfFalse().ifPresent(node -> node.accept(this, context));
+        statement.getStatementIfFalse().ifPresent(node -> node.accept(this, null));
         this.leaveCurrentVariableDeclarationScope();
     }
 
     @Override
-    protected void visit(Statement.WhileStatement statement, Void context) {
-        statement.getCondition().accept(this, context);
+    protected void visit(Statement.WhileStatement statement, Options options) {
+        statement.getCondition().accept(this, null);
 
         // Condition for while statement must be boolean.
         if (!statement.getCondition().getType().isBoolean()) {
@@ -243,13 +240,13 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
 
         // AST doesn't guarantee child statements not being local variable declaration, only ASTs vended from Parser do.
         this.enterNewVariableDeclarationScope();
-        statement.getStatementWhileTrue().accept(this, context);
+        statement.getStatementWhileTrue().accept(this, null);
         this.leaveCurrentVariableDeclarationScope();
     }
 
     @Override
-    protected void visit(Statement.ExpressionStatement statement, Void context) {
-        statement.getExpression().accept(this, context);
+    protected void visit(Statement.ExpressionStatement statement, Options options) {
+        statement.getExpression().accept(this, null);
 
         // Expression must be valid for expression statement.
         if (!statement.getExpression().isValidForExpressionStatement()) {
@@ -259,36 +256,45 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
     }
 
     @Override
-    protected void visit(Statement.ReturnStatement statement, Void context) {
-        statement.getValue().ifPresent(node -> node.accept(this, context));
+    protected void visit(Statement.ReturnStatement statement, Options options) {
+        statement.getValue().ifPresent(node -> node.accept(this, null));
 
         TypeReference expectedReturnType = this.getCurrentMethodDeclaration().getReturnType();
 
-        if (statement.getValue().isPresent()) {
-            TypeOfExpression actualReturnType = statement.getValue().get().getType();
-
-            // Return value must be compatible with expected return type.
-            if (!canAssignTypeOfExpressionToTypeReference(actualReturnType, expectedReturnType)) {
-                throw fail(new TypeMismatchException(actualReturnType.toString(), statement.getLocation(),
-                    "return value", this.getCurrentMethodDeclaration().toString(),
-                    expectedReturnType.getBasicTypeReference().getDeclaration().getName()));
+        if (expectedReturnType.isVoid()) {
+            if (statement.getValue().isPresent()) {
+                throw fail(new SemanticException("Must not return value from void method",
+                        this.getCurrentMethodDeclaration().toString(), statement.getLocation()));
             }
         }
         else {
-            // Plain return is only allowed in void methods.
-            if (!expectedReturnType.isVoid()) {
-                throw fail(new SemanticException("Must return value from non-void method",
-                    this.getCurrentMethodDeclaration().toString(), statement.getLocation()));
+            if (statement.getValue().isPresent()) {
+                TypeOfExpression actualReturnType = statement.getValue().get().getType();
+
+                // Return value must be compatible with expected return type.
+                if (!canAssignTypeOfExpressionToTypeReference(actualReturnType, expectedReturnType)) {
+                    throw fail(new TypeMismatchException(actualReturnType.toString(), statement.getLocation(),
+                            "return value", this.getCurrentMethodDeclaration().toString(),
+                            expectedReturnType.getBasicTypeReference().getDeclaration().getName()));
+                }
+            }
+            else {
+
+                // Plain return is only allowed in void methods.
+                if (!expectedReturnType.isVoid()) {
+                    throw fail(new SemanticException("Must return value from non-void method",
+                            this.getCurrentMethodDeclaration().toString(), statement.getLocation()));
+                }
             }
         }
     }
 
     @Override
-    protected void visit(Statement.EmptyStatement statement, Void context) {}
+    protected void visit(Statement.EmptyStatement statement, Options options) {}
 
     @Override
-    protected void visit(Statement.LocalVariableDeclarationStatement statement, Void context) {
-        statement.getType().accept(this, context);
+    protected void visit(Statement.LocalVariableDeclarationStatement statement, Options options) {
+        statement.getType().accept(this, null);
 
         // Variables must not be of type void or array of void.
 
@@ -297,11 +303,11 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
                 this.getCurrentMethodDeclaration().toString(), statement.getLocation()));
         }
 
-        // TODO: Is the variable declaration known when evaluating the initial value expression?
+        // Variable declaration is already known when evaluating the initial value expression.
         this.addVariableDeclarationToCurrentScope(statement);
 
         if (statement.getValue().isPresent()) {
-            statement.getValue().get().accept(this, context);
+            statement.getValue().get().accept(this, null);
 
             // Type of initial value must be compatible with variable declaration.
             if (!canAssignTypeOfExpressionToTypeReference(statement.getValue().get().getType(), statement.getType())) {
@@ -314,18 +320,18 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
     }
 
     @Override
-    protected void visit(Statement.Block block, Void context) {
+    protected void visit(Statement.Block block, Options options) {
         this.enterNewVariableDeclarationScope();
 
-        block.getStatements().forEach(node -> node.accept(this, context));
+        block.getStatements().forEach(node -> node.accept(this, null));
 
         this.leaveCurrentVariableDeclarationScope();
     }
 
     @Override
-    protected void visit(Expression.BinaryOperation expression, Void context) {
-        expression.getLeft().accept(this, context);
-        expression.getRight().accept(this, context);
+    protected void visit(Expression.BinaryOperation expression, Options options) {
+        expression.getLeft().accept(this, null);
+        expression.getRight().accept(this, null);
 
         TypeOfExpression typeOfLeftOperand = expression.getLeft().getType();
         TypeOfExpression typeOfRightOperand = expression.getRight().getType();
@@ -425,11 +431,11 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
     }
 
     @Override
-    protected void visit(Expression.UnaryOperation expression, Void context) {
-        expression.getOther().accept(this, context);
-
+    protected void visit(Expression.UnaryOperation expression, Options options) {
         switch (expression.getOperationType()) {
             case LOGICAL_NEGATION:
+                expression.getOther().accept(this, null);
+
                 // Operand for logical negation must be boolean.
                 if (!expression.getOther().getType().isBoolean()) {
                     throw fail(new TypeMismatchException(expression.getOther().getType().toString(),
@@ -442,6 +448,13 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
                 break;
 
             case NUMERIC_NEGATION:
+                if (expression.getOther().hasExplicitParentheses()) {
+                    expression.getOther().accept(this, null);
+                }
+                else {
+                    expression.getOther().accept(this, Options.LITERALLY_PREFIXED_WITH_NUMERIC_NEGATION_SIGN);
+                }
+
                 // Operand for numeric negation must be integer.
                 if (!expression.getOther().getType().isInteger()) {
                     throw fail(new TypeMismatchException(expression.getOther().getType().toString(),
@@ -458,21 +471,26 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
     }
 
     @Override
-    protected void visit(Expression.NullLiteral expression, Void context) {
+    protected void visit(Expression.NullLiteral expression, Options options) {
         expression.getType().resolveToNull();
     }
 
     @Override
-    protected void visit(Expression.BooleanLiteral expression, Void context) {
+    protected void visit(Expression.BooleanLiteral expression, Options options) {
         expression.getType().resolveToBoolean();
     }
 
     @Override
-    protected void visit(Expression.IntegerLiteral expression, Void context) {
+    protected void visit(Expression.IntegerLiteral expression, Options options) {
 
         // Literal value must fit in signed 32 bit.
         try {
-            Integer.parseInt(expression.getValue());
+            if (options == Options.LITERALLY_PREFIXED_WITH_NUMERIC_NEGATION_SIGN) {
+                Integer.parseInt("-" + expression.getValue());
+            }
+            else {
+                Integer.parseInt(expression.getValue());
+            }
         }
         catch (NumberFormatException exception) {
             throw fail(new SemanticException("Integer literal too big", this.getCurrentMethodDeclaration().toString(),
@@ -483,16 +501,107 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
     }
 
     @Override
-    protected void visit(Expression.MethodInvocation expression, Void context) {
+    protected void visit(Expression.MethodInvocation expression, Options options) {
+        switch (expression.getMethodReference().getName()) {
+            case "println":
+            case "flush":
+            case "write":
+                expression.getContext().ifPresent(node -> node.accept(this, Options.ALLOW_SYSTEM_OUT));
+                break;
+            case "read":
+                expression.getContext().ifPresent(node -> node.accept(this, Options.ALLOW_SYSTEM_IN));
+                break;
+            default:
+                expression.getContext().ifPresent(node -> node.accept(this, null));
+                break;
 
-        expression.getContext().ifPresent(node -> node.accept(this, context));
-        expression.getArguments().forEach(node -> node.accept(this, context));
+        }
+
+        expression.getArguments().forEach(node -> node.accept(this, null));
 
         String methodName = expression.getMethodReference().getName();
         Optional<MethodDeclaration> methodDeclaration;
 
         if (expression.getContext().isPresent()) {
             TypeOfExpression typeOfContext = expression.getContext().get().getType();
+
+            // If type of context is not resolved, context is compiler magic.
+            if (!typeOfContext.isResolved()) {
+                TokenLocation location = expression.getContext().get().getLocation();
+                final Expression replacement;
+
+
+                switch (expression.getMethodReference().getName()) {
+                    case "println": {
+                        if (expression.getArguments().size() != 1) {
+                            throw fail(new SemanticException("Incorrect number of arguments for System.out.println " +
+                                    "syscall", this.getCurrentMethodDeclaration().toString(), location));
+                        }
+
+                        Expression argument = expression.getArguments().get(0);
+
+                        if (!expression.getArguments().get(0).getType().isInteger()) {
+                            throw fail(new SemanticException("Incompatible argument of type " + argument.getType() +
+                                    " for System.out.println syscall", this.getCurrentMethodDeclaration().toString(),
+                                    argument.getLocation()));
+                        }
+
+                        replacement = new Expression.SystemOutPrintlnExpression(argument, location);
+                        replacement.getType().resolveToVoid();
+
+                        break;
+                    }
+                    case "flush": {
+                        if (expression.getArguments().size() != 0) {
+                            throw fail(new SemanticException("Incorrect number of arguments for System.out.flush " +
+                                    "syscall", this.getCurrentMethodDeclaration().toString(), location));
+                        }
+
+                        replacement = new Expression.SystemOutFlushExpression(location);
+                        replacement.getType().resolveToVoid();
+
+                        break;
+                    }
+                    case "write": {
+                        if (expression.getArguments().size() != 1) {
+                            throw fail(new SemanticException("Incorrect number of arguments for System.out.write " +
+                                    "syscall", this.getCurrentMethodDeclaration().toString(), location));
+                        }
+
+                        Expression argument = expression.getArguments().get(0);
+
+                        if (!expression.getArguments().get(0).getType().isInteger()) {
+                            throw fail(new SemanticException("Incompatible argument of type " + argument.getType() +
+                                    " for System.out.writesyscall", this.getCurrentMethodDeclaration().toString(),
+                                    argument.getLocation()));
+                        }
+
+                        replacement = new Expression.SystemOutWriteExpression(argument, location);
+                        replacement.getType().resolveToVoid();
+
+                        break;
+                    }
+                    case "read": {
+                        if (expression.getArguments().size() != 0) {
+                            throw fail(new SemanticException("Incorrect number of arguments for System.in.read syscall",
+                                    this.getCurrentMethodDeclaration().toString(), location));
+                        }
+
+                        replacement = new Expression.SystemInReadExpression(location);
+                        replacement.getType().resolveToInteger();
+
+                        break;
+                    }
+                    default:
+                        throw new AssertionError();
+                }
+
+                assert this.getPreviousNode().isPresent();
+
+                this.getPreviousNode().get().substituteExpression(expression, replacement);
+
+                return;
+            }
 
             // Methods cannot be invoked on null literal.
             if (!typeOfContext.getDeclaration().isPresent()) {
@@ -561,11 +670,24 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
     }
 
     @Override
-    protected void visit(Expression.ExplicitFieldAccess expression, Void context) {
-
-        expression.getContext().accept(this, context);
+    protected void visit(Expression.ExplicitFieldAccess expression, Options options) {
+        if (options == Options.ALLOW_SYSTEM_OUT && expression.getFieldReference().getName().equals("out")) {
+            expression.getContext().accept(this, Options.ALLOW_SYSTEM);
+        }
+        else if (options == Options.ALLOW_SYSTEM_IN && expression.getFieldReference().getName().equals("in")) {
+            expression.getContext().accept(this, Options.ALLOW_SYSTEM);
+        }
+        else {
+            expression.getContext().accept(this, null);
+        }
 
         TypeOfExpression typeOfContext = expression.getContext().getType();
+
+        // If type of context is not resolved, context is compiler magic, and parent node (who must have specified
+        // ALLOW_SYSTEM_X is prepared to deal with context of unresolved type.
+        if (!typeOfContext.isResolved()) {
+            return;
+        }
 
         // Fields cannot be accessed on null literal.
         if (!typeOfContext.getDeclaration().isPresent()) {
@@ -602,9 +724,9 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
     }
 
     @Override
-    protected void visit(Expression.ArrayElementAccess expression, Void context) {
-        expression.getContext().accept(this, context);
-        expression.getIndex().accept(this, context);
+    protected void visit(Expression.ArrayElementAccess expression, Options options) {
+        expression.getContext().accept(this, null);
+        expression.getIndex().accept(this, null);
 
         TypeOfExpression typeOfContext = expression.getContext().getType();
 
@@ -633,7 +755,7 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
     }
 
     @Override
-    protected void visit(Expression.VariableAccess expression, Void context) {
+    protected void visit(Expression.VariableAccess expression, Options options) {
         String name = expression.getVariableReference().getName();
         Optional<VariableDeclaration> variableDeclaration = this.getVariableDeclarationForName(name);
 
@@ -645,13 +767,17 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
                 throw fail(new SemanticException("Cannot reference class with name '" + name + "' directly",
                     this.getCurrentMethodDeclaration().toString(), expression.getLocation()));
             }
-
-            // Retrieve global declarations
-            variableDeclaration = this.getGlobalVariableDeclarationForName(name);
         }
 
         // Variable reference must be resolvable.
         if (!variableDeclaration.isPresent()) {
+
+            // If we found a valid `System` reference, return without resolving type (we can't). Parent node is prepared
+            // to deal with expression of unresolved type.
+            if (options == Options.ALLOW_SYSTEM && expression.getVariableReference().getName().equals("System")) {
+                return;
+            }
+
             throw fail(new SemanticException("Use of undeclared variable '" + name + "'",
                 this.getCurrentMethodDeclaration().toString(), expression.getLocation()));
         }
@@ -677,7 +803,7 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
     }
 
     @Override
-    protected void visit(Expression.CurrentContextAccess expression, Void context) {
+    protected void visit(Expression.CurrentContextAccess expression, Options options) {
 
         // Current context may not be accessed in main methods.
         if (this.getCurrentMethodDeclaration() instanceof MainMethodDeclaration) {
@@ -689,7 +815,7 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
     }
 
     @Override
-    protected void visit(Expression.NewObjectCreation expression, Void context) {
+    protected void visit(Expression.NewObjectCreation expression, Options options) {
         String className = expression.getClassReference().getName();
         Optional<ClassDeclaration> classDeclaration = this.getClassDeclarationForName(className);
 
@@ -704,8 +830,8 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
     }
 
     @Override
-    protected void visit(Expression.NewArrayCreation expression, Void context) {
-        expression.getPrimaryDimension().accept(this, context);
+    protected void visit(Expression.NewArrayCreation expression, Options options) {
+        expression.getPrimaryDimension().accept(this, null);
 
         // Primary dimension must be integer.
         if (!expression.getPrimaryDimension().getType().isInteger()) {
@@ -732,5 +858,25 @@ public class ReferenceAndExpressionTypeResolver extends SemanticAnalysisVisitorB
         expression.getBasicTypeReference().resolveTo(basicTypeDeclaration.get());
         expression.getType().resolveToArrayOf(basicTypeDeclaration.get(),
             expression.getNumberOfDimensions(), false);
+    }
+
+    @Override
+    protected void visit(Expression.SystemOutPrintlnExpression expression, Options context) {
+        assert false : "This node should not exist when performing semantic analysis.";
+    }
+
+    @Override
+    protected void visit(Expression.SystemOutFlushExpression expression, Options context) {
+        assert false : "This node should not exist when performing semantic analysis.";
+    }
+
+    @Override
+    protected void visit(Expression.SystemOutWriteExpression expression, Options context) {
+        assert false : "This node should not exist when performing semantic analysis.";
+    }
+
+    @Override
+    protected void visit(Expression.SystemInReadExpression expression, Options context) {
+        assert false : "This node should not exist when performing semantic analysis.";
     }
 }

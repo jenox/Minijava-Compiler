@@ -45,6 +45,10 @@ public class TypeOfExpression {
         this.isResolved = true;
     }
 
+    public final void resolveToVoid() {
+        this.resolveToArrayOf(PrimitiveTypeDeclaration.VOID, 0, false);
+    }
+
     public final void resolveToBoolean() {
         this.resolveToArrayOf(PrimitiveTypeDeclaration.BOOLEAN, 0, false);
     }

@@ -55,8 +55,13 @@ public final class MainMethodDeclaration implements SubroutineDeclaration, Membe
 
     @Override
     public <T> void accept(ASTVisitor<T> visitor, T context) {
+        visitor.willVisit(this);
         visitor.visit(this, context);
+        visitor.didVisit(this);
     }
+
+    @Override
+    public void substituteExpression(Expression oldValue, Expression newValue) {}
 
     @Override
     public String toString() {
