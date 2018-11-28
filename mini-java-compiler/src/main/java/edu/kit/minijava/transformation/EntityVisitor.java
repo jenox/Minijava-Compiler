@@ -168,6 +168,8 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
             graph.getEndBlock().addPred(returnNode);
         }
 
+        graph.getEndBlock().addPred(context.getResult());
+
         // No code should follow a return statement.
         construction.setUnreachable();
         // Done.
@@ -383,11 +385,20 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
     @Override
     protected void visit(edu.kit.minijava.ast.nodes.Statement.Block block, EntityContext context) {
-        // TODO: should a block be created here?
+        Construction construction = context.getConstruction();
 
+        if (!this.isVariableCounting) {
+            //TODO: check
+            firm.nodes.Block newBlock = construction.newBlock();
+            Node node = construction.newDummy(Mode.getX());
+            newBlock.addPred(node);
+
+            construction.setCurrentBlock(newBlock);
+        }
         for (Statement stmt : block.getStatements()) {
             stmt.accept(this, context);
         }
+
     }
 
     @Override
