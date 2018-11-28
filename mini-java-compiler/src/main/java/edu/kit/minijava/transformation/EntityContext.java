@@ -17,7 +17,7 @@ public class EntityContext {
     private StructType classType;
 
     public Declaration getDecl() {
-        return decl;
+        return this.decl;
     }
 
     public void setDecl(Declaration decl) {
@@ -31,32 +31,28 @@ public class EntityContext {
     }
 
     public StructType getClassType() {
-        return classType;
+        return this.classType;
     }
 
     public void setClassType(StructType classType) {
         this.classType = classType;
     }
 
-
     public void setConstruction(Construction construction) {
         this.construction = construction;
     }
 
-
     public Node getResult() {
-        return result;
+        return this.result;
     }
 
     public void setResult(Node result) {
         this.result = result;
     }
 
-
     public Construction getConstruction() {
-        return construction;
+        return this.construction;
     }
-
 
     public EntityContext() {
         this.numberOfLocalVars = 0;
