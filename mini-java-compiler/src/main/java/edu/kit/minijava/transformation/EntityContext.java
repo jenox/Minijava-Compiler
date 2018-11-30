@@ -10,11 +10,30 @@ import firm.nodes.Node;
 public class EntityContext {
 
     private Type type;
+    private Type elementType;
     private int numberOfLocalVars;
     private Graph graph;
     private Node result = null;
     private Construction construction;
     private StructType classType;
+    private Declaration decl;
+    private boolean isLeftSideOfAssignment;
+
+    public Type getElementType() {
+        return elementType;
+    }
+
+    public void setElementType(Type elementType) {
+        this.elementType = elementType;
+    }
+
+    public boolean isLeftSideOfAssignment() {
+        return isLeftSideOfAssignment;
+    }
+
+    public void setLeftSideOfAssignment(boolean leftSideOfAssignment) {
+        isLeftSideOfAssignment = leftSideOfAssignment;
+    }
 
     public Declaration getDecl() {
         return this.decl;
@@ -24,7 +43,6 @@ public class EntityContext {
         this.decl = decl;
     }
 
-    private Declaration decl;
 
     public void setNumberOfLocalVars(int numberOfLocalVars) {
         this.numberOfLocalVars = numberOfLocalVars;
