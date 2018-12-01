@@ -1,5 +1,13 @@
 #include <stdio.h>
 
+int __minijava_main(void);
+
+int main(void) {
+    printf("MiniJava runtime: Main function\n");
+    int result = __minijava_main();
+    return result;
+}
+
 int system_in_read() {
     printf("MiniJava runtime: read\n");
     return getchar();
