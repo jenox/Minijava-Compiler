@@ -26,6 +26,7 @@ public class CommandLineInterface {
                 command = new ValidateCommand();
                 break;
             case "--transform":
+            case "--compile-firm":
                 command = new TransformerCommand();
                 break;
             default:
