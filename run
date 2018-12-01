@@ -1,5 +1,8 @@
 #!/bin/bash
 
 SCRIPT_PATH=$(dirname "$0")
-export LD_LIBRARY_PATH="$SCRIPT_PATH/mini-java-compiler/lib"
-java -jar -ea "$SCRIPT_PATH/mini-java-compiler/build/libs/mini-java-compiler-1.0-SNAPSHOT.jar" "$@"
+
+export LD_LIBRARY_PATH="$SCRIPT_PATH/mini-java-compiler/lib:$LD_LIBRARY_PATH"
+export DYLD_LIBRARY_PATH="$SCRIPT_PATH/mini-java-compiler/lib:$DYLD_LIBRARY_PATH"
+
+java -jar -ea -Djna.library.path="$SCRIPT_PATH/mini-java-compiler/lib" "$SCRIPT_PATH/mini-java-compiler/build/libs/mini-java-compiler-1.0-SNAPSHOT.jar" "$@"
