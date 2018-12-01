@@ -18,6 +18,15 @@ public class EntityContext {
     private StructType classType;
     private Declaration decl;
     private boolean isLeftSideOfAssignment;
+    private boolean isTopLevel;
+
+    public boolean isTopLevel() {
+        return isTopLevel;
+    }
+
+    public void setTopLevel(boolean topLevel) {
+        isTopLevel = topLevel;
+    }
 
     public Type getElementType() {
         return elementType;
