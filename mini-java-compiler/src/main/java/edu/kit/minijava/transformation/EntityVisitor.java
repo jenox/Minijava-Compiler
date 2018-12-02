@@ -465,13 +465,14 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
                 e.accept(this, context);
                 int num = this.variableNums.get(statement);
 
-                if (e instanceof SystemInReadExpression) {
-                    Type type = this.types.get(statement.getType().getBasicTypeReference().getDeclaration());
-                    context.getConstruction().setVariable(num, context.getConstruction().newConst(0, type.getMode()));
-                }
-                else {
+                // TODO What was this for?
+//                if (e instanceof SystemInReadExpression) {
+//                    Type type = this.types.get(statement.getType().getBasicTypeReference().getDeclaration());
+//                    context.getConstruction().setVariable(num, context.getConstruction().newConst(0, type.getMode()));
+//                }
+//                else {
                     context.getConstruction().setVariable(num, context.getResult());
-                }
+//                }
             });
         }
         else {
