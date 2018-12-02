@@ -104,7 +104,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
     @Override
     protected void visit(ClassDeclaration classDeclaration, EntityContext context) {
         // flush everything
-        variableNums = new HashMap<>();
+        this.variableNums = new HashMap<>();
 
         StructType structType = new StructType(classDeclaration.getName());
         context.setClassType(structType);
@@ -282,7 +282,8 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
             }
 
             firmType = elementType;
-        } else if (!decl.isClassDeclaration()) {
+        }
+        else if (!decl.isClassDeclaration()) {
 
             PrimitiveTypeDeclaration decl_ = (PrimitiveTypeDeclaration) decl;
 
@@ -356,7 +357,8 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
                 bAfter.addPred(projFalse);
             }
             context.getConstruction().setCurrentBlock(bAfter);
-        } else {
+        }
+        else {
             statement.getStatementIfTrue().accept(this, context);
             statement.getStatementIfFalse().ifPresent(c -> c.accept(this, context));
         }
@@ -392,7 +394,8 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
             firm.nodes.Block afterLoop = construction.newBlock();
             afterLoop.addPred(projFalse);
             construction.setCurrentBlock(afterLoop);
-        } else {
+        }
+        else {
             statement.getStatementWhileTrue().accept(this, context);
         }
     }
@@ -439,7 +442,8 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
                 if (e instanceof SystemInReadExpression) {
                     Type type = this.types.get(statement.getType().getBasicTypeReference().getDeclaration());
                     context.getConstruction().setVariable(num, context.getConstruction().newConst(0, type.getMode()));
-                } else {
+                }
+                else {
                     context.getConstruction().setVariable(num, context.getResult());
                 }
             });
@@ -607,7 +611,8 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
             Node[] in = new Node[expression.getArguments().size() + 1];
 
             if (context.isCalledFromMain()) {
-                Declaration decl = ((VariableAccess) expression.getContext().get()).getVariableReference().getDeclaration();
+                Declaration decl =
+                    ((VariableAccess) expression.getContext().get()).getVariableReference().getDeclaration();
                 int num = this.variableNums.get(decl);
 
                 in[0] = construction.getVariable(num, Mode.getP());
@@ -618,7 +623,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
             for (int i = 0; i < expression.getArguments().size(); i++) {
                 expression.getArguments().get(i).accept(this, context);
-                in[i+1] = context.getResult();
+                in[i + 1] = context.getResult();
             }
 
             Entity methodEntity = this.entities.get(expression.getMethodReference().getDeclaration());
@@ -650,8 +655,10 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
             ClassDeclaration decl = (ClassDeclaration) expression.getContext().getType().getDeclaration().get();
             if (decl.getName() == this.currentClassName) {
                 num = 0;
-            } else {
-                VariableDeclaration varDecl = ((VariableAccess) expression.getContext()).getVariableReference().getDeclaration();
+            }
+            else {
+                VariableDeclaration varDecl =
+                    ((VariableAccess) expression.getContext()).getVariableReference().getDeclaration();
                 num = this.variableNums.get(varDecl);
             }
 
@@ -666,7 +673,8 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
             if (isLeftSide) {
                 Node store = context.getConstruction().newStore(mem, member, right);
                 newMem = context.getConstruction().newProj(store, Mode.getM(), Store.pnM);
-            } else {
+            }
+            else {
                 Node load = context.getConstruction().newLoad(mem, member, mode);
                 newMem = context.getConstruction().newProj(load, Mode.getM(), Load.pnM);
                 result = context.getConstruction().newProj(load, mode, Load.pnRes);
@@ -709,7 +717,8 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
                     Node sel = context.getConstruction().newSel(arrayPointer, index, type);
                     Node store = context.getConstruction().newStore(mem, sel, right);
                     newMem = context.getConstruction().newProj(store, Mode.getM(), Store.pnM);
-                } else {
+                }
+                else {
                     Node sel = context.getConstruction().newSel(arrayPointer, index, type);
                     Node load = context.getConstruction().newLoad(mem, sel, elementType.getMode());
                     newMem = context.getConstruction().newProj(load, Mode.getM(), Load.pnM);
@@ -718,12 +727,14 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
                 }
 
                 context.getConstruction().setCurrentMem(newMem);
-            } else {
+            }
+            else {
                 Node sel = context.getConstruction().newSel(arrayPointer, index, type);
                 context.setResult(sel);
             }
 
-        } else {
+        }
+        else {
             expression.getContext().accept(this, context);
         }
     }
@@ -751,12 +762,14 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
                 if (isLeftSide) {
                     context.getConstruction().setVariable(n, right);
-                } else {
+                }
+                else {
                     Node getNode = context.getConstruction().getVariable(n, mode);
                     context.setResult(getNode);
                 }
 
-            } else if (decl instanceof FieldDeclaration) {
+            }
+            else if (decl instanceof FieldDeclaration) {
                 //expression.getContext().accept(this, context);
 
                 Entity field = this.entities.get(decl);
@@ -774,7 +787,8 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
                 if (isLeftSide) {
                     Node store = context.getConstruction().newStore(mem, member, right);
                     newMem = context.getConstruction().newProj(store, Mode.getM(), Store.pnM);
-                } else {
+                }
+                else {
                     Node load = context.getConstruction().newLoad(mem, member, mode);
                     newMem = context.getConstruction().newProj(load, Mode.getM(), Load.pnM);
                     Node result = context.getConstruction().newProj(load, mode, Load.pnRes);

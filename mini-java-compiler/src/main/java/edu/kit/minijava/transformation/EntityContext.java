@@ -22,23 +22,23 @@ public class EntityContext {
     private boolean isCalledFromMain;
 
     public boolean isCalledFromMain() {
-        return isCalledFromMain;
+        return this.isCalledFromMain;
     }
 
     public void setCalledFromMain(boolean calledFromMain) {
-        isCalledFromMain = calledFromMain;
+        this.isCalledFromMain = calledFromMain;
     }
 
     public boolean isTopLevel() {
-        return isTopLevel;
+        return this.isTopLevel;
     }
 
     public void setTopLevel(boolean topLevel) {
-        isTopLevel = topLevel;
+        this.isTopLevel = topLevel;
     }
 
     public Type getElementType() {
-        return elementType;
+        return this.elementType;
     }
 
     public void setElementType(Type elementType) {
@@ -46,11 +46,11 @@ public class EntityContext {
     }
 
     public boolean isLeftSideOfAssignment() {
-        return isLeftSideOfAssignment;
+        return this.isLeftSideOfAssignment;
     }
 
     public void setLeftSideOfAssignment(boolean leftSideOfAssignment) {
-        isLeftSideOfAssignment = leftSideOfAssignment;
+        this.isLeftSideOfAssignment = leftSideOfAssignment;
     }
 
     public Declaration getDecl() {
