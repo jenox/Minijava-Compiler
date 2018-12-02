@@ -162,9 +162,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
     @Override
     protected void visit(MainMethodDeclaration methodDeclaration, EntityContext context) {
         Type[] parameterTypes = {};
-
-        Type voidType = new PrimitiveType(Mode.getBs());
-        Type[] resultTypes = { voidType };
+        Type[] resultTypes = {};
 
         MethodType mainMethodType = new MethodType(parameterTypes, resultTypes);
         // this.getUniqueMemberName(methodDeclaration.getName())
@@ -186,8 +184,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
         methodDeclaration.getBody().accept(this, context);
 
         Node mem = construction.getCurrentMem();
-        Node[] results = { construction.newDummy(Mode.getBs()) };
-        Node returnNode = construction.newReturn(mem, results);
+        Node returnNode = construction.newReturn(mem, new Node[] {});
         graph.getEndBlock().addPred(returnNode);
 
         // No code should follow a return statement.
@@ -212,8 +209,12 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
         }
 
         // GET RETURN TYPE OF THE METHOD
+        Type[] resultType = {};
+
         methodDeclaration.getReturnType().accept(this, context);
-        Type[] resultType = { context.getType() };
+        if (!methodDeclaration.getReturnType().isVoid()) {
+            resultType = new Type[] {context.getType()};
+        }
 
         // CREATE ENTITY FOR METHOD
         MethodType methodType = new MethodType(parameterTypes, resultType);
@@ -249,9 +250,11 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
         // no return stmts so far? -> create return node
         if (graph.getEndBlock().getPredCount() == 0) {
+
+            assert methodDeclaration.getReturnType().isVoid() : "Fell through without return on non-void method.";
+
             Node mem = construction.getCurrentMem();
-            Node[] results = { construction.newDummy(Mode.getBs()) };
-            Node returnNode = construction.newReturn(mem, results);
+            Node returnNode = construction.newReturn(mem, new Node[] {});
             graph.getEndBlock().addPred(returnNode);
         }
 
@@ -653,8 +656,14 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
             Node newMem = context.getConstruction().newProj(callNode, Mode.getM(), Call.pnM);
             context.getConstruction().setCurrentMem(newMem);
 
-            Node tuple = context.getConstruction().newProj(callNode, Mode.getT(), Call.pnTResult);
-            result = context.getConstruction().newProj(tuple, Mode.getIs(), 0);
+            // Retrieve mode for the return value
+            if (!expression.getType().isVoid()) {
+                Mode returnMode = this.getModeForType(expression.getType());
+                assert returnMode != null;
+
+                Node tuple = context.getConstruction().newProj(callNode, Mode.getT(), Call.pnTResult);
+                result = context.getConstruction().newProj(tuple, returnMode, 0);
+            }
         }
 
         context.setResult(result);
