@@ -69,7 +69,7 @@ public class Lower {
 //                ((StructType) type).layoutFields();
 //            }
 
-            System.out.println(type.toString() + " with name:" + type.getSize());
+//            System.out.println(type.toString() + " with name:" + type.getSize());
             // type.finishLayout();
         }
     }
