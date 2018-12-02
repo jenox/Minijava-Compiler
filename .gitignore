@@ -35,3 +35,10 @@ proguard/
 !*/build.gradle
 build/
 bin/
+
+# Firm graph representations
+*.vcg
+
+# Generated assembly and code
+*.s
+*.out
