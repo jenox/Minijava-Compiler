@@ -31,6 +31,11 @@ public enum PrimitiveTypeDeclaration implements BasicTypeDeclaration {
         return Collections.emptyList();
     }
 
+    @Override
+    public boolean isClassDeclaration() {
+        return false;
+    }
+
     public boolean canBeReferencedByUser() {
         return this.canBeReferencedByUser;
     }

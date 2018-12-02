@@ -124,6 +124,12 @@ public class TypeOfExpression {
         return this.numberOfDimensions > 0;
     }
 
+    public final boolean isVoid() {
+        assert this.isResolved;
+
+        return this.declaration == PrimitiveTypeDeclaration.VOID && this.numberOfDimensions == 0;
+    }
+
 
     // MARK: - Other
 

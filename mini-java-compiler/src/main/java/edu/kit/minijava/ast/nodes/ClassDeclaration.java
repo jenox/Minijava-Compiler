@@ -6,8 +6,8 @@ import java.util.*;
 
 public final class ClassDeclaration implements BasicTypeDeclaration, ASTNode {
     public ClassDeclaration(String name, List<MainMethodDeclaration> mainMethodDeclarations,
-                            List<MethodDeclaration> methodDeclarations, List<FieldDeclaration> fieldDeclarations,
-                            TokenLocation location) {
+                    List<MethodDeclaration> methodDeclarations, List<FieldDeclaration> fieldDeclarations,
+                    TokenLocation location) {
         this.name = name;
         this.mainMethodDeclarations = Collections.unmodifiableList(mainMethodDeclarations);
         this.methodDeclarations = Collections.unmodifiableList(methodDeclarations);
@@ -53,6 +53,11 @@ public final class ClassDeclaration implements BasicTypeDeclaration, ASTNode {
 
     @Override
     public void substituteExpression(Expression oldValue, Expression newValue) {}
+
+    @Override
+    public boolean isClassDeclaration() {
+        return true;
+    }
 
     @Override
     public String toString() {

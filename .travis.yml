@@ -29,7 +29,8 @@ jobs:
         - ./mjtest/mjt.py syntax --ci_testing --parallel --output_no_incorrect_reports
         - ./mjtest/mjt.py ast --ci_testing --parallel --output_no_incorrect_reports
         - ./mjtest/mjt.py semantic --ci_testing --parallel --output_no_incorrect_reports
-    - name: Custom mjtest Tests (all up to AST)
+        - ./mjtest/mjt.py compile-firm --ci_testing --parallel --output_no_incorrect_reports
+    - name: Custom mjtest Tests (all up to Semantic Tests)
       script:
         - ./build
         - git clone --recursive https://git.scc.kit.edu/ubduq/mjtest.git
@@ -39,13 +40,14 @@ jobs:
         - ./mjtest/mjt.py lexer --ci_testing --parallel --output_no_incorrect_reports
         - ./mjtest/mjt.py syntax --ci_testing --parallel --output_no_incorrect_reports
         - ./mjtest/mjt.py ast --ci_testing --parallel --output_no_incorrect_reports
-    - name: Custom mjtest Semantic Analysis Tests
+        - ./mjtest/mjt.py semantic --ci_testing --parallel --output_no_incorrect_reports
+    - name: Custom mjtest Firm Compilation Tests
       script:
         - ./build
         - git clone --recursive https://git.scc.kit.edu/ubduq/mjtest.git
         - cd mjtest/tests
         - git checkout dev
         - cd ../..
-        - ./mjtest/mjt.py semantic --ci_testing --parallel --output_no_incorrect_reports
+        - ./mjtest/mjt.py compile-firm --ci_testing --parallel --output_no_incorrect_reports
     - name: Style Check
       script: ./mini-java-compiler/gradlew -b ./mini-java-compiler/build.gradle checkstyleMain checkstyleTest

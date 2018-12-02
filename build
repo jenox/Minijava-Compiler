@@ -2,3 +2,10 @@
 
 SCRIPT_PATH=$(dirname "$0")
 "$SCRIPT_PATH/mini-java-compiler/gradlew" -b "$SCRIPT_PATH/mini-java-compiler/build.gradle" build
+
+MJ_RUNTIME_LIB_PATH=$SCRIPT_PATH/mini-java-compiler/build/libs/stdlib.o
+MJ_RUNTIME_SOURCE_PATH=$SCRIPT_PATH/mini-java-compiler/lib/stdlib.c
+
+echo "Building MiniJava runtime, writing to: $MJ_RUNTIME_LIB_PATH"
+
+gcc -c -o $MJ_RUNTIME_LIB_PATH $MJ_RUNTIME_SOURCE_PATH

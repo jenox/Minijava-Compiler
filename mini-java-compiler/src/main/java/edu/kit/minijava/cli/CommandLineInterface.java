@@ -25,6 +25,10 @@ public class CommandLineInterface {
             case "--check":
                 command = new ValidateCommand();
                 break;
+            case "--transform":
+            case "--compile-firm":
+                command = new TransformerCommand();
+                break;
             default:
                 CommandLineInterface.printErrorAndExit();
                 return;
@@ -37,6 +41,7 @@ public class CommandLineInterface {
         catch (Throwable exception) {
             String message = exception.getLocalizedMessage();
 
+            exception.printStackTrace();
             if (message == null || message.isEmpty()) {
                 System.err.println("error: something went terribly wrong!");
                 System.err.println();
