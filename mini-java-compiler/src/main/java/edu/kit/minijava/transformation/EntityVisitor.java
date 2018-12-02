@@ -15,8 +15,9 @@ import edu.kit.minijava.ast.references.TypeOfExpression;
 import firm.*;
 import firm.bindings.binding_ircons;
 import firm.nodes.*;
+import firm.nodes.Block;
 
-public class EntityVisitor extends ASTVisitor<EntityContext> {
+    public class EntityVisitor extends ASTVisitor<EntityContext> {
 
     private CompoundType globalType;
     private String currentClassName;
@@ -560,6 +561,36 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
     @Override
     protected void visit(BinaryOperation expression, EntityContext context) {
 
+        Node bin = null;
+
+        if (expression.getOperationType() == BinaryOperationType.LOGICAL_AND) {
+            if (this.isVariableCounting) {
+                expression.getRight().accept(this, context);
+                context.setLeftSideOfAssignment(false);
+                expression.getLeft().accept(this, context);
+
+            }
+            else {
+                context.setResult(this.handleShortCircuitedAnd(expression, context));
+            }
+
+            return;
+        }
+
+        if (expression.getOperationType() == BinaryOperationType.LOGICAL_OR) {
+            if (this.isVariableCounting) {
+                expression.getRight().accept(this, context);
+                context.setLeftSideOfAssignment(false);
+                expression.getLeft().accept(this, context);
+
+            }
+            else {
+                context.setResult(this.handleShortCircuitedOr(expression, context));
+            }
+
+            return;
+        }
+
         expression.getRight().accept(this, context);
         Node right = context.getResult();
 
@@ -567,7 +598,6 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
         expression.getLeft().accept(this, context);
         Node left = context.getResult();
 
-        Node bin = null;
 
         if (!this.isVariableCounting) {
             switch (expression.getOperationType()) {
@@ -579,12 +609,6 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
                     break;
                 case MULTIPLICATION:
                     bin = context.getConstruction().newMul(left, right);
-                    break;
-                case LOGICAL_OR:
-                    bin = context.getConstruction().newOr(left, right);
-                    break;
-                case LOGICAL_AND:
-                    bin = context.getConstruction().newAnd(left, right);
                     break;
                 case LESS_THAN:
                     bin = context.getConstruction().newCmp(left, right, Relation.Less);
@@ -623,12 +647,13 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
                 case ASSIGNMENT:
                     bin = right;
                 default:
-                    break;
+                    assert false : "Unhandled binary operation!";
             }
         }
 
         context.setResult(bin);
     }
+
 
     @Override
     protected void visit(UnaryOperation expression, EntityContext context) {
@@ -1097,6 +1122,108 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
         context.setResult(result);
     }
 
+    private Node handleShortCircuitedAnd(BinaryOperation expression, EntityContext context) {
+        Construction construction = context.getConstruction();
+
+        expression.getLeft().accept(this, context);
+        Node left = context.getResult();
+
+        // Projection to cond with lhs
+        Node lhsCond = this.createCond(left, construction);
+
+        Node leftTrue = construction.newProj(lhsCond, Mode.getX(), Cond.pnTrue);
+        Node leftFalse = construction.newProj(lhsCond, Mode.getX(), Cond.pnFalse);
+
+        // construction.getCurrentBlock().mature();
+
+        Block lhsTrueBlock = construction.newBlock();
+        lhsTrueBlock.addPred(leftTrue);
+        construction.setCurrentBlock(lhsTrueBlock);
+
+        expression.getRight().accept(this, context);
+        Node right = context.getResult();
+
+        // Projection to cond with lhs
+        Node rhsCond = this.createCond(right, construction);
+
+        Node rightTrue = context.getConstruction().newProj(rhsCond, Mode.getX(), Cond.pnTrue);
+        Node rightFalse = context.getConstruction().newProj(rhsCond, Mode.getX(), Cond.pnFalse);
+
+        // construction.getCurrentBlock().mature();
+
+        Block blockEitherFalse = construction.newBlock();
+        construction.setCurrentBlock(blockEitherFalse);
+        blockEitherFalse.addPred(leftFalse);
+        blockEitherFalse.addPred(rightFalse);
+
+        Node eitherFalseJmp = construction.newJmp();
+
+        Node constZero = construction.newConst(0, Mode.getBs());
+        Node constOne = construction.newConst(1, Mode.getBs());
+
+        Block afterBlock = construction.newBlock();
+        construction.setCurrentBlock(afterBlock);
+
+        afterBlock.addPred(eitherFalseJmp);
+        afterBlock.addPred(rightTrue);
+
+        Node phiNode = construction.newPhi(new Node[] {constZero, constOne}, Mode.getBs());
+
+        context.setResult(phiNode);
+        return phiNode;
+    }
+
+    private Node handleShortCircuitedOr(BinaryOperation expression, EntityContext context) {
+        Construction construction = context.getConstruction();
+
+        expression.getLeft().accept(this, context);
+        Node left = context.getResult();
+
+        // Projection to cond with lhs
+        Node lhsCond = this.createCond(left, construction);
+
+        Node leftTrue = construction.newProj(lhsCond, Mode.getX(), Cond.pnTrue);
+        Node leftFalse = construction.newProj(lhsCond, Mode.getX(), Cond.pnFalse);
+
+        // construction.getCurrentBlock().mature();
+
+        Block lhsFalseBlock = construction.newBlock();
+        lhsFalseBlock.addPred(leftFalse);
+        construction.setCurrentBlock(lhsFalseBlock);
+
+        expression.getRight().accept(this, context);
+        Node right = context.getResult();
+
+        // Projection to cond with lhs
+        Node rhsCond = this.createCond(right, construction);
+
+        Node rightTrue = context.getConstruction().newProj(rhsCond, Mode.getX(), Cond.pnTrue);
+        Node rightFalse = context.getConstruction().newProj(rhsCond, Mode.getX(), Cond.pnFalse);
+
+        // construction.getCurrentBlock().mature();
+
+        Block blockEitherTrue = construction.newBlock();
+        construction.setCurrentBlock(blockEitherTrue);
+        blockEitherTrue.addPred(leftTrue);
+        blockEitherTrue.addPred(rightTrue);
+
+        Node eitherTrueJump = construction.newJmp();
+
+        Node constZero = construction.newConst(0, Mode.getBs());
+        Node constOne = construction.newConst(1, Mode.getBs());
+
+        Block afterBlock = construction.newBlock();
+        construction.setCurrentBlock(afterBlock);
+
+        afterBlock.addPred(rightFalse);
+        afterBlock.addPred(eitherTrueJump);
+
+        Node phiNode = construction.newPhi(new Node[] {constZero, constOne}, Mode.getBs());
+
+        context.setResult(phiNode);
+        return phiNode;
+    }
+
     private String getUniqueMemberName(String methodName) {
         return this.currentClassName + "." + methodName;
     }
@@ -1118,5 +1245,18 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
             assert false : "Cannot get correct mode for type!";
             return null;
         }
+    }
+
+    private Node createCond(Node node, Construction construction) {
+        Node cond;
+        if (node.getMode().equals(Mode.getBs())) {
+            Node byteFalse = construction.newConst(0, Mode.getBs());
+            Node cmp = construction.newCmp(node, byteFalse, Relation.Equal.negated());
+            cond = construction.newCond(cmp);
+        }
+        else {
+            cond = construction.newCond(node);
+        }
+        return cond;
     }
 }
