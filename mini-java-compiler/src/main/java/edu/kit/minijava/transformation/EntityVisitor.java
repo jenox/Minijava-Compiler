@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import edu.kit.minijava.ast.nodes.*;
 import edu.kit.minijava.ast.nodes.Expression.*;
@@ -485,13 +486,19 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
     @Override
     protected void visit(ReturnStatement statement, EntityContext context) {
         context.setTopLevel(true);
-        statement.getValue().ifPresent(e -> e.accept(this, context));
+
+        Optional<Expression> returnValue = statement.getValue();
+        if (returnValue.isPresent()) {
+            returnValue.get().accept(this, context);
+        }
+        else {
+            context.setResult(null);
+        }
 
         if (!this.isVariableCounting) {
-            Node[] results = {};
+            Node[] results;
             Node mem = context.getConstruction().getCurrentMem();
 
-            // TODO: check this
             if (context.getResult() != null) {
                 results = new Node[] { context.getResult() };
 
