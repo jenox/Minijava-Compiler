@@ -48,9 +48,12 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
             Dump.dumpGraph(g, "");
         }
 
-        Backend.lowerForTarget();
-        Backend.createAssembler(outputFilename, "minijava");
+        Lower.lower();
 
+        Backend.lowerForTarget();
+
+        // TODO What is the compilation unit name for?
+        Backend.createAssembler(outputFilename,  "<builtin>");
     }
 
     public void transform(Program program) throws IOException {
