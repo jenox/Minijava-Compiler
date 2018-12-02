@@ -25,7 +25,7 @@ public class TransformerCommand extends Command {
 
             Program program = parser.parseProgram();
 
-            ReferenceAndExpressionTypeResolver resolver = new ReferenceAndExpressionTypeResolver(program);
+            new ReferenceAndExpressionTypeResolver(program);
 
             String asmOutputFilename = "a.s";
             String executableFilename = "a.out";
