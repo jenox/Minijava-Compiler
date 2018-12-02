@@ -141,6 +141,11 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
         for (MainMethodDeclaration mainMethodDeclaration : classDeclaration.getMainMethodDeclarations()) {
             mainMethodDeclaration.accept(this, context);
         }
+
+        // Layout class
+        // TODO Is this the right place for this?
+        structType.layoutFields();
+
     }
 
     @Override
