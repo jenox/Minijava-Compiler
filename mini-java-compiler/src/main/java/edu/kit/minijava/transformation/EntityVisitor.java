@@ -5,6 +5,7 @@ import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.sun.jna.Pointer;
 import edu.kit.minijava.ast.nodes.*;
 import edu.kit.minijava.ast.nodes.Expression.*;
 import edu.kit.minijava.ast.nodes.Program;
@@ -542,6 +543,10 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
     protected void visit(edu.kit.minijava.ast.nodes.Statement.Block block, EntityContext context) {
         for (Statement stmt : block.getStatements()) {
             stmt.accept(this, context);
+
+            if (stmt instanceof ReturnStatement) {
+                break;
+            }
         }
     }
 
@@ -644,7 +649,9 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
     @Override
     protected void visit(NullLiteral expression, EntityContext context) {
-        Node result = context.getConstruction().newUnknown(Mode.getP());
+        //Node result = context.getConstruction().newUnknown(Mode.getP());
+        TargetValue arst = new TargetValue(0, Mode.getP());
+        Node result = context.getConstruction().newConst(arst);
         context.setResult(result);
     }
 
@@ -939,14 +946,40 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
     @Override
     protected void visit(NewObjectCreation expression, EntityContext context) {
         if (!this.isVariableCounting) {
+            // calculate size and alignment
             Node mem = context.getConstruction().getCurrentMem();
             int classSize = this.classSizes.get(expression.getClassReference().getDeclaration());
             Node size = context.getConstruction().newConst(classSize , Mode.getIu());
             int alignment = this.types.get(expression.getClassReference().getDeclaration()).getAlignment();
 
+            // allocate memory
             Node alloc = context.getConstruction().newAlloc(mem, size, alignment);
             Node newMem = context.getConstruction().newProj(alloc, Mode.getM(), Alloc.pnM);
             Node res = context.getConstruction().newProj(alloc, Mode.getP(), Alloc.pnRes);
+
+            // init fields
+            context.setLeftSideOfAssignment(true);
+            for (FieldDeclaration decl : expression.getClassReference().getDeclaration().getFieldDeclarations()) {
+                Entity field = this.entities.get(decl);
+                Node member = context.getConstruction().newMember(res, field);
+                Mode mode = this.types.get(decl).getMode();
+
+                Node right = null;
+                if (mode.equals(Mode.getBs())) {
+                    right = context.getConstruction().newConst(0, Mode.getBs());
+                } else if (mode.equals(Mode.getIs())) {
+                    right = context.getConstruction().newConst(0, Mode.getBs());
+                } else if (mode.equals(Mode.getP())) {
+                    TargetValue arst = new TargetValue(0, Mode.getP());
+                    right = context.getConstruction().newConst(arst);
+                    //right = context.getConstruction().newUnknown(Mode.getP());
+                }
+
+                Node store = context.getConstruction().newStore(mem, member, right);
+                newMem = context.getConstruction().newProj(store, Mode.getM(), Store.pnM);
+
+            }
+            context.setLeftSideOfAssignment(false);
 
             context.getConstruction().setCurrentMem(newMem);
             context.setResult(res);
