@@ -698,7 +698,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
         if (!this.isVariableCounting) {
             TargetValue tarval;
             if (expression.getValue()) {
-                tarval = new TargetValue(1, Mode.getBs());
+                tarval = new TargetValue(-1, Mode.getBs());
             }
             else {
                 tarval = new TargetValue(0, Mode.getBs());
@@ -782,7 +782,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
                 if (context.getResult().getMode().equals(Mode.getb())) {
                     Node cresult = context.getResult();
                     if (cresult.equals(TargetValue.getBTrue())) {
-                        in[i + 1] = construction.newConst(1, Mode.getBs());
+                        in[i + 1] = construction.newConst(-1, Mode.getBs());
                     }
                     else {
                         in[i + 1] = construction.newConst(0, Mode.getBs());
@@ -1180,7 +1180,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
         Node eitherFalseJmp = construction.newJmp();
 
         Node constZero = construction.newConst(0, Mode.getBs());
-        Node constOne = construction.newConst(1, Mode.getBs());
+        Node constOne = construction.newConst(-1, Mode.getBs());
 
         Block afterBlock = construction.newBlock();
         construction.setCurrentBlock(afterBlock);
@@ -1231,7 +1231,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
         Node eitherTrueJump = construction.newJmp();
 
         Node constZero = construction.newConst(0, Mode.getBs());
-        Node constOne = construction.newConst(1, Mode.getBs());
+        Node constOne = construction.newConst(-1, Mode.getBs());
 
         Block afterBlock = construction.newBlock();
         construction.setCurrentBlock(afterBlock);
