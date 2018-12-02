@@ -32,6 +32,11 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
     private boolean isVariableCounting = false;
     private ClassDeclaration currentClassDeclaration;
 
+    // CONSTANTS
+    private Node nullNode = null;
+    private Node trueNode = null;
+    private Node falseNode = null;
+
 
     public void transform(Program program, String outputFilename) throws IOException {
         String[] targetOptions = { "pic=1" };
@@ -686,9 +691,14 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
     @Override
     protected void visit(NullLiteral expression, EntityContext context) {
         //Node result = context.getConstruction().newUnknown(Mode.getP());
-        TargetValue arst = new TargetValue(0, Mode.getP());
-        Node result = context.getConstruction().newConst(arst);
-        context.setResult(result);
+        if (nullNode == null) {
+            TargetValue arst = new TargetValue(0, Mode.getP());
+            Node result = context.getConstruction().newConst(arst);
+            context.setResult(result);
+            nullNode = result;
+        } else {
+            context.setResult(nullNode);
+        }
     }
 
     @Override
@@ -698,12 +708,19 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
         if (!this.isVariableCounting) {
             TargetValue tarval;
             if (expression.getValue()) {
-                tarval = new TargetValue(-1, Mode.getBs());
+                if (this.trueNode == null) {
+                    bool = context.getConstruction().newConst(-1, Mode.getBs());
+                } else {
+                    bool = this.trueNode;
+                }
             }
             else {
-                tarval = new TargetValue(0, Mode.getBs());
+                if (this.falseNode == null) {
+                    bool = context.getConstruction().newConst(0, Mode.getBs());
+                } else {
+                    bool = this.falseNode;
+                }
             }
-            bool = context.getConstruction().newConst(tarval);
         }
 
         context.setResult(bool);
@@ -932,7 +949,9 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
         context.setResult(null);
 
         Declaration decl = expression.getVariableReference().getDeclaration();
-        context.setDecl(decl);
+        if (expression.getVariableReference().getDeclaration().getType().getNumberOfDimensions() > 0) {
+            context.setDecl(decl);
+        }
         if (!this.isVariableCounting) {
 
             if (decl instanceof LocalVariableDeclarationStatement || decl instanceof ParameterDeclaration) {
@@ -1017,15 +1036,21 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
                 Node right = null;
                 if (mode.equals(Mode.getBs())) {
+                    if (this.trueNode == null) {
+                        right = context.getConstruction().newConst(0, Mode.getBs());
+                    } else {
+                        right = trueNode;
+                    }
+                } else if (mode.equals(Mode.getIs())) {
                     right = context.getConstruction().newConst(0, Mode.getBs());
-                }
-                else if (mode.equals(Mode.getIs())) {
-                    right = context.getConstruction().newConst(0, Mode.getBs());
-                }
-                else if (mode.equals(Mode.getP())) {
-                    TargetValue arst = new TargetValue(0, Mode.getP());
-                    right = context.getConstruction().newConst(arst);
-                    //right = context.getConstruction().newUnknown(Mode.getP());
+                } else if (mode.equals(Mode.getP())) {
+                    if (nullNode == null) {
+                        TargetValue arst = new TargetValue(0, Mode.getP());
+                        right = context.getConstruction().newConst(arst);
+                        nullNode = right;
+                    } else {
+                        right = nullNode;
+                    }
                 }
 
                 Node store = context.getConstruction().newStore(mem, member, right);
