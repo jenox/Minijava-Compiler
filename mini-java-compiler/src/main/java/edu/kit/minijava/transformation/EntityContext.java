@@ -19,6 +19,15 @@ public class EntityContext {
     private Declaration decl;
     private boolean isLeftSideOfAssignment;
     private boolean isTopLevel;
+    private boolean isCalledFromMain;
+
+    public boolean isCalledFromMain() {
+        return isCalledFromMain;
+    }
+
+    public void setCalledFromMain(boolean calledFromMain) {
+        isCalledFromMain = calledFromMain;
+    }
 
     public boolean isTopLevel() {
         return isTopLevel;
