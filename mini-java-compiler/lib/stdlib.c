@@ -4,8 +4,8 @@ int __minijava_main(void);
 
 int main(void) {
     printf("MiniJava runtime: Main function\n");
-    int result = __minijava_main();
-    return result;
+    __minijava_main();
+    return 0;
 }
 
 int system_in_read() {
