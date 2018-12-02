@@ -1,6 +1,7 @@
                 package edu.kit.minijava.transformation;
 
 import java.util.HashMap;
+import java.util.Map;
 
 import com.sun.jna.Pointer;
 
@@ -18,6 +19,8 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
     private CompoundType globalType;
     private String currentClassName;
 
+    private Map<String, Entity> runtimeEntities = new HashMap<>();
+
     private HashMap<Declaration, Integer> variableNums = new HashMap<>();
     private HashMap<Declaration, Entity> entities = new HashMap<>();
     private HashMap<Declaration, Type> types = new HashMap<>();
@@ -31,6 +34,10 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
         Firm.init("x86_64-linux-gnu", targetOptions);
 
         this.globalType = firm.Program.getGlobalType();
+
+        // Create entities for the runtime library calls
+        this.createRuntimeEntities();
+
         program.accept(this, new EntityContext());
 
         // Check and dump created graphs - can be viewed with ycomp
@@ -39,6 +46,55 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
             // Should produce a file calc(II)I.vcg
             Dump.dumpGraph(g, "");
         }
+    }
+
+    private void createRuntimeEntities() {
+
+        PrimitiveType intType = new PrimitiveType(Mode.getIs());
+
+        /* System.in.read */
+        String readName = "system_in_read";
+        MethodType readType = new MethodType(new Type[] {}, new Type[] { intType });
+
+        Entity readEntity = new Entity(this.globalType, readName, readType);
+
+        // Sets the mangled name of the entity
+        readEntity.setLdIdent(readName);
+
+        this.runtimeEntities.put(readName, readEntity);
+
+        /* System.out.write */
+        String writeName = "system_out_write";
+        MethodType writeType = new MethodType(new Type[] { intType }, new Type[] {});
+
+        Entity writeEntity = new Entity(this.globalType, writeName, writeType);
+
+        // Sets the mangled name of the entity
+        writeEntity.setLdIdent(writeName);
+
+        this.runtimeEntities.put(writeName, writeEntity);
+
+        /* System.out.flush */
+        String flushName = "system_out_flush";
+        MethodType flushType = new MethodType(new Type[] {}, new Type[] {});
+
+        Entity flushEntity = new Entity(this.globalType, flushName, flushType);
+
+        // Sets the mangled name of the entity
+        flushEntity.setLdIdent(flushName);
+
+        this.runtimeEntities.put(flushName, flushEntity);
+
+        /* System.out.println */
+        String printlnName = "system_out_println";
+        MethodType printlnType = new MethodType(new Type[] { intType }, new Type[] {});
+
+        Entity printlnEntity = new Entity(this.globalType, printlnName, printlnType);
+
+        // Sets the mangled name of the entity
+        printlnEntity.setLdIdent(printlnName);
+
+        this.runtimeEntities.put(printlnName, printlnEntity);
     }
 
     @Override
