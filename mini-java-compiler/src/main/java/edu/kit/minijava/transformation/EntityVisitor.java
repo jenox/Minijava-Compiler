@@ -8,6 +8,7 @@ import edu.kit.minijava.ast.nodes.*;
 import edu.kit.minijava.ast.nodes.Expression.*;
 import edu.kit.minijava.ast.nodes.Program;
 import edu.kit.minijava.ast.nodes.Statement.*;
+import edu.kit.minijava.ast.references.TypeOfExpression;
 import firm.*;
 import firm.bindings.binding_ircons;
 import firm.nodes.*;
@@ -941,5 +942,24 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
     private String getUniqueMemberName(String methodName) {
         return this.currentClassName + "." + methodName;
+    }
+
+    private Mode getModeForType(TypeOfExpression type) {
+        if (type.isInteger()) {
+            return Mode.getIs();
+        }
+        else if (type.isBoolean()) {
+            return Mode.getBs();
+        }
+        else if (type.isArrayType() || type.isObjectOrNull()) {
+            return Mode.getP();
+        }
+        else if (type.isVoid()) {
+            return null;
+        }
+        else {
+            assert false : "Cannot get correct mode for type!";
+            return null;
+        }
     }
 }
