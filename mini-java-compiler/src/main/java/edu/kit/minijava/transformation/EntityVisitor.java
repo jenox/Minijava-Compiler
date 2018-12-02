@@ -1,5 +1,6 @@
 package edu.kit.minijava.transformation;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -26,7 +27,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
     private boolean isVariableCounting = false;
 
 
-    public void transform(Program program) {
+    public void transform(Program program, String outputFilename) throws IOException {
         String[] targetOptions = { "pic=1" };
         Firm.init("x86_64-linux-gnu", targetOptions);
 
@@ -43,8 +44,15 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
             // Should produce a file calc(II)I.vcg
             Dump.dumpGraph(g, "");
         }
+
+        Backend.lowerForTarget();
+        Backend.createAssembler(outputFilename, "minijava");
+
     }
 
+    public void transform(Program program) throws IOException {
+        this.transform(program, "a.s");
+    }
     private void createRuntimeEntities() {
 
         PrimitiveType intType = new PrimitiveType(Mode.getIs());
@@ -148,7 +156,8 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
         Type[] resultTypes = { voidType };
 
         MethodType mainMethodType = new MethodType(parameterTypes, resultTypes);
-        Entity mainMethodEntity = new Entity(this.globalType, this.getUniqueMemberName(methodDeclaration.getName()),
+        // this.getUniqueMemberName(methodDeclaration.getName())
+        Entity mainMethodEntity = new Entity(this.globalType, "__minijava_main",
                         mainMethodType);
         this.entities.put(methodDeclaration, mainMethodEntity);
 
