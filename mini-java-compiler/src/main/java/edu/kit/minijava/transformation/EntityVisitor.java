@@ -29,7 +29,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
     public void transform(Program program, String outputFilename) throws IOException {
         String[] targetOptions = { "pic=1" };
-        Firm.init("x86_64-linux-gnu", targetOptions);
+        Firm.init(null, targetOptions);
 
         this.globalType = firm.Program.getGlobalType();
 
