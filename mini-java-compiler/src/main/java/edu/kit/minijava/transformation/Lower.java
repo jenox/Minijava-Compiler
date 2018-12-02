@@ -16,20 +16,12 @@ public class Lower {
 
     private void fixEntityLdName(Entity entity) {
         String name = entity.getLdName();
-        /* replace some "Java" names with "C" names:
-         * - The main method has to be called "main" in C
-         * - There is no PrintStream.println (but we use our dummy print_int implementation)
-         * - java/lang/system/out is also replaced by a dummy variable
-         */
-        if (name.equals("main([Ljava.lang.String;)V")) {
-            name = "main";
+
+        // Replace name of main method (which is guaranteed to be unique) with special name
+        if (name.endsWith(".main")) {
+            name = "__minijava_main";
         }
-        if (name.equals("java/io/PrintStream/println(I)V")) {
-            name = "print_int";
-        }
-        if (name.equals("java/lang/System/out")) {
-            name = "sysoutdummy";
-        }
+
         /* C linker doesn't allow all possible ascii chars for identifiers,
          * filter some out */
         name = name.replaceAll("[()\\[\\];]", "_");
@@ -54,6 +46,9 @@ public class Lower {
                 continue;
             }
 
+            // TODO This might not be needed here at all.
+            // For now, move the entity to be sure.
+            // Maybe we should put methods into the classes first, then move them in this lowering step.
             /* methods get implemented outside the class, move the entity */
             member.setOwner(Program.getGlobalType());
         }
