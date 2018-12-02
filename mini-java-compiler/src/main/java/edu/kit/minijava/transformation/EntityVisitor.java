@@ -832,22 +832,88 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
     @Override
     protected void visit(SystemOutPrintlnExpression expression, EntityContext context) {
+        if (!this.isVariableCounting) {
+            Construction construction = context.getConstruction();
+            Node mem = construction.getCurrentMem();
 
+            expression.getArgument().accept(this, context);
+            Node argument = context.getResult();
+
+            Entity functionEntity = this.runtimeEntities.get("system_out_println");
+            assert functionEntity != null : "Runtime library function entity must be present";
+
+            Node functionAddress = construction.newAddress(functionEntity);
+
+            Node call = construction.newCall(mem, functionAddress, new Node[] {argument}, functionEntity.getType());
+
+            Node newMem = construction.newProj(call, Mode.getM(), Call.pnM);
+            construction.setCurrentMem(newMem);
+        }
     }
+
 
     @Override
     protected void visit(SystemOutFlushExpression expression, EntityContext context) {
+        if (!this.isVariableCounting) {
+            Construction construction = context.getConstruction();
+            Node mem = construction.getCurrentMem();
 
+            Entity functionEntity = this.runtimeEntities.get("system_out_flush");
+            assert functionEntity != null : "Runtime library function entity must be present";
+
+            Node functionAddress = construction.newAddress(functionEntity);
+
+            Node call = construction.newCall(mem, functionAddress, new Node[] {}, functionEntity.getType());
+
+            Node newMem = construction.newProj(call, Mode.getM(), Call.pnM);
+            construction.setCurrentMem(newMem);
+        }
     }
 
     @Override
     protected void visit(SystemOutWriteExpression expression, EntityContext context) {
+        if (!this.isVariableCounting) {
+            Construction construction = context.getConstruction();
+            Node mem = construction.getCurrentMem();
 
+            expression.getArgument().accept(this, context);
+            Node argument = context.getResult();
+
+            Entity functionEntity = this.runtimeEntities.get("system_out_write");
+            assert functionEntity != null : "Runtime library function entity must be present";
+
+            Node functionAddress = construction.newAddress(functionEntity);
+
+            Node call = construction.newCall(mem, functionAddress, new Node[] {argument}, functionEntity.getType());
+
+            Node newMem = construction.newProj(call, Mode.getM(), Call.pnM);
+            construction.setCurrentMem(newMem);
+        }
     }
 
     @Override
     protected void visit(SystemInReadExpression expression, EntityContext context) {
+        Node result = null;
 
+        if (!this.isVariableCounting) {
+            Construction construction = context.getConstruction();
+            Node mem = construction.getCurrentMem();
+
+            Entity functionEntity = this.runtimeEntities.get("system_in_read");
+            assert functionEntity != null : "Runtime library function entity must be present";
+
+            Node functionAddress = construction.newAddress(functionEntity);
+
+            Node call = construction.newCall(mem, functionAddress, new Node[] {}, functionEntity.getType());
+
+            Node newMem = construction.newProj(call, Mode.getM(), Call.pnM);
+            construction.setCurrentMem(newMem);
+
+            Node callResults = construction.newProj(call, Mode.getT(), Call.pnTResult);
+            result = construction.newProj(callResults, Mode.getIs(), 0);
+        }
+
+        context.setResult(result);
     }
 
     public String getUniqueMemberName(String methodName) {
