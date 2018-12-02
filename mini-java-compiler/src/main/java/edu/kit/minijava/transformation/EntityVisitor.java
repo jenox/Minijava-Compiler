@@ -165,9 +165,12 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
         Type[] resultTypes = {};
 
         MethodType mainMethodType = new MethodType(parameterTypes, resultTypes);
-        // this.getUniqueMemberName(methodDeclaration.getName())
+
+        // Entity mainMethodEntity = new Entity(this.globalType, this.getUniqueMemberName(methodDeclaration.getName()),
+        //                 mainMethodType);
         Entity mainMethodEntity = new Entity(this.globalType, "__minijava_main",
-                        mainMethodType);
+            mainMethodType);
+
         this.entities.put(methodDeclaration, mainMethodEntity);
 
         context.setNumberOfLocalVars(1);
