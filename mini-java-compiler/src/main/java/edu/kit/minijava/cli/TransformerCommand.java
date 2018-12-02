@@ -1,6 +1,7 @@
 package edu.kit.minijava.cli;
 
 import java.io.*;
+import java.util.Map;
 
 import edu.kit.minijava.ast.nodes.Program;
 import edu.kit.minijava.lexer.Lexer;
@@ -9,6 +10,8 @@ import edu.kit.minijava.semantic.*;
 import edu.kit.minijava.transformation.EntityVisitor;
 
 public class TransformerCommand extends Command {
+
+    public static final String RUNTIME_LIB_ENV_KEY = "MJ_RUNTIME_LIB_PATH";
 
     @Override
     public int execute(String path) {
@@ -30,26 +33,24 @@ public class TransformerCommand extends Command {
             EntityVisitor visitor = new EntityVisitor();
             visitor.transform(program, asmOutputFilename);
 
-            // TODO Set correct path to library
+            // Retrieve runtime path from environment variable
+            Map<String, String> env = System.getenv();
+            String runtimeLibPath = env.get(RUNTIME_LIB_ENV_KEY);
 
-            // Compile standard library
-            Process p = Runtime.getRuntime().exec("gcc -S lib/stdlib.c -o lib.s");
-            int result;
-            try {
-                result = p.waitFor();
-            }
-            catch (Throwable t) {
-                result = -1;
-            }
-
-            if (result != 0) {
-                System.err.println("error: Failed to compile standard library!");
+            if (runtimeLibPath == null) {
+                System.err.println("error: Environment variable " + RUNTIME_LIB_ENV_KEY + " not set!");
                 return 1;
             }
 
             // Assemble and link runtime and code
 
-            p = Runtime.getRuntime().exec("gcc lib.s " + asmOutputFilename + " -o " + executableFilename);
+            Process p = Runtime.getRuntime().exec(
+                "gcc"
+                + " " + asmOutputFilename
+                + " " + runtimeLibPath
+                + " -o " + executableFilename);
+
+            int result;
 
             try {
                 result = p.waitFor();
