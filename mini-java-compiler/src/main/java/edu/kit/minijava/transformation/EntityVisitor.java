@@ -3,13 +3,10 @@ package edu.kit.minijava.transformation;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.sun.jna.Pointer;
-
 import edu.kit.minijava.ast.nodes.*;
 import edu.kit.minijava.ast.nodes.Expression.*;
 import edu.kit.minijava.ast.nodes.Program;
 import edu.kit.minijava.ast.nodes.Statement.*;
-import edu.kit.minijava.ast.references.TypeOfExpression;
 import firm.*;
 import firm.bindings.binding_ircons;
 import firm.nodes.*;
