@@ -25,7 +25,8 @@ public class Lower {
         /* C linker doesn't allow all possible ascii chars for identifiers,
          * filter some out */
         name = name.replaceAll("[()\\[\\];]", "_");
-        entity.setLdIdent(name);
+        Ident identifier = Ident.mangleGlobal(name);
+        entity.setLdIdent(identifier);
     }
 
     private void fixEntityNames() {
@@ -57,11 +58,19 @@ public class Lower {
     }
 
     private void layoutTypes() {
+
         for (Type type : Program.getTypes()) {
-            if (type instanceof ClassType) {
-                this.layoutClass((ClassType) type);
-            }
-            type.finishLayout();
+
+//            if (type instanceof ClassType) {
+//                this.layoutClass((ClassType) type);
+//            }
+
+//            if (type instanceof StructType) {
+//                ((StructType) type).layoutFields();
+//            }
+
+            System.out.println(type.toString() + " with name:" + type.getSize());
+            // type.finishLayout();
         }
     }
 
