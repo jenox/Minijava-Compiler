@@ -930,7 +930,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
         context.setResult(result);
     }
 
-    public String getUniqueMemberName(String methodName) {
+    private String getUniqueMemberName(String methodName) {
         return this.currentClassName + "." + methodName;
     }
 }
