@@ -20,6 +20,8 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
     private Map<String, Entity> runtimeEntities = new HashMap<>();
 
+
+    private HashMap<ClassDeclaration, HashMap<Declaration, Integer>> class2VariableNums = new HashMap<>();
     private HashMap<Declaration, Integer> variableNums = new HashMap<>();
     private HashMap<Declaration, Entity> entities = new HashMap<>();
     private HashMap<Declaration, Type> types = new HashMap<>();
@@ -111,6 +113,11 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
     @Override
     protected void visit(Program program, EntityContext context) {
+        this.isVariableCounting = true;
+        for (ClassDeclaration decl : program.getClassDeclarations()) {
+            decl.accept(this, context);
+        }
+        this.isVariableCounting = false;
         for (ClassDeclaration decl : program.getClassDeclarations()) {
             decl.accept(this, context);
         }
@@ -119,7 +126,11 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
     @Override
     protected void visit(ClassDeclaration classDeclaration, EntityContext context) {
         // flush everything
-        this.variableNums = new HashMap<>();
+        if (this.isVariableCounting) {
+            this.variableNums = new HashMap<>();
+        } else {
+            this.variableNums = this.class2VariableNums.get(classDeclaration);
+        }
 
         StructType structType = new StructType(classDeclaration.getName());
         context.setClassType(structType);
@@ -147,6 +158,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
         // TODO Is this the right place for this?
         structType.layoutFields();
 
+        this.class2VariableNums.put(classDeclaration, this.variableNums);
     }
 
     @Override
@@ -165,41 +177,44 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
         Type[] parameterTypes = {};
         Type[] resultTypes = {};
 
-        MethodType mainMethodType = new MethodType(parameterTypes, resultTypes);
 
-        // Entity mainMethodEntity = new Entity(this.globalType, this.getUniqueMemberName(methodDeclaration.getName()),
-        //                 mainMethodType);
-        Entity mainMethodEntity = new Entity(this.globalType, "__minijava_main",
-            mainMethodType);
 
-        this.entities.put(methodDeclaration, mainMethodEntity);
+        if (this.isVariableCounting) {
+            MethodType mainMethodType = new MethodType(parameterTypes, resultTypes);
 
-        context.setNumberOfLocalVars(1);
-        this.isVariableCounting = true;
-        methodDeclaration.getBody().accept(this, context);
+            // Entity mainMethodEntity = new Entity(this.globalType, this.getUniqueMemberName(methodDeclaration.getName()),
+            //                 mainMethodType);
+            Entity mainMethodEntity = new Entity(this.globalType, "__minijava_main",
+                mainMethodType);
 
-        this.isVariableCounting = false;
-        Graph graph = new Graph(mainMethodEntity, context.getNumberOfLocalVars());
-        Construction construction = new Construction(graph);
+            this.entities.put(methodDeclaration, mainMethodEntity);
 
-        // traverse body and create code
-        context.setConstruction(construction);
-        context.setCalledFromMain(true);
-        methodDeclaration.getBody().accept(this, context);
+            context.setNumberOfLocalVars(1);
+            methodDeclaration.getBody().accept(this, context);
+        } else {
+            Entity mainMethodEntity = this.entities.get(methodDeclaration);
+            Graph graph = new Graph(mainMethodEntity, context.getNumberOfLocalVars());
+            Construction construction = new Construction(graph);
 
-        Node mem = construction.getCurrentMem();
-        Node returnNode = construction.newReturn(mem, new Node[] {});
-        graph.getEndBlock().addPred(returnNode);
+            // traverse body and create code
+            context.setConstruction(construction);
+            context.setCalledFromMain(true);
+            methodDeclaration.getBody().accept(this, context);
 
-        // No code should follow a return statement.
-        construction.setUnreachable();
-        // Done.
-        construction.finish();
+            Node mem = construction.getCurrentMem();
+            Node returnNode = construction.newReturn(mem, new Node[] {});
+            graph.getEndBlock().addPred(returnNode);
+
+            // No code should follow a return statement.
+            construction.setUnreachable();
+            // Done.
+            construction.finish();
+        }
+
     }
 
     @Override
     protected void visit(MethodDeclaration methodDeclaration, EntityContext context) {
-
         // GET TYPES OF ALL PARAMETERS (FOR METHOD ENTITY)
         Type[] parameterTypes = new Type[methodDeclaration.getParameters().size() + 1];
         parameterTypes[0] = new PointerType(context.getClassType());
@@ -212,60 +227,68 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
             parameterTypes[count] = entContext.getType();
         }
 
-        // GET RETURN TYPE OF THE METHOD
-        Type[] resultType = {};
+        if (this.isVariableCounting) {
 
-        methodDeclaration.getReturnType().accept(this, context);
-        if (!methodDeclaration.getReturnType().isVoid()) {
-            resultType = new Type[] {context.getType()};
+
+            // GET RETURN TYPE OF THE METHOD
+            Type[] resultType = {};
+
+            methodDeclaration.getReturnType().accept(this, context);
+            if (!methodDeclaration.getReturnType().isVoid()) {
+                resultType = new Type[] {context.getType()};
+            }
+
+            // CREATE ENTITY FOR METHOD
+            MethodType methodType = new MethodType(parameterTypes, resultType);
+            Entity methodEntity = new Entity(this.globalType, this.getUniqueMemberName(methodDeclaration.getName()),
+                            methodType);
+            this.entities.put(methodDeclaration, methodEntity);
+
+
+            // COUNT LOCAL VARIABLES
+            context.setNumberOfLocalVars(1);
+            methodDeclaration.getParameters().forEach(p -> p.accept(this, context));
+
+            methodDeclaration.getBody().accept(this, context);
+        } else {
+            Entity methodEntity = this.entities.get(methodDeclaration);
+            Graph graph = new Graph(methodEntity, context.getNumberOfLocalVars());
+            Construction construction = new Construction(graph);
+
+            // set variables and parameters
+            Node projThis = construction.newProj(graph.getArgs(), Mode.getP(), 0);
+            construction.setVariable(0, projThis);
+
+            for (int i = 1; i < parameterTypes.length; i++) {
+                Type paramType = parameterTypes[i];
+
+                Node paramProj = construction.newProj(graph.getArgs(), paramType.getMode(), i);
+                construction.setVariable(i, paramProj);
+            }
+
+            // traverse body and create code
+            context.setConstruction(construction);
+            context.setCalledFromMain(false);
+            methodDeclaration.getBody().accept(this, context);
+
+            // no return stmts so far? -> create return node
+            if (graph.getEndBlock().getPredCount() == 0) {
+
+                assert methodDeclaration.getReturnType().isVoid() : "Fell through without return on non-void method.";
+
+                Node mem = construction.getCurrentMem();
+                Node returnNode = construction.newReturn(mem, new Node[] {});
+                graph.getEndBlock().addPred(returnNode);
+            }
+
+            // No code should follow a return statement.
+            construction.setUnreachable();
+            // Done.
+            construction.finish();
         }
 
-        // CREATE ENTITY FOR METHOD
-        MethodType methodType = new MethodType(parameterTypes, resultType);
-        Entity methodEntity = new Entity(this.globalType, this.getUniqueMemberName(methodDeclaration.getName()),
-                        methodType);
-        this.entities.put(methodDeclaration, methodEntity);
 
-        // COUNT LOCAL VARIABLES
-        context.setNumberOfLocalVars(1);
-        methodDeclaration.getParameters().forEach(p -> p.accept(this, context));
-        this.isVariableCounting = true;
-        methodDeclaration.getBody().accept(this, context);
 
-        this.isVariableCounting = false;
-        Graph graph = new Graph(methodEntity, context.getNumberOfLocalVars());
-        Construction construction = new Construction(graph);
-
-        // set variables and parameters
-        Node projThis = construction.newProj(graph.getArgs(), Mode.getP(), 0);
-        construction.setVariable(0, projThis);
-
-        for (int i = 1; i < parameterTypes.length; i++) {
-            Type paramType = parameterTypes[i];
-
-            Node paramProj = construction.newProj(graph.getArgs(), paramType.getMode(), i);
-            construction.setVariable(i, paramProj);
-        }
-
-        // traverse body and create code
-        context.setConstruction(construction);
-        context.setCalledFromMain(false);
-        methodDeclaration.getBody().accept(this, context);
-
-        // no return stmts so far? -> create return node
-        if (graph.getEndBlock().getPredCount() == 0) {
-
-            assert methodDeclaration.getReturnType().isVoid() : "Fell through without return on non-void method.";
-
-            Node mem = construction.getCurrentMem();
-            Node returnNode = construction.newReturn(mem, new Node[] {});
-            graph.getEndBlock().addPred(returnNode);
-        }
-
-        // No code should follow a return statement.
-        construction.setUnreachable();
-        // Done.
-        construction.finish();
     }
 
     @Override
@@ -606,10 +629,10 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
         if (!this.isVariableCounting) {
             TargetValue tarval;
             if (expression.getValue()) {
-                tarval = new TargetValue(1, Mode.getBs());
+                tarval = TargetValue.getBTrue();
             }
             else {
-                tarval = new TargetValue(0, Mode.getBs());
+                tarval = TargetValue.getBFalse();
             }
             bool = context.getConstruction().newConst(tarval);
         }
@@ -639,11 +662,20 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
             Node[] in = new Node[expression.getArguments().size() + 1];
 
             if (context.isCalledFromMain()) {
-                Declaration decl =
-                    ((VariableAccess) expression.getContext().get()).getVariableReference().getDeclaration();
-                int num = this.variableNums.get(decl);
+                Declaration decl = null;
 
-                in[0] = construction.getVariable(num, Mode.getP());
+                if (expression.getContext().get() instanceof VariableAccess) {
+                    decl = ((VariableAccess) expression.getContext().get()).getVariableReference().getDeclaration();
+                    int num = this.variableNums.get(decl);
+                    in[0] = construction.getVariable(num, Mode.getP());
+                } else if (expression.getContext().get() instanceof MethodInvocation) {
+                    expression.getContext().get().accept(this, context);
+                    in[0] = context.getResult();
+                } else if (expression.getContext().get() instanceof NewObjectCreation) {
+                    expression.getContext().get().accept(this, context);
+                    in[0] = context.getResult();
+                }
+
             }
             else {
                 in[0] = construction.newProj(graph.getArgs(), Mode.getP(), 0);
@@ -681,22 +713,25 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
         Node right = context.getResult();
 
         if (!this.isVariableCounting) {
-            expression.getContext().accept(this, context);
-
             Entity field = this.entities.get(expression.getFieldReference().getDeclaration());
-
-            int num = -1;
+            Node thisNode = null;
             ClassDeclaration decl = (ClassDeclaration) expression.getContext().getType().getDeclaration().get();
+
             if (decl.getName() == this.currentClassName) {
-                num = 0;
+                thisNode = context.getConstruction().getVariable(0 ,Mode.getP());
             }
-            else {
-                VariableDeclaration varDecl =
-                    ((VariableAccess) expression.getContext()).getVariableReference().getDeclaration();
-                num = this.variableNums.get(varDecl);
+            else if (expression.getContext() instanceof VariableAccess) {
+                Declaration contexDecl = ((VariableAccess) expression.getContext()).getVariableReference().getDeclaration();
+                int num = this.variableNums.get(contexDecl);
+                thisNode = context.getConstruction().getVariable(num ,Mode.getP());
+            } else if (expression.getContext() instanceof MethodInvocation) {
+                expression.getContext().accept(this, context);
+                thisNode = context.getResult();
+            } else if (expression.getContext() instanceof NewObjectCreation) {
+                expression.getContext().accept(this, context);
+                thisNode = context.getResult();
             }
 
-            Node thisNode = context.getConstruction().getVariable(num ,Mode.getP());
             Node member = context.getConstruction().newMember(thisNode, field);
             Node mem = context.getConstruction().getCurrentMem();
             Mode mode = this.types.get(expression.getFieldReference().getDeclaration()).getMode();
