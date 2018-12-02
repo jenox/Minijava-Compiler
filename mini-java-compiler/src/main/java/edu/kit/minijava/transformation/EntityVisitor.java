@@ -190,7 +190,6 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
             this.entities.put(methodDeclaration, mainMethodEntity);
 
-            context.setNumberOfLocalVars(1);
             methodDeclaration.getBody().accept(this, context);
         }
         else {
@@ -387,7 +386,13 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
             statement.getCondition().accept(this, context);
             Node cond;
             if (context.getResult().getMode().equals(Mode.getBs())) {
-                Node byteFalse = construction.newConst(0, Mode.getBs());
+                Node byteFalse = null;
+                if (this.falseNode == null) {
+                    byteFalse = construction.newConst(0, Mode.getBs());
+                } else {
+                    byteFalse = this.falseNode;
+                }
+
                 Node cmp = construction.newCmp(context.getResult(), byteFalse, Relation.Equal.negated());
                 cond = construction.newCond(cmp);
             }
@@ -453,10 +458,14 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
             statement.getCondition().accept(this, context);
 
 
-            statement.getCondition().accept(this, context);
             Node cond;
             if (context.getResult().getMode().equals(Mode.getBs())) {
-                Node byteFalse = construction.newConst(0, Mode.getBs());
+                Node byteFalse = null;
+                if (this.falseNode == null) {
+                    byteFalse = context.getConstruction().newConst(0, Mode.getBs());
+                } else {
+                    byteFalse = this.falseNode;
+                }
                 Node cmp = construction.newCmp(context.getResult(), byteFalse, Relation.Equal.negated());
                 cond = construction.newCond(cmp);
             }
