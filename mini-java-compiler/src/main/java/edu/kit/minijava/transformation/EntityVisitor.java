@@ -30,6 +30,8 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
     public void transform(Program program, String outputFilename) throws IOException {
         String[] targetOptions = { "pic=1" };
+
+        // A null target triple causes Firm to choose the host machine triple
         Firm.init(null, targetOptions);
 
         this.globalType = firm.Program.getGlobalType();
