@@ -59,6 +59,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
     public void transform(Program program) throws IOException {
         this.transform(program, "a.s");
     }
+
     private void createRuntimeEntities() {
 
         PrimitiveType intType = new PrimitiveType(Mode.getIs());
@@ -471,7 +472,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 //                    context.getConstruction().setVariable(num, context.getConstruction().newConst(0, type.getMode()));
 //                }
 //                else {
-                    context.getConstruction().setVariable(num, context.getResult());
+                context.getConstruction().setVariable(num, context.getResult());
 //                }
             });
         }
