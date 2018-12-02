@@ -1,12 +1,10 @@
-    package edu.kit.minijava.transformation;
+package edu.kit.minijava.transformation;
 
 import java.io.IOException;
-import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-import com.sun.jna.Pointer;
 import edu.kit.minijava.ast.nodes.*;
 import edu.kit.minijava.ast.nodes.Expression.*;
 import edu.kit.minijava.ast.nodes.Program;
@@ -17,7 +15,7 @@ import firm.bindings.binding_ircons;
 import firm.nodes.*;
 import firm.nodes.Block;
 
-    public class EntityVisitor extends ASTVisitor<EntityContext> {
+public class EntityVisitor extends ASTVisitor<EntityContext> {
 
     private CompoundType globalType;
     private String currentClassName;
@@ -179,7 +177,8 @@ import firm.nodes.Block;
 
             MethodType mainMethodType = new MethodType(parameterTypes, resultTypes);
 
-            // Entity mainMethodEntity = new Entity(this.globalType, this.getUniqueMemberName(methodDeclaration.getName()),
+            // Entity mainMethodEntity = new Entity(this.globalType,
+            // this.getUniqueMemberName(methodDeclaration.getName()),
             //                 mainMethodType);
             Entity mainMethodEntity = new Entity(this.globalType, "__minijava_main",
                 mainMethodType);
@@ -188,7 +187,8 @@ import firm.nodes.Block;
 
             context.setNumberOfLocalVars(1);
             methodDeclaration.getBody().accept(this, context);
-        } else {
+        }
+        else {
             this.variableNums = this.method2VariableNums.get(methodDeclaration);
 
             Entity mainMethodEntity = this.entities.get(methodDeclaration);
@@ -253,7 +253,8 @@ import firm.nodes.Block;
             methodDeclaration.getParameters().forEach(p -> p.accept(this, context));
 
             methodDeclaration.getBody().accept(this, context);
-        } else {
+        }
+        else {
             this.variableNums = this.method2VariableNums.get(methodDeclaration);
 
             Entity methodEntity = this.entities.get(methodDeclaration);
@@ -384,7 +385,8 @@ import firm.nodes.Block;
                 Node byteFalse = construction.newConst(0, Mode.getBs());
                 Node cmp = construction.newCmp(context.getResult(), byteFalse, Relation.Equal.negated());
                 cond = construction.newCond(cmp);
-            } else {
+            }
+            else {
                 cond = construction.newCond(context.getResult());
             }
 
@@ -452,7 +454,8 @@ import firm.nodes.Block;
                 Node byteFalse = construction.newConst(0, Mode.getBs());
                 Node cmp = construction.newCmp(context.getResult(), byteFalse, Relation.Equal.negated());
                 cond = construction.newCond(cmp);
-            } else {
+            }
+            else {
                 cond = construction.newCond(context.getResult());
             }
 
@@ -646,6 +649,7 @@ import firm.nodes.Block;
                     break;
                 case ASSIGNMENT:
                     bin = right;
+                    break;
                 default:
                     assert false : "Unhandled binary operation!";
             }
@@ -716,9 +720,11 @@ import firm.nodes.Block;
 
             if (val > maxInt) {
                 tmp = (val - maxInt - 1) + minInt;
-            } else if (val < minInt) {
+            }
+            else if (val < minInt) {
                 tmp = maxInt - (minInt - val - 1);
-            } else {
+            }
+            else {
                 tmp = val;
             }
             intVal = (int) tmp;
@@ -744,23 +750,29 @@ import firm.nodes.Block;
 
             if (!expression.getContext().isPresent()) {
                 in[0] = construction.newProj(graph.getArgs(), Mode.getP(), 0);
-            } else {
+            }
+            else {
                 if (expression.getContext().get() instanceof VariableAccess) {
                     expression.getContext().get().accept(this, context);
                     in[0] = context.getResult();
-                    //Declaration decl = ((VariableAccess) expression.getContext().get()).getVariableReference().getDeclaration();
+                    //Declaration decl = ((VariableAccess) expression.getContext().get())
+                    // .getVariableReference().getDeclaration();
                     //int num = this.variableNums.get(decl);
                     //in[0] = construction.getVariable(num, Mode.getP());
-                } else if (expression.getContext().get() instanceof MethodInvocation) {
+                }
+                else if (expression.getContext().get() instanceof MethodInvocation) {
                     expression.getContext().get().accept(this, context);
                     in[0] = context.getResult();
-                } else if (expression.getContext().get() instanceof ExplicitFieldAccess) {
+                }
+                else if (expression.getContext().get() instanceof ExplicitFieldAccess) {
                     expression.getContext().get().accept(this, context);
                     in[0] = context.getResult();
-                } else if (expression.getContext().get() instanceof NewObjectCreation) {
+                }
+                else if (expression.getContext().get() instanceof NewObjectCreation) {
                     expression.getContext().get().accept(this, context);
                     in[0] = context.getResult();
-                } else {
+                }
+                else {
                     in[0] = construction.newProj(graph.getArgs(), Mode.getP(), 0);
                 }
             }
@@ -771,10 +783,12 @@ import firm.nodes.Block;
                     Node cresult = context.getResult();
                     if (cresult.equals(TargetValue.getBTrue())) {
                         in[i + 1] = construction.newConst(1, Mode.getBs());
-                    } else {
+                    }
+                    else {
                         in[i + 1] = construction.newConst(0, Mode.getBs());
                     }
-                } else {
+                }
+                else {
                     in[i + 1] = context.getResult();
                 }
             }
@@ -813,19 +827,24 @@ import firm.nodes.Block;
             if (expression.getContext() instanceof MethodInvocation) {
                 expression.getContext().accept(this, context);
                 thisNode = context.getResult();
-            } else if (expression.getContext() instanceof ExplicitFieldAccess) {
+            }
+            else if (expression.getContext() instanceof ExplicitFieldAccess) {
                 expression.getContext().accept(this, context);
                 thisNode = context.getResult();
-            } else if (expression.getContext() instanceof NewObjectCreation) {
+            }
+            else if (expression.getContext() instanceof NewObjectCreation) {
                 expression.getContext().accept(this, context);
                 thisNode = context.getResult();
-            } else if (expression.getContext() instanceof VariableAccess) {
+            }
+            else if (expression.getContext() instanceof VariableAccess) {
                 expression.getContext().accept(this, context);
                 thisNode = context.getResult();
-                //Declaration contexDecl = ((VariableAccess) expression.getContext()).getVariableReference().getDeclaration();
+                //Declaration contexDecl = ((VariableAccess) expression.getContext())
+                // .getVariableReference().getDeclaration();
                 //int num = this.variableNums.get(contexDecl);
                 //thisNode = context.getConstruction().getVariable(num ,Mode.getP());
-            } else if (!context.isCalledFromMain()) {
+            }
+            else if (!context.isCalledFromMain()) {
                 thisNode = context.getConstruction().getVariable(0, Mode.getP());
             }
 
@@ -999,9 +1018,11 @@ import firm.nodes.Block;
                 Node right = null;
                 if (mode.equals(Mode.getBs())) {
                     right = context.getConstruction().newConst(0, Mode.getBs());
-                } else if (mode.equals(Mode.getIs())) {
+                }
+                else if (mode.equals(Mode.getIs())) {
                     right = context.getConstruction().newConst(0, Mode.getBs());
-                } else if (mode.equals(Mode.getP())) {
+                }
+                else if (mode.equals(Mode.getP())) {
                     TargetValue arst = new TargetValue(0, Mode.getP());
                     right = context.getConstruction().newConst(arst);
                     //right = context.getConstruction().newUnknown(Mode.getP());
