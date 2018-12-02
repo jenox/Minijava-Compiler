@@ -25,5 +25,5 @@ void system_out_write(int x) {
 
 void system_out_flush() {
     printf("MiniJava runtime: flush\n");
-    // No-op since we do not buffer output (for now)
+    fflush(stdout);
 }
