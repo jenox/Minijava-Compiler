@@ -1,9 +1,7 @@
 package edu.kit.minijava.transformation;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 import edu.kit.minijava.ast.nodes.*;
 import edu.kit.minijava.ast.nodes.Expression.*;
@@ -22,7 +20,6 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
     private Map<String, Entity> runtimeEntities = new HashMap<>();
 
-
     private HashMap<Declaration, HashMap<Declaration, Integer>> method2VariableNums = new HashMap<>();
     private HashMap<Declaration, Integer> variableNums = new HashMap<>();
     private HashMap<Declaration, Entity> entities = new HashMap<>();
@@ -36,7 +33,6 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
     private Node nullNode = null;
     private Node trueNode = null;
     private Node falseNode = null;
-
 
     public void transform(Program program, String outputFilename) throws IOException {
         String[] targetOptions = { "pic=1" };
@@ -63,7 +59,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
         Backend.lowerForTarget();
 
         // TODO What is the compilation unit name for?
-        Backend.createAssembler(outputFilename,  "<builtin>");
+        Backend.createAssembler(outputFilename, "<builtin>");
     }
 
     public void transform(Program program) throws IOException {
@@ -157,8 +153,16 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
         // Layout class
         // TODO Is this the right place for this?
+        Iterable<Entity> iterable = structType.getMembers();
+        for (Entity ent : iterable) {
+            System.out.println(ent.toString());
+            System.out.println(ent.getBitfieldSize());
+        }
+        System.out.println(structType.getTypeState());
         structType.layoutFields();
+        structType.finishLayout();
 
+        System.out.println("pause");
     }
 
     @Override
@@ -168,7 +172,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
         // create entity for method
         Entity fieldEntity = new Entity(context.getClassType(), this.getUniqueMemberName(fieldDeclaration.getName()),
-                        context.getType());
+                context.getType());
         this.entities.put(fieldDeclaration, fieldEntity);
     }
 
@@ -184,9 +188,8 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
             // Entity mainMethodEntity = new Entity(this.globalType,
             // this.getUniqueMemberName(methodDeclaration.getName()),
-            //                 mainMethodType);
-            Entity mainMethodEntity = new Entity(this.globalType, "__minijava_main",
-                mainMethodType);
+            // mainMethodType);
+            Entity mainMethodEntity = new Entity(this.globalType, "__minijava_main", mainMethodType);
 
             this.entities.put(methodDeclaration, mainMethodEntity);
 
@@ -228,7 +231,6 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
             TypeReference paramRef = methodDeclaration.getParameterTypes().get(count - 1);
             paramRef.accept(this, entContext);
 
-
             parameterTypes[count] = entContext.getType();
         }
 
@@ -242,15 +244,14 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
             methodDeclaration.getReturnType().accept(this, context);
             if (!methodDeclaration.getReturnType().isVoid()) {
-                resultType = new Type[] {context.getType()};
+                resultType = new Type[] { context.getType() };
             }
 
             // CREATE ENTITY FOR METHOD
             MethodType methodType = new MethodType(parameterTypes, resultType);
             Entity methodEntity = new Entity(this.globalType, this.getUniqueMemberName(methodDeclaration.getName()),
-                            methodType);
+                    methodType);
             this.entities.put(methodDeclaration, methodEntity);
-
 
             // COUNT LOCAL VARIABLES
             context.setNumberOfLocalVars(1);
@@ -345,6 +346,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
                 elementType = new ArrayType(elementType, 0);
             }
 
+            elementType.finishLayout();
             firmType = elementType;
         }
         else if (!decl.isClassDeclaration()) {
@@ -389,7 +391,8 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
                 Node byteFalse = null;
                 if (this.falseNode == null) {
                     byteFalse = construction.newConst(0, Mode.getBs());
-                } else {
+                }
+                else {
                     byteFalse = this.falseNode;
                 }
 
@@ -457,13 +460,13 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
             // loop condition
             statement.getCondition().accept(this, context);
 
-
             Node cond;
             if (context.getResult().getMode().equals(Mode.getBs())) {
                 Node byteFalse = null;
                 if (this.falseNode == null) {
                     byteFalse = context.getConstruction().newConst(0, Mode.getBs());
-                } else {
+                }
+                else {
                     byteFalse = this.falseNode;
                 }
                 Node cmp = construction.newCmp(context.getResult(), byteFalse, Relation.Equal.negated());
@@ -611,10 +614,9 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
         expression.getRight().accept(this, context);
         Node right = context.getResult();
 
-        context.setLeftSideOfAssignment(expression.getOperationType() == BinaryOperationType.ASSIGNMENT);
+        context.setLeftSideOfAssignment(expression.getOperationType().equals(BinaryOperationType.ASSIGNMENT));
         expression.getLeft().accept(this, context);
         Node left = context.getResult();
-
 
         if (!this.isVariableCounting) {
             switch (expression.getOperationType()) {
@@ -648,7 +650,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
                 case DIVISION:
                     Node mem = context.getConstruction().getCurrentMem();
                     Node div = context.getConstruction().newDiv(mem, left, right,
-                                    binding_ircons.op_pin_state.op_pin_state_floats);
+                            binding_ircons.op_pin_state.op_pin_state_floats);
                     bin = context.getConstruction().newProj(div, Mode.getIs(), Div.pnRes);
                     Node projMem = context.getConstruction().newProj(div, Mode.getM(), Div.pnM);
                     context.getConstruction().setCurrentMem(projMem);
@@ -656,7 +658,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
                 case MODULO:
                     Node mem_ = context.getConstruction().getCurrentMem();
                     Node mod = context.getConstruction().newMod(mem_, left, right,
-                                    binding_ircons.op_pin_state.op_pin_state_floats);
+                            binding_ircons.op_pin_state.op_pin_state_floats);
                     bin = context.getConstruction().newProj(mod, Mode.getIs(), Mod.pnRes);
                     Node projMem_ = context.getConstruction().newProj(mod, Mode.getM(), Div.pnM);
                     context.getConstruction().setCurrentMem(projMem_);
@@ -671,7 +673,6 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
         context.setResult(bin);
     }
-
 
     @Override
     protected void visit(UnaryOperation expression, EntityContext context) {
@@ -699,14 +700,15 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
     @Override
     protected void visit(NullLiteral expression, EntityContext context) {
-        //Node result = context.getConstruction().newUnknown(Mode.getP());
-        if (nullNode == null) {
+        // Node result = context.getConstruction().newUnknown(Mode.getP());
+        if (this.nullNode == null) {
             TargetValue arst = new TargetValue(0, Mode.getP());
             Node result = context.getConstruction().newConst(arst);
             context.setResult(result);
-            nullNode = result;
-        } else {
-            context.setResult(nullNode);
+            this.nullNode = result;
+        }
+        else {
+            context.setResult(this.nullNode);
         }
     }
 
@@ -719,14 +721,16 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
             if (expression.getValue()) {
                 if (this.trueNode == null) {
                     bool = context.getConstruction().newConst(-1, Mode.getBs());
-                } else {
+                }
+                else {
                     bool = this.trueNode;
                 }
             }
             else {
                 if (this.falseNode == null) {
                     bool = context.getConstruction().newConst(0, Mode.getBs());
-                } else {
+                }
+                else {
                     bool = this.falseNode;
                 }
             }
@@ -739,8 +743,8 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
     protected void visit(IntegerLiteral expression, EntityContext context) {
         if (!this.isVariableCounting) {
             Double val = new Double(expression.getValue());
-            double maxInt = (double) Integer.MAX_VALUE;
-            double minInt = (double) Integer.MIN_VALUE;
+            double maxInt = Integer.MAX_VALUE;
+            double minInt = Integer.MIN_VALUE;
             double tmp;
             int intVal;
 
@@ -773,7 +777,6 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
             Node mem = context.getConstruction().getCurrentMem();
             Node[] in = new Node[expression.getArguments().size() + 1];
 
-
             if (!expression.getContext().isPresent()) {
                 in[0] = construction.newProj(graph.getArgs(), Mode.getP(), 0);
             }
@@ -781,10 +784,10 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
                 if (expression.getContext().get() instanceof VariableAccess) {
                     expression.getContext().get().accept(this, context);
                     in[0] = context.getResult();
-                    //Declaration decl = ((VariableAccess) expression.getContext().get())
+                    // Declaration decl = ((VariableAccess) expression.getContext().get())
                     // .getVariableReference().getDeclaration();
-                    //int num = this.variableNums.get(decl);
-                    //in[0] = construction.getVariable(num, Mode.getP());
+                    // int num = this.variableNums.get(decl);
+                    // in[0] = construction.getVariable(num, Mode.getP());
                 }
                 else if (expression.getContext().get() instanceof MethodInvocation) {
                     expression.getContext().get().accept(this, context);
@@ -865,10 +868,10 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
             else if (expression.getContext() instanceof VariableAccess) {
                 expression.getContext().accept(this, context);
                 thisNode = context.getResult();
-                //Declaration contexDecl = ((VariableAccess) expression.getContext())
+                // Declaration contexDecl = ((VariableAccess) expression.getContext())
                 // .getVariableReference().getDeclaration();
-                //int num = this.variableNums.get(contexDecl);
-                //thisNode = context.getConstruction().getVariable(num ,Mode.getP());
+                // int num = this.variableNums.get(contexDecl);
+                // thisNode = context.getConstruction().getVariable(num ,Mode.getP());
             }
             else if (!context.isCalledFromMain()) {
                 thisNode = context.getConstruction().getVariable(0, Mode.getP());
@@ -877,6 +880,10 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
             Node member = context.getConstruction().newMember(thisNode, field);
             Node mem = context.getConstruction().getCurrentMem();
             Mode mode = this.types.get(expression.getFieldReference().getDeclaration()).getMode();
+
+            if (mode == null) {
+                mode = Mode.getP();
+            }
 
             Node newMem = null;
             Node result = null;
@@ -909,7 +916,6 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
             // for sel stmt
             expression.getContext().accept(this, context);
 
-            int num = this.variableNums.get(context.getDecl());
             Node arrayPointer = context.getResult();
 
             Type type = this.types.get(context.getDecl());
@@ -964,8 +970,8 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
         if (!this.isVariableCounting) {
 
             if (decl instanceof LocalVariableDeclarationStatement || decl instanceof ParameterDeclaration) {
-                Node mem  = context.getConstruction().getCurrentMem();
-                int n     = this.variableNums.get(decl);
+                Node mem = context.getConstruction().getCurrentMem();
+                int n = this.variableNums.get(decl);
                 Type type = this.types.get(decl);
                 Mode mode = type.getMode();
 
@@ -983,7 +989,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
             }
             else if (decl instanceof FieldDeclaration) {
-                //expression.getContext().accept(this, context);
+                // expression.getContext().accept(this, context);
 
                 Entity field = this.entities.get(decl);
                 Node thisNode = context.getConstruction().getVariable(0, Mode.getP());
@@ -1028,7 +1034,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
             // calculate size and alignment
             Node mem = context.getConstruction().getCurrentMem();
             int classSize = this.classSizes.get(expression.getClassReference().getDeclaration());
-            Node size = context.getConstruction().newConst(classSize , Mode.getIu());
+            Node size = context.getConstruction().newConst(classSize, Mode.getIu());
             int alignment = this.types.get(expression.getClassReference().getDeclaration()).getAlignment();
 
             // allocate memory
@@ -1044,22 +1050,30 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
                 Mode mode = this.types.get(decl).getMode();
 
                 Node right = null;
-                if (mode.equals(Mode.getBs())) {
-                    if (this.trueNode == null) {
-                        right = context.getConstruction().newConst(0, Mode.getBs());
-                    } else {
-                        right = trueNode;
-                    }
-                } else if (mode.equals(Mode.getIs())) {
-                    right = context.getConstruction().newConst(0, Mode.getBs());
-                } else if (mode.equals(Mode.getP())) {
-                    if (nullNode == null) {
+
+                //if mode is null, we have a non-atomic type, initialize with null pointer
+                if (mode == null || mode.equals(Mode.getP())) {
+                    //we have an array, initialize with null pointer
+                    if (this.nullNode == null) {
                         TargetValue arst = new TargetValue(0, Mode.getP());
                         right = context.getConstruction().newConst(arst);
-                        nullNode = right;
-                    } else {
-                        right = nullNode;
+                        this.nullNode = right;
                     }
+                    else {
+                        right = this.nullNode;
+                    }
+                }
+                else if (mode.equals(Mode.getBs())) {
+                    if (this.trueNode == null) {
+                        right = context.getConstruction().newConst(0, Mode.getBs());
+                    }
+                    else {
+                        right = this.trueNode;
+                    }
+                }
+                else if (mode.equals(Mode.getIs())) {
+                    right = context.getConstruction().newConst(0, Mode.getBs());
+                    //TODO: sollte hier vllt Mode.getIs stehen?
                 }
 
                 Node store = context.getConstruction().newStore(mem, member, right);
@@ -1105,13 +1119,12 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
             Node functionAddress = construction.newAddress(functionEntity);
 
-            Node call = construction.newCall(mem, functionAddress, new Node[] {argument}, functionEntity.getType());
+            Node call = construction.newCall(mem, functionAddress, new Node[] { argument }, functionEntity.getType());
 
             Node newMem = construction.newProj(call, Mode.getM(), Call.pnM);
             construction.setCurrentMem(newMem);
         }
     }
-
 
     @Override
     protected void visit(SystemOutFlushExpression expression, EntityContext context) {
@@ -1145,7 +1158,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
             Node functionAddress = construction.newAddress(functionEntity);
 
-            Node call = construction.newCall(mem, functionAddress, new Node[] {argument}, functionEntity.getType());
+            Node call = construction.newCall(mem, functionAddress, new Node[] { argument }, functionEntity.getType());
 
             Node newMem = construction.newProj(call, Mode.getM(), Call.pnM);
             construction.setCurrentMem(newMem);
@@ -1222,7 +1235,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
         afterBlock.addPred(eitherFalseJmp);
         afterBlock.addPred(rightTrue);
 
-        Node phiNode = construction.newPhi(new Node[] {constZero, constOne}, Mode.getBs());
+        Node phiNode = construction.newPhi(new Node[] { constZero, constOne }, Mode.getBs());
 
         context.setResult(phiNode);
         return phiNode;
@@ -1273,7 +1286,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
         afterBlock.addPred(rightFalse);
         afterBlock.addPred(eitherTrueJump);
 
-        Node phiNode = construction.newPhi(new Node[] {constZero, constOne}, Mode.getBs());
+        Node phiNode = construction.newPhi(new Node[] { constZero, constOne }, Mode.getBs());
 
         context.setResult(phiNode);
         return phiNode;
