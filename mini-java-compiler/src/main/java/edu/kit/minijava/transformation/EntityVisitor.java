@@ -153,16 +153,9 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
         // Layout class
         // TODO Is this the right place for this?
-        Iterable<Entity> iterable = structType.getMembers();
-        for (Entity ent : iterable) {
-            System.out.println(ent.toString());
-            System.out.println(ent.getBitfieldSize());
-        }
-        System.out.println(structType.getTypeState());
         structType.layoutFields();
         structType.finishLayout();
 
-        System.out.println("pause");
     }
 
     @Override
@@ -338,7 +331,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
                     elementType = new PrimitiveType(Mode.getIs());
                     break;
                 default:
-                    elementType = new StructType(name);
+                    elementType = new StructType(name); //TODO: arrays von structs passen noch nicht
             }
             this.types.put(reference.getBasicTypeReference().getDeclaration(), elementType);
 
@@ -701,6 +694,11 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
     @Override
     protected void visit(NullLiteral expression, EntityContext context) {
         // Node result = context.getConstruction().newUnknown(Mode.getP());
+        if (this.isVariableCounting) {
+            //nothing to do
+            return;
+        }
+
         if (this.nullNode == null) {
             TargetValue arst = new TargetValue(0, Mode.getP());
             Node result = context.getConstruction().newConst(arst);
@@ -717,7 +715,6 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
         Node bool = null;
 
         if (!this.isVariableCounting) {
-            TargetValue tarval;
             if (expression.getValue()) {
                 if (this.trueNode == null) {
                     bool = context.getConstruction().newConst(-1, Mode.getBs());
