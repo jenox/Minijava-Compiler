@@ -1,0 +1,4 @@
+[submodule "mjtest"]
+	path = mjtest
+	url = git@git.scc.kit.edu:ubduq/mjtest.git
+	branch = master
