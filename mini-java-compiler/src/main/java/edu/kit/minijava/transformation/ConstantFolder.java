@@ -33,16 +33,9 @@ public class ConstantFolder extends ConstantFolderBase {
 
             // Not all nodes are evaluated.
             if (this.resultOfLastVisitedNode != null) {
-                TargetValue result = this.resultOfLastVisitedNode;
-                TargetValue oldValue = this.getValueForNode(node);
-                TargetValue newValue = join(oldValue, result);
-
-                System.out.println(oldValue + " ⊔ " + result + " = " + newValue);
-
-                this.setValueForNode(node, newValue);
 
                 // If a change was made, make sure to revisit affected edges.
-                if (!oldValue.equals(newValue)) {
+                if (this.setValueForNode(node, this.resultOfLastVisitedNode)) {
                     System.out.println("value of " + node + " changed");
 
                     for (BackEdges.Edge edge : BackEdges.getOuts(node)) {

@@ -21,8 +21,20 @@ abstract class ConstantFolderBase extends NodeVisitor.Default {
         return Optional.ofNullable(this.values.get(node)).orElse(UNDEFINED);
     }
 
-    void setValueForNode(Node node, TargetValue value) {
+    /**
+     * When attempting to set conflicting values, transitions to not a constant.
+     *
+     * Returns whether or not a change was made.
+     */
+    boolean setValueForNode(Node node, TargetValue value) {
+        TargetValue oldValue = this.getValueForNode(node);
+        TargetValue newValue = join(oldValue, value);
+
+        System.out.println(describe(oldValue) + " ⊔ " + describe(value) + " = " + describe(newValue));
+
         this.values.put(node, value);
+
+        return !oldValue.equals(newValue);
     }
 
     boolean isWorklistEmpty() {
@@ -113,7 +125,7 @@ abstract class ConstantFolderBase extends NodeVisitor.Default {
 
     static String describe(TargetValue value) {
         if (value == UNDEFINED) {
-            return "UNDEFINED";
+            return "undefined";
         }
         else if (value == NOT_A_CONSTANT) {
             return "not a constant";
