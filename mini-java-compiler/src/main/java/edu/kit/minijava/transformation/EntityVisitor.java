@@ -1,9 +1,7 @@
 package edu.kit.minijava.transformation;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 import edu.kit.minijava.ast.nodes.*;
 import edu.kit.minijava.ast.nodes.Expression.*;
@@ -56,6 +54,12 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
             g.check();
             // Should produce a file calc(II)I.vcg
             Dump.dumpGraph(g, "");
+
+            NodeCollector collector = new NodeCollector();
+            g.walkTopological(collector);
+            List<Node> worklist = new ArrayList<>(collector.getNodes());
+
+            System.out.println(worklist);
         }
 
         Lower.lower();
