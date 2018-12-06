@@ -14,15 +14,15 @@ public class ConstantFolder extends ConstantFolderBase {
         this.debugLog();
 
         for (Node node : this.getNodes()) {
-            ConstantValue value = this.getValueForNode(node);
+            TargetValue value = this.getValueForNode(node);
 
-            if (value.getValue().isPresent()) {
-                Graph.exchange(node, graph.newConst(value.getValue().get()));
+            if (value.isConstant()) {
+                Graph.exchange(node, graph.newConst(value));
             }
         }
     }
 
-    private ConstantValue resultOfLastVisitedNode = null;
+    private TargetValue resultOfLastVisitedNode = null;
 
     private void iterate() {
         while (!this.isWorklistEmpty()) {
@@ -33,9 +33,9 @@ public class ConstantFolder extends ConstantFolderBase {
 
             // Not all nodes are evaluated.
             if (this.resultOfLastVisitedNode != null) {
-                ConstantValue result = this.resultOfLastVisitedNode;
-                ConstantValue oldValue = this.getValueForNode(node);
-                ConstantValue newValue = oldValue.join(result);
+                TargetValue result = this.resultOfLastVisitedNode;
+                TargetValue oldValue = this.getValueForNode(node);
+                TargetValue newValue = join(oldValue, result);
 
                 System.out.println(oldValue + " ⊔ " + result + " = " + newValue);
 
@@ -55,9 +55,9 @@ public class ConstantFolder extends ConstantFolderBase {
 
     @Override
     public void visit(Const node) {
-        assert this.getValueForNode(node).isUndefined();
+        assert this.getValueForNode(node) == UNDEFINED;
 
-        this.setValueForNode(node, ConstantValue.constant(node.getTarval()));
+        this.setValueForNode(node, node.getTarval());
     }
 
     @Override
@@ -70,10 +70,10 @@ public class ConstantFolder extends ConstantFolderBase {
         this.visit(node, "-", TargetValue::sub);
     }
 
-    private void visit(Binop node, String operator, ConstantValue.BinaryOperation operation) {
-        ConstantValue left = this.getValueForNode(node.getLeft());
-        ConstantValue right = this.getValueForNode(node.getRight());
-        ConstantValue result = ConstantValue.fold(left, right, operation);
+    private void visit(Binop node, String operator, ConstantFolderBase.BinaryOperation operation) {
+        TargetValue left = this.getValueForNode(node.getLeft());
+        TargetValue right = this.getValueForNode(node.getRight());
+        TargetValue result = fold(left, right, operation);
 
         this.resultOfLastVisitedNode = result;
 
