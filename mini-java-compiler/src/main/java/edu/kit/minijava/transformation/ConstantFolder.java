@@ -12,6 +12,14 @@ public class ConstantFolder extends ConstantFolderBase {
         BackEdges.disable(graph);
 
         this.debugLog();
+
+        for (Node node : this.getNodes()) {
+            ConstantValue value = this.getValueForNode(node);
+
+            if (value.getValue().isPresent()) {
+                Graph.exchange(node, graph.newConst(value.getValue().get()));
+            }
+        }
     }
 
     private ConstantValue resultOfLastVisitedNode = null;

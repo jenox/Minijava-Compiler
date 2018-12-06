@@ -39,6 +39,10 @@ abstract class ConstantFolderBase extends NodeVisitor.Default {
         }
     }
 
+    Set<Node> getNodes() {
+        return this.values.keySet();
+    }
+
     void debugLog() {
         System.out.println(this.worklist);
         System.out.println(this.values);
