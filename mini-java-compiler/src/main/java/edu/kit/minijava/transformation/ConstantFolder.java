@@ -112,4 +112,33 @@ public class ConstantFolder extends ConstantFolderBase {
 
         System.out.println("-" + other + " = " + this.resultOfLastVisitedNode);
     }
+
+    @Override
+    public void visit(And node) {
+        TargetValue left = this.getValueForNode(node.getLeft());
+        TargetValue right = this.getValueForNode(node.getRight());
+
+        this.resultOfLastVisitedNode = fold(left, right, TargetValue::and);
+
+        System.out.println(left + " && " + right + " = " + this.resultOfLastVisitedNode);
+    }
+
+    @Override
+    public void visit(Or node) {
+        TargetValue left = this.getValueForNode(node.getLeft());
+        TargetValue right = this.getValueForNode(node.getRight());
+
+        this.resultOfLastVisitedNode = fold(left, right, TargetValue::or);
+
+        System.out.println(left + " || " + right + " = " + this.resultOfLastVisitedNode);
+    }
+
+    @Override
+    public void visit(Not node) {
+        TargetValue other = this.getValueForNode(node.getOp());
+
+        this.resultOfLastVisitedNode = fold(other, TargetValue::not);
+
+        System.out.println("!" + other + " = " + this.resultOfLastVisitedNode);
+    }
 }
