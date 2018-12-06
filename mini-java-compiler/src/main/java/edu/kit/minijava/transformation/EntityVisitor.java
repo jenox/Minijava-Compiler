@@ -55,11 +55,9 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
             // Should produce a file calc(II)I.vcg
             Dump.dumpGraph(g, "");
 
-            NodeCollector collector = new NodeCollector();
-            g.walkTopological(collector);
-            List<Node> worklist = new ArrayList<>(collector.getNodes());
+            ConstantFolder folder = new ConstantFolder(g);
 
-            System.out.println(worklist);
+//            System.out.println(worklist);
         }
 
         Lower.lower();
