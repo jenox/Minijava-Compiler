@@ -55,21 +55,61 @@ public class ConstantFolder extends ConstantFolderBase {
 
     @Override
     public void visit(Add node) {
-        this.visit(node, "+", TargetValue::add);
+        TargetValue left = this.getValueForNode(node.getLeft());
+        TargetValue right = this.getValueForNode(node.getRight());
+
+        this.resultOfLastVisitedNode = fold(left, right, TargetValue::div);
+
+        System.out.println(left + " + " + right + " = " + this.resultOfLastVisitedNode);
     }
 
     @Override
     public void visit(Sub node) {
-        this.visit(node, "-", TargetValue::sub);
-    }
-
-    private void visit(Binop node, String operator, ConstantFolderBase.BinaryOperation operation) {
         TargetValue left = this.getValueForNode(node.getLeft());
         TargetValue right = this.getValueForNode(node.getRight());
-        TargetValue result = fold(left, right, operation);
 
-        this.resultOfLastVisitedNode = result;
+        this.resultOfLastVisitedNode = fold(left, right, TargetValue::div);
 
-        System.out.println(left + " " + operator + " " + right + " = " + result);
+        System.out.println(left + " - " + right + " = " + this.resultOfLastVisitedNode);
+    }
+
+    @Override
+    public void visit(Mul node) {
+        TargetValue left = this.getValueForNode(node.getLeft());
+        TargetValue right = this.getValueForNode(node.getRight());
+
+        this.resultOfLastVisitedNode = fold(left, right, TargetValue::div);
+
+        System.out.println(left + " * " + right + " = " + this.resultOfLastVisitedNode);
+    }
+
+    @Override
+    public void visit(Div node) {
+        TargetValue left = this.getValueForNode(node.getLeft());
+        TargetValue right = this.getValueForNode(node.getRight());
+
+        // TODO: what happens if we divide by zero?
+        this.resultOfLastVisitedNode = fold(left, right, TargetValue::div);
+
+        System.out.println(left + " / " + right + " = " + this.resultOfLastVisitedNode);
+    }
+
+    @Override
+    public void visit(Mod node) {
+        TargetValue left = this.getValueForNode(node.getLeft());
+        TargetValue right = this.getValueForNode(node.getRight());
+
+        this.resultOfLastVisitedNode = fold(left, right, TargetValue::mod);
+
+        System.out.println(left + " % " + right + " = " + this.resultOfLastVisitedNode);
+    }
+
+    @Override
+    public void visit(Minus node) {
+        TargetValue other = this.getValueForNode(node.getOp());
+
+        this.resultOfLastVisitedNode = fold(other, TargetValue::neg);
+
+        System.out.println("-" + other + " = " + this.resultOfLastVisitedNode);
     }
 }

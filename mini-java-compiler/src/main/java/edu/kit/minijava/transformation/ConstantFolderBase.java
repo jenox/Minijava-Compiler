@@ -74,7 +74,6 @@ abstract class ConstantFolderBase extends NodeVisitor.Default {
         TargetValue perform(TargetValue lhs, TargetValue rhs);
     }
 
-    // TODO: what happens if we divide by zero?
     static TargetValue fold(TargetValue left, TargetValue right, BinaryOperation operation) {
         if (left.isConstant() && right.isConstant()) {
             return operation.perform(left, right);
