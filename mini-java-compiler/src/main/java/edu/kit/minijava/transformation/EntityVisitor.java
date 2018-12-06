@@ -331,7 +331,8 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
                     elementType = new PrimitiveType(Mode.getIs());
                     break;
                 default:
-                    elementType = new StructType(name); //TODO: arrays von structs passen noch nicht
+                    elementType = new PrimitiveType(Mode.getP()); // TODO: können wir hier einfach auf Pointer setzen?
+
             }
             this.types.put(reference.getBasicTypeReference().getDeclaration(), elementType);
 
@@ -695,7 +696,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
     protected void visit(NullLiteral expression, EntityContext context) {
         // Node result = context.getConstruction().newUnknown(Mode.getP());
         if (this.isVariableCounting) {
-            //nothing to do
+            // nothing to do
             return;
         }
 
@@ -799,7 +800,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
                     in[0] = context.getResult();
                 }
                 else {
-                    in[0] = construction.newProj(graph.getArgs(), Mode.getP(), 0);
+                    in[0] = construction.newProj(graph.getArgs(), Mode.getP(), 0); // TODO: Problem mit number 0
                 }
             }
 
@@ -915,7 +916,16 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
             Node arrayPointer = context.getResult();
 
-            Type type = this.types.get(context.getDecl());
+            Type type = null;
+            if (context.getDecl() == null) {
+                // there is no declaration, like when accessing new created array, e.g. new int[5][1]
+                // in this case type should be set in context
+                type = context.getType();
+            }
+            else {
+                type = this.types.get(context.getDecl());
+            }
+
             Type elementType = this.types.get(expression.getContext().getType().getDeclaration().get());
 
             // for sel stmt
@@ -1048,9 +1058,9 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
                 Node right = null;
 
-                //if mode is null, we have a non-atomic type, initialize with null pointer
+                // if mode is null, we have a non-atomic type, initialize with null pointer
                 if (mode == null || mode.equals(Mode.getP())) {
-                    //we have an array, initialize with null pointer
+                    // we have an array, initialize with null pointer
                     if (this.nullNode == null) {
                         TargetValue arst = new TargetValue(0, Mode.getP());
                         right = context.getConstruction().newConst(arst);
@@ -1070,7 +1080,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
                 }
                 else if (mode.equals(Mode.getIs())) {
                     right = context.getConstruction().newConst(0, Mode.getBs());
-                    //TODO: sollte hier vllt Mode.getIs stehen?
+                    // TODO: sollte hier vllt Mode.getIs stehen?
                 }
 
                 Node store = context.getConstruction().newStore(mem, member, right);
@@ -1099,6 +1109,27 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
             context.getConstruction().setCurrentMem(newMem);
             context.setResult(res);
+
+            // get firm type of array
+            String name = expression.getBasicTypeReference().getName();
+            Type elementType = null;
+
+            switch (name) {
+                case "boolean":
+                case "String":
+                case "void":
+                    elementType = new PrimitiveType(Mode.getBs());
+                    break;
+                case "int":
+                    elementType = new PrimitiveType(Mode.getIs());
+                    break;
+                default:
+                    elementType = new PrimitiveType(Mode.getP()); // TODO: können wir hier einfach auf Pointer setzen?
+
+            }
+
+            context.setType(new ArrayType(elementType, 0));
+
         }
     }
 
