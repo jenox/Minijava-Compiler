@@ -141,4 +141,19 @@ public class ConstantFolder extends ConstantFolderBase {
 
         System.out.println("!" + other + " = " + this.resultOfLastVisitedNode);
     }
+
+    @Override
+    public void visit(Cmp node) {
+        TargetValue left = this.getValueForNode(node.getLeft());
+        TargetValue right = this.getValueForNode(node.getRight());
+
+        if (node.getRelation().contains(left.compare(right))) {
+            this.resultOfLastVisitedNode = new TargetValue(-1, Mode.getBs());
+        }
+        else {
+            this.resultOfLastVisitedNode = new TargetValue(0, Mode.getBs());
+        }
+
+        System.out.println(left + " " + node.getRelation() + " " + right + " = " + this.resultOfLastVisitedNode);
+    }
 }
