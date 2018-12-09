@@ -11,43 +11,22 @@ env:
 
 jobs:
   allow_failures:
-    - name: Shared mjtest Tests
+    - name: Firm Compilation Tests
 
   include:
     - stage: build
       name: Build
       script: ./build
     - stage: test
-      name: Shared mjtest Tests
-      script:
-        - ./build
-        - git clone --recursive https://git.scc.kit.edu/IPDSnelting/mjtest.git
-        - cd mjtest/tests
-        - git checkout master
-        - cd ../..
-        - ./mjtest/mjt.py lexer --ci_testing --parallel --output_no_incorrect_reports
-        - ./mjtest/mjt.py syntax --ci_testing --parallel --output_no_incorrect_reports
-        - ./mjtest/mjt.py ast --ci_testing --parallel --output_no_incorrect_reports
-        - ./mjtest/mjt.py semantic --ci_testing --parallel --output_no_incorrect_reports
-        - ./mjtest/mjt.py compile-firm --ci_testing --parallel --output_no_incorrect_reports
-    - name: Custom mjtest Tests (all up to Semantic Tests)
-      script:
-        - ./build
-        - git clone --recursive https://git.scc.kit.edu/ubduq/mjtest.git
-        - cd mjtest/tests
-        - git checkout dev
-        - cd ../..
-        - ./mjtest/mjt.py lexer --ci_testing --parallel --output_no_incorrect_reports
-        - ./mjtest/mjt.py syntax --ci_testing --parallel --output_no_incorrect_reports
-        - ./mjtest/mjt.py ast --ci_testing --parallel --output_no_incorrect_reports
-        - ./mjtest/mjt.py semantic --ci_testing --parallel --output_no_incorrect_reports
-    - name: Custom mjtest Firm Compilation Tests
-      script:
-        - ./build
-        - git clone --recursive https://git.scc.kit.edu/ubduq/mjtest.git
-        - cd mjtest/tests
-        - git checkout dev
-        - cd ../..
-        - ./mjtest/mjt.py compile-firm --ci_testing --parallel --output_no_incorrect_reports
-    - name: Style Check
+      name: Style Check
       script: ./mini-java-compiler/gradlew -b ./mini-java-compiler/build.gradle checkstyleMain checkstyleTest
+    - name: Lexer Tests
+      script: ./build && ./mjtest/mjt.py lexer --ci_testing --parallel
+    - name: Parser Tests
+      script: ./build && ./mjtest/mjt.py syntax --ci_testing --parallel
+    - name: AST Tests
+      script: ./build && ./mjtest/mjt.py ast --ci_testing --parallel
+    - name: Semantic Tests
+      script: ./build && ./mjtest/mjt.py semantic --ci_testing --parallel
+    - name: Firm Compilation Tests
+      script: ./build && ./mjtest/mjt.py compile-firm --ci_testing --parallel
