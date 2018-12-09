@@ -128,9 +128,8 @@ public abstract class ExpressionResult {
             afterBlock.addPred(this.getIfFalse());
 
             Node phiNode = this.getConstruction().newPhi(new Node[] { constMinusOne, constZero }, Mode.getBs());
-            this.getConstruction().setCurrentBlock(afterBlock);
 
-            return new Value(this.getConstruction(), this.getBlock(), phiNode, false);
+            return new Value(this.getConstruction(), this.getConstruction().getCurrentBlock(), phiNode, true);
         }
 
         @Override
