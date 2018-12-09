@@ -787,36 +787,38 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
             Construction construction = context.getConstruction();
             Graph graph = construction.getGraph();
 
-            Node mem = context.getConstruction().getCurrentMem();
             Node[] in = new Node[expression.getArguments().size() + 1];
 
             if (!expression.getContext().isPresent()) {
                 in[0] = construction.newProj(graph.getArgs(), Mode.getP(), 0);
             }
             else {
-                if (expression.getContext().get() instanceof VariableAccess) {
-                    expression.getContext().get().accept(this, context);
-                    in[0] = context.getResult().convertToValue().getNode();
-                    // Declaration decl = ((VariableAccess) expression.getContext().get())
-                    // .getVariableReference().getDeclaration();
-                    // int num = this.variableNums.get(decl);
-                    // in[0] = construction.getVariable(num, Mode.getP());
-                }
-                else if (expression.getContext().get() instanceof MethodInvocation) {
-                    expression.getContext().get().accept(this, context);
-                    in[0] = context.getResult().convertToValue().getNode();
-                }
-                else if (expression.getContext().get() instanceof ExplicitFieldAccess) {
-                    expression.getContext().get().accept(this, context);
-                    in[0] = context.getResult().convertToValue().getNode();
-                }
-                else if (expression.getContext().get() instanceof NewObjectCreation) {
-                    expression.getContext().get().accept(this, context);
-                    in[0] = context.getResult().convertToValue().getNode();
-                }
-                else {
-                    in[0] = construction.newProj(graph.getArgs(), Mode.getP(), 0); // TODO: Problem mit number 0
-                }
+                expression.getContext().get().accept(this, context);
+                in[0] = context.getResult().convertToValue().getNode();
+
+//                if (expression.getContext().get() instanceof VariableAccess) {
+//                    expression.getContext().get().accept(this, context);
+//                    in[0] = context.getResult().convertToValue().getNode();
+//                    // Declaration decl = ((VariableAccess) expression.getContext().get())
+//                    // .getVariableReference().getDeclaration();
+//                    // int num = this.variableNums.get(decl);
+//                    // in[0] = construction.getVariable(num, Mode.getP());
+//                }
+//                else if (expression.getContext().get() instanceof MethodInvocation) {
+//                    expression.getContext().get().accept(this, context);
+//                    in[0] = context.getResult().convertToValue().getNode();
+//                }
+//                else if (expression.getContext().get() instanceof ExplicitFieldAccess) {
+//                    expression.getContext().get().accept(this, context);
+//                    in[0] = context.getResult().convertToValue().getNode();
+//                }
+//                else if (expression.getContext().get() instanceof NewObjectCreation) {
+//                    expression.getContext().get().accept(this, context);
+//                    in[0] = context.getResult().convertToValue().getNode();
+//                }
+//                else {
+//                    in[0] = construction.newProj(graph.getArgs(), Mode.getP(), 0); // TODO: Problem mit number 0
+//                }
             }
 
             for (int i = 0; i < expression.getArguments().size(); i++) {
@@ -827,6 +829,8 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
             Entity methodEntity = this.entities.get(expression.getMethodReference().getDeclaration());
             Node callee = context.getConstruction().newAddress(methodEntity);
+
+            Node mem = context.getConstruction().getCurrentMem();
             Node callNode = context.getConstruction().newCall(mem, callee, in, methodEntity.getType());
 
             Node newMem = context.getConstruction().newProj(callNode, Mode.getM(), Call.pnM);
@@ -1009,22 +1013,22 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
                     mode = Mode.getP();
                 }
 
-                Node mem = context.getConstruction().getCurrentMem();
-                Node newMem = null;
-
                 if (isLeftSide) {
                     Node store = context.getConstruction()
-                        .newStore(mem, member, rightResult.convertToValue().getNode());
-                    newMem = context.getConstruction().newProj(store, Mode.getM(), Store.pnM);
+                        .newStore(context.getConstruction().getCurrentMem(),
+                            member, rightResult.convertToValue().getNode());
+                    Node newMem = context.getConstruction().newProj(store, Mode.getM(), Store.pnM);
+                    context.getConstruction().setCurrentMem(newMem);
                 }
                 else {
-                    Node load = context.getConstruction().newLoad(mem, member, mode);
-                    newMem = context.getConstruction().newProj(load, Mode.getM(), Load.pnM);
+                    Node load = context.getConstruction()
+                        .newLoad(context.getConstruction().getCurrentMem(), member, mode);
+                    Node newMem = context.getConstruction().newProj(load, Mode.getM(), Load.pnM);
+                    context.getConstruction().setCurrentMem(newMem);
+
                     Node result = context.getConstruction().newProj(load, mode, Load.pnRes);
                     context.setResult(new ExpressionResult.Value(context.getConstruction(), result));
                 }
-
-                context.getConstruction().setCurrentMem(newMem);
             }
             else {
                 assert false : "Unhandled assignment type";
@@ -1044,15 +1048,17 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
     @Override
     protected void visit(NewObjectCreation expression, EntityContext context) {
         if (!this.isVariableCounting) {
-            // calculate size and alignment
-            Node mem = context.getConstruction().getCurrentMem();
+
+            // Calculate size and alignment
             int classSize = this.classSizes.get(expression.getClassReference().getDeclaration());
             Node size = context.getConstruction().newConst(classSize, Mode.getIu());
             int alignment = this.types.get(expression.getClassReference().getDeclaration()).getAlignment();
 
-            // allocate memory
-            Node alloc = context.getConstruction().newAlloc(mem, size, alignment);
+            // Allocate memory
+            Node alloc = context.getConstruction().newAlloc(context.getConstruction().getCurrentMem(), size, alignment);
             Node newMem = context.getConstruction().newProj(alloc, Mode.getM(), Alloc.pnM);
+            context.getConstruction().setCurrentMem(newMem);
+
             Node res = context.getConstruction().newProj(alloc, Mode.getP(), Alloc.pnRes);
 
             // init fields
@@ -1088,13 +1094,14 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
                     right = context.getConstruction().newConst(0, Mode.getIs());
                 }
 
-                Node store = context.getConstruction().newStore(mem, member, right);
+                Node store = context.getConstruction()
+                    .newStore(context.getConstruction().getCurrentMem(), member, right);
                 newMem = context.getConstruction().newProj(store, Mode.getM(), Store.pnM);
+                context.getConstruction().setCurrentMem(newMem);
 
             }
             context.setLeftSideOfAssignment(false);
 
-            context.getConstruction().setCurrentMem(newMem);
             context.setResult(new ExpressionResult.Value(context.getConstruction(), res));
         }
     }
@@ -1111,13 +1118,14 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
             Node mem = context.getConstruction().getCurrentMem();
             Node alloc = context.getConstruction().newAlloc(mem, size, alignment);
-            Node newMem = context.getConstruction().newProj(alloc, Mode.getM(), Alloc.pnM);
-            Node res = context.getConstruction().newProj(alloc, Mode.getP(), Alloc.pnRes);
 
+            Node newMem = context.getConstruction().newProj(alloc, Mode.getM(), Alloc.pnM);
             context.getConstruction().setCurrentMem(newMem);
+
+            Node res = context.getConstruction().newProj(alloc, Mode.getP(), Alloc.pnRes);
             context.setResult(new ExpressionResult.Value(context.getConstruction(), res));
 
-            // get firm type of array
+            // Get firm type of array
             String name = expression.getBasicTypeReference().getName();
             Type elementType = null;
 
@@ -1144,7 +1152,6 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
     protected void visit(SystemOutPrintlnExpression expression, EntityContext context) {
         if (!this.isVariableCounting) {
             Construction construction = context.getConstruction();
-            Node mem = construction.getCurrentMem();
 
             expression.getArgument().accept(this, context);
             Node argument = context.getResult().convertToValue().getNode();
@@ -1154,6 +1161,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
             Node functionAddress = construction.newAddress(functionEntity);
 
+            Node mem = construction.getCurrentMem();
             Node call = construction.newCall(mem, functionAddress, new Node[] { argument }, functionEntity.getType());
 
             Node newMem = construction.newProj(call, Mode.getM(), Call.pnM);
@@ -1165,13 +1173,13 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
     protected void visit(SystemOutFlushExpression expression, EntityContext context) {
         if (!this.isVariableCounting) {
             Construction construction = context.getConstruction();
-            Node mem = construction.getCurrentMem();
 
             Entity functionEntity = this.runtimeEntities.get("system_out_flush");
             assert functionEntity != null : "Runtime library function entity must be present";
 
             Node functionAddress = construction.newAddress(functionEntity);
 
+            Node mem = construction.getCurrentMem();
             Node call = construction.newCall(mem, functionAddress, new Node[] {}, functionEntity.getType());
 
             Node newMem = construction.newProj(call, Mode.getM(), Call.pnM);
@@ -1183,7 +1191,6 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
     protected void visit(SystemOutWriteExpression expression, EntityContext context) {
         if (!this.isVariableCounting) {
             Construction construction = context.getConstruction();
-            Node mem = construction.getCurrentMem();
 
             expression.getArgument().accept(this, context);
             Node argument = context.getResult().convertToValue().getNode();
@@ -1193,6 +1200,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
             Node functionAddress = construction.newAddress(functionEntity);
 
+            Node mem = construction.getCurrentMem();
             Node call = construction.newCall(mem, functionAddress, new Node[] { argument }, functionEntity.getType());
 
             Node newMem = construction.newProj(call, Mode.getM(), Call.pnM);
@@ -1206,13 +1214,13 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
         if (!this.isVariableCounting) {
             Construction construction = context.getConstruction();
-            Node mem = construction.getCurrentMem();
 
             Entity functionEntity = this.runtimeEntities.get("system_in_read");
             assert functionEntity != null : "Runtime library function entity must be present";
 
             Node functionAddress = construction.newAddress(functionEntity);
 
+            Node mem = construction.getCurrentMem();
             Node call = construction.newCall(mem, functionAddress, new Node[] {}, functionEntity.getType());
 
             Node newMem = construction.newProj(call, Mode.getM(), Call.pnM);
