@@ -315,58 +315,47 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
     @Override
     protected void visit(ExplicitTypeReference reference, EntityContext context) {
         Type firmType = null;
+        Type elementType = null;
 
         BasicTypeDeclaration decl = reference.getBasicTypeReference().getDeclaration();
-        Type elementType = null;
         String name = reference.getBasicTypeReference().getName();
 
-        // check for array type
-        if (reference.getNumberOfDimensions() > 0) {
-
-            switch (name) {
-                case "boolean":
-                case "String":
-                case "void":
-                    elementType = new PrimitiveType(Mode.getBs());
-                    break;
-                case "int":
-                    elementType = new PrimitiveType(Mode.getIs());
-                    break;
-                default:
-                    elementType = new PrimitiveType(Mode.getP()); // TODO: können wir hier einfach auf Pointer setzen?
-
-            }
-            this.types.put(reference.getBasicTypeReference().getDeclaration(), elementType);
-
-            for (int i = 0; i < reference.getNumberOfDimensions(); i++) {
-                elementType = new ArrayType(elementType, 0);
-            }
-
-            elementType.finishLayout();
-            firmType = elementType;
+        if (decl.isClassDeclaration()) {
+            elementType = new PointerType(new StructType(name));
         }
-        else if (!decl.isClassDeclaration()) {
+        else if (decl instanceof PrimitiveTypeDeclaration) {
+            // Primitive type
+            PrimitiveTypeDeclaration primitiveDeclaration = (PrimitiveTypeDeclaration) decl;
 
-            PrimitiveTypeDeclaration decl_ = (PrimitiveTypeDeclaration) decl;
-
-            switch (decl_) {
+            switch (primitiveDeclaration) {
                 case INTEGER:
-                    firmType = new PrimitiveType(Mode.getIs());
+                    elementType = new PrimitiveType(Mode.getIs());
                     break;
                 case VOID:
                 case STRING:
                 case BOOLEAN:
-                    firmType = new PrimitiveType(Mode.getBs());
+                    elementType = new PrimitiveType(Mode.getBs());
                     break;
                 default:
+                    assert false : "Unhandled primitive type!";
                     break;
             }
         }
-        // user defined type
         else {
-            firmType = new PointerType(new StructType(name));
+            assert false : "Unhandled type declaration";
         }
 
+        elementType.finishLayout();
+        this.types.put(reference.getBasicTypeReference().getDeclaration(), elementType);
+
+        if (reference.getNumberOfDimensions() > 0) {
+            // We have an array type, wrap in pointers according to number of dimensions
+            for (int i = 0; i < reference.getNumberOfDimensions(); i++) {
+                elementType = new PointerType(new ArrayType(elementType, 0));
+            }
+        }
+
+        firmType = elementType;
         context.setType(firmType);
     }
 
@@ -380,6 +369,8 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
         // Generate code for the condition
         if (!this.isVariableCounting) {
             Construction construction = context.getConstruction();
+
+            context.setTopLevel(true);
 
             statement.getCondition().accept(this, context);
 
@@ -582,6 +573,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
             expression.getLeft().accept(this, context);
         }
         else {
+            context.setTopLevel(true);
             if (expression.getOperationType() == BinaryOperationType.LOGICAL_AND) {
                 context.setResult(this.handleShortCircuitedAnd(expression, context));
                 return;
@@ -595,6 +587,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
             if (expression.getOperationType() == BinaryOperationType.ASSIGNMENT) {
                 expression.getRight().accept(this, context);
                 ExpressionResult.Value right = context.getResult().convertToValue();
+                context.setResult(right);
 
                 context.setLeftSideOfAssignment(expression.getOperationType().equals(BinaryOperationType.ASSIGNMENT));
                 expression.getLeft().accept(this, context);
@@ -604,13 +597,22 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
                 return;
             }
 
+            context.setTopLevel(true);
+
             expression.getRight().accept(this, context);
             ExpressionResult.Value rightExpression = context.getResult().convertToValue();
+            context.setResult(rightExpression);
+
             Node right = rightExpression.getNode();
 
             context.setLeftSideOfAssignment(expression.getOperationType().equals(BinaryOperationType.ASSIGNMENT));
+
+            context.setTopLevel(true);
+
             expression.getLeft().accept(this, context);
             ExpressionResult.Value leftExpression = context.getResult().convertToValue();
+            context.setResult(leftExpression);
+
             Node left = leftExpression.getNode();
 
             switch (expression.getOperationType()) {
@@ -685,6 +687,8 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
         if (!this.isVariableCounting) {
             ExpressionResult.Value otherNode = context.getResult().convertToValue();
+            context.setResult(otherNode);
+
             Construction construction = context.getConstruction();
             switch (expression.getOperationType()) {
                 case LOGICAL_NEGATION:
@@ -917,17 +921,8 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
             Node arrayPointer = context.getResult().convertToValue().getNode();
 
-            Type type = null;
-            if (context.getDecl() == null) {
-                // there is no declaration, like when accessing new created array, e.g. new int[5][1]
-                // in this case type should be set in context
-                type = context.getType();
-            }
-            else {
-                type = this.types.get(context.getDecl());
-            }
-
-            Type elementType = this.types.get(expression.getContext().getType().getDeclaration().get());
+            Type elementType = this.firmTypeFromExpressionType(expression.getType());
+            Type type = this.firmTypeFromExpressionType(expression.getContext().getType());
 
             // for sel stmt
             expression.getIndex().accept(this, context);
@@ -936,6 +931,12 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
             // access array
             Node mem = context.getConstruction().getCurrentMem();
             Node newMem = null;
+
+            if (!(type instanceof PointerType)) {
+                assert false : "All arrays are pointer types!";
+            }
+
+            type = ((PointerType) type).getPointsTo();
 
             if (isTopLevel) {
                 if (isLeftSide) {
@@ -957,7 +958,6 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
                 Node sel = context.getConstruction().newSel(arrayPointer, index, type);
                 context.setResult(new ExpressionResult.Value(context.getConstruction(), sel));
             }
-
         }
         else {
             expression.getContext().accept(this, context);
@@ -1106,7 +1106,8 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
             Node size = context.getConstruction()
                 .newConv(context.getResult().convertToValue().getNode(), Mode.getIu());
 
-            int alignment = context.getType().getAlignment();
+            int alignment = this.types.get(expression.getBasicTypeReference().getDeclaration()).getAlignment();
+//            int alignment = context.getType().getAlignment();
 
             Node mem = context.getConstruction().getCurrentMem();
             Node alloc = context.getConstruction().newAlloc(mem, size, alignment);
@@ -1300,5 +1301,51 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
             assert false : "Cannot get correct mode for type!";
             return null;
         }
+    }
+
+    private Type firmTypeFromExpressionType(TypeOfExpression type) {
+
+        Type elementType = null;
+
+        assert type.isResolved() : "Unresolved type!";
+        BasicTypeDeclaration decl = type.getDeclaration().get();
+
+        String name = decl.getName();
+
+        if (decl.isClassDeclaration()) {
+            elementType = new PointerType(new StructType(name));
+        }
+        else if (decl instanceof PrimitiveTypeDeclaration) {
+            // Primitive type
+            PrimitiveTypeDeclaration primitiveDeclaration = (PrimitiveTypeDeclaration) decl;
+
+            switch (primitiveDeclaration) {
+                case INTEGER:
+                    elementType = new PrimitiveType(Mode.getIs());
+                    break;
+                case VOID:
+                case STRING:
+                case BOOLEAN:
+                    elementType = new PrimitiveType(Mode.getBs());
+                    break;
+                default:
+                    assert false : "Unhandled primitive type!";
+                    break;
+            }
+        }
+        else {
+            assert false : "Unhandled type declaration";
+        }
+
+        elementType.finishLayout();
+
+        if (type.getNumberOfDimensions() > 0) {
+            // We have an array type, wrap in pointers according to number of dimensions
+            for (int i = 0; i < type.getNumberOfDimensions(); i++) {
+                elementType = new PointerType(new ArrayType(elementType, 0));
+            }
+        }
+
+        return elementType;
     }
 }
