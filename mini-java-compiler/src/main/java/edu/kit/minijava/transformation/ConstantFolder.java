@@ -198,7 +198,8 @@ public class ConstantFolder extends ConstantFolderBase {
             this.resultOfLastVisitedNode = new TargetValue(0, Mode.getBs());
         }
 
-        System.out.println(describe(left) + " " + node.getRelation() + " " + describe(right) + " = " + this.resultOfLastVisitedNode);
+        System.out.println(describe(left) + " " + node.getRelation() + " " + describe(right) + " = " +
+                this.resultOfLastVisitedNode);
     }
 
     @Override
