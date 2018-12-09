@@ -206,12 +206,12 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
             methodContext.setCalledFromMain(true);
             methodDeclaration.getBody().accept(this, methodContext);
 
-            Node mem = construction.getCurrentMem();
-            Node returnNode = construction.newReturn(mem, new Node[] {});
-            graph.getEndBlock().addPred(returnNode);
+            if (!methodContext.endsOnJumpNode()) {
+                Node mem = construction.getCurrentMem();
+                Node returnNode = construction.newReturn(mem, new Node[] {});
+                graph.getEndBlock().addPred(returnNode);
+            }
 
-            // No code should follow a return statement.
-            construction.setUnreachable();
             // Done.
             construction.finish();
         }
@@ -410,32 +410,64 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
             // generate code for the true-statement
             statement.getStatementIfTrue().accept(this, context);
 
+            boolean thenEndsOnJump = context.endsOnJumpNode();
+
             // Jump out of if-block
-            Node endIf = context.getConstruction().newJmp();
+//            Node endIf = context.getConstruction().newJmp();
 
             Node endElse = null;
+            boolean elseEndsOnJump = false;
+
+            firm.nodes.Block bFalse = context.getConstruction().newBlock();
+            bFalse.addPred(condition.getIfFalse());
+            context.getConstruction().setCurrentBlock(bFalse);
+
             if (statement.getStatementIfFalse().isPresent()) {
                 // Else-Block
-                firm.nodes.Block bFalse = context.getConstruction().newBlock();
-                bFalse.addPred(condition.getIfFalse());
-                context.getConstruction().setCurrentBlock(bFalse);
+                context.setEndsOnJumpNode(false);
 
                 statement.getStatementIfFalse().ifPresent(c -> c.accept(this, context));
 
+                elseEndsOnJump = context.endsOnJumpNode();
+
                 // Jump out of else-block
-                endElse = context.getConstruction().newJmp();
+//                endElse = context.getConstruction().newJmp();
             }
 
-            // Follow-up block connect with the jumps out of if- and else-block
-            firm.nodes.Block bAfter = context.getConstruction().newBlock();
-            bAfter.addPred(endIf);
-            if (statement.getStatementIfFalse().isPresent()) {
+            bFalse = context.getConstruction().getCurrentBlock();
+
+            // Follow-up block connection with the jumps out of if- and else-block
+
+            if (!thenEndsOnJump && !elseEndsOnJump) {
+                firm.nodes.Block bAfter = context.getConstruction().newBlock();
+
+                context.getConstruction().setCurrentBlock(bTrue);
+                Node endIf = context.getConstruction().newJmp();
+
+                context.getConstruction().setCurrentBlock(bFalse);
+                endElse = context.getConstruction().newJmp();
+
+                bAfter.addPred(endIf);
                 bAfter.addPred(endElse);
+
+                context.getConstruction().setCurrentBlock(bAfter);
+
+                context.setEndsOnJumpNode(false);
             }
+            // Only then branch ends on a branch node
+            else if (!thenEndsOnJump) {
+                // In this case, set the else block as the current block
+                context.getConstruction().setCurrentBlock(bTrue);
+                context.setEndsOnJumpNode(false);
+            }
+            else if (!elseEndsOnJump) {
+                context.getConstruction().setCurrentBlock(bFalse);
+                context.setEndsOnJumpNode(false);
+            }
+            // Both end on jump node
             else {
-                bAfter.addPred(condition.getIfFalse());
+                context.setEndsOnJumpNode(true);
             }
-            context.getConstruction().setCurrentBlock(bAfter);
         }
         else {
             statement.getStatementIfTrue().accept(this, context);
@@ -447,6 +479,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
     protected void visit(WhileStatement statement, EntityContext context) {
         Construction construction = context.getConstruction();
         if (!this.isVariableCounting) {
+
             Node jump = construction.newJmp();
 
             firm.nodes.Block loopHeader = construction.newBlock();
@@ -465,8 +498,12 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
             statement.getStatementWhileTrue().accept(this, context);
 
-            Node jmp2 = construction.newJmp();
-            loopHeader.addPred(jmp2);
+            boolean loopEndsOnJumpNode = context.endsOnJumpNode();
+
+            if (!loopEndsOnJumpNode) {
+                Node jmp2 = construction.newJmp();
+                loopHeader.addPred(jmp2);
+            }
 
             // after-loop block
             firm.nodes.Block afterLoop = construction.newBlock();
@@ -482,6 +519,8 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
     protected void visit(ExpressionStatement statement, EntityContext context) {
         context.setTopLevel(true);
         statement.getExpression().accept(this, context);
+
+        context.setEndsOnJumpNode(false);
     }
 
     @Override
@@ -506,6 +545,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
                 Node returnNode = context.getConstruction().newReturn(mem, results);
                 context.getConstruction().getGraph().getEndBlock().addPred(returnNode);
             }
+            context.setEndsOnJumpNode(true);
         }
     }
 
@@ -537,6 +577,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
         }
 
         context.setResult(null);
+        context.setEndsOnJumpNode(false);
     }
 
     @Override
@@ -544,7 +585,10 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
         for (Statement stmt : block.getStatements()) {
             stmt.accept(this, context);
 
+            context.setEndsOnJumpNode(false);
+
             if (stmt instanceof ReturnStatement) {
+                context.setEndsOnJumpNode(true);
                 break;
             }
         }
@@ -1004,6 +1048,9 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
                 }
 
                 context.getConstruction().setCurrentMem(newMem);
+            }
+            else {
+                assert false : "Unhandled assignment type";
             }
         }
     }

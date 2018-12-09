@@ -17,6 +17,7 @@ public class EntityContext {
     private boolean isLeftSideOfAssignment;
     private boolean isTopLevel;
     private boolean isCalledFromMain;
+    private boolean endsOnJumpNode;
 
     public boolean isCalledFromMain() {
         return this.isCalledFromMain;
@@ -110,6 +111,14 @@ public class EntityContext {
 
     public int getNumberOfLocalVars() {
         return this.numberOfLocalVars;
+    }
+
+    public void setEndsOnJumpNode(boolean endsOnJumpNode) {
+        this.endsOnJumpNode = endsOnJumpNode;
+    }
+
+    public boolean endsOnJumpNode() {
+        return this.endsOnJumpNode;
     }
 
 }
