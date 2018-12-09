@@ -369,6 +369,8 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
         if (!this.isVariableCounting) {
             Construction construction = context.getConstruction();
 
+            context.setTopLevel(true);
+
             statement.getCondition().accept(this, context);
 
             ExpressionResult.Cond condition = context.getResult().convertToCond();
@@ -570,6 +572,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
             expression.getLeft().accept(this, context);
         }
         else {
+            context.setTopLevel(true);
             if (expression.getOperationType() == BinaryOperationType.LOGICAL_AND) {
                 context.setResult(this.handleShortCircuitedAnd(expression, context));
                 return;
@@ -593,6 +596,8 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
                 return;
             }
 
+            context.setTopLevel(true);
+
             expression.getRight().accept(this, context);
             ExpressionResult.Value rightExpression = context.getResult().convertToValue();
             context.setResult(rightExpression);
@@ -600,6 +605,9 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
             Node right = rightExpression.getNode();
 
             context.setLeftSideOfAssignment(expression.getOperationType().equals(BinaryOperationType.ASSIGNMENT));
+
+            context.setTopLevel(true);
+
             expression.getLeft().accept(this, context);
             ExpressionResult.Value leftExpression = context.getResult().convertToValue();
             context.setResult(leftExpression);
