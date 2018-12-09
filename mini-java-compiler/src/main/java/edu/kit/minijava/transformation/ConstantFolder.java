@@ -18,8 +18,14 @@ public class ConstantFolder extends ConstantFolderBase {
         for (Node node : this.getNodes()) {
             TargetValue value = this.getValueForNode(node);
 
+            // For efficiency reasons, do not replace nodes that were constants already.
             if (node instanceof Const) {
                 assert ((Const)node).getTarval().equals(value);
+                continue;
+            }
+
+            // We only store value for projections to propagate values through projections.
+            if (node instanceof Proj) {
                 continue;
             }
 
@@ -193,5 +199,12 @@ public class ConstantFolder extends ConstantFolderBase {
         }
 
         System.out.println(describe(left) + " " + node.getRelation() + " " + describe(right) + " = " + this.resultOfLastVisitedNode);
+    }
+
+    @Override
+    public void visit(Proj projection) {
+        if (projection.getNum() == 1) {
+            this.resultOfLastVisitedNode = this.getValueForNode(projection.getPred());
+        }
     }
 }
