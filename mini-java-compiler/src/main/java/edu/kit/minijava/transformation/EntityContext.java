@@ -2,18 +2,15 @@ package edu.kit.minijava.transformation;
 
 import edu.kit.minijava.ast.nodes.Declaration;
 import firm.Construction;
-import firm.Graph;
 import firm.StructType;
 import firm.Type;
-import firm.nodes.Node;
 
 public class EntityContext {
 
     private Type type;
     private Type elementType;
     private int numberOfLocalVars;
-    private Graph graph;
-    private Node result = null;
+    private ExpressionResult result = null;
     private Construction construction;
     private StructType classType;
     private Declaration decl;
@@ -78,11 +75,11 @@ public class EntityContext {
         this.construction = construction;
     }
 
-    public Node getResult() {
+    public ExpressionResult getResult() {
         return this.result;
     }
 
-    public void setResult(Node result) {
+    public void setResult(ExpressionResult result) {
         this.result = result;
     }
 
