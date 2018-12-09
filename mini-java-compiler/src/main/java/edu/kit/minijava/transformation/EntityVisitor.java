@@ -1084,8 +1084,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
                     }
                 }
                 else if (mode.equals(Mode.getIs())) {
-                    right = context.getConstruction().newConst(0, Mode.getBs());
-                    // TODO: sollte hier vllt Mode.getIs stehen?
+                    right = context.getConstruction().newConst(0, Mode.getIs());
                 }
 
                 Node store = context.getConstruction().newStore(mem, member, right);
