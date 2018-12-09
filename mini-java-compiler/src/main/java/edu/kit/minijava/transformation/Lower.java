@@ -26,7 +26,7 @@ public class Lower {
          * filter some out */
         name = name.replaceAll("[()\\[\\];]", "_");
         Ident identifier = Ident.mangleGlobal(name);
-        entity.setLdIdent(identifier);
+        entity.setLdIdent(identifier); //TODO: Problem bei Aufruf, Testcase: legitimate_call_to_main.java
     }
 
     private void fixEntityNames() {
@@ -36,8 +36,9 @@ public class Lower {
     }
 
     private void layoutClass(ClassType cls) {
-        if (cls.equals(Program.getGlobalType()))
+        if (cls.equals(Program.getGlobalType())) {
             return;
+        }
 
         for (int m = 0; m < cls.getNMembers(); /* nothing */) {
             Entity member = cls.getMember(m);
