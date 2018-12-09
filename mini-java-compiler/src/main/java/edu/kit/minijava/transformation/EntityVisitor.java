@@ -937,7 +937,8 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
             type = ((PointerType) type).getPointsTo();
 
-            if (isTopLevel) {
+            // TODO Remove isTopLevel if no longer needed
+//            if (isTopLevel) {
                 if (isLeftSide) {
                     Node sel = context.getConstruction().newSel(arrayPointer, index, type);
                     Node store = context.getConstruction().newStore(mem, sel, rightResult.convertToValue().getNode());
@@ -952,11 +953,11 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
                 }
 
                 context.getConstruction().setCurrentMem(newMem);
-            }
-            else {
-                Node sel = context.getConstruction().newSel(arrayPointer, index, type);
-                context.setResult(new ExpressionResult.Value(context.getConstruction(), sel));
-            }
+//            }
+//            else {
+//                Node sel = context.getConstruction().newSel(arrayPointer, index, type);
+//                context.setResult(new ExpressionResult.Value(context.getConstruction(), sel));
+//            }
         }
         else {
             expression.getContext().accept(this, context);
