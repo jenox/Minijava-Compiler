@@ -58,7 +58,7 @@ public class ConstantFolder extends ConstantFolderBase {
         TargetValue left = this.getValueForNode(node.getLeft());
         TargetValue right = this.getValueForNode(node.getRight());
 
-        this.resultOfLastVisitedNode = fold(left, right, TargetValue::div);
+        this.resultOfLastVisitedNode = fold(left, right, TargetValue::add);
 
         System.out.println(left + " + " + right + " = " + this.resultOfLastVisitedNode);
     }
@@ -68,7 +68,7 @@ public class ConstantFolder extends ConstantFolderBase {
         TargetValue left = this.getValueForNode(node.getLeft());
         TargetValue right = this.getValueForNode(node.getRight());
 
-        this.resultOfLastVisitedNode = fold(left, right, TargetValue::div);
+        this.resultOfLastVisitedNode = fold(left, right, TargetValue::sub);
 
         System.out.println(left + " - " + right + " = " + this.resultOfLastVisitedNode);
     }
@@ -78,7 +78,7 @@ public class ConstantFolder extends ConstantFolderBase {
         TargetValue left = this.getValueForNode(node.getLeft());
         TargetValue right = this.getValueForNode(node.getRight());
 
-        this.resultOfLastVisitedNode = fold(left, right, TargetValue::div);
+        this.resultOfLastVisitedNode = fold(left, right, TargetValue::mul);
 
         System.out.println(left + " * " + right + " = " + this.resultOfLastVisitedNode);
     }
