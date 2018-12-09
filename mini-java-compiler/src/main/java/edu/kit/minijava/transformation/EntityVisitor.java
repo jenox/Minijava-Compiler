@@ -338,7 +338,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
             this.types.put(reference.getBasicTypeReference().getDeclaration(), elementType);
 
             for (int i = 0; i < reference.getNumberOfDimensions(); i++) {
-                elementType = new ArrayType(elementType, 0);
+                elementType = new PointerType(new ArrayType(elementType, 0));
             }
 
             elementType.finishLayout();
@@ -936,6 +936,12 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
             Node mem = context.getConstruction().getCurrentMem();
             Node newMem = null;
 
+            if (!(type instanceof PointerType)) {
+                assert false : "All arrays are pointer types!";
+            }
+
+            type = ((PointerType) type).getPointsTo();
+
             if (isTopLevel) {
                 if (isLeftSide) {
                     Node sel = context.getConstruction().newSel(arrayPointer, index, type);
@@ -1105,7 +1111,8 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
             Node size = context.getConstruction()
                 .newConv(context.getResult().convertToValue().getNode(), Mode.getIu());
 
-            int alignment = context.getType().getAlignment();
+            int alignment = this.types.get(expression.getBasicTypeReference().getDeclaration()).getAlignment();
+//            int alignment = context.getType().getAlignment();
 
             Node mem = context.getConstruction().getCurrentMem();
             Node alloc = context.getConstruction().newAlloc(mem, size, alignment);
