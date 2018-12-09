@@ -3,6 +3,8 @@ package edu.kit.minijava.transformation;
 import firm.*;
 import firm.nodes.*;
 
+import java.util.*;
+
 public class ConstantFolder extends ConstantFolderBase {
     ConstantFolder(Graph graph) {
         super(graph);
@@ -16,8 +18,16 @@ public class ConstantFolder extends ConstantFolderBase {
         for (Node node : this.getNodes()) {
             TargetValue value = this.getValueForNode(node);
 
+            if (node instanceof Const) {
+                assert ((Const)node).getTarval().equals(value);
+                continue;
+            }
+
             if (value.isConstant()) {
-                Graph.exchange(node, graph.newConst(value));
+                Proj memoryBeforeOperation = this.getMemoryUsedByOperation(node).orElse(null);
+                Const replacement = (Const)graph.newConst(value);
+
+                safeReplaceNodeWithConstant(node, replacement, memoryBeforeOperation);
             }
         }
     }
@@ -46,6 +56,21 @@ public class ConstantFolder extends ConstantFolderBase {
         }
     }
 
+    private Optional<Proj> getMemoryUsedByOperation(Node node) {
+        Proj projection = null;
+
+        if (node instanceof Div) {
+            projection = (Proj)((Div)node).getMem();
+        }
+        else if (node instanceof Mod) {
+            projection = (Proj)((Mod)node).getMem();
+        }
+
+        assert projection == null || projection.getNum() == 0;
+
+        return Optional.ofNullable(projection);
+    }
+
     @Override
     public void visit(Const node) {
         assert this.getValueForNode(node) == UNDEFINED;
@@ -60,7 +85,7 @@ public class ConstantFolder extends ConstantFolderBase {
 
         this.resultOfLastVisitedNode = fold(left, right, TargetValue::add);
 
-        System.out.println(left + " + " + right + " = " + this.resultOfLastVisitedNode);
+        System.out.println(describe(left) + " + " + describe(right) + " = " + this.resultOfLastVisitedNode);
     }
 
     @Override
@@ -70,7 +95,7 @@ public class ConstantFolder extends ConstantFolderBase {
 
         this.resultOfLastVisitedNode = fold(left, right, TargetValue::sub);
 
-        System.out.println(left + " - " + right + " = " + this.resultOfLastVisitedNode);
+        System.out.println(describe(left) + " - " + describe(right) + " = " + this.resultOfLastVisitedNode);
     }
 
     @Override
@@ -80,28 +105,41 @@ public class ConstantFolder extends ConstantFolderBase {
 
         this.resultOfLastVisitedNode = fold(left, right, TargetValue::mul);
 
-        System.out.println(left + " * " + right + " = " + this.resultOfLastVisitedNode);
+        System.out.println(describe(left) + " * " + describe(right) + " = " + this.resultOfLastVisitedNode);
     }
 
     @Override
     public void visit(Div node) {
         TargetValue left = this.getValueForNode(node.getLeft());
         TargetValue right = this.getValueForNode(node.getRight());
+        TargetValue zero = new TargetValue(0, Mode.getIs());
 
-        // TODO: what happens if we divide by zero?
-        this.resultOfLastVisitedNode = fold(left, right, TargetValue::div);
+        // Division by zero is undefined, we choose zero as result.
+        if (!right.equals(zero)) {
+            this.resultOfLastVisitedNode = fold(left, right, TargetValue::div);
+        }
+        else {
+            this.resultOfLastVisitedNode = zero;
+        }
 
-        System.out.println(left + " / " + right + " = " + this.resultOfLastVisitedNode);
+        System.out.println(describe(left) + " / " + describe(right) + " = " + this.resultOfLastVisitedNode);
     }
 
     @Override
     public void visit(Mod node) {
         TargetValue left = this.getValueForNode(node.getLeft());
         TargetValue right = this.getValueForNode(node.getRight());
+        TargetValue zero = new TargetValue(0, Mode.getIs());
 
-        this.resultOfLastVisitedNode = fold(left, right, TargetValue::mod);
+        // Division by zero is undefined, we choose zero as result.
+        if (!right.equals(zero)) {
+            this.resultOfLastVisitedNode = fold(left, right, TargetValue::mod);
+        }
+        else {
+            this.resultOfLastVisitedNode = zero;
+        }
 
-        System.out.println(left + " % " + right + " = " + this.resultOfLastVisitedNode);
+        System.out.println(describe(left) + " % " + describe(right) + " = " + this.resultOfLastVisitedNode);
     }
 
     @Override
@@ -110,7 +148,7 @@ public class ConstantFolder extends ConstantFolderBase {
 
         this.resultOfLastVisitedNode = fold(other, TargetValue::neg);
 
-        System.out.println("-" + other + " = " + this.resultOfLastVisitedNode);
+        System.out.println("-" + describe(other) + " = " + this.resultOfLastVisitedNode);
     }
 
     @Override
@@ -120,7 +158,7 @@ public class ConstantFolder extends ConstantFolderBase {
 
         this.resultOfLastVisitedNode = fold(left, right, TargetValue::and);
 
-        System.out.println(left + " && " + right + " = " + this.resultOfLastVisitedNode);
+        System.out.println(describe(left) + " && " + describe(right) + " = " + this.resultOfLastVisitedNode);
     }
 
     @Override
@@ -130,7 +168,7 @@ public class ConstantFolder extends ConstantFolderBase {
 
         this.resultOfLastVisitedNode = fold(left, right, TargetValue::or);
 
-        System.out.println(left + " || " + right + " = " + this.resultOfLastVisitedNode);
+        System.out.println(describe(left) + " || " + describe(right) + " = " + this.resultOfLastVisitedNode);
     }
 
     @Override
@@ -139,7 +177,7 @@ public class ConstantFolder extends ConstantFolderBase {
 
         this.resultOfLastVisitedNode = fold(other, TargetValue::not);
 
-        System.out.println("!" + other + " = " + this.resultOfLastVisitedNode);
+        System.out.println("!" + describe(other) + " = " + this.resultOfLastVisitedNode);
     }
 
     @Override
@@ -154,6 +192,6 @@ public class ConstantFolder extends ConstantFolderBase {
             this.resultOfLastVisitedNode = new TargetValue(0, Mode.getBs());
         }
 
-        System.out.println(left + " " + node.getRelation() + " " + right + " = " + this.resultOfLastVisitedNode);
+        System.out.println(describe(left) + " " + node.getRelation() + " " + describe(right) + " = " + this.resultOfLastVisitedNode);
     }
 }

@@ -2,6 +2,7 @@ package edu.kit.minijava.transformation;
 
 import firm.*;
 import firm.nodes.*;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 
@@ -134,4 +135,69 @@ abstract class ConstantFolderBase extends NodeVisitor.Default {
         }
     }
 
+
+    // MARK: - Graph Operations
+
+    static void safeReplaceNodeWithConstant(Node oldValue, Const newValue, @Nullable Proj memoryBeforeOperation) {
+        List<Node> successors = getSuccessorsOf(oldValue);
+
+        Graph.exchange(oldValue, newValue);
+
+        for (Node successor : successors) {
+            if (!(successor instanceof Proj)) continue;
+
+            Proj projection = (Proj)successor;
+
+            // memory projection
+            if (projection.getNum() == 0) {
+                contractProjection(projection, memoryBeforeOperation);
+            }
+
+            // result projection
+            else if (projection.getNum() == 1) {
+                contractProjection(projection, projection.getPred());
+            }
+
+            // other?
+            else {
+                throw new AssertionError();
+            }
+        }
+    }
+
+    private static void contractProjection(Proj projection, Node replacement) {
+        assert projection != null;
+        assert replacement != null;
+
+        for (Node successor : getSuccessorsOf(projection)) {
+            for (int index = 0; index < successor.getPredCount(); index += 1) {
+                if (successor.getPred(index).equals(projection)) {
+                    successor.setPred(index, replacement);
+                }
+            }
+        }
+
+        Graph.killNode(projection);
+    }
+
+    private static List<Node> getSuccessorsOf(Node node) {
+        Graph graph = node.getGraph();
+        boolean wasEnabled = BackEdges.enabled(graph);
+
+        if (!wasEnabled) {
+            BackEdges.enable(graph);
+        }
+
+        List<Node> nodes = new ArrayList<>();
+
+        for (BackEdges.Edge edge : BackEdges.getOuts(node)) {
+            nodes.add(edge.node);
+        }
+
+        if (!wasEnabled) {
+            BackEdges.disable(graph);
+        }
+
+        return nodes;
+    }
 }
