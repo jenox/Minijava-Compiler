@@ -919,10 +919,6 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
         Declaration decl = expression.getVariableReference().getDeclaration();
 
-        // TODO Remove this completely
-        if (expression.getVariableReference().getDeclaration().getType().getNumberOfDimensions() > 0) {
-            context.setDecl(decl);
-        }
         if (!this.isVariableCounting) {
 
             if (decl instanceof LocalVariableDeclarationStatement || decl instanceof ParameterDeclaration) {

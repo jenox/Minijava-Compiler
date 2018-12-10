@@ -12,7 +12,6 @@ public class EntityContext {
     private ExpressionResult result = null;
     private Construction construction;
     private StructType classType;
-    private Declaration decl;
     private boolean isLeftSideOfAssignment;
     private boolean isCalledFromMain;
     private boolean endsOnJumpNode;
@@ -32,15 +31,6 @@ public class EntityContext {
     public void setLeftSideOfAssignment(boolean leftSideOfAssignment) {
         this.isLeftSideOfAssignment = leftSideOfAssignment;
     }
-
-    public Declaration getDecl() {
-        return this.decl;
-    }
-
-    public void setDecl(Declaration decl) {
-        this.decl = decl;
-    }
-
 
     public void setNumberOfLocalVars(int numberOfLocalVars) {
         this.numberOfLocalVars = numberOfLocalVars;
