@@ -795,30 +795,6 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
             else {
                 expression.getContext().get().accept(this, context);
                 in[0] = context.getResult().convertToValue().getNode();
-
-//                if (expression.getContext().get() instanceof VariableAccess) {
-//                    expression.getContext().get().accept(this, context);
-//                    in[0] = context.getResult().convertToValue().getNode();
-//                    // Declaration decl = ((VariableAccess) expression.getContext().get())
-//                    // .getVariableReference().getDeclaration();
-//                    // int num = this.variableNums.get(decl);
-//                    // in[0] = construction.getVariable(num, Mode.getP());
-//                }
-//                else if (expression.getContext().get() instanceof MethodInvocation) {
-//                    expression.getContext().get().accept(this, context);
-//                    in[0] = context.getResult().convertToValue().getNode();
-//                }
-//                else if (expression.getContext().get() instanceof ExplicitFieldAccess) {
-//                    expression.getContext().get().accept(this, context);
-//                    in[0] = context.getResult().convertToValue().getNode();
-//                }
-//                else if (expression.getContext().get() instanceof NewObjectCreation) {
-//                    expression.getContext().get().accept(this, context);
-//                    in[0] = context.getResult().convertToValue().getNode();
-//                }
-//                else {
-//                    in[0] = construction.newProj(graph.getArgs(), Mode.getP(), 0); // TODO: Problem mit number 0
-//                }
             }
 
             for (int i = 0; i < expression.getArguments().size(); i++) {
@@ -884,15 +860,16 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
             }
 
             Node member = context.getConstruction().newMember(thisNode, field);
-            Node mem = context.getConstruction().getCurrentMem();
             Mode mode = this.types.get(expression.getFieldReference().getDeclaration()).getMode();
 
             if (mode == null) {
                 mode = Mode.getP();
             }
 
-            Node newMem = null;
             Node result = null;
+
+            Node mem = context.getConstruction().getCurrentMem();
+            Node newMem = null;
 
             if (isLeftSide) {
                 Node store = context.getConstruction().newStore(mem, member, rightResult.convertToValue().getNode());
@@ -901,6 +878,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
             else {
                 Node load = context.getConstruction().newLoad(mem, member, mode);
                 newMem = context.getConstruction().newProj(load, Mode.getM(), Load.pnM);
+
                 result = context.getConstruction().newProj(load, mode, Load.pnRes);
                 context.setResult(new ExpressionResult.Value(context.getConstruction(), result));
             }
