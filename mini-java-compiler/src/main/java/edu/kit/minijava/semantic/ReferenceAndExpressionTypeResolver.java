@@ -486,18 +486,37 @@ public class ReferenceAndExpressionTypeResolver extends
         // Literal value must fit in signed 32 bit.
         try {
             if (options == Options.LITERALLY_PREFIXED_WITH_NUMERIC_NEGATION_SIGN) {
-                Integer.parseInt("-" + expression.getValue());
+                int value = Integer.parseInt("-" + expression.getValue());
+
+                // Move unary minus into the integer literal node itself
+
+                // Check for correct AST structure first
+                assert this.getPreviousNode().isPresent();
+                ASTNode prevNode = this.getPreviousNode().get();
+
+                assert prevNode instanceof Expression.UnaryOperation;
+                assert ((Expression.UnaryOperation) prevNode).getOperationType().equals(
+                    UnaryOperationType.NUMERIC_NEGATION);
+
+                Expression negativeInt =
+                    new Expression.IntegerLiteral(Integer.toString(value), expression.getLocation());
+
+                prevNode.substituteExpression(expression, negativeInt);
+
+                // Resolve new integer node to correct type
+                negativeInt.getType().resolveToInteger();
             }
             else {
                 Integer.parseInt(expression.getValue());
+
+                // Resolve old integer node to correct type
+                expression.getType().resolveToInteger();
             }
         }
         catch (NumberFormatException exception) {
             throw fail(new SemanticException("Integer literal too big", this.getCurrentMethodDeclaration().toString(),
                 expression.getLocation()));
         }
-
-        expression.getType().resolveToInteger();
     }
 
     @Override
