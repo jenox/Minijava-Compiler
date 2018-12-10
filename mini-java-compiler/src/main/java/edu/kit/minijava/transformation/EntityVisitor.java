@@ -942,7 +942,6 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
         if (!this.isVariableCounting) {
 
             if (decl instanceof LocalVariableDeclarationStatement || decl instanceof ParameterDeclaration) {
-                Node mem = context.getConstruction().getCurrentMem();
                 int n = this.variableNums.get(decl);
                 Type type = this.types.get(decl);
                 Mode mode = type.getMode();
@@ -961,8 +960,6 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
             }
             else if (decl instanceof FieldDeclaration) {
-                // expression.getContext().accept(this, context);
-
                 Entity field = this.entities.get(decl);
                 Node thisNode = context.getConstruction().getVariable(0, Mode.getP());
                 Node member = context.getConstruction().newMember(thisNode, field);
@@ -998,7 +995,6 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
     @Override
     protected void visit(CurrentContextAccess expression, EntityContext context) {
         if (!this.isVariableCounting) {
-            Node mem = context.getConstruction().getCurrentMem();
             Node getNode = context.getConstruction().getVariable(0, Mode.getP());
             context.setResult(new ExpressionResult.Value(context.getConstruction(), getNode));
         }
