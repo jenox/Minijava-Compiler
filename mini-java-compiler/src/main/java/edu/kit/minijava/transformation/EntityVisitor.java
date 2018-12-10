@@ -742,27 +742,16 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
     @Override
     protected void visit(IntegerLiteral expression, EntityContext context) {
         if (!this.isVariableCounting) {
-            Double val = new Double(expression.getValue());
-            double maxInt = Integer.MAX_VALUE;
-            double minInt = Integer.MIN_VALUE;
-            double tmp;
-            int intVal;
+            // The literal has already been checked for overflow during semantic analysis.
+            // The unary minus in case of negative literals has been moved into the literal itself.
 
-            if (val > maxInt) {
-                tmp = (val - maxInt - 1) + minInt;
-            }
-            else if (val < minInt) {
-                tmp = maxInt - (minInt - val - 1);
-            }
-            else {
-                tmp = val;
-            }
-            intVal = (int) tmp;
+            // If this throws a NumberFormatException, something is going wrong in semantic analysis
+            int value = Integer.parseInt(expression.getValue());
 
-            TargetValue tarval = new TargetValue(intVal, Mode.getIs());
-            Node lit = context.getConstruction().newConst(tarval);
+            TargetValue tarval = new TargetValue(value, Mode.getIs());
+            Node literal = context.getConstruction().newConst(tarval);
 
-            context.setResult(new ExpressionResult.Value(context.getConstruction(), lit));
+            context.setResult(new ExpressionResult.Value(context.getConstruction(), literal));
         }
     }
 
