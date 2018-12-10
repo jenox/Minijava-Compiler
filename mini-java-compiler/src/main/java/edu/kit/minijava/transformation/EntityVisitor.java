@@ -383,6 +383,9 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
             // generate code for the true-statement
             statement.getStatementIfTrue().accept(this, context);
 
+            // Set current block to last block in then statement
+            bTrue = context.getConstruction().getCurrentBlock();
+
             boolean thenEndsOnJump = context.endsOnJumpNode();
 
             Node endElse = null;
