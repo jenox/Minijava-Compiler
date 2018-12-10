@@ -8,7 +8,6 @@ import firm.Type;
 public class EntityContext {
 
     private Type type;
-    private Type elementType;
     private int numberOfLocalVars;
     private ExpressionResult result = null;
     private Construction construction;
@@ -24,14 +23,6 @@ public class EntityContext {
 
     public void setCalledFromMain(boolean calledFromMain) {
         this.isCalledFromMain = calledFromMain;
-    }
-
-    public Type getElementType() {
-        return this.elementType;
-    }
-
-    public void setElementType(Type elementType) {
-        this.elementType = elementType;
     }
 
     public boolean isLeftSideOfAssignment() {
