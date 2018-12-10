@@ -1192,8 +1192,6 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
     }
 
-//    private Node convertToValueNode(Node )
-
     private ExpressionResult.Cond handleShortCircuitedAnd(BinaryOperation expression, EntityContext context) {
         Construction construction = context.getConstruction();
 
