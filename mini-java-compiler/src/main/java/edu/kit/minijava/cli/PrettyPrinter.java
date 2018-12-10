@@ -390,22 +390,26 @@ public final class PrettyPrinter extends ASTVisitor<PrettyPrinter.Options> {
 
     @Override
     protected void visit(Expression.SystemOutPrintlnExpression expression, Options context) {
-        assert false : "This node should not exist when pretty printing.";
+        this.print("System.out.println(");
+        expression.getArgument().accept(this, Options.DO_NOT_PRINT_PARENTHESES_AROUND_EXPRESSION);
+        this.print(")");
     }
 
     @Override
     protected void visit(Expression.SystemOutFlushExpression expression, Options context) {
-        assert false : "This node should not exist when pretty printing.";
+        this.print("System.out.flush()");
     }
 
     @Override
     protected void visit(Expression.SystemOutWriteExpression expression, Options context) {
-        assert false : "This node should not exist when pretty printing.";
+        this.print("System.out.write(");
+        expression.getArgument().accept(this, Options.DO_NOT_PRINT_PARENTHESES_AROUND_EXPRESSION);
+        this.print(")");
     }
 
     @Override
     protected void visit(Expression.SystemInReadExpression expression, Options context) {
-        assert false : "This node should not exist when pretty printing.";
+        this.print("System.in.read()");
     }
 
     private void printOpeningParenthesis(Options context) {
