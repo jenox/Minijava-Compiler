@@ -1067,43 +1067,42 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
     @Override
     protected void visit(NewArrayCreation expression, EntityContext context) {
+
         if (!this.isVariableCounting) {
+
+            Construction construction = context.getConstruction();
+
+            // Find array size
             expression.getPrimaryDimension().accept(this, context);
-            Node size = context.getConstruction()
-                .newConv(context.getResult().convertToValue().getNode(), Mode.getIu());
 
-            int alignment = this.types.get(expression.getBasicTypeReference().getDeclaration()).getAlignment();
-//            int alignment = context.getType().getAlignment();
+            Node elementCount = context.getResult().convertToValue().getNode();
 
-            Node mem = context.getConstruction().getCurrentMem();
-            Node alloc = context.getConstruction().newAlloc(mem, size, alignment);
+            // Assert correct type hierarchy
+            Type arrayPointerType = this.firmTypeFromExpressionType(expression.getType());
+            assert (arrayPointerType instanceof PointerType) : "All arrays must be pointer types!";
 
-            Node newMem = context.getConstruction().newProj(alloc, Mode.getM(), Alloc.pnM);
-            context.getConstruction().setCurrentMem(newMem);
+            Type arrayType = ((PointerType) arrayPointerType).getPointsTo();
+            assert (arrayType instanceof ArrayType) : "All arrays must point to array types!";
 
-            Node res = context.getConstruction().newProj(alloc, Mode.getP(), Alloc.pnRes);
-            context.setResult(new ExpressionResult.Value(context.getConstruction(), res));
+            Type elementType = ((ArrayType) arrayType).getElementType();
 
-            // Get firm type of array
-            String name = expression.getBasicTypeReference().getName();
-            Type elementType = null;
+            // Calculate sizes
+            Node elementSize = construction.newConst(elementType.getSize(), Mode.getIs());
+            int alignment = elementType.getAlignment();
 
-            switch (name) {
-                case "boolean":
-                case "String":
-                case "void":
-                    elementType = new PrimitiveType(Mode.getBs());
-                    break;
-                case "int":
-                    elementType = new PrimitiveType(Mode.getIs());
-                    break;
-                default:
-                    elementType = new PrimitiveType(Mode.getP()); // TODO: können wir hier einfach auf Pointer setzen?
+            Node signedArraySize = construction.newMul(elementCount, elementSize);
+            Node unsignedArraySize = construction.newConv(signedArraySize, Mode.getIu());
 
-            }
+            // Allocate memory
+            Node alloc = construction.newAlloc(construction.getCurrentMem(), unsignedArraySize, alignment);
 
-            context.setType(new ArrayType(elementType, 0));
+            Node newMem = construction.newProj(alloc, Mode.getM(), Alloc.pnM);
+            construction.setCurrentMem(newMem);
 
+            Node result = construction.newProj(alloc, Mode.getP(), Alloc.pnRes);
+
+            context.setResult(new ExpressionResult.Value(construction, result));
+            context.setType(arrayPointerType);
         }
     }
 
