@@ -491,32 +491,32 @@ public class ReferenceAndExpressionTypeResolver extends
                 // Move unary minus into the integer literal node itself
 
                 // Check for correct AST structure first
-                assert this.getPreviousNode().isPresent();
-                ASTNode prevNode = this.getPreviousNode().get();
+                assert this.getPreviousNode(2).isPresent();
+                ASTNode outerNode = this.getPreviousNode(2).get();
 
-                assert prevNode instanceof Expression.UnaryOperation;
-                assert ((Expression.UnaryOperation) prevNode).getOperationType().equals(
+                assert this.getPreviousNode().get() instanceof Expression.UnaryOperation;
+                Expression.UnaryOperation unaryOp = (Expression.UnaryOperation) this.getPreviousNode().get();
+                assert unaryOp.getOperationType().equals(
                     UnaryOperationType.NUMERIC_NEGATION);
 
                 Expression negativeInt =
                     new Expression.IntegerLiteral(Integer.toString(value), expression.getLocation());
 
-                prevNode.substituteExpression(expression, negativeInt);
+                outerNode.substituteExpression(unaryOp, negativeInt);
 
                 // Resolve new integer node to correct type
                 negativeInt.getType().resolveToInteger();
             }
             else {
                 Integer.parseInt(expression.getValue());
-
-                // Resolve old integer node to correct type
-                expression.getType().resolveToInteger();
             }
         }
         catch (NumberFormatException exception) {
             throw fail(new SemanticException("Integer literal too big", this.getCurrentMethodDeclaration().toString(),
                 expression.getLocation()));
         }
+
+        expression.getType().resolveToInteger();
     }
 
     @Override
