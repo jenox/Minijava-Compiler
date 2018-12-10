@@ -516,7 +516,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
     @Override
     protected void visit(EmptyStatement statement, EntityContext context) {
-        // do nothing
+        // Nothing to do here
     }
 
     @Override
@@ -817,6 +817,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
         if (!this.isVariableCounting) {
             Entity field = this.entities.get(expression.getFieldReference().getDeclaration());
+
             Node thisNode = null;
             ClassDeclaration decl = (ClassDeclaration) expression.getContext().getType().getDeclaration().get();
 
@@ -835,10 +836,6 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
             else if (expression.getContext() instanceof VariableAccess) {
                 expression.getContext().accept(this, context);
                 thisNode = context.getResult().convertToValue().getNode();
-                // Declaration contexDecl = ((VariableAccess) expression.getContext())
-                // .getVariableReference().getDeclaration();
-                // int num = this.variableNums.get(contexDecl);
-                // thisNode = context.getConstruction().getVariable(num ,Mode.getP());
             }
             else if (!context.isCalledFromMain()) {
                 thisNode = context.getConstruction().getVariable(0, Mode.getP());
@@ -860,20 +857,6 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
                 new ExpressionResult.FieldLValue(context.getConstruction(), member, mode);
 
             context.setResult(result);
-
-//            if (isLeftSide) {
-//                Node store = context.getConstruction().newStore(mem, member, rightResult.convertToValue().getNode());
-//                newMem = context.getConstruction().newProj(store, Mode.getM(), Store.pnM);
-//            }
-//            else {
-//                Node load = context.getConstruction().newLoad(mem, member, mode);
-//                newMem = context.getConstruction().newProj(load, Mode.getM(), Load.pnM);
-//
-//                result = context.getConstruction().newProj(load, mode, Load.pnRes);
-//                context.setResult(new ExpressionResult.Value(context.getConstruction(), result));
-//            }
-//
-//            context.getConstruction().setCurrentMem(newMem);
         }
     }
 
@@ -882,6 +865,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
         context.setResult(null);
 
         if (!this.isVariableCounting) {
+
             // Evaluate array reference first
             expression.getContext().accept(this, context);
             Node arrayPointer = context.getResult().convertToValue().getNode();
@@ -944,23 +928,6 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
                     new ExpressionResult.FieldLValue(context.getConstruction(), member, mode);
 
                 context.setResult(result);
-
-//                if (isLeftSide) {
-//                    Node store = context.getConstruction()
-//                        .newStore(context.getConstruction().getCurrentMem(),
-//                            member, rightResult.convertToValue().getNode());
-//                    Node newMem = context.getConstruction().newProj(store, Mode.getM(), Store.pnM);
-//                    context.getConstruction().setCurrentMem(newMem);
-//                }
-//                else {
-//                    Node load = context.getConstruction()
-//                        .newLoad(context.getConstruction().getCurrentMem(), member, mode);
-//                    Node newMem = context.getConstruction().newProj(load, Mode.getM(), Load.pnM);
-//                    context.getConstruction().setCurrentMem(newMem);
-//
-//                    Node result = context.getConstruction().newProj(load, mode, Load.pnRes);
-//                    context.setResult(new ExpressionResult.Value(context.getConstruction(), result));
-//                }
             }
             else {
                 assert false : "Unhandled assignment type";
