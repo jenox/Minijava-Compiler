@@ -15,7 +15,6 @@ public class EntityContext {
     private StructType classType;
     private Declaration decl;
     private boolean isLeftSideOfAssignment;
-    private boolean isTopLevel;
     private boolean isCalledFromMain;
     private boolean endsOnJumpNode;
 
@@ -25,14 +24,6 @@ public class EntityContext {
 
     public void setCalledFromMain(boolean calledFromMain) {
         this.isCalledFromMain = calledFromMain;
-    }
-
-    public boolean isTopLevel() {
-        return this.isTopLevel;
-    }
-
-    public void setTopLevel(boolean topLevel) {
-        this.isTopLevel = topLevel;
     }
 
     public Type getElementType() {
