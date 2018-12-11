@@ -203,7 +203,6 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
                 graph.getEndBlock().addPred(returnNode);
             }
 
-            // Done.
             construction.finish();
         }
 
@@ -518,7 +517,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
     @Override
     protected void visit(EmptyStatement statement, EntityContext context) {
-        // do nothing
+        // Nothing to do here
     }
 
     @Override
@@ -566,9 +565,8 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
         Construction construction = context.getConstruction();
 
         if (this.isVariableCounting) {
-            expression.getRight().accept(this, context);
-            context.setLeftSideOfAssignment(expression.getOperationType().equals(BinaryOperationType.ASSIGNMENT));
             expression.getLeft().accept(this, context);
+            expression.getRight().accept(this, context);
         }
         else {
             if (expression.getOperationType() == BinaryOperationType.LOGICAL_AND) {
@@ -582,31 +580,33 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
             }
 
             if (expression.getOperationType() == BinaryOperationType.ASSIGNMENT) {
+
+                expression.getLeft().accept(this, context);
+
+                // This should always be a valid l-value
+                ExpressionResult lhs = context.getResult();
+
                 expression.getRight().accept(this, context);
                 ExpressionResult.Value right = context.getResult().convertToValue();
                 context.setResult(right);
 
-                context.setLeftSideOfAssignment(expression.getOperationType().equals(BinaryOperationType.ASSIGNMENT));
-                expression.getLeft().accept(this, context);
+                ExpressionResult assignmentResult = lhs.assignTo(right);
 
-                result = right;
-                context.setResult(result);
+                context.setResult(assignmentResult);
                 return;
             }
-
-            expression.getRight().accept(this, context);
-            ExpressionResult.Value rightExpression = context.getResult().convertToValue();
-            context.setResult(rightExpression);
-
-            Node right = rightExpression.getNode();
-
-            context.setLeftSideOfAssignment(expression.getOperationType().equals(BinaryOperationType.ASSIGNMENT));
 
             expression.getLeft().accept(this, context);
             ExpressionResult.Value leftExpression = context.getResult().convertToValue();
             context.setResult(leftExpression);
 
             Node left = leftExpression.getNode();
+
+            expression.getRight().accept(this, context);
+            ExpressionResult.Value rightExpression = context.getResult().convertToValue();
+            context.setResult(rightExpression);
+
+            Node right = rightExpression.getNode();
 
             switch (expression.getOperationType()) {
                 case ADDITION:
@@ -676,19 +676,16 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
     protected void visit(UnaryOperation expression, EntityContext context) {
         expression.getOther().accept(this, context);
 
-        Node uni = null;
-
         if (!this.isVariableCounting) {
-            ExpressionResult.Value otherNode = context.getResult().convertToValue();
-            context.setResult(otherNode);
+            Node uni = null;
+            ExpressionResult.Value operand = context.getResult().convertToValue();
 
-            Construction construction = context.getConstruction();
             switch (expression.getOperationType()) {
                 case LOGICAL_NEGATION:
-                    uni = construction.newNot(otherNode.getNode());
+                    uni = context.getConstruction().newNot(operand.getNode());
                     break;
                 case NUMERIC_NEGATION:
-                    uni = context.getConstruction().newMinus(otherNode.getNode());
+                    uni = context.getConstruction().newMinus(operand.getNode());
                     break;
                 default:
                     assert false : "Unhandled unary operation!";
@@ -809,111 +806,60 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
     @Override
     protected void visit(ExplicitFieldAccess expression, EntityContext context) {
-        boolean isLeftSide = context.isLeftSideOfAssignment();
-        context.setLeftSideOfAssignment(false);
-        ExpressionResult rightResult = context.getResult();
-
         if (!this.isVariableCounting) {
             Entity field = this.entities.get(expression.getFieldReference().getDeclaration());
-            Node thisNode = null;
-            ClassDeclaration decl = (ClassDeclaration) expression.getContext().getType().getDeclaration().get();
 
-            if (expression.getContext() instanceof MethodInvocation) {
+            Node thisNode = null;
+
+            if ((expression.getContext() instanceof MethodInvocation)
+                || (expression.getContext() instanceof ExplicitFieldAccess)
+                || (expression.getContext() instanceof NewObjectCreation)
+                || (expression.getContext() instanceof VariableAccess)) {
+
                 expression.getContext().accept(this, context);
                 thisNode = context.getResult().convertToValue().getNode();
-            }
-            else if (expression.getContext() instanceof ExplicitFieldAccess) {
-                expression.getContext().accept(this, context);
-                thisNode = context.getResult().convertToValue().getNode();
-            }
-            else if (expression.getContext() instanceof NewObjectCreation) {
-                expression.getContext().accept(this, context);
-                thisNode = context.getResult().convertToValue().getNode();
-            }
-            else if (expression.getContext() instanceof VariableAccess) {
-                expression.getContext().accept(this, context);
-                thisNode = context.getResult().convertToValue().getNode();
-                // Declaration contexDecl = ((VariableAccess) expression.getContext())
-                // .getVariableReference().getDeclaration();
-                // int num = this.variableNums.get(contexDecl);
-                // thisNode = context.getConstruction().getVariable(num ,Mode.getP());
             }
             else if (!context.isCalledFromMain()) {
                 thisNode = context.getConstruction().getVariable(0, Mode.getP());
             }
 
-            Node member = context.getConstruction().newMember(thisNode, field);
+            Member member = (Member) context.getConstruction().newMember(thisNode, field);
+
             Mode mode = this.types.get(expression.getFieldReference().getDeclaration()).getMode();
+            if (mode == null) mode = Mode.getP();
 
-            if (mode == null) {
-                mode = Mode.getP();
-            }
+            ExpressionResult.FieldLValue result =
+                new ExpressionResult.FieldLValue(context.getConstruction(), member, mode);
 
-            Node result = null;
-
-            Node mem = context.getConstruction().getCurrentMem();
-            Node newMem = null;
-
-            if (isLeftSide) {
-                Node store = context.getConstruction().newStore(mem, member, rightResult.convertToValue().getNode());
-                newMem = context.getConstruction().newProj(store, Mode.getM(), Store.pnM);
-            }
-            else {
-                Node load = context.getConstruction().newLoad(mem, member, mode);
-                newMem = context.getConstruction().newProj(load, Mode.getM(), Load.pnM);
-
-                result = context.getConstruction().newProj(load, mode, Load.pnRes);
-                context.setResult(new ExpressionResult.Value(context.getConstruction(), result));
-            }
-
-            context.getConstruction().setCurrentMem(newMem);
+            context.setResult(result);
         }
     }
 
     @Override
     protected void visit(ArrayElementAccess expression, EntityContext context) {
-        boolean isLeftSide = context.isLeftSideOfAssignment();
-        context.setLeftSideOfAssignment(false);
-        ExpressionResult rightResult = context.getResult();
-        context.setResult(null);
-
         if (!this.isVariableCounting) {
-            // for sel stmt
-            expression.getContext().accept(this, context);
 
+            // Evaluate array reference first
+            expression.getContext().accept(this, context);
             Node arrayPointer = context.getResult().convertToValue().getNode();
 
-            Type elementType = this.firmTypeFromExpressionType(expression.getType());
-            Type type = this.firmTypeFromExpressionType(expression.getContext().getType());
-
-            // for sel stmt
+            // Evaluate index expression
             expression.getIndex().accept(this, context);
             Node index = context.getResult().convertToValue().getNode();
 
-            // access array
-            Node mem = context.getConstruction().getCurrentMem();
-            Node newMem = null;
-
-            if (!(type instanceof PointerType)) {
-                assert false : "All arrays are pointer types!";
-            }
-
+            // Ensure correct type of the expression and retrieve element types
+            Type type = this.firmTypeFromExpressionType(expression.getContext().getType());
+            assert (type instanceof PointerType) : "All arrays are pointer types!";
             type = ((PointerType) type).getPointsTo();
 
-            if (isLeftSide) {
-                Node sel = context.getConstruction().newSel(arrayPointer, index, type);
-                Node store = context.getConstruction().newStore(mem, sel, rightResult.convertToValue().getNode());
-                newMem = context.getConstruction().newProj(store, Mode.getM(), Store.pnM);
-            }
-            else {
-                Node sel = context.getConstruction().newSel(arrayPointer, index, type);
-                Node load = context.getConstruction().newLoad(mem, sel, elementType.getMode());
-                newMem = context.getConstruction().newProj(load, Mode.getM(), Load.pnM);
-                Node result = context.getConstruction().newProj(load, elementType.getMode(), Load.pnRes);
-                context.setResult(new ExpressionResult.Value(context.getConstruction(), result));
-            }
+            Type elementType = this.firmTypeFromExpressionType(expression.getType());
 
-            context.getConstruction().setCurrentMem(newMem);
+            Sel sel = (Sel) context.getConstruction().newSel(arrayPointer, index, type);
+
+            ExpressionResult.ArrayLValue result =
+                new ExpressionResult.ArrayLValue(context.getConstruction(), sel, elementType);
+
+            context.setResult(result);
         }
         else {
             expression.getContext().accept(this, context);
@@ -922,62 +868,34 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
     @Override
     protected void visit(VariableAccess expression, EntityContext context) {
-        boolean isLeftSide = context.isLeftSideOfAssignment();
-        context.setLeftSideOfAssignment(false);
-
-        ExpressionResult rightResult = context.getResult();
-        context.setResult(null);
 
         Declaration decl = expression.getVariableReference().getDeclaration();
-        if (expression.getVariableReference().getDeclaration().getType().getNumberOfDimensions() > 0) {
-            context.setDecl(decl);
-        }
+
         if (!this.isVariableCounting) {
 
             if (decl instanceof LocalVariableDeclarationStatement || decl instanceof ParameterDeclaration) {
                 int n = this.variableNums.get(decl);
                 Type type = this.types.get(decl);
-                Mode mode = type.getMode();
 
-                if (mode == null) {
-                    mode = Mode.getP();
-                }
+                // TODO Use mode instead of type here?
+                Mode mode = Optional.ofNullable(type.getMode()).orElse(Mode.getP());
 
-                if (isLeftSide) {
-                    context.getConstruction().setVariable(n, rightResult.convertToValue().getNode());
-                }
-                else {
-                    Node getNode = context.getConstruction().getVariable(n, mode);
-                    context.setResult(new ExpressionResult.Value(context.getConstruction(), getNode));
-                }
+                ExpressionResult.LocalVariableLValue result =
+                    new ExpressionResult.LocalVariableLValue(context.getConstruction(), n, type);
 
+                context.setResult(result);
             }
             else if (decl instanceof FieldDeclaration) {
                 Entity field = this.entities.get(decl);
                 Node thisNode = context.getConstruction().getVariable(0, Mode.getP());
-                Node member = context.getConstruction().newMember(thisNode, field);
+                Member member = (Member) context.getConstruction().newMember(thisNode, field);
 
-                Mode mode = this.types.get(decl).getMode();
-                if (mode == null) {
-                    mode = Mode.getP();
-                }
+                Mode mode = Optional.ofNullable(this.types.get(decl).getMode()).orElse(Mode.getP());
 
-                if (isLeftSide) {
-                    Node store = context.getConstruction()
-                        .newStore(context.getConstruction().getCurrentMem(),
-                            member, rightResult.convertToValue().getNode());
-                    Node newMem = context.getConstruction().newProj(store, Mode.getM(), Store.pnM);
-                    context.getConstruction().setCurrentMem(newMem);
-                }
-                else {
-                    Node load = context.getConstruction()
-                        .newLoad(context.getConstruction().getCurrentMem(), member, mode);
-                    Node newMem = context.getConstruction().newProj(load, Mode.getM(), Load.pnM);
-                    context.getConstruction().setCurrentMem(newMem);
+                ExpressionResult.FieldLValue result =
+                    new ExpressionResult.FieldLValue(context.getConstruction(), member, mode);
 
-                    Node result = context.getConstruction().newProj(load, mode, Load.pnRes);
-                    context.setResult(new ExpressionResult.Value(context.getConstruction(), result));
-                }
+                context.setResult(result);
             }
             else {
                 assert false : "Unhandled assignment type";
@@ -1009,8 +927,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
             Node res = context.getConstruction().newProj(alloc, Mode.getP(), Alloc.pnRes);
 
-            // init fields
-            context.setLeftSideOfAssignment(true);
+            // Initialize fields
             for (FieldDeclaration decl : expression.getClassReference().getDeclaration().getFieldDeclarations()) {
                 Entity field = this.entities.get(decl);
                 Node member = context.getConstruction().newMember(res, field);
@@ -1048,8 +965,6 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
                 context.getConstruction().setCurrentMem(newMem);
 
             }
-            context.setLeftSideOfAssignment(false);
-
             context.setResult(new ExpressionResult.Value(context.getConstruction(), res));
         }
     }
