@@ -379,7 +379,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
             statement.getCondition().accept(this, context);
 
-            ExpressionResult.Cond condition = context.getResult().convertToCond();
+            ExpressionResult.Condition condition = context.getResult().convertToCondition();
 
             // If-Block (the true part)
             firm.nodes.Block bTrue = context.getConstruction().newBlock();
@@ -466,7 +466,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
             // loop condition
             statement.getCondition().accept(this, context);
 
-            ExpressionResult.Cond condition = context.getResult().convertToCond();
+            ExpressionResult.Condition condition = context.getResult().convertToCondition();
 
             // loop body
             firm.nodes.Block loopBody = construction.newBlock();
@@ -631,27 +631,27 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
                     result = new ExpressionResult.Value(construction, context.getConstruction().newMul(left, right));
                     break;
                 case LESS_THAN:
-                    result = new ExpressionResult.Cond(construction,
+                    result = new ExpressionResult.Condition(construction,
                         context.getConstruction().newCmp(left, right, Relation.Less));
                     break;
                 case LESS_THAN_OR_EQUAL_TO:
-                    result = new ExpressionResult.Cond(construction,
+                    result = new ExpressionResult.Condition(construction,
                         context.getConstruction().newCmp(left, right, Relation.LessEqual));
                     break;
                 case GREATER_THAN:
-                    result = new ExpressionResult.Cond(construction,
+                    result = new ExpressionResult.Condition(construction,
                         context.getConstruction().newCmp(left, right, Relation.Greater));
                     break;
                 case GREATER_THAN_OR_EQUAL_TO:
-                    result = new ExpressionResult.Cond(construction,
+                    result = new ExpressionResult.Condition(construction,
                         context.getConstruction().newCmp(left, right, Relation.GreaterEqual));
                     break;
                 case EQUAL_TO:
-                    result = new ExpressionResult.Cond(construction,
+                    result = new ExpressionResult.Condition(construction,
                         context.getConstruction().newCmp(left, right, Relation.Equal));
                     break;
                 case NOT_EQUAL_TO:
-                    result = new ExpressionResult.Cond(construction,
+                    result = new ExpressionResult.Condition(construction,
                         context.getConstruction().newCmp(left, right, Relation.Equal.negated()));
                     break;
                 case DIVISION:
@@ -1082,18 +1082,18 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
     }
 
-    private ExpressionResult.Cond handleShortCircuitedAnd(BinaryOperation expression, EntityContext context) {
+    private ExpressionResult.Condition handleShortCircuitedAnd(BinaryOperation expression, EntityContext context) {
         Construction construction = context.getConstruction();
 
         expression.getLeft().accept(this, context);
-        ExpressionResult.Cond left = context.getResult().convertToCond();
+        ExpressionResult.Condition left = context.getResult().convertToCondition();
 
         Block lhsTrueBlock = construction.newBlock();
         lhsTrueBlock.addPred(left.getIfTrue());
         construction.setCurrentBlock(lhsTrueBlock);
 
         expression.getRight().accept(this, context);
-        ExpressionResult.Cond right = context.getResult().convertToCond();
+        ExpressionResult.Condition right = context.getResult().convertToCondition();
 
         Block blockEitherFalse = construction.newBlock();
         construction.setCurrentBlock(blockEitherFalse);
@@ -1102,24 +1102,24 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
         Node eitherFalseJmp = construction.newJmp();
 
-        ExpressionResult.Cond result =
-            new ExpressionResult.Cond(construction, left.getBlock(), right.getIfTrue(), eitherFalseJmp);
+        ExpressionResult.Condition result =
+            new ExpressionResult.Condition(construction, left.getBlock(), right.getIfTrue(), eitherFalseJmp);
 
         return result;
     }
 
-    private ExpressionResult.Cond handleShortCircuitedOr(BinaryOperation expression, EntityContext context) {
+    private ExpressionResult.Condition handleShortCircuitedOr(BinaryOperation expression, EntityContext context) {
         Construction construction = context.getConstruction();
 
         expression.getLeft().accept(this, context);
-        ExpressionResult.Cond left = context.getResult().convertToCond();
+        ExpressionResult.Condition left = context.getResult().convertToCondition();
 
         Block lhsFalseBlock = construction.newBlock();
         lhsFalseBlock.addPred(left.getIfFalse());
         construction.setCurrentBlock(lhsFalseBlock);
 
         expression.getRight().accept(this, context);
-        ExpressionResult.Cond right = context.getResult().convertToCond();
+        ExpressionResult.Condition right = context.getResult().convertToCondition();
 
         Block blockEitherTrue = construction.newBlock();
         construction.setCurrentBlock(blockEitherTrue);
@@ -1128,8 +1128,8 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
         Node eitherTrueJump = construction.newJmp();
 
-        ExpressionResult.Cond result =
-            new ExpressionResult.Cond(construction, left.getBlock(), eitherTrueJump, right.getIfFalse());
+        ExpressionResult.Condition result =
+            new ExpressionResult.Condition(construction, left.getBlock(), eitherTrueJump, right.getIfFalse());
 
         return result;
     }
