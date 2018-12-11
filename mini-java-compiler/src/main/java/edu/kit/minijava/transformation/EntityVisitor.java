@@ -805,8 +805,6 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
     @Override
     protected void visit(ExplicitFieldAccess expression, EntityContext context) {
-        ExpressionResult rightResult = context.getResult();
-
         if (!this.isVariableCounting) {
             Entity field = this.entities.get(expression.getFieldReference().getDeclaration());
 
@@ -869,8 +867,6 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
     @Override
     protected void visit(VariableAccess expression, EntityContext context) {
-        ExpressionResult rightResult = context.getResult();
-        context.setResult(null);
 
         Declaration decl = expression.getVariableReference().getDeclaration();
 
@@ -880,9 +876,9 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
                 int n = this.variableNums.get(decl);
                 Type type = this.types.get(decl);
 
+                // TODO Use mode instead of type here?
                 Mode mode = Optional.ofNullable(type.getMode()).orElse(Mode.getP());
 
-                // TODO Use mode instead of type here?
                 ExpressionResult.LocalVariableLValue result =
                     new ExpressionResult.LocalVariableLValue(context.getConstruction(), n, type);
 
