@@ -297,9 +297,6 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
                 graph.getEndBlock().addPred(returnNode);
             }
 
-            // No code should follow a return statement.
-            construction.setUnreachable();
-            // Done.
             construction.finish();
         }
 
