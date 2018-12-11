@@ -983,18 +983,23 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
             // Calculate sizes
             Node elementSize = construction.newConst(elementType.getSize(), Mode.getIs());
-            int alignment = elementType.getAlignment();
 
-            Node signedArraySize = construction.newMul(elementCount, elementSize);
-            Node unsignedArraySize = construction.newConv(signedArraySize, Mode.getIu());
+            // Allocate memory via system call
+            Entity functionEntity = this.runtimeEntities.get("alloc_mem");
+            assert functionEntity != null : "Runtime library function entity must be present";
 
-            // Allocate memory
-            Node alloc = construction.newAlloc(construction.getCurrentMem(), unsignedArraySize, alignment);
+            Node functionAddress = construction.newAddress(functionEntity);
 
-            Node newMem = construction.newProj(alloc, Mode.getM(), Alloc.pnM);
+            Node mem = construction.getCurrentMem();
+            Node call =
+                construction.newCall(mem, functionAddress, new Node[] {elementCount, elementSize}, functionEntity.getType());
+
+            Node newMem = construction.newProj(call, Mode.getM(), Call.pnM);
             construction.setCurrentMem(newMem);
 
-            Node result = construction.newProj(alloc, Mode.getP(), Alloc.pnRes);
+            Node callResultTuple = construction.newProj(call, Mode.getT(), Call.pnTResult);
+
+            Node result = construction.newProj(callResultTuple, Mode.getP(), 0);
 
             context.setResult(new ExpressionResult.Value(construction, result));
             context.setType(arrayPointerType);
