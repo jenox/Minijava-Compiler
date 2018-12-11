@@ -297,6 +297,9 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
                 graph.getEndBlock().addPred(returnNode);
             }
 
+            construction.getCurrentBlock().mature();
+            construction.getGraph().getEndBlock().mature();
+
             construction.finish();
         }
 
