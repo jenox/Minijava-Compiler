@@ -928,57 +928,35 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
     protected void visit(NewObjectCreation expression, EntityContext context) {
         if (!this.isVariableCounting) {
 
+            Construction construction = context.getConstruction();
+
             // Calculate size and alignment
             int classSize = this.classSizes.get(expression.getClassReference().getDeclaration());
-            Node size = context.getConstruction().newConst(classSize, Mode.getIu());
-            int alignment = this.types.get(expression.getClassReference().getDeclaration()).getAlignment();
+            Node size = construction.newConst(classSize, Mode.getIs());
 
-            // Allocate memory
-            Node alloc = context.getConstruction().newAlloc(context.getConstruction().getCurrentMem(), size, alignment);
-            Node newMem = context.getConstruction().newProj(alloc, Mode.getM(), Alloc.pnM);
-            context.getConstruction().setCurrentMem(newMem);
+            Node oneConst = construction.newConst(1, Mode.getIs());
 
-            Node res = context.getConstruction().newProj(alloc, Mode.getP(), Alloc.pnRes);
+            // Allocate memory via system call
+            Entity functionEntity = this.runtimeEntities.get("alloc_mem");
+            assert functionEntity != null : "Runtime library function entity must be present";
 
-            // Initialize fields
-            for (FieldDeclaration decl : expression.getClassReference().getDeclaration().getFieldDeclarations()) {
-                Entity field = this.entities.get(decl);
-                Node member = context.getConstruction().newMember(res, field);
-                Mode mode = this.types.get(decl).getMode();
+            Node functionAddress = construction.newAddress(functionEntity);
 
-                Node right = null;
+            Node mem = construction.getCurrentMem();
+            Node call =
+                construction.newCall(mem, functionAddress, new Node[] {oneConst, size}, functionEntity.getType());
 
-                // if mode is null, we have a non-atomic type, initialize with null pointer
-                if (mode == null || mode.equals(Mode.getP())) {
-                    // we have an array, initialize with null pointer
-                    if (this.nullNode == null) {
-                        TargetValue arst = new TargetValue(0, Mode.getP());
-                        right = context.getConstruction().newConst(arst);
-                        this.nullNode = right;
-                    }
-                    else {
-                        right = this.nullNode;
-                    }
-                }
-                else if (mode.equals(Mode.getBs())) {
-                    if (this.trueNode == null) {
-                        right = context.getConstruction().newConst(0, Mode.getBs());
-                    }
-                    else {
-                        right = this.trueNode;
-                    }
-                }
-                else if (mode.equals(Mode.getIs())) {
-                    right = context.getConstruction().newConst(0, Mode.getIs());
-                }
+            Node newMem = construction.newProj(call, Mode.getM(), Call.pnM);
+            construction.setCurrentMem(newMem);
 
-                Node store = context.getConstruction()
-                    .newStore(context.getConstruction().getCurrentMem(), member, right);
-                newMem = context.getConstruction().newProj(store, Mode.getM(), Store.pnM);
-                context.getConstruction().setCurrentMem(newMem);
+            Node callResultTuple = construction.newProj(call, Mode.getT(), Call.pnTResult);
 
-            }
-            context.setResult(new ExpressionResult.Value(context.getConstruction(), res));
+            Node result = construction.newProj(callResultTuple, Mode.getP(), 0);
+
+            // As alloc_mem guarantees that its memory region is already zero-initialized, we do
+            // not need to initialize each field of the type at this point
+
+            context.setResult(new ExpressionResult.Value(context.getConstruction(), result));
         }
     }
 
