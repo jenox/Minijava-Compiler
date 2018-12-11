@@ -997,8 +997,8 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
             Node functionAddress = construction.newAddress(functionEntity);
 
             Node mem = construction.getCurrentMem();
-            Node call =
-                construction.newCall(mem, functionAddress, new Node[] {elementCount, elementSize}, functionEntity.getType());
+            Node call = construction.newCall(mem, functionAddress,
+                new Node[] {elementCount, elementSize}, functionEntity.getType());
 
             Node newMem = construction.newProj(call, Mode.getM(), Call.pnM);
             construction.setCurrentMem(newMem);
