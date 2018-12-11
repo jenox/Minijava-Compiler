@@ -811,21 +811,12 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
             Entity field = this.entities.get(expression.getFieldReference().getDeclaration());
 
             Node thisNode = null;
-            ClassDeclaration decl = (ClassDeclaration) expression.getContext().getType().getDeclaration().get();
 
-            if (expression.getContext() instanceof MethodInvocation) {
-                expression.getContext().accept(this, context);
-                thisNode = context.getResult().convertToValue().getNode();
-            }
-            else if (expression.getContext() instanceof ExplicitFieldAccess) {
-                expression.getContext().accept(this, context);
-                thisNode = context.getResult().convertToValue().getNode();
-            }
-            else if (expression.getContext() instanceof NewObjectCreation) {
-                expression.getContext().accept(this, context);
-                thisNode = context.getResult().convertToValue().getNode();
-            }
-            else if (expression.getContext() instanceof VariableAccess) {
+            if ((expression.getContext() instanceof MethodInvocation)
+                || (expression.getContext() instanceof ExplicitFieldAccess)
+                || (expression.getContext() instanceof NewObjectCreation)
+                || (expression.getContext() instanceof VariableAccess)) {
+
                 expression.getContext().accept(this, context);
                 thisNode = context.getResult().convertToValue().getNode();
             }
@@ -834,16 +825,9 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
             }
 
             Member member = (Member) context.getConstruction().newMember(thisNode, field);
+
             Mode mode = this.types.get(expression.getFieldReference().getDeclaration()).getMode();
-
-            if (mode == null) {
-                mode = Mode.getP();
-            }
-
-//            Node result = null;
-
-            Node mem = context.getConstruction().getCurrentMem();
-            Node newMem = null;
+            if (mode == null) mode = Mode.getP();
 
             ExpressionResult.FieldLValue result =
                 new ExpressionResult.FieldLValue(context.getConstruction(), member, mode);
