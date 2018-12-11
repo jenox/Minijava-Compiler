@@ -695,18 +695,12 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
     @Override
     protected void visit(NullLiteral expression, EntityContext context) {
-        if (this.isVariableCounting) {
-            // Nothing to do here
-            return;
-        }
+        if (!this.isVariableCounting) {
+            TargetValue nullValue = new TargetValue(0, Mode.getP());
+            Node result = context.getConstruction().newConst(nullValue);
 
-        if (this.nullNode == null) {
-            TargetValue arst = new TargetValue(0, Mode.getP());
-            Node result = context.getConstruction().newConst(arst);
-            this.nullNode = result;
+            context.setResult(new ExpressionResult.Value(context.getConstruction(), result));
         }
-
-        context.setResult(new ExpressionResult.Value(context.getConstruction(), this.nullNode));
     }
 
     @Override
