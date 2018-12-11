@@ -514,11 +514,15 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
             Node mem = context.getConstruction().getCurrentMem();
 
             if (context.getResult() != null) {
-                results = new Node[] { context.getResult().convertToValue().getNode() };
-
-                Node returnNode = context.getConstruction().newReturn(mem, results);
-                context.getConstruction().getGraph().getEndBlock().addPred(returnNode);
+                results = new Node[] {context.getResult().convertToValue().getNode()};
             }
+            else {
+                results = new Node[] {};
+            }
+
+            Node returnNode = context.getConstruction().newReturn(mem, results);
+            context.getConstruction().getGraph().getEndBlock().addPred(returnNode);
+
             context.setEndsOnJumpNode(true);
         }
     }
