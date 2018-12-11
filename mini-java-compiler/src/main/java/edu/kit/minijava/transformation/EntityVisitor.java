@@ -29,11 +29,6 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
     private boolean isVariableCounting = false;
     private ClassDeclaration currentClassDeclaration;
 
-    // CONSTANTS
-    private Node nullNode = null;
-    private Node trueNode = null;
-    private Node falseNode = null;
-
     public void transform(Program program, String outputFilename) throws IOException {
         String[] targetOptions = { "pic=1" };
 
@@ -725,20 +720,23 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
     @Override
     protected void visit(BooleanLiteral expression, EntityContext context) {
+        if (!this.isVariableCounting) {
+            TargetValue booleanValue;
 
-        Node boolNode;
+            if (expression.getValue()) {
+                booleanValue = new TargetValue(-1, Mode.getBs());
+            }
+            else {
+                booleanValue = new TargetValue(0, Mode.getBs());
+            }
 
-        if (expression.getValue()) {
-            boolNode = context.getConstruction().newConst(-1, Mode.getBs());
+            Node boolNode = context.getConstruction().newConst(booleanValue);
+
+            ExpressionResult.Value result =
+                new ExpressionResult.Value(context.getConstruction(), boolNode);
+
+            context.setResult(result);
         }
-        else {
-            boolNode = context.getConstruction().newConst(0, Mode.getBs());
-        }
-
-        ExpressionResult.Value result =
-            new ExpressionResult.Value(context.getConstruction(), boolNode);
-
-        context.setResult(result);
     }
 
     @Override
