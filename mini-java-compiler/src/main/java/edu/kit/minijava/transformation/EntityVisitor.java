@@ -838,10 +838,12 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
             Node thisNode = null;
 
+            // TODO Is this correct? Shouldn't these all be handled the same way?
             if ((expression.getContext() instanceof MethodInvocation)
                 || (expression.getContext() instanceof ExplicitFieldAccess)
                 || (expression.getContext() instanceof NewObjectCreation)
-                || (expression.getContext() instanceof VariableAccess)) {
+                || (expression.getContext() instanceof VariableAccess)
+                || (expression.getContext() instanceof ArrayElementAccess)) {
 
                 expression.getContext().accept(this, context);
                 thisNode = context.getResult().convertToValue().getNode();
