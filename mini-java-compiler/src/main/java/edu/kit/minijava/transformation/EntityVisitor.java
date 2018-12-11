@@ -68,6 +68,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
     private void createRuntimeEntities() {
 
         PrimitiveType intType = new PrimitiveType(Mode.getIs());
+        PrimitiveType pointerType = new PrimitiveType(Mode.getP());
 
         /* System.in.read */
         String readName = "system_in_read";
@@ -112,6 +113,19 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
         printlnEntity.setLdIdent(printlnName);
 
         this.runtimeEntities.put(printlnName, printlnEntity);
+
+        // TODO Should this take unsigned integers instead?
+
+        /* Memory allocation */
+        String allocName = "alloc_mem";
+        MethodType allocType = new MethodType(new Type[] { intType, intType }, new Type[] { pointerType });
+
+        Entity allocEntity = new Entity(this.globalType, allocName, allocType);
+
+        // Sets the mangled name of the entity
+        allocEntity.setLdIdent(allocName);
+
+        this.runtimeEntities.put(allocName, allocEntity);
     }
 
     @Override
