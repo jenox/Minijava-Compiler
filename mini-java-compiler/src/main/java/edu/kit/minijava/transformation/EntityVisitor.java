@@ -836,25 +836,15 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
         if (!this.isVariableCounting) {
             Entity field = this.entities.get(expression.getFieldReference().getDeclaration());
 
-            Node thisNode = null;
+            // First, evaluate context and set result
+            expression.getContext().accept(this, context);
+            Node contextValue = context.getResult().convertToValue().getNode();
 
-            // TODO Is this correct? Shouldn't these all be handled the same way?
-            if ((expression.getContext() instanceof MethodInvocation)
-                || (expression.getContext() instanceof ExplicitFieldAccess)
-                || (expression.getContext() instanceof NewObjectCreation)
-                || (expression.getContext() instanceof VariableAccess)
-                || (expression.getContext() instanceof ArrayElementAccess)) {
-
-                expression.getContext().accept(this, context);
-                thisNode = context.getResult().convertToValue().getNode();
-            }
-            else if (!context.isCalledFromMain()) {
-                thisNode = context.getConstruction().getVariable(0, Mode.getP());
-            }
-
-            Member member = (Member) context.getConstruction().newMember(thisNode, field);
+            Member member = (Member) context.getConstruction().newMember(contextValue, field);
 
             Mode mode = this.types.get(expression.getFieldReference().getDeclaration()).getMode();
+
+            // All types without explicit modes associated with them are reference types
             if (mode == null) mode = Mode.getP();
 
             ExpressionResult.FieldLValue result =
