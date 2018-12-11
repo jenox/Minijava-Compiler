@@ -8,14 +8,12 @@ import firm.Type;
 public class EntityContext {
 
     private Type type;
-    private Type elementType;
     private int numberOfLocalVars;
     private ExpressionResult result = null;
     private Construction construction;
     private StructType classType;
     private Declaration decl;
     private boolean isLeftSideOfAssignment;
-    private boolean isTopLevel;
     private boolean isCalledFromMain;
     private boolean endsOnJumpNode;
 
@@ -25,22 +23,6 @@ public class EntityContext {
 
     public void setCalledFromMain(boolean calledFromMain) {
         this.isCalledFromMain = calledFromMain;
-    }
-
-    public boolean isTopLevel() {
-        return this.isTopLevel;
-    }
-
-    public void setTopLevel(boolean topLevel) {
-        this.isTopLevel = topLevel;
-    }
-
-    public Type getElementType() {
-        return this.elementType;
-    }
-
-    public void setElementType(Type elementType) {
-        this.elementType = elementType;
     }
 
     public boolean isLeftSideOfAssignment() {

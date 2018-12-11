@@ -49,8 +49,12 @@ public abstract class ASTVisitor<T> {
     }
 
     protected final Optional<ASTNode> getPreviousNode() {
-        if (this.nodes.size() >= 2) {
-            return Optional.of(this.nodes.get(this.nodes.size() - 2));
+        return this.getPreviousNode(1);
+    }
+
+    protected final Optional<ASTNode> getPreviousNode(int offset) {
+        if (this.nodes.size() >= offset + 1) {
+            return Optional.of(this.nodes.get(this.nodes.size() - (offset + 1)));
         }
         else {
             return Optional.empty();

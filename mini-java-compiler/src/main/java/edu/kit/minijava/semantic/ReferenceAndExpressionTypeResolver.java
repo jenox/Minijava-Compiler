@@ -486,7 +486,26 @@ public class ReferenceAndExpressionTypeResolver extends
         // Literal value must fit in signed 32 bit.
         try {
             if (options == Options.LITERALLY_PREFIXED_WITH_NUMERIC_NEGATION_SIGN) {
-                Integer.parseInt("-" + expression.getValue());
+                int value = Integer.parseInt("-" + expression.getValue());
+
+                // Move unary minus into the integer literal node itself
+
+                // Check for correct AST structure first
+                assert this.getPreviousNode(2).isPresent();
+                ASTNode outerNode = this.getPreviousNode(2).get();
+
+                assert this.getPreviousNode().get() instanceof Expression.UnaryOperation;
+                Expression.UnaryOperation unaryOp = (Expression.UnaryOperation) this.getPreviousNode().get();
+                assert unaryOp.getOperationType().equals(
+                    UnaryOperationType.NUMERIC_NEGATION);
+
+                Expression negativeInt =
+                    new Expression.IntegerLiteral(Integer.toString(value), expression.getLocation());
+
+                outerNode.substituteExpression(unaryOp, negativeInt);
+
+                // Resolve new integer node to correct type
+                negativeInt.getType().resolveToInteger();
             }
             else {
                 Integer.parseInt(expression.getValue());
