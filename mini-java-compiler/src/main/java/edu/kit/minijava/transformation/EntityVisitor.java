@@ -287,8 +287,8 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
             methodContext.setCalledFromMain(false);
             methodDeclaration.getBody().accept(this, methodContext);
 
-            // no return stmts so far? -> create return node
-            if (graph.getEndBlock().getPredCount() == 0) {
+            // Create return node if the method body does not end with a return statement
+            if (!methodContext.endsOnJumpNode()) {
 
                 assert methodDeclaration.getReturnType().isVoid() : "Fell through without return on non-void method.";
 
@@ -561,10 +561,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
         for (Statement stmt : block.getStatements()) {
             stmt.accept(this, context);
 
-            context.setEndsOnJumpNode(false);
-
             if (stmt instanceof ReturnStatement) {
-                context.setEndsOnJumpNode(true);
                 break;
             }
         }
