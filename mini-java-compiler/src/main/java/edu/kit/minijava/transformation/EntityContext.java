@@ -1,6 +1,5 @@
 package edu.kit.minijava.transformation;
 
-import edu.kit.minijava.ast.nodes.Declaration;
 import firm.Construction;
 import firm.StructType;
 import firm.Type;
