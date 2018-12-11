@@ -564,8 +564,8 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
         Construction construction = context.getConstruction();
 
         if (this.isVariableCounting) {
-            expression.getRight().accept(this, context);
             expression.getLeft().accept(this, context);
+            expression.getRight().accept(this, context);
         }
         else {
             if (expression.getOperationType() == BinaryOperationType.LOGICAL_AND) {
@@ -595,17 +595,17 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
                 return;
             }
 
-            expression.getRight().accept(this, context);
-            ExpressionResult.Value rightExpression = context.getResult().convertToValue();
-            context.setResult(rightExpression);
-
-            Node right = rightExpression.getNode();
-
             expression.getLeft().accept(this, context);
             ExpressionResult.Value leftExpression = context.getResult().convertToValue();
             context.setResult(leftExpression);
 
             Node left = leftExpression.getNode();
+
+            expression.getRight().accept(this, context);
+            ExpressionResult.Value rightExpression = context.getResult().convertToValue();
+            context.setResult(rightExpression);
+
+            Node right = rightExpression.getNode();
 
             switch (expression.getOperationType()) {
                 case ADDITION:
