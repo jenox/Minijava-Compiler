@@ -12,7 +12,6 @@ public class EntityContext {
     private ExpressionResult result = null;
     private Construction construction;
     private StructType classType;
-    private boolean isLeftSideOfAssignment;
     private boolean isCalledFromMain;
     private boolean endsOnJumpNode;
 
@@ -22,14 +21,6 @@ public class EntityContext {
 
     public void setCalledFromMain(boolean calledFromMain) {
         this.isCalledFromMain = calledFromMain;
-    }
-
-    public boolean isLeftSideOfAssignment() {
-        return this.isLeftSideOfAssignment;
-    }
-
-    public void setLeftSideOfAssignment(boolean leftSideOfAssignment) {
-        this.isLeftSideOfAssignment = leftSideOfAssignment;
     }
 
     public void setNumberOfLocalVars(int numberOfLocalVars) {

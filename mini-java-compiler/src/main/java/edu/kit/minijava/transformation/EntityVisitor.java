@@ -565,7 +565,6 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
         if (this.isVariableCounting) {
             expression.getRight().accept(this, context);
-            context.setLeftSideOfAssignment(expression.getOperationType().equals(BinaryOperationType.ASSIGNMENT));
             expression.getLeft().accept(this, context);
         }
         else {
@@ -601,8 +600,6 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
             context.setResult(rightExpression);
 
             Node right = rightExpression.getNode();
-
-            context.setLeftSideOfAssignment(expression.getOperationType().equals(BinaryOperationType.ASSIGNMENT));
 
             expression.getLeft().accept(this, context);
             ExpressionResult.Value leftExpression = context.getResult().convertToValue();
@@ -811,8 +808,6 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
     @Override
     protected void visit(ExplicitFieldAccess expression, EntityContext context) {
-        boolean isLeftSide = context.isLeftSideOfAssignment();
-        context.setLeftSideOfAssignment(false);
         ExpressionResult rightResult = context.getResult();
 
         if (!this.isVariableCounting) {
@@ -895,9 +890,6 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
     @Override
     protected void visit(VariableAccess expression, EntityContext context) {
-        boolean isLeftSide = context.isLeftSideOfAssignment();
-        context.setLeftSideOfAssignment(false);
-
         ExpressionResult rightResult = context.getResult();
         context.setResult(null);
 
@@ -959,8 +951,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
             Node res = context.getConstruction().newProj(alloc, Mode.getP(), Alloc.pnRes);
 
-            // init fields
-            context.setLeftSideOfAssignment(true);
+            // Initialize fields
             for (FieldDeclaration decl : expression.getClassReference().getDeclaration().getFieldDeclarations()) {
                 Entity field = this.entities.get(decl);
                 Node member = context.getConstruction().newMember(res, field);
@@ -998,8 +989,6 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
                 context.getConstruction().setCurrentMem(newMem);
 
             }
-            context.setLeftSideOfAssignment(false);
-
             context.setResult(new ExpressionResult.Value(context.getConstruction(), res));
         }
     }
