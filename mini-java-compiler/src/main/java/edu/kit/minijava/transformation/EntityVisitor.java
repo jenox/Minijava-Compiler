@@ -675,19 +675,16 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
     protected void visit(UnaryOperation expression, EntityContext context) {
         expression.getOther().accept(this, context);
 
-        Node uni = null;
-
         if (!this.isVariableCounting) {
-            ExpressionResult.Value otherNode = context.getResult().convertToValue();
-            context.setResult(otherNode);
+            Node uni = null;
+            ExpressionResult.Value operand = context.getResult().convertToValue();
 
-            Construction construction = context.getConstruction();
             switch (expression.getOperationType()) {
                 case LOGICAL_NEGATION:
-                    uni = construction.newNot(otherNode.getNode());
+                    uni = context.getConstruction().newNot(operand.getNode());
                     break;
                 case NUMERIC_NEGATION:
-                    uni = context.getConstruction().newMinus(otherNode.getNode());
+                    uni = context.getConstruction().newMinus(operand.getNode());
                     break;
                 default:
                     assert false : "Unhandled unary operation!";
