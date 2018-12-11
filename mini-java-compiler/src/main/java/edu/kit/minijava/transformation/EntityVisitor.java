@@ -838,8 +838,6 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
     @Override
     protected void visit(ArrayElementAccess expression, EntityContext context) {
-        context.setResult(null);
-
         if (!this.isVariableCounting) {
 
             // Evaluate array reference first
