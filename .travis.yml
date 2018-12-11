@@ -10,9 +10,6 @@ env:
   - MJ_RUN="./run" MJ_TIMEOUT=60
 
 jobs:
-  allow_failures:
-    - name: Firm Compilation Tests
-
   include:
     - stage: build
       name: Build
