@@ -706,31 +706,19 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
     @Override
     protected void visit(BooleanLiteral expression, EntityContext context) {
 
-        ExpressionResult.Value value = null;
-        Node bool = null;
+        Node boolNode;
 
-        if (!this.isVariableCounting) {
-            if (expression.getValue()) {
-                if (this.trueNode == null) {
-                    bool = context.getConstruction().newConst(-1, Mode.getBs());
-                }
-                else {
-                    bool = this.trueNode;
-                }
-            }
-            else {
-                if (this.falseNode == null) {
-                    bool = context.getConstruction().newConst(0, Mode.getBs());
-                }
-                else {
-                    bool = this.falseNode;
-                }
-            }
-
-            value = new ExpressionResult.Value(context.getConstruction(), bool);
+        if (expression.getValue()) {
+            boolNode = context.getConstruction().newConst(-1, Mode.getBs());
+        }
+        else {
+            boolNode = context.getConstruction().newConst(0, Mode.getBs());
         }
 
-        context.setResult(value);
+        ExpressionResult.Value result =
+            new ExpressionResult.Value(context.getConstruction(), boolNode);
+
+        context.setResult(result);
     }
 
     @Override
