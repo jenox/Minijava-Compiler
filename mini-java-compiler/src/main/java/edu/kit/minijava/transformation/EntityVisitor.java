@@ -661,22 +661,28 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
                     break;
                 case DIVISION:
                     Node mem = context.getConstruction().getCurrentMem();
-                    Node div = context.getConstruction().newDiv(mem, left, right,
+                    Node left64 = construction.newConv(left, Mode.getLs());
+                    Node right64 = construction.newConv(right, Mode.getLs());
+                    Node div = context.getConstruction().newDiv(mem, left64, right64,
                             binding_ircons.op_pin_state.op_pin_state_floats);
+                    Node res = context.getConstruction().newProj(div, Mode.getLs(), Div.pnRes);
+                    Node resInt = construction.newConv(res, Mode.getIs());
 
-                    result = new ExpressionResult.Value(construction,
-                        context.getConstruction().newProj(div, Mode.getIs(), Div.pnRes));
+                    result = new ExpressionResult.Value(construction, resInt);
 
                     Node projMem = context.getConstruction().newProj(div, Mode.getM(), Div.pnM);
                     context.getConstruction().setCurrentMem(projMem);
                     break;
                 case MODULO:
                     Node mem_ = context.getConstruction().getCurrentMem();
-                    Node mod = context.getConstruction().newMod(mem_, left, right,
+                    left64 = construction.newConv(left, Mode.getLs());
+                    right64 = construction.newConv(right, Mode.getLs());
+                    Node mod = context.getConstruction().newMod(mem_, left64, right64,
                             binding_ircons.op_pin_state.op_pin_state_floats);
+                    res = context.getConstruction().newProj(mod, Mode.getLs(), Mod.pnRes);
+                    resInt = construction.newConv(res, Mode.getIs());
 
-                    result = new ExpressionResult.Value(construction,
-                        context.getConstruction().newProj(mod, Mode.getIs(), Mod.pnRes));
+                    result = new ExpressionResult.Value(construction, resInt);
 
                     Node projMem_ = context.getConstruction().newProj(mod, Mode.getM(), Div.pnM);
                     context.getConstruction().setCurrentMem(projMem_);
@@ -995,8 +1001,8 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
             Node functionAddress = construction.newAddress(functionEntity);
 
             Node mem = construction.getCurrentMem();
-            Node call =
-                construction.newCall(mem, functionAddress, new Node[] {elementCount, elementSize}, functionEntity.getType());
+            Node call = construction.newCall(mem, functionAddress,
+                new Node[] {elementCount, elementSize}, functionEntity.getType());
 
             Node newMem = construction.newProj(call, Mode.getM(), Call.pnM);
             construction.setCurrentMem(newMem);
