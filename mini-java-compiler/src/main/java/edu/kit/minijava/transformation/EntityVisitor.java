@@ -377,9 +377,14 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
         if (!this.isVariableCounting) {
             Construction construction = context.getConstruction();
 
+            Block blockBeforeIf = construction.getCurrentBlock();
+
             statement.getCondition().accept(this, context);
 
             ExpressionResult.Condition condition = context.getResult().convertToCondition();
+
+            blockBeforeIf.mature();
+            condition.getBlock().mature();
 
             // If-Block (the true part)
             firm.nodes.Block bTrue = context.getConstruction().newBlock();
@@ -429,20 +434,32 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
                 context.getConstruction().setCurrentBlock(bAfter);
 
+                bTrue.mature();
+                bFalse.mature();
+
                 context.setEndsOnJumpNode(false);
             }
             // Only then branch ends on a branch node
             else if (!thenEndsOnJump) {
                 // In this case, set the else block as the current block
                 context.getConstruction().setCurrentBlock(bTrue);
+
+                bFalse.mature();
+
                 context.setEndsOnJumpNode(false);
             }
             else if (!elseEndsOnJump) {
                 context.getConstruction().setCurrentBlock(bFalse);
+
+                bTrue.mature();
+
                 context.setEndsOnJumpNode(false);
             }
             // Both end on jump node
             else {
+                bTrue.mature();
+                bFalse.mature();
+
                 context.setEndsOnJumpNode(true);
             }
         }
@@ -457,11 +474,16 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
         Construction construction = context.getConstruction();
         if (!this.isVariableCounting) {
 
+            Block blockBeforeWhile = construction.getCurrentBlock();
+
             Node jump = construction.newJmp();
 
             firm.nodes.Block loopHeader = construction.newBlock();
             loopHeader.addPred(jump);
             construction.setCurrentBlock(loopHeader);
+
+            blockBeforeWhile.mature();
+
 
             // loop condition
             statement.getCondition().accept(this, context);
@@ -486,6 +508,11 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
             firm.nodes.Block afterLoop = construction.newBlock();
             afterLoop.addPred(condition.getIfFalse());
             construction.setCurrentBlock(afterLoop);
+
+            loopHeader.mature();
+            loopBody.mature();
+
+            context.setEndsOnJumpNode(false);
         }
         else {
             statement.getStatementWhileTrue().accept(this, context);
@@ -1089,6 +1116,8 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
         lhsTrueBlock.addPred(left.getIfTrue());
         construction.setCurrentBlock(lhsTrueBlock);
 
+        lhsTrueBlock.mature();
+
         expression.getRight().accept(this, context);
         ExpressionResult.Condition right = context.getResult().convertToCondition();
 
@@ -1098,6 +1127,8 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
         blockEitherFalse.addPred(right.getIfFalse());
 
         Node eitherFalseJmp = construction.newJmp();
+
+        blockEitherFalse.mature();
 
         ExpressionResult.Condition result =
             new ExpressionResult.Condition(construction, left.getBlock(), right.getIfTrue(), eitherFalseJmp);
@@ -1115,6 +1146,8 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
         lhsFalseBlock.addPred(left.getIfFalse());
         construction.setCurrentBlock(lhsFalseBlock);
 
+        lhsFalseBlock.mature();
+
         expression.getRight().accept(this, context);
         ExpressionResult.Condition right = context.getResult().convertToCondition();
 
@@ -1124,6 +1157,8 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
         blockEitherTrue.addPred(right.getIfTrue());
 
         Node eitherTrueJump = construction.newJmp();
+
+        blockEitherTrue.mature();
 
         ExpressionResult.Condition result =
             new ExpressionResult.Condition(construction, left.getBlock(), eitherTrueJump, right.getIfFalse());

@@ -127,13 +127,18 @@ public abstract class ExpressionResult {
             Node constZero = this.getConstruction().newConst(0, Mode.getBs());
             Node constMinusOne = this.getConstruction().newConst(-1, Mode.getBs());
 
+            Block previousBlock = this.getConstruction().getCurrentBlock();
             Block afterBlock = this.getConstruction().newBlock();
             this.getConstruction().setCurrentBlock(afterBlock);
+
+            // previousBlock.mature();
 
             afterBlock.addPred(this.getIfTrue());
             afterBlock.addPred(this.getIfFalse());
 
             Node phiNode = this.getConstruction().newPhi(new Node[] { constMinusOne, constZero }, Mode.getBs());
+
+            afterBlock.mature();
 
             return new Value(this.getConstruction(), this.getConstruction().getCurrentBlock(), phiNode, true);
         }
