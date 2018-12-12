@@ -3,6 +3,8 @@ package edu.kit.minijava.transformation;
 import firm.*;
 import firm.nodes.*;
 
+import java.util.*;
+
 public abstract class ExpressionResult {
 
     private final Construction construction;
@@ -17,7 +19,11 @@ public abstract class ExpressionResult {
     }
 
     public abstract Value convertToValue();
-    public abstract Cond convertToCond();
+    public abstract Condition convertToCondition();
+
+    public Value assignTo(Value value) {
+        throw new UnsupportedOperationException("Can only assign to LValues!");
+    }
 
     public static final class Value extends ExpressionResult {
 
@@ -60,7 +66,7 @@ public abstract class ExpressionResult {
         }
 
         @Override
-        public Cond convertToCond() {
+        public Condition convertToCondition() {
             assert this.getNode().getMode().equals(Mode.getBs())
                 : "Can only convert boolean values to control flow graph structures!";
 
@@ -72,17 +78,17 @@ public abstract class ExpressionResult {
             Node trueProj = this.getConstruction().newProj(cond, Mode.getX(), firm.nodes.Cond.pnTrue);
             Node falseProj = this.getConstruction().newProj(cond, Mode.getX(), firm.nodes.Cond.pnFalse);
 
-            return new Cond(this.getConstruction(), this.getBlock(), trueProj, falseProj);
+            return new Condition(this.getConstruction(), this.getBlock(), trueProj, falseProj);
         }
     }
 
-    public static final class Cond extends ExpressionResult {
+    public static final class Condition extends ExpressionResult {
 
         private final Block block;
         private final Node ifTrue;
         private final Node ifFalse;
 
-        public Cond(Construction construction, Block block, Node ifTrue, Node ifFalse) {
+        public Condition(Construction construction, Block block, Node ifTrue, Node ifFalse) {
             super(construction);
 
             this.block = block;
@@ -91,7 +97,7 @@ public abstract class ExpressionResult {
 
         }
 
-        public Cond(Construction construction, Node compareNode) {
+        public Condition(Construction construction, Node compareNode) {
             super(construction);
 
             Node cond = construction.newCond(compareNode);
@@ -121,21 +127,216 @@ public abstract class ExpressionResult {
             Node constZero = this.getConstruction().newConst(0, Mode.getBs());
             Node constMinusOne = this.getConstruction().newConst(-1, Mode.getBs());
 
+            Block previousBlock = this.getConstruction().getCurrentBlock();
             Block afterBlock = this.getConstruction().newBlock();
             this.getConstruction().setCurrentBlock(afterBlock);
+
+            // previousBlock.mature();
 
             afterBlock.addPred(this.getIfTrue());
             afterBlock.addPred(this.getIfFalse());
 
             Node phiNode = this.getConstruction().newPhi(new Node[] { constMinusOne, constZero }, Mode.getBs());
 
+            afterBlock.mature();
+
             return new Value(this.getConstruction(), this.getConstruction().getCurrentBlock(), phiNode, true);
         }
 
         @Override
-        public Cond convertToCond() {
+        public Condition convertToCondition() {
             return this;
         }
     }
 
+    public static final class ArrayLValue extends ExpressionResult {
+
+        private final Sel selNode;
+        private final Type valueType;
+        private final Mode valueMode;
+
+        public ArrayLValue(Construction construction, Sel selNode, Type valueType) {
+            super(construction);
+
+            if (selNode == null) throw new IllegalArgumentException();
+            this.selNode = selNode;
+
+            if (valueType == null) throw new IllegalArgumentException();
+            this.valueType = valueType;
+
+            this.valueMode = Optional.ofNullable(this.getValueType().getMode()).orElse(Mode.getP());
+        }
+
+        public Sel getSelNode() {
+            return this.selNode;
+        }
+
+        public Type getValueType() {
+            return this.valueType;
+        }
+
+        public Mode getValueMode() {
+            return this.valueMode;
+        }
+
+        @Override
+        public Value convertToValue() {
+            Node mem = this.getConstruction().getCurrentMem();
+            Node load = this.getConstruction().newLoad(mem, this.getSelNode(), this.getValueType().getMode());
+
+            Node newMem = this.getConstruction().newProj(load, Mode.getM(), Load.pnM);
+            this.getConstruction().setCurrentMem(newMem);
+
+            Node result = this.getConstruction().newProj(load, this.getValueType().getMode(), Load.pnRes);
+
+            return new Value(this.getConstruction(), result);
+        }
+
+        @Override
+        public Condition convertToCondition() {
+
+            assert this.getValueMode().equals(Mode.getBs())
+                : "Can only convert boolean values to control flow graph structures!";
+
+            return this.convertToValue().convertToCondition();
+        }
+
+        @Override
+        public Value assignTo(Value value) {
+
+            Mode otherMode = Optional.ofNullable(value.getNode().getMode()).orElse(Mode.getP());
+            if (!this.getValueMode().equals(otherMode)) {
+                throw new IllegalArgumentException("Mismatching modes for assignment!");
+            }
+
+            Node mem = this.getConstruction().getCurrentMem();
+            Node store = this.getConstruction().newStore(mem, this.getSelNode(), value.getNode());
+
+            // Update memory nodes
+            mem = this.getConstruction().newProj(store, Mode.getM(), Store.pnM);
+            this.getConstruction().setCurrentMem(mem);
+
+            return new Value(this.getConstruction(), value.getNode());
+        }
+    }
+
+    public static final class LocalVariableLValue extends ExpressionResult {
+
+        private final int variableIndex;
+        private final Type valueType;
+        private final Mode valueMode;
+
+        public LocalVariableLValue(Construction construction, int variableIndex, Type valueType) {
+            super(construction);
+
+            this.variableIndex = variableIndex;
+
+            if (valueType == null) throw new IllegalArgumentException();
+            this.valueType = valueType;
+
+            this.valueMode = Optional.ofNullable(valueType.getMode()).orElse(Mode.getP());
+        }
+
+        public int getVariableIndex() {
+            return this.variableIndex;
+        }
+
+        public Type getValueType() {
+            return this.valueType;
+        }
+
+        public Mode getValueMode() {
+            return this.valueMode;
+        }
+
+        @Override
+        public Value convertToValue() {
+            Node value = this.getConstruction().getVariable(this.getVariableIndex(), this.getValueType().getMode());
+            return new Value(this.getConstruction(), value);
+        }
+
+        @Override
+        public Condition convertToCondition() {
+
+            assert this.getValueMode().equals(Mode.getBs())
+                : "Can only convert boolean values to control flow graph structures!";
+
+            return this.convertToValue().convertToCondition();
+        }
+
+        @Override
+        public Value assignTo(Value value) {
+
+            Mode otherMode = Optional.ofNullable(value.getNode().getMode()).orElse(Mode.getP());
+            if (!this.getValueMode().equals(otherMode)) {
+                throw new IllegalArgumentException("Mismatching modes for assignment!");
+            }
+
+            this.getConstruction().setVariable(this.variableIndex, value.getNode());
+
+            return new Value(this.getConstruction(), value.getNode());
+        }
+    }
+
+    public static final class FieldLValue extends ExpressionResult {
+
+        private final Member memberNode;
+        private final Mode valueMode;
+
+        public FieldLValue(Construction construction, Member memberNode, Mode valueMode) {
+            super(construction);
+
+            if (memberNode == null) throw new IllegalArgumentException();
+            this.memberNode = memberNode;
+
+            if (valueMode == null) throw new IllegalArgumentException();
+            this.valueMode = valueMode;
+        }
+
+        public Member getMemberNode() {
+            return this.memberNode;
+        }
+
+        public Mode getValueMode() {
+            return this.valueMode;
+        }
+
+        @Override
+        public Value convertToValue() {
+            Node mem = this.getConstruction().getCurrentMem();
+            Node load = this.getConstruction().newLoad(mem, this.getMemberNode(), this.getValueMode());
+
+            mem = this.getConstruction().newProj(load, Mode.getM(), Load.pnM);
+            this.getConstruction().setCurrentMem(mem);
+
+            // Retrieve and return result
+            Node result = this.getConstruction().newProj(load, this.getValueMode(), Load.pnRes);
+            return new Value(this.getConstruction(), result);
+        }
+
+        @Override
+        public Condition convertToCondition() {
+            assert this.getValueMode().equals(Mode.getBs())
+                : "Can only convert boolean values to control flow graph structures!";
+
+            return this.convertToValue().convertToCondition();
+        }
+
+        @Override
+        public Value assignTo(Value value) {
+
+            Mode otherMode = Optional.ofNullable(value.getNode().getMode()).orElse(Mode.getP());
+            if (!this.getValueMode().equals(otherMode)) {
+                throw new IllegalArgumentException("Mismatching modes for assignment!");
+            }
+
+            Node mem = this.getConstruction().getCurrentMem();
+            Node store = this.getConstruction().newStore(mem, this.getMemberNode(), value.getNode());
+
+            mem = this.getConstruction().newProj(store, Mode.getM(), Store.pnM);
+            this.getConstruction().setCurrentMem(mem);
+
+            return new Value(this.getConstruction(), value.getNode());
+        }
+    }
 }
