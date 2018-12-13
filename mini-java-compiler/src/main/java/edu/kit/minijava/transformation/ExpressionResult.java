@@ -19,7 +19,7 @@ public abstract class ExpressionResult {
     }
 
     public abstract Value convertToValue();
-    public abstract Cond convertToCond();
+    public abstract Condition convertToCondition();
 
     public Value assignTo(Value value) {
         throw new UnsupportedOperationException("Can only assign to LValues!");
@@ -66,7 +66,7 @@ public abstract class ExpressionResult {
         }
 
         @Override
-        public Cond convertToCond() {
+        public Condition convertToCondition() {
             assert this.getNode().getMode().equals(Mode.getBs())
                 : "Can only convert boolean values to control flow graph structures!";
 
@@ -78,17 +78,17 @@ public abstract class ExpressionResult {
             Node trueProj = this.getConstruction().newProj(cond, Mode.getX(), firm.nodes.Cond.pnTrue);
             Node falseProj = this.getConstruction().newProj(cond, Mode.getX(), firm.nodes.Cond.pnFalse);
 
-            return new Cond(this.getConstruction(), this.getBlock(), trueProj, falseProj);
+            return new Condition(this.getConstruction(), this.getBlock(), trueProj, falseProj);
         }
     }
 
-    public static final class Cond extends ExpressionResult {
+    public static final class Condition extends ExpressionResult {
 
         private final Block block;
         private final Node ifTrue;
         private final Node ifFalse;
 
-        public Cond(Construction construction, Block block, Node ifTrue, Node ifFalse) {
+        public Condition(Construction construction, Block block, Node ifTrue, Node ifFalse) {
             super(construction);
 
             this.block = block;
@@ -97,7 +97,7 @@ public abstract class ExpressionResult {
 
         }
 
-        public Cond(Construction construction, Node compareNode) {
+        public Condition(Construction construction, Node compareNode) {
             super(construction);
 
             Node cond = construction.newCond(compareNode);
@@ -127,19 +127,24 @@ public abstract class ExpressionResult {
             Node constZero = this.getConstruction().newConst(0, Mode.getBs());
             Node constMinusOne = this.getConstruction().newConst(-1, Mode.getBs());
 
+            Block previousBlock = this.getConstruction().getCurrentBlock();
             Block afterBlock = this.getConstruction().newBlock();
             this.getConstruction().setCurrentBlock(afterBlock);
+
+            // previousBlock.mature();
 
             afterBlock.addPred(this.getIfTrue());
             afterBlock.addPred(this.getIfFalse());
 
             Node phiNode = this.getConstruction().newPhi(new Node[] { constMinusOne, constZero }, Mode.getBs());
 
+            afterBlock.mature();
+
             return new Value(this.getConstruction(), this.getConstruction().getCurrentBlock(), phiNode, true);
         }
 
         @Override
-        public Cond convertToCond() {
+        public Condition convertToCondition() {
             return this;
         }
     }
@@ -188,12 +193,12 @@ public abstract class ExpressionResult {
         }
 
         @Override
-        public Cond convertToCond() {
+        public Condition convertToCondition() {
 
             assert this.getValueMode().equals(Mode.getBs())
                 : "Can only convert boolean values to control flow graph structures!";
 
-            return this.convertToValue().convertToCond();
+            return this.convertToValue().convertToCondition();
         }
 
         @Override
@@ -251,12 +256,12 @@ public abstract class ExpressionResult {
         }
 
         @Override
-        public Cond convertToCond() {
+        public Condition convertToCondition() {
 
             assert this.getValueMode().equals(Mode.getBs())
                 : "Can only convert boolean values to control flow graph structures!";
 
-            return this.convertToValue().convertToCond();
+            return this.convertToValue().convertToCondition();
         }
 
         @Override
@@ -310,11 +315,11 @@ public abstract class ExpressionResult {
         }
 
         @Override
-        public Cond convertToCond() {
+        public Condition convertToCondition() {
             assert this.getValueMode().equals(Mode.getBs())
                 : "Can only convert boolean values to control flow graph structures!";
 
-            return this.convertToValue().convertToCond();
+            return this.convertToValue().convertToCondition();
         }
 
         @Override
