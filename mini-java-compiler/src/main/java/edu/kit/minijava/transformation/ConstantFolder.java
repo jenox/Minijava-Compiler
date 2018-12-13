@@ -182,12 +182,14 @@ public class ConstantFolder extends ConstantFolderBase {
         TargetValue left = this.getValueForNode(node.getLeft());
         TargetValue right = this.getValueForNode(node.getRight());
 
-        if (node.getRelation().contains(left.compare(right))) {
-            this.resultOfLastVisitedNode = TargetValue.getBTrue();
-        }
-        else {
-            this.resultOfLastVisitedNode = TargetValue.getBFalse();
-        }
+        this.resultOfLastVisitedNode = fold(left, right, (lhs, rhs) -> {
+            if (node.getRelation().contains(left.compare(right))) {
+                return TargetValue.getBTrue();
+            }
+            else {
+                return TargetValue.getBFalse();
+            }
+        });
 
         System.out.println(describe(left) + " " + node.getRelation() + " " + describe(right) + " = " +
                 this.resultOfLastVisitedNode);
