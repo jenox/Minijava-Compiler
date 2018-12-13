@@ -205,6 +205,19 @@ public class ConstantFolder extends ConstantFolderBase {
     }
 
     @Override
+    public void visit(Phi node) {
+        TargetValue result = UNDEFINED;
+
+        for (Node predecessor : node.getPreds()) {
+            TargetValue value = this.getValueForNode(predecessor);
+
+            result = join(result, value);
+        }
+
+        this.resultOfLastVisitedNode = result;
+    }
+
+    @Override
     public void visit(Conv node) {
         assert node.getPredCount() == 1;
 
