@@ -15,17 +15,12 @@ public class ConstantFolder extends ConstantFolderBase {
 
         this.debugLog();
 
-        for (Node node : this.getNodes()) {
+        for (Node node : this.getTopologicalOrdering()) {
             TargetValue value = this.getValueForNode(node);
 
             // For efficiency reasons, do not replace nodes that were constants already.
             if (node instanceof Const) {
                 assert ((Const)node).getTarval().equals(value);
-                continue;
-            }
-
-            // We only store value for projections to propagate values through projections.
-            if (node instanceof Proj) {
                 continue;
             }
 
@@ -47,16 +42,12 @@ public class ConstantFolder extends ConstantFolderBase {
             Node node = this.removeElementFromWorklist();
             node.accept(this);
 
-            // Not all nodes are evaluated.
-            if (this.resultOfLastVisitedNode != null) {
+            assert this.resultOfLastVisitedNode != null;
 
-                // If a change was made, make sure to revisit affected edges.
-                if (this.setValueForNode(node, this.resultOfLastVisitedNode)) {
-                    System.out.println("value of " + node + " changed");
-
-                    for (BackEdges.Edge edge : BackEdges.getOuts(node)) {
-                        this.addElementToWorklist(edge.node);
-                    }
+            // If a change was made, make sure to revisit affected edges.
+            if (this.setValueForNode(node, this.resultOfLastVisitedNode)) {
+                for (BackEdges.Edge edge : BackEdges.getOuts(node)) {
+                    this.addElementToWorklist(edge.node);
                 }
             }
         }
@@ -81,7 +72,7 @@ public class ConstantFolder extends ConstantFolderBase {
     public void visit(Const node) {
         assert this.getValueForNode(node) == UNDEFINED;
 
-        this.setValueForNode(node, node.getTarval());
+        this.resultOfLastVisitedNode = node.getTarval();
     }
 
     @Override
@@ -204,8 +195,26 @@ public class ConstantFolder extends ConstantFolderBase {
 
     @Override
     public void visit(Proj projection) {
-        if (projection.getNum() == 1) {
+        if (projection.getMode().equals(Mode.getM())) {
+            this.defaultVisit(projection);
+        }
+        else {
             this.resultOfLastVisitedNode = this.getValueForNode(projection.getPred());
         }
+    }
+
+    @Override
+    public void visit(Conv node) {
+        assert node.getPredCount() == 1;
+
+        TargetValue oldValue = this.getValueForNode(node.getPred(0));
+        TargetValue newValue = oldValue.convertTo(node.getMode());
+
+        this.resultOfLastVisitedNode = newValue;
+    }
+
+    @Override
+    public void defaultVisit(Node node) {
+        this.resultOfLastVisitedNode = NOT_A_CONSTANT;
     }
 }

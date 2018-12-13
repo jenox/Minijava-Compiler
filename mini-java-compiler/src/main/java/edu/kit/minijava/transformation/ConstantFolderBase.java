@@ -12,9 +12,11 @@ abstract class ConstantFolderBase extends NodeVisitor.Default {
         NodeCollector collector = new NodeCollector();
         graph.walkTopological(collector);
 
+        this.topologicalOrdering = Collections.unmodifiableList(collector.getNodes());
         this.worklist = new ArrayDeque<>(collector.getNodes());
     }
 
+    private final List<Node> topologicalOrdering;
     private final Queue<Node> worklist;
     private final Map<Node, TargetValue> values = new HashMap<>();
 
@@ -31,7 +33,7 @@ abstract class ConstantFolderBase extends NodeVisitor.Default {
         TargetValue oldValue = this.getValueForNode(node);
         TargetValue newValue = join(oldValue, value);
 
-        System.out.println(describe(oldValue) + " ⊔ " + describe(value) + " = " + describe(newValue));
+//        System.out.println(describe(oldValue) + " ⊔ " + describe(value) + " = " + describe(newValue));
 
         this.values.put(node, value);
 
@@ -52,13 +54,18 @@ abstract class ConstantFolderBase extends NodeVisitor.Default {
         }
     }
 
-    Set<Node> getNodes() {
-        return this.values.keySet();
+    List<Node> getTopologicalOrdering() {
+        return this.topologicalOrdering;
     }
 
     void debugLog() {
-        System.out.println(this.worklist);
-        System.out.println(this.values);
+        for (Node node : this.values.keySet()) {
+            TargetValue value = this.values.get(node);
+
+            if (value.isConstant()) {
+                System.out.println(node + ": " + value);
+            }
+        }
     }
 
 
@@ -139,6 +146,7 @@ abstract class ConstantFolderBase extends NodeVisitor.Default {
     // MARK: - Graph Operations
 
     static void safeReplaceNodeWithConstant(Node oldValue, Const newValue, @Nullable Proj memoryBeforeOperation) {
+        System.out.println("Replacing " + oldValue + " -> " + newValue);
         List<Node> successors = getSuccessorsOf(oldValue);
 
         Graph.exchange(oldValue, newValue);
@@ -148,19 +156,11 @@ abstract class ConstantFolderBase extends NodeVisitor.Default {
 
             Proj projection = (Proj)successor;
 
-            // memory projection
-            if (projection.getNum() == 0) {
+            // Contract attached memory projections.
+            if (projection.getMode().equals(Mode.getM())) {
+                assert memoryBeforeOperation != null;
+
                 contractProjection(projection, memoryBeforeOperation);
-            }
-
-            // result projection
-            else if (projection.getNum() == 1) {
-                contractProjection(projection, projection.getPred());
-            }
-
-            // other?
-            else {
-                throw new AssertionError();
             }
         }
     }
