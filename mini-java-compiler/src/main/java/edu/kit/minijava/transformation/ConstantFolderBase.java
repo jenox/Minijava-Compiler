@@ -132,10 +132,10 @@ abstract class ConstantFolderBase extends NodeVisitor.Default {
 
     static String describe(TargetValue value) {
         if (value == UNDEFINED) {
-            return "undefined";
+            return "⊥";
         }
         else if (value == NOT_A_CONSTANT) {
-            return "not a constant";
+            return "⊤";
         }
         else {
             return value.toString();

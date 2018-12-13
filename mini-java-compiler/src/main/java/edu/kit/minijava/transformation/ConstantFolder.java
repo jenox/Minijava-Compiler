@@ -82,7 +82,7 @@ public class ConstantFolder extends ConstantFolderBase {
 
         this.resultOfLastVisitedNode = fold(left, right, TargetValue::add);
 
-        System.out.println(describe(left) + " + " + describe(right) + " = " + this.resultOfLastVisitedNode);
+        this.print("+", left, right);
     }
 
     @Override
@@ -92,7 +92,7 @@ public class ConstantFolder extends ConstantFolderBase {
 
         this.resultOfLastVisitedNode = fold(left, right, TargetValue::sub);
 
-        System.out.println(describe(left) + " - " + describe(right) + " = " + this.resultOfLastVisitedNode);
+        this.print("-", left, right);
     }
 
     @Override
@@ -102,7 +102,7 @@ public class ConstantFolder extends ConstantFolderBase {
 
         this.resultOfLastVisitedNode = fold(left, right, TargetValue::mul);
 
-        System.out.println(describe(left) + " * " + describe(right) + " = " + this.resultOfLastVisitedNode);
+        this.print("*", left, right);
     }
 
     @Override
@@ -119,7 +119,7 @@ public class ConstantFolder extends ConstantFolderBase {
             this.resultOfLastVisitedNode = zero;
         }
 
-        System.out.println(describe(left) + " / " + describe(right) + " = " + this.resultOfLastVisitedNode);
+        this.print("/", left, right);
     }
 
     @Override
@@ -136,7 +136,7 @@ public class ConstantFolder extends ConstantFolderBase {
             this.resultOfLastVisitedNode = zero;
         }
 
-        System.out.println(describe(left) + " % " + describe(right) + " = " + this.resultOfLastVisitedNode);
+        this.print("%", left, right);
     }
 
     @Override
@@ -145,7 +145,7 @@ public class ConstantFolder extends ConstantFolderBase {
 
         this.resultOfLastVisitedNode = fold(other, TargetValue::neg);
 
-        System.out.println("-" + describe(other) + " = " + this.resultOfLastVisitedNode);
+        this.print("-", other);
     }
 
     @Override
@@ -155,7 +155,7 @@ public class ConstantFolder extends ConstantFolderBase {
 
         this.resultOfLastVisitedNode = fold(left, right, TargetValue::and);
 
-        System.out.println(describe(left) + " && " + describe(right) + " = " + this.resultOfLastVisitedNode);
+        this.print("&&", left, right);
     }
 
     @Override
@@ -165,7 +165,7 @@ public class ConstantFolder extends ConstantFolderBase {
 
         this.resultOfLastVisitedNode = fold(left, right, TargetValue::or);
 
-        System.out.println(describe(left) + " || " + describe(right) + " = " + this.resultOfLastVisitedNode);
+        this.print("||", left, right);
     }
 
     @Override
@@ -174,7 +174,7 @@ public class ConstantFolder extends ConstantFolderBase {
 
         this.resultOfLastVisitedNode = fold(other, TargetValue::not);
 
-        System.out.println("!" + describe(other) + " = " + this.resultOfLastVisitedNode);
+        this.print("!", other);
     }
 
     @Override
@@ -191,8 +191,7 @@ public class ConstantFolder extends ConstantFolderBase {
             }
         });
 
-        System.out.println(describe(left) + " " + node.getRelation() + " " + describe(right) + " = " +
-                this.resultOfLastVisitedNode);
+        this.print(node.getRelation().toString(), left, right);
     }
 
     @Override
@@ -218,5 +217,14 @@ public class ConstantFolder extends ConstantFolderBase {
     @Override
     public void defaultVisit(Node node) {
         this.resultOfLastVisitedNode = NOT_A_CONSTANT;
+    }
+
+    private void print(String operator, TargetValue lhs, TargetValue rhs) {
+        System.out.println(describe(lhs) + " " + operator + " " + describe(rhs) + " = " +
+                describe(this.resultOfLastVisitedNode));
+    }
+
+    private void print(String operator, TargetValue value) {
+        System.out.println(operator + describe(value) + " = " + describe(this.resultOfLastVisitedNode));
     }
 }
