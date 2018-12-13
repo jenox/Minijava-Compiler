@@ -49,8 +49,8 @@ public class ConstantFolder extends ConstantFolderBase {
                     }
                     else if (condition.getTarval().equals(TargetValue.getBFalse())) {
                         System.out.println("control flow is always false");
-                        // TODO: Replace Cond node with jump to 'true' block
-                        // TODO: Discard 'false' block
+                        // TODO: Replace Cond node with jump to 'false' block
+                        // TODO: Discard 'true' block
                     }
                     else {
                         // no const
