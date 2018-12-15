@@ -29,11 +29,17 @@ public class ConstantFolder extends ConstantFolderBase {
                 Const replacement = (Const)graph.newConst(value);
 
                 safeReplaceNodeWithConstant(node, replacement, memoryBeforeOperation);
+                this.hasModifiedGraph = true;
             }
         }
     }
 
     private TargetValue resultOfLastVisitedNode = null;
+    private boolean hasModifiedGraph = false;
+
+    public boolean hasModifiedGraph() {
+        return this.hasModifiedGraph;
+    }
 
     private void iterate() {
         while (!this.isWorklistEmpty()) {
