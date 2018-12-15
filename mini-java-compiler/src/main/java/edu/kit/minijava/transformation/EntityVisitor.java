@@ -29,6 +29,27 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
     private boolean isVariableCounting = false;
     private ClassDeclaration currentClassDeclaration;
 
+    public Iterable<Graph> molkiTransform(Program program) throws IOException {
+        String[] targetOptions = { "pic=1" };
+
+        // A null target triple causes Firm to choose the host machine triple
+        Firm.init(null, targetOptions);
+
+        this.globalType = firm.Program.getGlobalType();
+
+        // Create entities for the runtime library calls
+        this.createRuntimeEntities();
+
+        program.accept(this, new EntityContext());
+
+        // Check created graphs
+        for (Graph g : firm.Program.getGraphs()) {
+            g.check();
+        }
+
+        return firm.Program.getGraphs();
+    }
+
     public void transform(Program program, String outputFilename) throws IOException {
         String[] targetOptions = { "pic=1" };
 
