@@ -180,7 +180,7 @@ abstract class ConstantFolderBase extends NodeVisitor.Default {
         Graph.killNode(projection);
     }
 
-    static List<Node> getSuccessorsOf(Node node) {
+    private static List<Node> getSuccessorsOf(Node node) {
         Graph graph = node.getGraph();
         boolean wasEnabled = BackEdges.enabled(graph);
 

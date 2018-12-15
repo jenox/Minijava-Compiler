@@ -24,40 +24,6 @@ public class ConstantFolder extends ConstantFolderBase {
                 continue;
             }
 
-            if (node instanceof Cond) {
-                assert node.getPredCount() == 1;
-
-                if (node.getPred(0) instanceof Const) {
-                    Const condition = (Const)node.getPred(0);
-
-                    List<Node> successors = getSuccessorsOf(node);
-                    assert successors.size() == 2;
-
-                    Proj trueConditionProjection = (Proj)successors.get(0);
-                    Proj falseConditionProjection = (Proj)successors.get(1);
-
-                    assert trueConditionProjection.getNum() == 1;
-                    assert falseConditionProjection.getNum() == 0;
-
-                    Block trueBlock = (Block)getSuccessorsOf(trueConditionProjection).get(0);
-                    Block falseBlock = (Block)getSuccessorsOf(falseConditionProjection).get(0);
-
-                    if (condition.getTarval().equals(TargetValue.getBTrue())) {
-                        System.out.println("control flow is always true");
-                        // TODO: Replace Cond node with jump to 'true' block
-                        // TODO: Discard 'false' block
-                    }
-                    else if (condition.getTarval().equals(TargetValue.getBFalse())) {
-                        System.out.println("control flow is always false");
-                        // TODO: Replace Cond node with jump to 'false' block
-                        // TODO: Discard 'true' block
-                    }
-                    else {
-                        // no const
-                    }
-                }
-            }
-
             if (value.isConstant()) {
                 Proj memoryBeforeOperation = this.getMemoryUsedByOperation(node).orElse(null);
                 Const replacement = (Const)graph.newConst(value);
