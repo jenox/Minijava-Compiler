@@ -44,6 +44,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
         // Check and dump created graphs - can be viewed with ycomp
         for (Graph g : firm.Program.getGraphs()) {
+            ConstantFolder folder = new ConstantFolder(g);
             g.check();
             Dump.dumpGraph(g, "");
         }
