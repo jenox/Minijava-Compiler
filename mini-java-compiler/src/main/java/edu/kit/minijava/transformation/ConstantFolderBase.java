@@ -41,7 +41,7 @@ abstract class ConstantFolderBase extends NodeVisitor.Default {
 
 //        System.out.println(describe(oldValue) + " ⊔ " + describe(value) + " = " + describe(newValue) + "\t" + node);
 
-        this.values.put(node, value);
+        this.values.put(node, newValue);
 
         return !oldValue.equals(newValue);
     }
