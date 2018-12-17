@@ -226,7 +226,14 @@ public class ConstantFolder extends ConstantFolderBase {
         assert node.getPredCount() == 1;
 
         TargetValue oldValue = this.getValueForNode(node.getPred(0));
-        TargetValue newValue = oldValue.convertTo(node.getMode());
+        TargetValue newValue;
+
+        if (oldValue.isConstant()) {
+            newValue = oldValue.convertTo(node.getMode());
+        }
+        else {
+            newValue = oldValue;
+        }
 
         this.resultOfLastVisitedNode = newValue;
     }

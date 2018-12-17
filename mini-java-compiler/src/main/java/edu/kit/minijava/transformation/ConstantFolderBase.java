@@ -30,6 +30,12 @@ abstract class ConstantFolderBase extends NodeVisitor.Default {
      * Returns whether or not a change was made.
      */
     boolean setValueForNode(Node node, TargetValue value) {
+
+        // Assert integrity of target value. Other parts of code assume shared identities for bottom (UNDEFINED) and top
+        // (NOT_A_CONSTANT) values. Maybe we should change this? But at least we don't fail silently now.
+        assert !value.equals(TargetValue.getUnknown()) || value == UNDEFINED;
+        assert !value.equals(TargetValue.getBad()) || value == NOT_A_CONSTANT;
+
         TargetValue oldValue = this.getValueForNode(node);
         TargetValue newValue = join(oldValue, value);
 
