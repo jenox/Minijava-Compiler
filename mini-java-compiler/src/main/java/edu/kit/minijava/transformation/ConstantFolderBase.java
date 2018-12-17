@@ -39,7 +39,7 @@ abstract class ConstantFolderBase extends NodeVisitor.Default {
         TargetValue oldValue = this.getValueForNode(node);
         TargetValue newValue = join(oldValue, value);
 
-//        System.out.println(describe(oldValue) + " ⊔ " + describe(value) + " = " + describe(newValue));
+//        System.out.println(describe(oldValue) + " ⊔ " + describe(value) + " = " + describe(newValue) + "\t" + node);
 
         this.values.put(node, value);
 
@@ -68,7 +68,7 @@ abstract class ConstantFolderBase extends NodeVisitor.Default {
         for (Node node : this.values.keySet()) {
             TargetValue value = this.values.get(node);
 
-            if (value.isConstant()) {
+            if (value.isConstant() && !(node instanceof Const)) {
                 System.out.println(node + ": " + value);
             }
         }
