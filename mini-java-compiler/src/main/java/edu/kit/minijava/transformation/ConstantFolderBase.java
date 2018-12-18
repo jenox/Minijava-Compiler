@@ -30,12 +30,18 @@ abstract class ConstantFolderBase extends NodeVisitor.Default {
      * Returns whether or not a change was made.
      */
     boolean setValueForNode(Node node, TargetValue value) {
+
+        // Assert integrity of target value. Other parts of code assume shared identities for bottom (UNDEFINED) and top
+        // (NOT_A_CONSTANT) values. Maybe we should change this? But at least we don't fail silently now.
+        assert !value.equals(TargetValue.getUnknown()) || value == UNDEFINED;
+        assert !value.equals(TargetValue.getBad()) || value == NOT_A_CONSTANT;
+
         TargetValue oldValue = this.getValueForNode(node);
         TargetValue newValue = join(oldValue, value);
 
-//        System.out.println(describe(oldValue) + " ⊔ " + describe(value) + " = " + describe(newValue));
+//        System.out.println(describe(oldValue) + " ⊔ " + describe(value) + " = " + describe(newValue) + "\t" + node);
 
-        this.values.put(node, value);
+        this.values.put(node, newValue);
 
         return !oldValue.equals(newValue);
     }
@@ -62,7 +68,7 @@ abstract class ConstantFolderBase extends NodeVisitor.Default {
         for (Node node : this.values.keySet()) {
             TargetValue value = this.values.get(node);
 
-            if (value.isConstant()) {
+            if (value.isConstant() && !(node instanceof Const)) {
                 System.out.println(node + ": " + value);
             }
         }
@@ -145,7 +151,7 @@ abstract class ConstantFolderBase extends NodeVisitor.Default {
 
     // MARK: - Graph Operations
 
-    static void safeReplaceNodeWithConstant(Node oldValue, Const newValue, @Nullable Proj memoryBeforeOperation) {
+    static void safeReplaceNodeWithConstant(Node oldValue, Const newValue, @Nullable Node memoryBeforeOperation) {
         System.out.println("Replacing " + oldValue + " -> " + newValue);
         List<Node> successors = getSuccessorsOf(oldValue);
 

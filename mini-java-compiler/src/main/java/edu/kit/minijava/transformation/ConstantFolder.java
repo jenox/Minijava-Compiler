@@ -25,7 +25,7 @@ public class ConstantFolder extends ConstantFolderBase {
             }
 
             if (value.isConstant()) {
-                Proj memoryBeforeOperation = this.getMemoryUsedByOperation(node).orElse(null);
+                Node memoryBeforeOperation = this.getMemoryUsedByOperation(node).orElse(null);
                 Const replacement = (Const)graph.newConst(value);
 
                 safeReplaceNodeWithConstant(node, replacement, memoryBeforeOperation);
@@ -59,19 +59,17 @@ public class ConstantFolder extends ConstantFolderBase {
         }
     }
 
-    private Optional<Proj> getMemoryUsedByOperation(Node node) {
-        Proj projection = null;
+    private Optional<Node> getMemoryUsedByOperation(Node node) {
+        Node memory = null;
 
         if (node instanceof Div) {
-            projection = (Proj)((Div)node).getMem();
+            memory = ((Div)node).getMem();
         }
         else if (node instanceof Mod) {
-            projection = (Proj)((Mod)node).getMem();
+            memory = ((Mod)node).getMem();
         }
 
-        assert projection == null || projection.getNum() == 0;
-
-        return Optional.ofNullable(projection);
+        return Optional.ofNullable(memory);
     }
 
     @Override
@@ -228,7 +226,14 @@ public class ConstantFolder extends ConstantFolderBase {
         assert node.getPredCount() == 1;
 
         TargetValue oldValue = this.getValueForNode(node.getPred(0));
-        TargetValue newValue = oldValue.convertTo(node.getMode());
+        TargetValue newValue;
+
+        if (oldValue.isConstant()) {
+            newValue = oldValue.convertTo(node.getMode());
+        }
+        else {
+            newValue = oldValue;
+        }
 
         this.resultOfLastVisitedNode = newValue;
     }
