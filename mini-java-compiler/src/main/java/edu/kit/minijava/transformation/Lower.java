@@ -17,10 +17,7 @@ public class Lower {
     private void fixEntityLdName(Entity entity) {
         String name = entity.getLdName();
 
-        // Replace name of main method (which is guaranteed to be unique) with special name
-        if (name.endsWith(".main")) {
-            name = "__minijava_main";
-        }
+        // Main has already received its special name during construction of the Firm graph
 
         /* C linker doesn't allow all possible ascii chars for identifiers,
          * filter some out */
