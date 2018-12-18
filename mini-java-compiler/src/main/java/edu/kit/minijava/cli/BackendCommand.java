@@ -1,7 +1,8 @@
 package edu.kit.minijava.cli;
 
 import edu.kit.minijava.ast.nodes.Program;
-import edu.kit.minijava.backend.MolkiVisitor;
+import edu.kit.minijava.backend.PrepVisitor;
+import edu.kit.minijava.backend.TransformVisitor;
 import edu.kit.minijava.lexer.Lexer;
 import edu.kit.minijava.parser.Parser;
 import edu.kit.minijava.parser.ParserException;
@@ -37,22 +38,27 @@ public class BackendCommand extends Command {
             Iterable<Graph> graphs = visitor.molkiTransform(program);
 
             // MOLKI TRANSFORMATION
-            MolkiVisitor molkiVisitor = new MolkiVisitor();
+            PrepVisitor prepVisitor = new PrepVisitor();
 
-            // TODO: do we have to treat main method differently?
-            // VISIT METHODS
+            graphs.forEach(g -> {
+                g.walkTopological(prepVisitor);
+            });
+
+            TransformVisitor transformVisitor = new TransformVisitor(prepVisitor.getJmp2BlockName(), prepVisitor.getProj2regIndex());
+
             graphs.forEach(g -> {
                 String methodName = g.getEntity().getName();
                 MethodType methodType = (MethodType) g.getEntity().getType();
-                int noArgs = methodType.getNParams();
+                // non-main methods have additional `this` parameter
+                int noArgs = Math.max(0, methodType.getNParams() - 1);
                 int noResults = methodType.getNRess();
 
-                molkiVisitor.appendMolkiCode("\n.function " + methodName + " " + noArgs + " " + noResults);
-                g.walkTopological(molkiVisitor);
-                molkiVisitor.appendMolkiCode("\n.endfunction\n");
+                transformVisitor.appendMolkiCode("\n.function " + methodName + " " + noArgs + " " + noResults);
+                g.walkTopological(transformVisitor);
+                transformVisitor.appendMolkiCode("\n.endfunction\n");
             });
 
-            String output = molkiVisitor.getMolkiCode();
+            String output = transformVisitor.getMolkiCode();
             System.out.println(output);
 
             return 0;
