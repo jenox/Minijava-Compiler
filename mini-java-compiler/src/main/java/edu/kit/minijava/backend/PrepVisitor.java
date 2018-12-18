@@ -21,7 +21,7 @@ public class PrepVisitor implements NodeVisitor {
     }
 
     public HashMap<Node, Integer> getProj2regIndex() {
-        return proj2regIndex;
+        return this.proj2regIndex;
     }
 
     @Override
@@ -152,7 +152,7 @@ public class PrepVisitor implements NodeVisitor {
         div.getLeft().accept(this);
         div.getRight().accept(this);
 
-        this.proj2regIndex.put(div, this.registerIndex++);
+        this.proj2regIndex.put(div, this.registerIndex++); //TODO: 2 Zielregister
     }
 
     @Override
@@ -207,7 +207,7 @@ public class PrepVisitor implements NodeVisitor {
 
     @Override
     public void visit(Mod mod) {
-
+        //TODO: wie bei Div
     }
 
     @Override
@@ -247,7 +247,7 @@ public class PrepVisitor implements NodeVisitor {
 
     @Override
     public void visit(Phi phi) {
-
+        //TODO: kompliziert
     }
 
     @Override
@@ -272,7 +272,8 @@ public class PrepVisitor implements NodeVisitor {
 
     @Override
     public void visit(Sel sel) {
-
+        //TODO
+        this.proj2regIndex.put(sel, this.registerIndex++);
     }
 
     @Override
