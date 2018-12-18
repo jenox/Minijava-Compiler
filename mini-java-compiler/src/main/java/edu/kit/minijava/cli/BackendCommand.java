@@ -44,7 +44,8 @@ public class BackendCommand extends Command {
                 g.walkTopological(prepVisitor);
             });
 
-            TransformVisitor transformVisitor = new TransformVisitor(prepVisitor.getJmp2BlockName(), prepVisitor.getProj2regIndex());
+            TransformVisitor transformVisitor = new TransformVisitor(prepVisitor.getJmp2BlockName(), prepVisitor
+                            .getProj2regIndex());
 
             graphs.forEach(g -> {
                 String methodName = g.getEntity().getName();
@@ -80,5 +81,3 @@ public class BackendCommand extends Command {
         }
     }
 }
-
-
