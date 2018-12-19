@@ -1,12 +1,12 @@
 package edu.kit.minijava.backend;
 
-import firm.*;
+import java.util.HashMap;
+
 import firm.nodes.*;
+import firm.nodes.NodeVisitor.Default;
 
-import java.util.*;
 
-
-public class PrepVisitor implements NodeVisitor {
+public class PrepVisitor extends Default {
     // ATTRIBUTES
     // TODO: handle different methods (different methods could use the same block numbers)
     private int registerIndex = 0;
@@ -38,35 +38,6 @@ public class PrepVisitor implements NodeVisitor {
         this.ptr2Name.put(address, address.getEntity().getName());
     }
 
-    @Override
-    public void visit(Align align) {
-
-    }
-
-    @Override
-    public void visit(Alloc alloc) {
-
-    }
-
-    @Override
-    public void visit(Anchor anchor) {
-
-    }
-
-    @Override
-    public void visit(And and) {
-
-    }
-
-    @Override
-    public void visit(Bad bad) {
-
-    }
-
-    @Override
-    public void visit(Bitcast bitcast) {
-
-    }
 
     @Override
     public void visit(Block block) {
@@ -118,33 +89,8 @@ public class PrepVisitor implements NodeVisitor {
     }
 
     @Override
-    public void visit(Cond cond) {
-
-    }
-
-    @Override
-    public void visit(Confirm confirm) {
-
-    }
-
-    @Override
     public void visit(Const aConst) {
         this.proj2regIndex.put(aConst, this.registerIndex++);
-    }
-
-    @Override
-    public void visit(Conv conv) {
-
-    }
-
-    @Override
-    public void visit(CopyB copyB) {
-
-    }
-
-    @Override
-    public void visit(Deleted deleted) {
-
     }
 
     @Override
@@ -156,93 +102,8 @@ public class PrepVisitor implements NodeVisitor {
     }
 
     @Override
-    public void visit(Dummy dummy) {
-
-    }
-
-    @Override
-    public void visit(End end) {
-
-    }
-
-    @Override
-    public void visit(Eor eor) {
-
-    }
-
-    @Override
-    public void visit(Free free) {
-
-    }
-
-    @Override
-    public void visit(IJmp iJmp) {
-
-    }
-
-    @Override
-    public void visit(Id id) {
-
-    }
-
-    @Override
-    public void visit(Jmp jmp) {
-
-    }
-
-    @Override
-    public void visit(Load load) {
-
-    }
-
-    @Override
-    public void visit(Member member) {
-
-    }
-
-    @Override
-    public void visit(Minus minus) {
-
-    }
-
-    @Override
     public void visit(Mod mod) {
         //TODO: wie bei Div
-    }
-
-    @Override
-    public void visit(Mul mul) {
-
-    }
-
-    @Override
-    public void visit(Mulh mulh) {
-
-    }
-
-    @Override
-    public void visit(Mux mux) {
-
-    }
-
-    @Override
-    public void visit(NoMem noMem) {
-
-    }
-
-    @Override
-    public void visit(Not not) {
-
-    }
-
-    @Override
-    public void visit(Offset offset) {
-
-    }
-
-    @Override
-    public void visit(Or or) {
-
     }
 
     @Override
@@ -251,18 +112,8 @@ public class PrepVisitor implements NodeVisitor {
     }
 
     @Override
-    public void visit(Pin pin) {
-
-    }
-
-    @Override
     public void visit(Proj proj) {
         this.proj2regIndex.put(proj, this.registerIndex++);
-    }
-
-    @Override
-    public void visit(Raise raise) {
-
     }
 
     @Override
@@ -277,36 +128,6 @@ public class PrepVisitor implements NodeVisitor {
     }
 
     @Override
-    public void visit(Shl shl) {
-
-    }
-
-    @Override
-    public void visit(Shr shr) {
-
-    }
-
-    @Override
-    public void visit(Shrs shrs) {
-
-    }
-
-    @Override
-    public void visit(Size size) {
-
-    }
-
-    @Override
-    public void visit(Start start) {
-
-    }
-
-    @Override
-    public void visit(Store store) {
-
-    }
-
-    @Override
     public void visit(Sub sub) {
         sub.getLeft().accept(this);
         sub.getRight().accept(this);
@@ -315,27 +136,7 @@ public class PrepVisitor implements NodeVisitor {
     }
 
     @Override
-    public void visit(Switch aSwitch) {
-
-    }
-
-    @Override
-    public void visit(Sync sync) {
-
-    }
-
-    @Override
-    public void visit(Tuple tuple) {
-
-    }
-
-    @Override
-    public void visit(Unknown unknown) {
-
-    }
-
-    @Override
-    public void visitUnknown(Node node) {
-
+    public void defaultVisit(Node n) {
+        throw new UnsupportedOperationException("unknown node: " + n);
     }
 }
