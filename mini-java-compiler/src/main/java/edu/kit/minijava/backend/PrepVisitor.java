@@ -51,34 +51,12 @@ public class PrepVisitor extends Default {
     }
 
     @Override
-    public void visit(Builtin builtin) {
-
-    }
-
-    @Override
     public void visit(Call call) {
         call.getPtr().accept(this);
 
-        String functionName = this.ptr2Name.get(call.getPtr());
-
-        // TODO: should this distinction be made, or should we just always have a register for a call?
-        switch (functionName) {
-            case "system_out_println":
-                break;
-            case "system_out_write":
-                break;
-            case "system_out_flush":
-                this.node2regIndex.put(call, this.registerIndex++);
-                break;
-            case "system_in_read":
-                this.node2regIndex.put(call, this.registerIndex++);
-                break;
-            case "alloc_mem":
-                this.node2regIndex.put(call, this.registerIndex++);
-                break;
-            default:
-                this.node2regIndex.put(call, this.registerIndex++);
-        }
+        //allocate register for call, regardless of whether is is used or not
+        this.node2regIndex.put(call, this.registerIndex);
+        this.registerIndex++;
     }
 
     @Override
@@ -98,12 +76,25 @@ public class PrepVisitor extends Default {
         div.getLeft().accept(this);
         div.getRight().accept(this);
 
-        this.node2regIndex.put(div, this.registerIndex++); //TODO: 2 Zielregister
+        //we need two target registers for div. These are registerIndex and registerIndex + 1.
+        //Assignment of registerIndex+1 is not represented explicitly.
+        this.node2regIndex.put(div, this.registerIndex);
+
+        this.registerIndex += 2;
     }
 
     @Override
     public void visit(Mod mod) {
-        //TODO: wie bei Div
+        mod.getLeft().accept(this);
+        mod.getRight().accept(this);
+
+        //we need two target registers for mod. These are registerIndex and registerIndex + 1.
+        //Assignment of registerIndex+1 is not represented explicitly.
+        this.node2regIndex.put(mod, this.registerIndex);
+
+        this.registerIndex += 2;
+
+
     }
 
     @Override
