@@ -13,7 +13,7 @@ public class PrepVisitor extends Default {
 
     private HashMap<Node, String> jmp2BlockName = new HashMap<>();
     private HashMap<Address, String> ptr2Name = new HashMap<>();
-    private HashMap<Node, Integer> proj2regIndex = new HashMap<>();
+    private HashMap<Node, Integer> node2regIndex = new HashMap<>();
 
     // GETTERS
     public HashMap<Node, String> getJmp2BlockName() {
@@ -21,7 +21,7 @@ public class PrepVisitor extends Default {
     }
 
     public HashMap<Node, Integer> getProj2regIndex() {
-        return this.proj2regIndex;
+        return this.node2regIndex;
     }
 
     @Override
@@ -30,7 +30,7 @@ public class PrepVisitor extends Default {
         add.getRight().accept(this);
 
         int currentIndex = this.registerIndex++;
-        this.proj2regIndex.put(add, currentIndex);
+        this.node2regIndex.put(add, currentIndex);
     }
 
     @Override
@@ -68,16 +68,16 @@ public class PrepVisitor extends Default {
             case "system_out_write":
                 break;
             case "system_out_flush":
-                this.proj2regIndex.put(call, this.registerIndex++);
+                this.node2regIndex.put(call, this.registerIndex++);
                 break;
             case "system_in_read":
-                this.proj2regIndex.put(call, this.registerIndex++);
+                this.node2regIndex.put(call, this.registerIndex++);
                 break;
             case "alloc_mem":
-                this.proj2regIndex.put(call, this.registerIndex++);
+                this.node2regIndex.put(call, this.registerIndex++);
                 break;
             default:
-                this.proj2regIndex.put(call, this.registerIndex++);
+                this.node2regIndex.put(call, this.registerIndex++);
         }
     }
 
@@ -90,7 +90,7 @@ public class PrepVisitor extends Default {
 
     @Override
     public void visit(Const aConst) {
-        this.proj2regIndex.put(aConst, this.registerIndex++);
+        this.node2regIndex.put(aConst, this.registerIndex++);
     }
 
     @Override
@@ -98,7 +98,7 @@ public class PrepVisitor extends Default {
         div.getLeft().accept(this);
         div.getRight().accept(this);
 
-        this.proj2regIndex.put(div, this.registerIndex++); //TODO: 2 Zielregister
+        this.node2regIndex.put(div, this.registerIndex++); //TODO: 2 Zielregister
     }
 
     @Override
@@ -113,18 +113,18 @@ public class PrepVisitor extends Default {
 
     @Override
     public void visit(Proj proj) {
-        this.proj2regIndex.put(proj, this.registerIndex++);
+        this.node2regIndex.put(proj, this.registerIndex++);
     }
 
     @Override
     public void visit(Return aReturn) {
-        this.proj2regIndex.put(aReturn, this.registerIndex++);
+        this.node2regIndex.put(aReturn, this.registerIndex++);
     }
 
     @Override
     public void visit(Sel sel) {
         //TODO
-        this.proj2regIndex.put(sel, this.registerIndex++);
+        this.node2regIndex.put(sel, this.registerIndex++);
     }
 
     @Override
@@ -132,7 +132,7 @@ public class PrepVisitor extends Default {
         sub.getLeft().accept(this);
         sub.getRight().accept(this);
 
-        this.proj2regIndex.put(sub, this.registerIndex++);
+        this.node2regIndex.put(sub, this.registerIndex++);
     }
 
     @Override
