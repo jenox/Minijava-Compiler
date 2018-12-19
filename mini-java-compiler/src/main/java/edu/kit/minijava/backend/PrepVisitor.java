@@ -14,6 +14,7 @@ public class PrepVisitor extends Default {
     private HashMap<Node, String> jmp2BlockName = new HashMap<>();
     private HashMap<Address, String> ptr2Name = new HashMap<>();
     private HashMap<Node, Integer> node2regIndex = new HashMap<>();
+    private HashMap<Node, Integer> blockToPhiReg = new HashMap<>();
 
     // GETTERS
     public HashMap<Node, String> getJmp2BlockName() {
@@ -22,6 +23,10 @@ public class PrepVisitor extends Default {
 
     public HashMap<Node, Integer> getProj2regIndex() {
         return this.node2regIndex;
+    }
+
+    public HashMap<Node, Integer> getBlockToPhiReg() {
+        return this.blockToPhiReg;
     }
 
     @Override
@@ -100,6 +105,11 @@ public class PrepVisitor extends Default {
     @Override
     public void visit(Phi phi) {
         //Idee: vorgänger abspeichern, um in Transform Visitor entprechende mov Befehle einzufügen
+        for (Node node : phi.getPreds()) {
+            this.blockToPhiReg.put(node, this.registerIndex);
+        }
+
+        this.registerIndex++;
 
     }
 

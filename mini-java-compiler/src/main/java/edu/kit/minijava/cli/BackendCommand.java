@@ -1,19 +1,13 @@
 package edu.kit.minijava.cli;
 
-import edu.kit.minijava.ast.nodes.Program;
-import edu.kit.minijava.backend.PrepVisitor;
-import edu.kit.minijava.backend.TransformVisitor;
-import edu.kit.minijava.lexer.Lexer;
-import edu.kit.minijava.parser.Parser;
-import edu.kit.minijava.parser.ParserException;
-import edu.kit.minijava.semantic.ReferenceAndExpressionTypeResolver;
-import edu.kit.minijava.semantic.SemanticException;
-import edu.kit.minijava.transformation.EntityVisitor;
+import java.io.*;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import edu.kit.minijava.ast.nodes.Program;
+import edu.kit.minijava.backend.*;
+import edu.kit.minijava.lexer.Lexer;
+import edu.kit.minijava.parser.*;
+import edu.kit.minijava.semantic.*;
+import edu.kit.minijava.transformation.EntityVisitor;
 import firm.*;
 
 public class BackendCommand extends Command {
@@ -45,7 +39,7 @@ public class BackendCommand extends Command {
             });
 
             TransformVisitor transformVisitor = new TransformVisitor(prepVisitor.getJmp2BlockName(), prepVisitor
-                            .getProj2regIndex());
+                            .getProj2regIndex(), prepVisitor.getBlockToPhiReg());
 
             graphs.forEach(g -> {
                 String methodName = g.getEntity().getName();

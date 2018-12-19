@@ -1,8 +1,9 @@
 package edu.kit.minijava.backend;
 
-import firm.*;
-import firm.nodes.*;
 import java.util.*;
+
+import firm.Relation;
+import firm.nodes.*;
 
 public class TransformVisitor implements NodeVisitor {
     // CONSTANTS
@@ -16,6 +17,9 @@ public class TransformVisitor implements NodeVisitor {
     private HashMap<Node, String> jmp2BlockName;
     // primarily for projections to save their register index
     private HashMap<Node, Integer> proj2regIndex;
+    private HashMap<Node, Integer> blockToPhiReg;
+
+    private Node currentBlock = null;
 
     // GETTERS & SETTERS
     public String getMolkiCode() {
@@ -26,9 +30,11 @@ public class TransformVisitor implements NodeVisitor {
         this.molkiCode += molkiCode;
     }
 
-    public TransformVisitor(HashMap<Node, String> jmp2BlockName, HashMap<Node, Integer> proj2regIndex) {
+    public TransformVisitor(HashMap<Node, String> jmp2BlockName, HashMap<Node, Integer> proj2regIndex,
+            HashMap<Node, Integer> blockToPhiReg) {
         this.jmp2BlockName = jmp2BlockName;
         this.proj2regIndex = proj2regIndex;
+        this.blockToPhiReg = blockToPhiReg;
     }
 
     // METHODS
@@ -81,6 +87,12 @@ public class TransformVisitor implements NodeVisitor {
 
     @Override
     public void visit(Block block) {
+
+        if (this.currentBlock != null && this.blockToPhiReg.containsKey(this.currentBlock)) {
+            // TODO: add mov command
+            this.appendMolkiCode("\n phi mov");
+        }
+
         String name = "Block_" + block.getNr();
         this.appendMolkiCode("\n" + name + ":");
     }
@@ -107,12 +119,9 @@ public class TransformVisitor implements NodeVisitor {
         parameters.remove(0); // memory / side effect
         parameters.remove(0); // function address
 
-        if (!functionName.equals("__minijava_main")
-                        && !functionName.equals("system_out_println")
-                        && !functionName.equals("system_out_write")
-                        && !functionName.equals("system_out_flush")
-                        && !functionName.equals("system_in_read")
-                        && !functionName.equals("alloc_mem")) {
+        if (!functionName.equals("__minijava_main") && !functionName.equals("system_out_println")
+                && !functionName.equals("system_out_write") && !functionName.equals("system_out_flush")
+                && !functionName.equals("system_in_read") && !functionName.equals("alloc_mem")) {
             parameters.remove(0); // object pointer
         }
 
@@ -152,8 +161,8 @@ public class TransformVisitor implements NodeVisitor {
                 break;
             default:
                 currentIndex = this.proj2regIndex.get(call);
-                this.appendMolkiCode(this.newlineCmd + "call " + functionName + " [ " + args + " ] " +
-                                "-> %@" + currentIndex);
+                this.appendMolkiCode(
+                        this.newlineCmd + "call " + functionName + " [ " + args + " ] " + "-> %@" + currentIndex);
         }
     }
 
@@ -209,8 +218,8 @@ public class TransformVisitor implements NodeVisitor {
 
         // TODO: how to handle div results properly?
         // 2 Zielregister
-        this.appendMolkiCode(this.newlineCmd + "idiv [ %@" + left + " | %@" + right + " ]"
-                        + " -> [ %@" + this.proj2regIndex.get(div) + "]");
+        this.appendMolkiCode(this.newlineCmd + "idiv [ %@" + left + " | %@" + right + " ]" + " -> [ %@"
+                + this.proj2regIndex.get(div) + "]");
     }
 
     @Override
@@ -359,8 +368,7 @@ public class TransformVisitor implements NodeVisitor {
             this.appendMolkiCode(this.newlineCmd + "mov %@" + this.proj2regIndex.get(aReturn) + ", %@r0");
 
             // check, if we should produce a jmp
-            if (!(this.jmp2BlockName.get(aReturn) == null)
-                            && !currentBlock.equals(aReturn.getPred(0).getBlock())) {
+            if (!(this.jmp2BlockName.get(aReturn) == null) && !currentBlock.equals(aReturn.getPred(0).getBlock())) {
 
                 // check if we are able to produce a jmp
                 if (aReturn.getBlock().getPred(0).getPred(0).getPred(0) instanceof Cmp) {
