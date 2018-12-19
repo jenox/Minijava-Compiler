@@ -99,7 +99,8 @@ public class PrepVisitor extends Default {
 
     @Override
     public void visit(Phi phi) {
-        //TODO: kompliziert
+        //Idee: vorgänger abspeichern, um in Transform Visitor entprechende mov Befehle einzufügen
+
     }
 
     @Override
@@ -126,8 +127,9 @@ public class PrepVisitor extends Default {
         this.node2regIndex.put(sub, this.registerIndex++);
     }
 
+
     @Override
     public void defaultVisit(Node n) {
-        throw new UnsupportedOperationException("unknown node: " + n);
+     //   throw new UnsupportedOperationException("unknown node: " + n + " " + n.getClass());
     }
 }
