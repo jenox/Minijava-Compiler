@@ -17,12 +17,10 @@ public class TransformVisitor implements NodeVisitor {
     // primarily for projections to save their register index
     private HashMap<Node, Integer> proj2regIndex;
 
-
     // GETTERS & SETTERS
     public String getMolkiCode() {
         return this.molkiCode;
     }
-
 
     public void appendMolkiCode(String molkiCode) {
         this.molkiCode += molkiCode;
@@ -110,18 +108,18 @@ public class TransformVisitor implements NodeVisitor {
         parameters.remove(0); // function address
 
         if (!functionName.equals("__minijava_main")
-                && !functionName.equals("system_out_println")
-                && !functionName.equals("system_out_write")
-                && !functionName.equals("system_out_flush")
-                && !functionName.equals("system_in_read")
-                && !functionName.equals("alloc_mem")) {
+                        && !functionName.equals("system_out_println")
+                        && !functionName.equals("system_out_write")
+                        && !functionName.equals("system_out_flush")
+                        && !functionName.equals("system_in_read")
+                        && !functionName.equals("alloc_mem")) {
             parameters.remove(0); // object pointer
         }
 
         String args = "";
         for (int i = 0; i < parameters.size(); i++) {
             // TODO: how to write parameters into registers without for example, getting a second `sub` expression
-            //parameters.get(i).accept(this);
+            // parameters.get(i).accept(this);
             // TODO: write parameter into register with same number as projection
 
             int arg = this.proj2regIndex.get(parameters.get(i));
@@ -155,7 +153,7 @@ public class TransformVisitor implements NodeVisitor {
             default:
                 currentIndex = this.proj2regIndex.get(call);
                 this.appendMolkiCode(this.newlineCmd + "call " + functionName + " [ " + args + " ] " +
-                        "-> %@" + currentIndex);
+                                "-> %@" + currentIndex);
         }
     }
 
@@ -166,7 +164,6 @@ public class TransformVisitor implements NodeVisitor {
         int left = this.proj2regIndex.get(cmp.getLeft());
         cmp.getRight().accept(this);
         int right = this.proj2regIndex.get(cmp.getRight());
-
 
         this.appendMolkiCode(this.newlineCmd + "cmp %@" + left + ", %@" + right);
     }
@@ -211,8 +208,9 @@ public class TransformVisitor implements NodeVisitor {
         int right = this.proj2regIndex.get(div.getRight());
 
         // TODO: how to handle div results properly?
+        // 2 Zielregister
         this.appendMolkiCode(this.newlineCmd + "idiv [ %@" + left + " | %@" + right + " ]"
-                           + " -> [ %@" + this.proj2regIndex.get(div) + "]");
+                        + " -> [ %@" + this.proj2regIndex.get(div) + "]");
     }
 
     @Override
@@ -237,7 +235,7 @@ public class TransformVisitor implements NodeVisitor {
 
     @Override
     public void visit(IJmp iJmp) {
-        System.out.println("");
+
     }
 
     @Override
@@ -253,12 +251,12 @@ public class TransformVisitor implements NodeVisitor {
 
     @Override
     public void visit(Load load) {
-        //load.getPtr().accept(this);
-        //String ptrResult = this.tempResult;
+        // load.getPtr().accept(this);
+        // String ptrResult = this.tempResult;
 
-        //int currentIndex = this.registerIndex++;
-        //this.appendMolkiCode(this.newlineCmd + "mov " + "(" + ptrResult + "), %@" + currentIndex);
-        //this.tempResult = "%@" + currentIndex;
+        // int currentIndex = this.registerIndex++;
+        // this.appendMolkiCode(this.newlineCmd + "mov " + "(" + ptrResult + "), %@" + currentIndex);
+        // this.tempResult = "%@" + currentIndex;
     }
 
     @Override
@@ -268,37 +266,37 @@ public class TransformVisitor implements NodeVisitor {
 
     @Override
     public void visit(Minus minus) {
-        //minus.getOp().accept(this);
-        //this.appendMolkiCode( this.newlineCmd + "neg " + tempResult);
+        // minus.getOp().accept(this);
+        // this.appendMolkiCode( this.newlineCmd + "neg " + tempResult);
     }
 
     @Override
     public void visit(Mod mod) {
-        //mod.getLeft().accept(this);
-        //String left = this.tempResult;
-        //mod.getRight().accept(this);
-        //String right = this.tempResult;
-        //int left = this.proj2regIndex.get(cmp.getLeft());
-        //int right = this.proj2regIndex.get(cmp.getRight());
+        // mod.getLeft().accept(this);
+        // String left = this.tempResult;
+        // mod.getRight().accept(this);
+        // String right = this.tempResult;
+        // int left = this.proj2regIndex.get(cmp.getLeft());
+        // int right = this.proj2regIndex.get(cmp.getRight());
 
         //// TODO: how to handle mod results properly?
-        //this.appendMolkiCode(this.newlineCmd + "imod [ " + left + " | " + right + " ]"
-        //                   + " -> [ %@" + this.registerIndex++ + " | %@" + this.registerIndex++ + "]");
+        // this.appendMolkiCode(this.newlineCmd + "imod [ " + left + " | " + right + " ]"
+        // + " -> [ %@" + this.registerIndex++ + " | %@" + this.registerIndex++ + "]");
     }
 
     @Override
     public void visit(Mul mul) {
-        //mul.getLeft().accept(this);
-        //String left = this.tempResult;
-        //mul.getRight().accept(this);
-        //String right = this.tempResult;
-        //int left = this.proj2regIndex.get(cmp.getLeft());
-        //int right = this.proj2regIndex.get(cmp.getRight());
+        // mul.getLeft().accept(this);
+        // String left = this.tempResult;
+        // mul.getRight().accept(this);
+        // String right = this.tempResult;
+        // int left = this.proj2regIndex.get(cmp.getLeft());
+        // int right = this.proj2regIndex.get(cmp.getRight());
 
-        //int currentIndex = this.registerIndex++;
+        // int currentIndex = this.registerIndex++;
 
-        //this.appendMolkiCode(this.newlineCmd + "mul [ " + left + " | " + right + " ] -> %@" + currentIndex);
-        //this.tempResult = "%@" + currentIndex;
+        // this.appendMolkiCode(this.newlineCmd + "mul [ " + left + " | " + right + " ] -> %@" + currentIndex);
+        // this.tempResult = "%@" + currentIndex;
     }
 
     @Override
@@ -318,8 +316,8 @@ public class TransformVisitor implements NodeVisitor {
 
     @Override
     public void visit(Not not) {
-        //not.getOp().accept(this);
-        //this.appendMolkiCode(this.newlineCmd + "not " + tempResult);
+        // not.getOp().accept(this);
+        // this.appendMolkiCode(this.newlineCmd + "not " + tempResult);
     }
 
     @Override
@@ -362,7 +360,7 @@ public class TransformVisitor implements NodeVisitor {
 
             // check, if we should produce a jmp
             if (!(this.jmp2BlockName.get(aReturn) == null)
-                    && !currentBlock.equals(aReturn.getPred(0).getBlock())) {
+                            && !currentBlock.equals(aReturn.getPred(0).getBlock())) {
 
                 // check if we are able to produce a jmp
                 if (aReturn.getBlock().getPred(0).getPred(0).getPred(0) instanceof Cmp) {
@@ -397,15 +395,15 @@ public class TransformVisitor implements NodeVisitor {
 
     @Override
     public void visit(Sel sel) {
-        //sel.getPtr().accept(this);
-        //String ptrResult = this.tempResult;
-        //sel.getIndex().accept(this);
-        //String indexResult = this.tempResult;
+        // sel.getPtr().accept(this);
+        // String ptrResult = this.tempResult;
+        // sel.getIndex().accept(this);
+        // String indexResult = this.tempResult;
 
-        //int currentIndex = this.registerIndex++;
+        // int currentIndex = this.registerIndex++;
 
-        //this.appendMolkiCode(this.newlineCmd + "mov " + indexResult + "(" + ptrResult + "), %@" + currentIndex);
-        //this.tempResult = "%@" + currentIndex;
+        // this.appendMolkiCode(this.newlineCmd + "mov " + indexResult + "(" + ptrResult + "), %@" + currentIndex);
+        // this.tempResult = "%@" + currentIndex;
     }
 
     @Override
@@ -435,13 +433,13 @@ public class TransformVisitor implements NodeVisitor {
 
     @Override
     public void visit(Store store) {
-        //String value = this.tempResult;
-        //store.getPtr().accept(this);
-        //String ptrResult = this.tempResult;
+        // String value = this.tempResult;
+        // store.getPtr().accept(this);
+        // String ptrResult = this.tempResult;
 
-        //int currentIndex = this.registerIndex++;
+        // int currentIndex = this.registerIndex++;
 
-        //this.appendMolkiCode(this.newlineCmd + "mov " + value + ", (" + ptrResult + ")");
+        // this.appendMolkiCode(this.newlineCmd + "mov " + value + ", (" + ptrResult + ")");
     }
 
     @Override
@@ -454,7 +452,7 @@ public class TransformVisitor implements NodeVisitor {
         int currentIndex = this.proj2regIndex.get(sub);
 
         // RIGHT AND LEFT ARE SWITCHED BECAUSE OF ASSEMBLER SYNTAX
-        this.appendMolkiCode( this.newlineCmd + "sub [ %@" + left + " | %@" + right + " ] -> %@" + currentIndex);
+        this.appendMolkiCode(this.newlineCmd + "sub [ %@" + left + " | %@" + right + " ] -> %@" + currentIndex);
     }
 
     @Override
