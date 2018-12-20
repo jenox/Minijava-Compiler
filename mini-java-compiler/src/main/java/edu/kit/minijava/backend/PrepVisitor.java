@@ -14,7 +14,7 @@ public class PrepVisitor extends Default {
     private HashMap<Node, String> jmp2BlockName = new HashMap<>();
     private HashMap<Address, String> ptr2Name = new HashMap<>();
     private HashMap<Node, Integer> node2regIndex = new HashMap<>();
-    private HashMap<Node, Integer> blockToPhiReg = new HashMap<>();
+    private HashMap<Node, Integer> nodeToPhiReg = new HashMap<>();
 
     // GETTERS
     public HashMap<Node, String> getJmp2BlockName() {
@@ -26,7 +26,7 @@ public class PrepVisitor extends Default {
     }
 
     public HashMap<Node, Integer> getBlockToPhiReg() {
-        return this.blockToPhiReg;
+        return this.nodeToPhiReg;
     }
 
     @Override
@@ -47,7 +47,7 @@ public class PrepVisitor extends Default {
     @Override
     public void visit(Block block) {
         if (block.getPredCount() > 0) {
-            String name = "Block_" + block.getNr();
+            String name = "L" + block.getNr();
 
             // this is also adding non-Jmp nodes to the hashmap,
             // which is ok, because only jmp nodes should use the hashmap
@@ -106,7 +106,7 @@ public class PrepVisitor extends Default {
     public void visit(Phi phi) {
         //Idee: vorgänger abspeichern, um in Transform Visitor entprechende mov Befehle einzufügen
         for (Node node : phi.getPreds()) {
-            this.blockToPhiReg.put(node, this.registerIndex);
+            this.nodeToPhiReg.put(node, this.registerIndex);
         }
 
         this.registerIndex++;
@@ -140,6 +140,10 @@ public class PrepVisitor extends Default {
 
     @Override
     public void defaultVisit(Node n) {
-     //   throw new UnsupportedOperationException("unknown node: " + n + " " + n.getClass());
+        //throw new UnsupportedOperationException("unknown node: " + n + " " + n.getClass());
+    }
+
+    public void resolvePhis() {
+        //TODO:implement
     }
 }
