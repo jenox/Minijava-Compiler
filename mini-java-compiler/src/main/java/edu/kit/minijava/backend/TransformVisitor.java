@@ -95,7 +95,7 @@ public class TransformVisitor implements NodeVisitor {
 
         this.currentBlock = block;
 
-        String name = "Block_" + block.getNr();
+        String name = "L" + block.getNr();
         this.appendMolkiCode("\n" + name + ":");
     }
 
@@ -164,7 +164,8 @@ public class TransformVisitor implements NodeVisitor {
             default:
                 currentIndex = this.proj2regIndex.get(call);
                 this.appendMolkiCode(
-                                this.newlineCmd + "call " + functionName + " [ " + args + " ] " + "-> %@" + currentIndex);
+                                this.newlineCmd + "call " + functionName + " [ " + args + " ] " + "-> %@"
+                                                + currentIndex);
         }
     }
 
