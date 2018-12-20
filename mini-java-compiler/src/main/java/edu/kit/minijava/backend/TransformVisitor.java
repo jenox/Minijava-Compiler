@@ -31,7 +31,7 @@ public class TransformVisitor implements NodeVisitor {
     }
 
     public TransformVisitor(HashMap<Node, String> jmp2BlockName, HashMap<Node, Integer> proj2regIndex,
-            HashMap<Node, Integer> blockToPhiReg) {
+                    HashMap<Node, Integer> blockToPhiReg) {
         this.jmp2BlockName = jmp2BlockName;
         this.proj2regIndex = proj2regIndex;
         this.blockToPhiReg = blockToPhiReg;
@@ -93,6 +93,8 @@ public class TransformVisitor implements NodeVisitor {
             this.appendMolkiCode("\n phi mov");
         }
 
+        this.currentBlock = block;
+
         String name = "Block_" + block.getNr();
         this.appendMolkiCode("\n" + name + ":");
     }
@@ -120,8 +122,8 @@ public class TransformVisitor implements NodeVisitor {
         parameters.remove(0); // function address
 
         if (!functionName.equals("__minijava_main") && !functionName.equals("system_out_println")
-                && !functionName.equals("system_out_write") && !functionName.equals("system_out_flush")
-                && !functionName.equals("system_in_read") && !functionName.equals("alloc_mem")) {
+                        && !functionName.equals("system_out_write") && !functionName.equals("system_out_flush")
+                        && !functionName.equals("system_in_read") && !functionName.equals("alloc_mem")) {
             parameters.remove(0); // object pointer
         }
 
@@ -162,7 +164,7 @@ public class TransformVisitor implements NodeVisitor {
             default:
                 currentIndex = this.proj2regIndex.get(call);
                 this.appendMolkiCode(
-                        this.newlineCmd + "call " + functionName + " [ " + args + " ] " + "-> %@" + currentIndex);
+                                this.newlineCmd + "call " + functionName + " [ " + args + " ] " + "-> %@" + currentIndex);
         }
     }
 
@@ -219,7 +221,7 @@ public class TransformVisitor implements NodeVisitor {
         // TODO: how to handle div results properly?
         // 2 Zielregister
         this.appendMolkiCode(this.newlineCmd + "idiv [ %@" + left + " | %@" + right + " ]" + " -> [ %@"
-                + this.proj2regIndex.get(div) + "]");
+                        + this.proj2regIndex.get(div) + "]");
     }
 
     @Override
