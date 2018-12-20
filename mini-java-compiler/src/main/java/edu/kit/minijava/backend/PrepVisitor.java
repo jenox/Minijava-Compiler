@@ -1,6 +1,6 @@
 package edu.kit.minijava.backend;
 
-import java.util.HashMap;
+import java.util.*;
 
 import firm.nodes.*;
 import firm.nodes.NodeVisitor.Default;
@@ -9,12 +9,13 @@ import firm.nodes.NodeVisitor.Default;
 public class PrepVisitor extends Default {
     // ATTRIBUTES
     // TODO: handle different methods (different methods could use the same block numbers)
+    //brauchen wir eigentlich nicht
     private int registerIndex = 0;
 
     private HashMap<Node, String> jmp2BlockName = new HashMap<>();
     private HashMap<Address, String> ptr2Name = new HashMap<>();
     private HashMap<Node, Integer> node2regIndex = new HashMap<>();
-    private HashMap<Node, Integer> nodeToPhiReg = new HashMap<>();
+    private HashMap<Node, List<Integer>> nodeToPhiReg = new HashMap<>();
 
     // GETTERS
     public HashMap<Node, String> getJmp2BlockName() {
@@ -25,7 +26,7 @@ public class PrepVisitor extends Default {
         return this.node2regIndex;
     }
 
-    public HashMap<Node, Integer> getBlockToPhiReg() {
+    public HashMap<Node,List<Integer>> getBlockToPhiReg() {
         return this.nodeToPhiReg;
     }
 
@@ -67,6 +68,7 @@ public class PrepVisitor extends Default {
     @Override
     public void visit(Cmp cmp) {
         // TODO: shouldn't there also be a jmp being generated here?
+        //eigentlich muss hier nichts getan werden
         cmp.getLeft().accept(this);
         cmp.getRight().accept(this);
     }
@@ -104,9 +106,8 @@ public class PrepVisitor extends Default {
 
     @Override
     public void visit(Phi phi) {
-        //Idee: vorgänger abspeichern, um in Transform Visitor entprechende mov Befehle einzufügen
         for (Node node : phi.getPreds()) {
-            this.nodeToPhiReg.put(node, this.registerIndex);
+            this.appendList(node, this.registerIndex);
         }
 
         this.registerIndex++;
@@ -125,7 +126,6 @@ public class PrepVisitor extends Default {
 
     @Override
     public void visit(Sel sel) {
-        //TODO
         this.node2regIndex.put(sel, this.registerIndex++);
     }
 
@@ -137,13 +137,25 @@ public class PrepVisitor extends Default {
         this.node2regIndex.put(sub, this.registerIndex++);
     }
 
+    /**
+     * add mapping from node to register of phi instruction
+     * @param node node to set target register for
+     * @param reg register
+     */
+    private void appendList(Node node, int reg) {
+        List<Integer> regs = this.nodeToPhiReg.get(node);
+        if (regs == null) {
+            regs = new ArrayList<>();
+            this.nodeToPhiReg.put(node, regs);
+        }
+
+        regs.add(reg);
+    }
+
 
     @Override
     public void defaultVisit(Node n) {
         //throw new UnsupportedOperationException("unknown node: " + n + " " + n.getClass());
     }
 
-    public void resolvePhis() {
-        //TODO:implement
-    }
 }
