@@ -48,9 +48,9 @@ public class BackendCommand extends Command {
                 int noArgs = Math.max(0, methodType.getNParams() - 1);
                 int noResults = methodType.getNRess();
 
-                transformVisitor.appendMolkiCode("\n.function " + methodName + " " + noArgs + " " + noResults);
+                transformVisitor.appendMolkiCodeNoIndent(".function " + methodName + " " + noArgs + " " + noResults);
                 g.walkTopological(transformVisitor);
-                transformVisitor.appendMolkiCode("\n.endfunction\n");
+                transformVisitor.appendMolkiCodeNoIndent(".endfunction\n");
             });
 
             String output = transformVisitor.getMolkiCode();
