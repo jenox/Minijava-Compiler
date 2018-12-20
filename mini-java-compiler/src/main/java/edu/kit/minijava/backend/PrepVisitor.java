@@ -152,10 +152,25 @@ public class PrepVisitor extends Default {
         regs.add(reg);
     }
 
+    @Override
+    public void visit(Start node) {
+        //nothing to do
+    }
+
+    @Override
+    public void visit(Cond node) {
+        //nothing to do
+    }
+
+    @Override
+    public void visit(End node) {
+        //nothing to do
+    }
+
 
     @Override
     public void defaultVisit(Node n) {
-        //throw new UnsupportedOperationException("unknown node: " + n + " " + n.getClass());
+        throw new UnsupportedOperationException("unknown node: " + n + " " + n.getClass());
     }
 
 }
