@@ -4,8 +4,9 @@ import java.util.*;
 
 import firm.Relation;
 import firm.nodes.*;
+import firm.nodes.NodeVisitor.Default;
 
-public class TransformVisitor implements NodeVisitor {
+public class TransformVisitor extends Default {
     // CONSTANTS
     private static final String NEW_LINE = "\n";
     private static final String INDENT = "    "; // 4 spaces
@@ -68,36 +69,6 @@ public class TransformVisitor implements NodeVisitor {
     }
 
     @Override
-    public void visit(Align align) {
-
-    }
-
-    @Override
-    public void visit(Alloc alloc) {
-
-    }
-
-    @Override
-    public void visit(Anchor anchor) {
-
-    }
-
-    @Override
-    public void visit(And and) {
-
-    }
-
-    @Override
-    public void visit(Bad bad) {
-
-    }
-
-    @Override
-    public void visit(Bitcast bitcast) {
-
-    }
-
-    @Override
     public void visit(Block block) {
 
         if (this.currentBlock != null && this.nodeToPhiReg.containsKey(this.currentBlock)) {
@@ -111,11 +82,6 @@ public class TransformVisitor implements NodeVisitor {
 
         String name = "L" + block.getNr();
         this.appendMolkiCodeNoIndent(name + ":");
-    }
-
-    @Override
-    public void visit(Builtin builtin) {
-
     }
 
     @Override
@@ -139,12 +105,11 @@ public class TransformVisitor implements NodeVisitor {
         for (int i = start; i < call.getPredCount(); i++) {
 
             // TODO: how to write parameters into registers without for example, getting a second `sub` expression
-            // parameters.get(i).accept(this);
             // TODO: write parameter into register with same number as projection
 
             int arg = this.nodeToRegIndex.get(call.getPred(i));
             if (call.getPredCount() - i == 1) {
-                args += arg;
+                args += REG_PREFIX + arg;
             }
             else {
                 args += arg + " | ";
@@ -186,14 +151,6 @@ public class TransformVisitor implements NodeVisitor {
     }
 
     @Override
-    public void visit(Cond cond) {
-    }
-
-    @Override
-    public void visit(Confirm confirm) {
-    }
-
-    @Override
     public void visit(Const aConst) {
         // TODO: should this use `asInt`?
         // was passiert bei booleans?
@@ -201,21 +158,6 @@ public class TransformVisitor implements NodeVisitor {
         int targetReg = this.nodeToRegIndex.get(aConst);
 
         this.appendMolkiCode("mov " + constant + ", %@" + targetReg);
-    }
-
-    @Override
-    public void visit(Conv conv) {
-
-    }
-
-    @Override
-    public void visit(CopyB copyB) {
-
-    }
-
-    @Override
-    public void visit(Deleted deleted) {
-
     }
 
     @Override
@@ -231,32 +173,7 @@ public class TransformVisitor implements NodeVisitor {
     }
 
     @Override
-    public void visit(Dummy dummy) {
-
-    }
-
-    @Override
     public void visit(End end) {
-
-    }
-
-    @Override
-    public void visit(Eor eor) {
-
-    }
-
-    @Override
-    public void visit(Free free) {
-
-    }
-
-    @Override
-    public void visit(IJmp iJmp) {
-
-    }
-
-    @Override
-    public void visit(Id id) {
 
     }
 
@@ -272,11 +189,6 @@ public class TransformVisitor implements NodeVisitor {
         int targetReg = this.nodeToRegIndex.get(load);
 
         this.appendMolkiCode("mov " + "(" + REG_PREFIX + pointerReg + "), " + REG_PREFIX + targetReg);
-    }
-
-    @Override
-    public void visit(Member member) {
-
     }
 
     @Override
@@ -308,53 +220,14 @@ public class TransformVisitor implements NodeVisitor {
     }
 
     @Override
-    public void visit(Mulh mulh) {
-
-    }
-
-    @Override
-    public void visit(Mux mux) {
-
-    }
-
-    @Override
-    public void visit(NoMem noMem) {
-
-    }
-
-    @Override
     public void visit(Not not) {
         int reg = this.nodeToRegIndex.get(not.getOp());
         this.appendMolkiCode("not " + REG_PREFIX + reg);
     }
 
     @Override
-    public void visit(Offset offset) {
-
-    }
-
-    @Override
-    public void visit(Or or) {
-
-    }
-
-    @Override
     public void visit(Phi phi) {
         // nothing to do
-    }
-
-    @Override
-    public void visit(Pin pin) {
-
-    }
-
-    @Override
-    public void visit(Proj proj) {
-    }
-
-    @Override
-    public void visit(Raise raise) {
-
     }
 
     @Override
@@ -415,28 +288,8 @@ public class TransformVisitor implements NodeVisitor {
     }
 
     @Override
-    public void visit(Shl shl) {
-
-    }
-
-    @Override
-    public void visit(Shr shr) {
-
-    }
-
-    @Override
-    public void visit(Shrs shrs) {
-
-    }
-
-    @Override
-    public void visit(Size size) {
-
-    }
-
-    @Override
     public void visit(Start start) {
-
+        //nothing to do
     }
 
     @Override
@@ -458,30 +311,19 @@ public class TransformVisitor implements NodeVisitor {
     }
 
     @Override
-    public void visit(Switch aSwitch) {
-
+    public void visit(Proj node) {
+        //nothing to do
     }
 
     @Override
-    public void visit(Sync sync) {
-
+    public void visit(Cond node) {
+        //nothing to do
     }
 
     @Override
-    public void visit(Tuple tuple) {
-
+    public void defaultVisit(Node n) {
+        throw new UnsupportedOperationException("unknown node " + n.getClass());
     }
-
-    @Override
-    public void visit(Unknown unknown) {
-
-    }
-
-    @Override
-    public void visitUnknown(Node node) {
-
-    }
-
     /*
      * UTILITY FUNCTIONS
      */
