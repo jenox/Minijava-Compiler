@@ -104,12 +104,9 @@ public class PrepVisitor extends Default {
         boolean isParam = proj.getGraph().getArgs().equals(proj.getPred());
         int register = 0;
         if (isParam) {
-            register = proj.getNum();
+            register = proj.getNum() - 1; // TODO: sollte eigentlich gehen
         }
         else {
-            Iterable<Node> watchPred = proj.getPreds();
-            Node node = proj.getBlock();
-            int nr = proj.getNr();
             Node pred = proj.getPred();
             if (pred.getPredCount() > 0 && !proj.getMode().equals(Mode.getX())
                             && !proj.getMode().equals(Mode.getT())
