@@ -2,14 +2,14 @@ package edu.kit.minijava.backend;
 
 import java.util.*;
 
+import firm.Mode;
 import firm.nodes.*;
 import firm.nodes.NodeVisitor.Default;
-
 
 public class PrepVisitor extends Default {
     // ATTRIBUTES
     // TODO: handle different methods (different methods could use the same block numbers)
-    //brauchen wir eigentlich nicht
+    // brauchen wir eigentlich nicht
     private int registerIndex = 0;
 
     private HashMap<Node, String> jmp2BlockName = new HashMap<>();
@@ -26,15 +26,12 @@ public class PrepVisitor extends Default {
         return this.node2regIndex;
     }
 
-    public HashMap<Node,List<Integer>> getBlockToPhiReg() {
+    public HashMap<Node, List<Integer>> getBlockToPhiReg() {
         return this.nodeToPhiReg;
     }
 
     @Override
     public void visit(Add add) {
-        add.getLeft().accept(this);
-        add.getRight().accept(this);
-
         int currentIndex = this.registerIndex++;
         this.node2regIndex.put(add, currentIndex);
     }
@@ -43,7 +40,6 @@ public class PrepVisitor extends Default {
     public void visit(Address address) {
         this.ptr2Name.put(address, address.getEntity().getName());
     }
-
 
     @Override
     public void visit(Block block) {
@@ -58,19 +54,14 @@ public class PrepVisitor extends Default {
 
     @Override
     public void visit(Call call) {
-        call.getPtr().accept(this);
-
-        //allocate register for call, regardless of whether is is used or not
+        // allocate register for call, regardless of whether is is used or not
         this.node2regIndex.put(call, this.registerIndex);
         this.registerIndex++;
     }
 
     @Override
     public void visit(Cmp cmp) {
-        // TODO: shouldn't there also be a jmp being generated here?
-        //eigentlich muss hier nichts getan werden
-        cmp.getLeft().accept(this);
-        cmp.getRight().accept(this);
+        // nothing to do
     }
 
     @Override
@@ -80,11 +71,8 @@ public class PrepVisitor extends Default {
 
     @Override
     public void visit(Div div) {
-        div.getLeft().accept(this);
-        div.getRight().accept(this);
-
-        //we need two target registers for div. These are registerIndex and registerIndex + 1.
-        //Assignment of registerIndex+1 is not represented explicitly.
+        // we need two target registers for div. These are registerIndex and registerIndex + 1.
+        // Assignment of registerIndex+1 is not represented explicitly.
         this.node2regIndex.put(div, this.registerIndex);
 
         this.registerIndex += 2;
@@ -92,15 +80,11 @@ public class PrepVisitor extends Default {
 
     @Override
     public void visit(Mod mod) {
-        mod.getLeft().accept(this);
-        mod.getRight().accept(this);
-
-        //we need two target registers for mod. These are registerIndex and registerIndex + 1.
-        //Assignment of registerIndex+1 is not represented explicitly.
+        // we need two target registers for mod. These are registerIndex and registerIndex + 1.
+        // Assignment of registerIndex+1 is not represented explicitly.
         this.node2regIndex.put(mod, this.registerIndex);
 
         this.registerIndex += 2;
-
 
     }
 
@@ -116,7 +100,28 @@ public class PrepVisitor extends Default {
 
     @Override
     public void visit(Proj proj) {
-        this.node2regIndex.put(proj, this.registerIndex++);
+        // this projection is parameter if predecessor is args node
+        boolean isParam = proj.getGraph().getArgs().equals(proj.getPred());
+        int register = 0;
+        if (isParam) {
+            register = proj.getNum();
+        }
+        else {
+            Iterable<Node> watchPred = proj.getPreds();
+            Node node = proj.getBlock();
+            int nr = proj.getNr();
+            Node pred = proj.getPred();
+            if (pred.getPredCount() > 0 && !proj.getMode().equals(Mode.getX())
+                            && !proj.getMode().equals(Mode.getT())
+                            && !proj.getMode().equals(Mode.getM())) {
+                register = this.node2regIndex.get(pred.getPred(0));
+            }
+            else {
+                return;
+            }
+        }
+
+        this.node2regIndex.put(proj, register);
     }
 
     @Override
@@ -131,16 +136,14 @@ public class PrepVisitor extends Default {
 
     @Override
     public void visit(Sub sub) {
-        sub.getLeft().accept(this);
-        sub.getRight().accept(this);
-
         this.node2regIndex.put(sub, this.registerIndex++);
     }
 
     /**
      * add mapping from node to register of phi instruction
+     *
      * @param node node to set target register for
-     * @param reg register
+     * @param reg  register
      */
     private void appendList(Node node, int reg) {
         List<Integer> regs = this.nodeToPhiReg.get(node);
@@ -154,23 +157,26 @@ public class PrepVisitor extends Default {
 
     @Override
     public void visit(Start node) {
-        //nothing to do
+        // nothing to do
     }
 
     @Override
     public void visit(Cond node) {
-        //nothing to do
+        // nothing to do
     }
 
     @Override
     public void visit(End node) {
-        //nothing to do
+        // nothing to do
     }
-
 
     @Override
     public void defaultVisit(Node n) {
         throw new UnsupportedOperationException("unknown node: " + n + " " + n.getClass());
+    }
+
+    public void setRegisterIndex(int registerIndex) {
+        this.registerIndex = registerIndex;
     }
 
 }

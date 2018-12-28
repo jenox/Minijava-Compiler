@@ -35,6 +35,8 @@ public class BackendCommand extends Command {
             PrepVisitor prepVisitor = new PrepVisitor();
 
             graphs.forEach(g -> {
+                int numArgs = ((MethodType) g.getEntity().getType()).getNParams();
+                prepVisitor.setRegisterIndex(numArgs);
                 g.walkTopological(prepVisitor);
             });
 
@@ -45,12 +47,12 @@ public class BackendCommand extends Command {
                 String methodName = g.getEntity().getName();
                 MethodType methodType = (MethodType) g.getEntity().getType();
                 // non-main methods have additional `this` parameter
-                int noArgs = Math.max(0, methodType.getNParams() - 1);
+                int numArgs = Math.max(0, methodType.getNParams() - 1);
                 int noResults = methodType.getNRess();
 
                 //replace '.' with '_' for correct molki syntax
                 methodName = methodName.replace('.', '_');
-                transformVisitor.appendMolkiCodeNoIndent(".function " + methodName + " " + noArgs + " " + noResults);
+                transformVisitor.appendMolkiCodeNoIndent(".function " + methodName + " " + numArgs + " " + noResults);
                 g.walkTopological(transformVisitor);
                 transformVisitor.appendMolkiCodeNoIndent(".endfunction\n");
             });

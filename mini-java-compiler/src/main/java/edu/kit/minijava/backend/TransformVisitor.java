@@ -53,9 +53,6 @@ public class TransformVisitor extends Default {
     // METHODS
     @Override
     public void visit(Add add) {
-        add.getLeft().accept(this);
-        add.getRight().accept(this);
-
         int srcReg1 = this.nodeToRegIndex.get(add.getLeft());
         int srcReg2 = this.nodeToRegIndex.get(add.getRight());
         int targetReg = this.nodeToRegIndex.get(add);
@@ -111,7 +108,7 @@ public class TransformVisitor extends Default {
                 args += REG_PREFIX + arg;
             }
             else {
-                args += arg + " | ";
+                args += REG_PREFIX + arg + " | ";
             }
 
         }
@@ -133,7 +130,10 @@ public class TransformVisitor extends Default {
                 break;
             case "alloc_mem":
                 targetReg = this.nodeToRegIndex.get(call);
-                this.appendMolkiCode("call __stdlib_calloc [ ] -> %@" + targetReg);
+                int srcReg1 = this.nodeToRegIndex.get(call.getPred(3));
+                int srcReg2 = this.nodeToRegIndex.get(call.getPred(2));
+                args = REG_PREFIX + srcReg1 + " | " + REG_PREFIX + srcReg2;
+                this.appendMolkiCode("call __stdlib_calloc [ " + args + " ] -> %@" + targetReg);
                 break;
             default:
                 targetReg = this.nodeToRegIndex.get(call);
@@ -143,10 +143,10 @@ public class TransformVisitor extends Default {
 
     @Override
     public void visit(Cmp cmp) {
-        int left = this.nodeToRegIndex.get(cmp.getLeft());
-        int right = this.nodeToRegIndex.get(cmp.getRight());
+        int srcReg1 = this.nodeToRegIndex.get(cmp.getRight());
+        int srcReg2 = this.nodeToRegIndex.get(cmp.getLeft());
 
-        this.appendMolkiCode("cmp %@" + left + ", %@" + right);
+        this.appendMolkiCode("cmp %@" + srcReg1 + ", %@" + srcReg2);
     }
 
     @Override
@@ -234,7 +234,7 @@ public class TransformVisitor extends Default {
 
         // check, if we're the main function
         if (!currentBlock.equals(startBlock)) {
-            this.appendMolkiCode("mov %@" + this.nodeToRegIndex.get(aReturn) + ", %@r0");
+            this.appendMolkiCode("mov %@" + this.nodeToRegIndex.get(aReturn.getPred(1)) + ", %@r0");
 
             // check, if we should produce a jmp
             if (!(this.jmp2BlockName.get(aReturn) == null) && !currentBlock.equals(aReturn.getPred(0).getBlock())) {
@@ -299,8 +299,8 @@ public class TransformVisitor extends Default {
 
     @Override
     public void visit(Sub sub) {
-        int srcReg1 = this.nodeToRegIndex.get(sub.getLeft());
-        int srcReg2 = this.nodeToRegIndex.get(sub.getRight());
+        int srcReg1 = this.nodeToRegIndex.get(sub.getRight());
+        int srcReg2 = this.nodeToRegIndex.get(sub.getLeft());
 
         int targetReg = this.nodeToRegIndex.get(sub);
 
