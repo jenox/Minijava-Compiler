@@ -367,7 +367,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
                     break;
                 default:
                     assert false : "Unhandled primitive type!";
-                break;
+                    break;
             }
         }
         else {
@@ -506,7 +506,6 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
             blockBeforeWhile.mature();
 
-
             // loop condition
             statement.getCondition().accept(this, context);
 
@@ -563,7 +562,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
             Node mem = context.getConstruction().getCurrentMem();
 
             if (context.getResult() != null) {
-                results = new Node[] {context.getResult().convertToValue().getNode()};
+                results = new Node[] { context.getResult().convertToValue().getNode() };
             }
             else {
                 results = new Node[] {};
@@ -782,8 +781,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
             Node boolNode = context.getConstruction().newConst(booleanValue);
 
-            ExpressionResult.Value result =
-                            new ExpressionResult.Value(context.getConstruction(), boolNode);
+            ExpressionResult.Value result = new ExpressionResult.Value(context.getConstruction(), boolNode);
 
             context.setResult(result);
         }
@@ -871,8 +869,8 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
                 mode = Mode.getP();
             }
 
-            ExpressionResult.FieldLValue result =
-                            new ExpressionResult.FieldLValue(context.getConstruction(), member, mode);
+            ExpressionResult.FieldLValue result = new ExpressionResult.FieldLValue(context.getConstruction(), member,
+                            mode);
 
             context.setResult(result);
         }
@@ -899,8 +897,8 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
             Sel sel = (Sel) context.getConstruction().newSel(arrayPointer, index, type);
 
-            ExpressionResult.ArrayLValue result =
-                            new ExpressionResult.ArrayLValue(context.getConstruction(), sel, elementType);
+            ExpressionResult.ArrayLValue result = new ExpressionResult.ArrayLValue(context.getConstruction(), sel,
+                            elementType);
 
             context.setResult(result);
         }
@@ -923,8 +921,8 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
                 // TODO Use mode instead of type here?
                 Mode mode = Optional.ofNullable(type.getMode()).orElse(Mode.getP());
 
-                ExpressionResult.LocalVariableLValue result =
-                                new ExpressionResult.LocalVariableLValue(context.getConstruction(), n, type);
+                ExpressionResult.LocalVariableLValue result = new ExpressionResult.LocalVariableLValue(context
+                                .getConstruction(), n, type);
 
                 context.setResult(result);
             }
@@ -935,8 +933,8 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
                 Mode mode = Optional.ofNullable(this.types.get(decl).getMode()).orElse(Mode.getP());
 
-                ExpressionResult.FieldLValue result =
-                                new ExpressionResult.FieldLValue(context.getConstruction(), member, mode);
+                ExpressionResult.FieldLValue result = new ExpressionResult.FieldLValue(context.getConstruction(),
+                                member, mode);
 
                 context.setResult(result);
             }
@@ -973,8 +971,8 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
             Node functionAddress = construction.newAddress(functionEntity);
 
             Node mem = construction.getCurrentMem();
-            Node call =
-                            construction.newCall(mem, functionAddress, new Node[] {oneConst, size}, functionEntity.getType());
+            Node call = construction.newCall(mem, functionAddress, new Node[] { oneConst, size }, functionEntity
+                            .getType());
 
             Node newMem = construction.newProj(call, Mode.getM(), Call.pnM);
             construction.setCurrentMem(newMem);
@@ -1022,7 +1020,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
             Node mem = construction.getCurrentMem();
             Node call = construction.newCall(mem, functionAddress,
-                            new Node[] {elementCount, elementSize}, functionEntity.getType());
+                            new Node[] { elementCount, elementSize }, functionEntity.getType());
 
             Node newMem = construction.newProj(call, Mode.getM(), Call.pnM);
             construction.setCurrentMem(newMem);
@@ -1146,8 +1144,8 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
         blockEitherFalse.mature();
 
-        ExpressionResult.Condition result =
-                        new ExpressionResult.Condition(construction, left.getBlock(), right.getIfTrue(), eitherFalseJmp);
+        ExpressionResult.Condition result = new ExpressionResult.Condition(construction, left.getBlock(), right
+                        .getIfTrue(), eitherFalseJmp);
 
         return result;
     }
@@ -1176,8 +1174,8 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
         blockEitherTrue.mature();
 
-        ExpressionResult.Condition result =
-                        new ExpressionResult.Condition(construction, left.getBlock(), eitherTrueJump, right.getIfFalse());
+        ExpressionResult.Condition result = new ExpressionResult.Condition(construction, left.getBlock(),
+                        eitherTrueJump, right.getIfFalse());
 
         return result;
     }
@@ -1201,7 +1199,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
         }
         else {
             assert false : "Cannot get correct mode for type!";
-        return null;
+            return null;
         }
     }
 
@@ -1232,7 +1230,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
                     break;
                 default:
                     assert false : "Unhandled primitive type!";
-                break;
+                    break;
             }
         }
         else {
