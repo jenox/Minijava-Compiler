@@ -48,6 +48,8 @@ public class BackendCommand extends Command {
                 int noArgs = Math.max(0, methodType.getNParams() - 1);
                 int noResults = methodType.getNRess();
 
+                //replace '.' with '_' for correct molki syntax
+                methodName = methodName.replace('.', '_');
                 transformVisitor.appendMolkiCodeNoIndent(".function " + methodName + " " + noArgs + " " + noResults);
                 g.walkTopological(transformVisitor);
                 transformVisitor.appendMolkiCodeNoIndent(".endfunction\n");

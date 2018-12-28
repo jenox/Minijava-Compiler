@@ -44,7 +44,7 @@ public class TransformVisitor extends Default {
     }
 
     public TransformVisitor(HashMap<Node, String> jmp2BlockName, HashMap<Node, Integer> proj2regIndex,
-            HashMap<Node, List<Integer>> nodeToPhiReg) {
+                    HashMap<Node, List<Integer>> nodeToPhiReg) {
         this.jmp2BlockName = jmp2BlockName;
         this.nodeToRegIndex = proj2regIndex;
         this.nodeToPhiReg = nodeToPhiReg;
@@ -65,7 +65,9 @@ public class TransformVisitor extends Default {
 
     @Override
     public void visit(Address address) {
-        this.ptr2Name.put(address, address.getEntity().getName());
+        //replace '.' with '_' for correct molki syntax
+        String name = address.getEntity().getName().replace('.', '_');
+        this.ptr2Name.put(address, name);
     }
 
     @Override
@@ -95,8 +97,8 @@ public class TransformVisitor extends Default {
         int start = 2;
 
         if (!functionName.equals("__minijava_main") && !functionName.equals("system_out_println")
-                && !functionName.equals("system_out_write") && !functionName.equals("system_out_flush")
-                && !functionName.equals("system_in_read") && !functionName.equals("alloc_mem")) {
+                        && !functionName.equals("system_out_write") && !functionName.equals("system_out_flush")
+                        && !functionName.equals("system_in_read") && !functionName.equals("alloc_mem")) {
             start++; // ignore this pred, which is object pointer
         }
 
@@ -169,7 +171,7 @@ public class TransformVisitor extends Default {
         int targetReg2 = targetReg1 + 1; // by convention used in PrepVisitor
 
         this.appendMolkiCode("idiv [ %@" + left + " | %@" + right + " ]" + " -> [ %@" + targetReg1 + ", " + REG_PREFIX
-                + targetReg2 + "]");
+                        + targetReg2 + "]");
     }
 
     @Override
@@ -206,7 +208,7 @@ public class TransformVisitor extends Default {
         int targetReg2 = targetReg1 + 1; // by convention used in PrepVisitor
 
         this.appendMolkiCode("imod [ " + REG_PREFIX + srcReg1 + " | " + REG_PREFIX + srcReg2 + " ]" + " -> [ %@"
-                + REG_PREFIX + targetReg1 + " | %@" + targetReg2 + "]");
+                        + REG_PREFIX + targetReg1 + " | %@" + targetReg2 + "]");
     }
 
     @Override
