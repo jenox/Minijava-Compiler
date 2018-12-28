@@ -106,9 +106,6 @@ public class TransformVisitor extends Default {
 
         for (int i = start; i < call.getPredCount(); i++) {
 
-            // TODO: how to write parameters into registers without for example, getting a second `sub` expression
-            // TODO: write parameter into register with same number as projection
-
             int arg = this.nodeToRegIndex.get(call.getPred(i));
             if (call.getPredCount() - i == 1) {
                 args += REG_PREFIX + arg;
@@ -154,8 +151,6 @@ public class TransformVisitor extends Default {
 
     @Override
     public void visit(Const aConst) {
-        // TODO: should this use `asInt`?
-        // was passiert bei booleans?
         String constant = CONST_PREFIX + String.valueOf(aConst.getTarval().asInt());
         int targetReg = this.nodeToRegIndex.get(aConst);
 
@@ -239,7 +234,7 @@ public class TransformVisitor extends Default {
 
         // check, if we're the main function
         if (!currentBlock.equals(startBlock)) {
-            this.appendMolkiCode("mov %@" + this.nodeToRegIndex.get(aReturn) + ", %@r0"); // TODO: wieso r0?
+            this.appendMolkiCode("mov %@" + this.nodeToRegIndex.get(aReturn) + ", %@r0");
 
             // check, if we should produce a jmp
             if (!(this.jmp2BlockName.get(aReturn) == null) && !currentBlock.equals(aReturn.getPred(0).getBlock())) {
