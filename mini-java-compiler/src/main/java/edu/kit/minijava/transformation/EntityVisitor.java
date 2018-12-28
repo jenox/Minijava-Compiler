@@ -560,7 +560,6 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
         if (!this.isVariableCounting) {
             Node[] results;
-            Node mem = context.getConstruction().getCurrentMem();
 
             if (context.getResult() != null) {
                 results = new Node[] {context.getResult().convertToValue().getNode()};
@@ -569,6 +568,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
                 results = new Node[] {};
             }
 
+            Node mem = context.getConstruction().getCurrentMem();
             Node returnNode = context.getConstruction().newReturn(mem, results);
             context.getConstruction().getGraph().getEndBlock().addPred(returnNode);
 
