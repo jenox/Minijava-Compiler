@@ -96,7 +96,7 @@ public class TransformVisitor extends Default {
         // ignore first two preds, ie memory and function adress
         int start = 2;
 
-        if (!functionName.equals("__minijava_main") && !functionName.equals("system_out_println")
+        if (!functionName.equals("minijava_main") && !functionName.equals("system_out_println")
                         && !functionName.equals("system_out_write") && !functionName.equals("system_out_flush")
                         && !functionName.equals("system_in_read") && !functionName.equals("alloc_mem")) {
             start++; // ignore this pred, which is object pointer
