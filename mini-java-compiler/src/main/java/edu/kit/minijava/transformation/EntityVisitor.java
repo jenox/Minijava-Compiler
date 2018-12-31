@@ -44,6 +44,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
         // Check created graphs
         for (Graph g : firm.Program.getGraphs()) {
+            ConstantFolder folder = new ConstantFolder(g);
             g.check();
         }
 
@@ -209,7 +210,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
             MethodType mainMethodType = new MethodType(parameterTypes, resultTypes);
 
-            Entity mainMethodEntity = new Entity(this.globalType, "minijava_main", mainMethodType);
+            Entity mainMethodEntity = new Entity(this.globalType, "__minijava_main", mainMethodType);
             this.entities.put(methodDeclaration, mainMethodEntity);
 
             methodDeclaration.getBody().accept(this, methodContext);

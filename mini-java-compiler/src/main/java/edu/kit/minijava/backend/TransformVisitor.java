@@ -2,7 +2,10 @@ package edu.kit.minijava.backend;
 
 import java.util.*;
 
+import firm.BackEdges;
+import firm.Mode;
 import firm.Relation;
+import firm.TargetValue;
 import firm.nodes.*;
 import firm.nodes.NodeVisitor.Default;
 
@@ -14,11 +17,11 @@ public class TransformVisitor extends Default {
     private static final String CONST_PREFIX = "$";
 
     // ATTRIBUTES
-    private StringBuilder molkiCode = new StringBuilder();
+    private ArrayList<String> molkiCode = new ArrayList<>();
 
     private HashMap<Address, String> ptr2Name = new HashMap<>();
     // primarily for jmps to look up the block where they jump to
-    private HashMap<Node, String> jmp2BlockName;
+    private HashMap<Node, List<Integer>> jmp2BlockName;
     // primarily for projections to save their register index
     private HashMap<Node, Integer> nodeToRegIndex;
     private HashMap<Node, List<Integer>> nodeToPhiReg;
@@ -26,8 +29,8 @@ public class TransformVisitor extends Default {
     private Node currentBlock = null;
 
     // GETTERS & SETTERS
-    public String getMolkiCode() {
-        return this.molkiCode.toString();
+    public ArrayList<String> getMolkiCode() {
+        return this.molkiCode;
     }
 
     /**
@@ -36,21 +39,135 @@ public class TransformVisitor extends Default {
      * @param molkiCode string inserted with correct indentation and linebreak at end.
      */
     public void appendMolkiCode(String molkiCode) {
-        this.molkiCode.append(INDENT + molkiCode + NEW_LINE);
+        this.molkiCode.add(INDENT + molkiCode);
     }
 
     public void appendMolkiCodeNoIndent(String code) {
-        this.molkiCode.append(code + NEW_LINE);
+        this.molkiCode.add(code);
     }
 
-    public TransformVisitor(HashMap<Node, String> jmp2BlockName, HashMap<Node, Integer> proj2regIndex,
-                    HashMap<Node, List<Integer>> nodeToPhiReg) {
+    public TransformVisitor(HashMap<Node, List<Integer>> jmp2BlockName, HashMap<Node, Integer> proj2regIndex,
+                    HashMap<Node, List<Integer>> nodeToPhiReg, HashMap<Address, String> ptr2Name) {
         this.jmp2BlockName = jmp2BlockName;
         this.nodeToRegIndex = proj2regIndex;
         this.nodeToPhiReg = nodeToPhiReg;
+        this.ptr2Name = ptr2Name;
     }
 
     // METHODS
+    private boolean stackSlotAssigned(Node node) {
+        return false;
+    }
+
+    private int getStackSlotOffset(Node node) {
+        return 0;
+    }
+
+    private void getValue(Node node, int destReg) {
+        if (stackSlotAssigned(node)) {
+            int offset = getStackSlotOffset(node);
+            System.out.printf("\tmovl %d(%%rbp), %@d # reload for %s\n", offset, destReg, node);
+            return;
+        }
+        createValue(node);
+    }
+
+    public void createValue(Node node) {
+        // TODO: change visit methods to use printf
+        switch (node.getOpCode()) {
+            case iro_Add:
+                Add add = (Add) node;
+                visit(add);
+                break;
+            case iro_Sub:
+                Sub sub = (Sub) node;
+                visit(sub);
+                break;
+            case iro_Mul:
+                Mul mul = (Mul) node;
+                visit(mul);
+                break;
+            case iro_Div:
+                Div div = (Div) node;
+                visit(div);
+                break;
+            case iro_Mod:
+                Mod mod = (Mod) node;
+                visit(mod);
+                break;
+            case iro_Address:
+                Address address = (Address) node;
+                visit(address);
+                break;
+            case iro_Call:
+                Call call = (Call) node;
+                visit(call);
+                break;
+            case iro_Cmp:
+                Cmp cmp = (Cmp) node;
+                visit(cmp);
+                break;
+            case iro_Const:
+                Const aConst = (Const) node;
+                visit(aConst);
+                break;
+            case iro_End:
+                End aEnd = (End) node;
+                visit(aEnd);
+                break;
+            case iro_Jmp:
+                Jmp aJmp = (Jmp) node;
+                visit(aJmp);
+                break;
+            case iro_Load:
+                Load aLoad = (Load) node;
+                visit(aLoad);
+                break;
+            case iro_Minus:
+                Minus aMinus = (Minus) node;
+                visit(aMinus);
+                break;
+            case iro_Not:
+                Not aNot = (Not) node;
+                visit(aNot);
+                break;
+            case iro_Phi:
+                Phi aPhi = (Phi) node;
+                visit(aPhi);
+                break;
+            case iro_Return:
+                Return aReturn = (Return) node;
+                visit(aReturn);
+                break;
+            case iro_Sel:
+                Sel aSel = (Sel) node;
+                visit(aSel);
+                break;
+            case iro_Start:
+                Start aStart = (Start) node;
+                visit(aStart);
+                break;
+            case iro_Store:
+                Store aStore = (Store) node;
+                visit(aStore);
+                break;
+            case iro_Proj:
+                Proj aProj = (Proj) node;
+                visit(aProj);
+                break;
+            case iro_Cond:
+                Cond aCond = (Cond) node;
+                visit(aCond);
+                break;
+            case iro_Member:
+                Member aMember = (Member) node;
+                visit(aMember);
+                break;
+            default:
+                throw new UnsupportedOperationException("unknown node " + node.getClass());
+        }
+    }
+
     @Override
     public void visit(Add add) {
         int srcReg1 = this.nodeToRegIndex.get(add.getLeft());
@@ -62,25 +179,24 @@ public class TransformVisitor extends Default {
 
     @Override
     public void visit(Address address) {
-        //replace '.' with '_' for correct molki syntax
-        String name = address.getEntity().getName().replace('.', '_');
-        this.ptr2Name.put(address, name);
+        // nothing to do
     }
 
     @Override
     public void visit(Block block) {
 
-        if (this.currentBlock != null && this.nodeToPhiReg.containsKey(this.currentBlock)) {
-            int sourceReg = this.nodeToRegIndex.get(block);
-            for (int targetReg : this.nodeToPhiReg.get(this.currentBlock)) {
-                this.appendTwoAdressCommand("mov", sourceReg, targetReg);
-            }
-        }
+        // TODO: what does this access to nodeToPhiReg do?
+        //if (this.currentBlock != null && this.nodeToPhiReg.containsKey(this.currentBlock)) {
+        //    int sourceReg = this.nodeToRegIndex.get(block);
+        //    for (int targetReg : this.nodeToPhiReg.get(this.currentBlock)) {
+        //        this.appendTwoAdressCommand("mov", sourceReg, targetReg);
+        //    }
+        //}
 
-        this.currentBlock = block;
+        //this.currentBlock = block;
 
-        String name = "L" + block.getNr();
-        this.appendMolkiCodeNoIndent(name + ":");
+        //String name = "L" + block.getNr();
+        //this.appendMolkiCodeNoIndent(name + ":");
     }
 
     @Override
@@ -118,6 +234,7 @@ public class TransformVisitor extends Default {
                 this.appendMolkiCode("call __stdlib_println [ " + args + " ]");
                 break;
             case "system_out_write":
+                this.appendMolkiCode("# block nr " + call.getBlock().getNr());
                 this.appendMolkiCode("call __stdlib_write [ " + args + " ]");
                 break;
             case "system_out_flush":
@@ -151,10 +268,30 @@ public class TransformVisitor extends Default {
 
     @Override
     public void visit(Const aConst) {
-        String constant = CONST_PREFIX + String.valueOf(aConst.getTarval().asInt());
-        int targetReg = this.nodeToRegIndex.get(aConst);
+        if (aConst.getMode().equals(Mode.getb())) {
+            List<Integer> blockNrs = new ArrayList<>();
 
-        this.appendMolkiCode("mov " + constant + ", %@" + targetReg);
+            // get Conditions
+            for (BackEdges.Edge edge : BackEdges.getOuts(aConst)) {
+                // get Projections
+                for (BackEdges.Edge condEdge : BackEdges.getOuts(edge.node)) {
+                    // get Blocks
+                    for (BackEdges.Edge projEdge : BackEdges.getOuts(condEdge.node)) {
+                        Block block = (Block) projEdge.node;
+                        blockNrs.add(block.getNr());
+                    }
+                }
+                break;
+            }
+
+            this.appendMolkiCode("jmp L" + blockNrs.get(0));
+        }
+        else {
+            String constant = CONST_PREFIX + String.valueOf(aConst.getTarval().asInt());
+            int targetReg = this.nodeToRegIndex.get(aConst);
+
+            this.appendMolkiCode("mov " + constant + ", %@" + targetReg);
+        }
     }
 
     @Override
@@ -176,9 +313,12 @@ public class TransformVisitor extends Default {
 
     @Override
     public void visit(Jmp jmp) {
-        String name = this.jmp2BlockName.get(jmp);
-        this.appendMolkiCode("jmp " + name);
+        this.appendMolkiCode("# jmp ");
+        this.appendMolkiCode("# block nr " + jmp.getBlock().getNr());
+        this.appendMolkiCode("jmp " + this.getBlockLabel(jmp));
     }
+
+
 
     @Override
     public void visit(Load load) {
@@ -224,7 +364,12 @@ public class TransformVisitor extends Default {
 
     @Override
     public void visit(Phi phi) {
-        // nothing to do
+        // TODO: this is wrong
+        if (!phi.getMode().equals(Mode.getM())) {
+            phi.getPreds().forEach(pred -> {
+                this.appendMolkiCode("mov %@" + this.nodeToRegIndex.get(pred) + ", %@" + this.nodeToRegIndex.get(phi));
+            });
+        }
     }
 
     @Override
@@ -232,12 +377,22 @@ public class TransformVisitor extends Default {
         Node currentBlock = aReturn.getBlock();
         Block startBlock = currentBlock.getGraph().getStartBlock();
 
-        // check, if we're the main function
+        // check if we're the main function
         if (!currentBlock.equals(startBlock)) {
-            this.appendMolkiCode("mov %@" + this.nodeToRegIndex.get(aReturn.getPred(1)) + ", %@r0");
+            // assumption: we always have at most one pred for return
+            if (aReturn.getPredCount() == 2) {
+                this.appendMolkiCode("mov %@" + this.nodeToRegIndex.get(aReturn.getPred(1)) + ", %@r0");
+            }
 
-            // check, if we should produce a jmp
-            if (!(this.jmp2BlockName.get(aReturn) == null) && !currentBlock.equals(aReturn.getPred(0).getBlock())) {
+            // check if we aren't in the fallthrough block
+            if (!currentBlock.equals(aReturn.getPred(0).getBlock())) {
+                // get block nr of the successor block
+                int blockNr = -1;
+                for (BackEdges.Edge edge : BackEdges.getOuts(aReturn)) {
+                    Block block = (Block) edge.node;
+                    blockNr = block.getNr();
+                    break;
+                }
 
                 // check if we are able to produce a jmp
                 // TODO: if Bedingung überprüfen / vereinfachen
@@ -245,27 +400,27 @@ public class TransformVisitor extends Default {
                     Cmp tempCmp = (Cmp) aReturn.getBlock().getPred(0).getPred(0).getPred(0);
 
                     if (tempCmp.getRelation().equals(Relation.Less)) {
-                        this.appendMolkiCode("jl " + this.jmp2BlockName.get(aReturn));
+                        this.appendMolkiCode("jl L" + blockNr);
                     }
                     else if (tempCmp.getRelation().equals(Relation.LessEqual)) {
-                        this.appendMolkiCode("jle " + this.jmp2BlockName.get(aReturn));
+                        this.appendMolkiCode("jle L" + blockNr);
                     }
                     else if (tempCmp.getRelation().equals(Relation.GreaterEqual)) {
-                        this.appendMolkiCode("jg " + this.jmp2BlockName.get(aReturn));
+                        this.appendMolkiCode("jg L" + blockNr);
                     }
                     else if (tempCmp.getRelation().equals(Relation.GreaterEqual)) {
-                        this.appendMolkiCode("jge " + this.jmp2BlockName.get(aReturn));
+                        this.appendMolkiCode("jge L" + blockNr);
                     }
                     else if (tempCmp.getRelation().equals(Relation.Equal)) {
-                        this.appendMolkiCode("je " + this.jmp2BlockName.get(aReturn));
+                        this.appendMolkiCode("je L" + blockNr);
                     }
                     // TODO: what is the diff between `negated` and `inversed`?
                     else if (tempCmp.getRelation().equals(Relation.Equal.negated())) {
-                        this.appendMolkiCode("jne " + this.jmp2BlockName.get(aReturn));
+                        this.appendMolkiCode("jne L" + blockNr);
                     }
                 }
                 else {
-                    this.appendMolkiCode("jmp " + this.jmp2BlockName.get(aReturn));
+                    this.appendMolkiCode("jmp L" + blockNr);
                 }
             }
         }
@@ -318,6 +473,13 @@ public class TransformVisitor extends Default {
     }
 
     @Override
+    public void visit(Member node) {
+        //nothing to do
+    }
+
+
+
+    @Override
     public void defaultVisit(Node n) {
         throw new UnsupportedOperationException("unknown node " + n.getClass());
     }
@@ -326,8 +488,8 @@ public class TransformVisitor extends Default {
      */
 
     private void appendTwoAdressCommand(String cmd, int srcReg, int targetReg) {
-        this.molkiCode.append(cmd).append(" " + REG_PREFIX + srcReg).append(", " + REG_PREFIX + targetReg);
-        this.molkiCode.append(NEW_LINE);
+        this.appendMolkiCode(cmd + " " + REG_PREFIX + srcReg + ", " + REG_PREFIX + targetReg);
+        this.appendMolkiCode(NEW_LINE);
 
     }
 
@@ -335,4 +497,18 @@ public class TransformVisitor extends Default {
         this.appendMolkiCode(cmd + " [ %@" + srcReg1 + " | %@" + srcReg2 + " ] -> %@" + targetReg);
     }
 
+    private String getBlockLabel(Node node) {
+        List<Integer> blockNrs = this.jmp2BlockName.get(node);
+
+        int blockNr = -1;
+        if (blockNrs.size() == 1) {
+            blockNr = blockNrs.get(0);
+        }
+        else {
+            Collections.sort(blockNrs);
+            blockNr = blockNrs.get(1);
+        }
+
+        return "L" + blockNr;
+    }
 }
