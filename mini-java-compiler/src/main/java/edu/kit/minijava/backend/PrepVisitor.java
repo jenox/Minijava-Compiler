@@ -12,16 +12,12 @@ public class PrepVisitor extends Default {
     // ATTRIBUTES
     private int registerIndex = 0;
     private HashMap<Node, Integer> node2regIndex = new HashMap<>();
-    private HashMap<Node, List<Integer>> nodeToPhiReg = new HashMap<>();
     private HashMap<Integer, List<Node>> blockId2Nodes = new HashMap<>();
     private HashMap<Graph, List<Integer>> graph2BlockId = new HashMap<>();
 
     // GETTERS
     public HashMap<Node, Integer> getProj2regIndex() {
         return this.node2regIndex;
-    }
-    public HashMap<Node, List<Integer>> getBlockToPhiReg() {
-        return this.nodeToPhiReg;
     }
     public HashMap<Integer, List<Node>> getBlockId2Nodes() {
         return this.blockId2Nodes;
@@ -58,15 +54,13 @@ public class PrepVisitor extends Default {
     @Override
     public void visit(Call call) {
         // allocate register for call, regardless of whether is is used or not
-        this.node2regIndex.put(call, this.registerIndex);
-        this.registerIndex++;
+        this.node2regIndex.put(call, this.registerIndex++);
 
         this.addInstrToBlock(null, call);
     }
 
     @Override
     public void visit(Cmp cmp) {
-        // nothing to do
         this.addInstrToBlock(null, cmp);
     }
 
@@ -110,9 +104,6 @@ public class PrepVisitor extends Default {
 
     @Override
     public void visit(Phi phi) {
-        //for (Node node : phi.getPreds()) {
-        //    this.appendList(node, this.registerIndex);
-        //}
         this.node2regIndex.put(phi, this.registerIndex++);
 
         this.addInstrToBlock(null, phi);
@@ -121,34 +112,17 @@ public class PrepVisitor extends Default {
     @Override
     public void visit(Proj proj) {
         // this projection is parameter if predecessor is args node
-        boolean isParam = proj.getGraph().getArgs().equals(proj.getPred());
+        boolean isParam = proj.getPred().equals(proj.getGraph().getArgs());
         int register = 0;
-        if (isParam) {
-            register = proj.getNum() - 1; // TODO: sollte eigentlich gehen
-        }
-        else {
-            Node pred = proj.getPred();
-            // no memory predecessor
-            if (pred.getPredCount() == 1 && !proj.getMode().equals(Mode.getX())
-                            && !proj.getMode().equals(Mode.getT())
-                            && !proj.getMode().equals(Mode.getM())) {
-                register = this.node2regIndex.get(pred.getPred(0));
-            }
-            else if (pred.getPredCount() > 1 && !proj.getMode().equals(Mode.getX())
-                        && !proj.getMode().equals(Mode.getT())
-                        && !proj.getMode().equals(Mode.getM())
-                        && pred.getPred(0) instanceof Phi) {
-                register = this.node2regIndex.get(pred);
-            }
-            // existing memory predecessor
-            else if (pred.getPredCount() > 1 && !proj.getMode().equals(Mode.getX())
-                        && !proj.getMode().equals(Mode.getT())
-                        && !proj.getMode().equals(Mode.getM())) {
-                register = this.node2regIndex.get(pred.getPred(1));
-            }
 
-            else {
-                return;
+        if (isParam) {
+            register = proj.getNum();
+        }
+        else if (!proj.getMode().equals(Mode.getM()) && !proj.getMode().equals(Mode.getX())) {
+            Node pred = proj.getPred();
+
+            if (!pred.equals(proj.getGraph().getStart())) {
+                register = this.node2regIndex.get(pred);
             }
         }
 
@@ -178,22 +152,6 @@ public class PrepVisitor extends Default {
         this.addInstrToBlock(null, sub);
     }
 
-    /**
-     * add mapping from node to register of phi instruction
-     *
-     * @param node node to set target register for
-     * @param reg  register
-     */
-    private void appendList(Node node, int reg) {
-        List<Integer> regs = this.nodeToPhiReg.get(node);
-        if (regs == null) {
-            regs = new ArrayList<>();
-            this.nodeToPhiReg.put(node, regs);
-        }
-
-        regs.add(reg);
-    }
-
     @Override
     public void visit(Start node) {
         // nothing to do
@@ -201,7 +159,7 @@ public class PrepVisitor extends Default {
 
     @Override
     public void visit(Cond node) {
-        // nothing to do
+        this.addInstrToBlock(null, node);
     }
 
     @Override
@@ -221,9 +179,7 @@ public class PrepVisitor extends Default {
 
     @Override
     public void visit(Member node) {
-        this.node2regIndex.put(node, this.registerIndex++);
-
-        this.addInstrToBlock(null, node);
+        // nothing to do
     }
 
     @Override
@@ -264,5 +220,4 @@ public class PrepVisitor extends Default {
         }
         this.blockId2Nodes.get(blockNr).add(node);
     }
-
 }

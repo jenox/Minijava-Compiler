@@ -14,8 +14,6 @@ import edu.kit.minijava.parser.*;
 import edu.kit.minijava.semantic.*;
 import edu.kit.minijava.transformation.EntityVisitor;
 import firm.*;
-import firm.nodes.Const;
-import firm.nodes.Jmp;
 import firm.nodes.Node;
 
 public class BackendCommand extends Command {
@@ -51,14 +49,14 @@ public class BackendCommand extends Command {
 
             HashMap<Integer, List<Node>> blockId2Nodes = prepVisitor.getBlockId2Nodes();
             HashMap<Graph, List<Integer>> graph2BlockId = prepVisitor.getGraph2BlockId();
-            TransformVisitor transformVisitor = new TransformVisitor(prepVisitor.getProj2regIndex(), prepVisitor.getBlockToPhiReg());
+            MolkiTransformer molkiTransformer = new MolkiTransformer(prepVisitor.getProj2regIndex());
             ArrayList output = new ArrayList();
 
             graphs.forEach(g -> {
                 String methodName = g.getEntity().getName();
                 MethodType methodType = (MethodType) g.getEntity().getType();
                 // non-main methods have additional `this` parameter
-                int numArgs = Math.max(0, methodType.getNParams() - 1);
+                int numArgs = Math.max(0, methodType.getNParams());
                 int noResults = methodType.getNRess();
 
                 //replace '.' with '_' for correct molki syntax
@@ -72,12 +70,12 @@ public class BackendCommand extends Command {
                 output.add(".function " + methodName + " " + numArgs + " " + noResults);
 
                 graph2BlockId.get(g).forEach(i -> {
-                    transformVisitor.getMolkiCode().put(i, new ArrayList<>());
+                    molkiTransformer.getMolkiCode().put(i, new ArrayList<>());
 
-                    blockId2Nodes.get(i).forEach(node -> transformVisitor.createValue(i, node));
+                    blockId2Nodes.get(i).forEach(node -> molkiTransformer.createValue(i, node));
                 });
 
-                HashMap<Integer, List<String>> molkiCode = transformVisitor.getMolkiCode();
+                HashMap<Integer, List<String>> molkiCode = molkiTransformer.getMolkiCode();
 
                 graph2BlockId.get(g).forEach(i -> {
                     // move jmps to the end of the block

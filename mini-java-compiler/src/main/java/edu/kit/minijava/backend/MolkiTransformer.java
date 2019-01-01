@@ -1,4 +1,4 @@
-        package edu.kit.minijava.backend;
+            package edu.kit.minijava.backend;
 
 import java.util.*;
 
@@ -9,7 +9,7 @@ import firm.TargetValue;
 import firm.nodes.*;
 import firm.nodes.NodeVisitor.Default;
 
-public class TransformVisitor extends Default {
+public class MolkiTransformer extends Default {
     // CONSTANTS
     private static final String NEW_LINE = "\n";
     private static final String INDENT = "    "; // 4 spaces
@@ -22,8 +22,6 @@ public class TransformVisitor extends Default {
 
     // primarily for projections to save their register index
     private HashMap<Node, Integer> nodeToRegIndex;
-    private HashMap<Node, List<Integer>> nodeToPhiReg;
-
 
     // GETTERS & SETTERS
     public HashMap<Integer, List<String>> getMolkiCode() {
@@ -47,28 +45,9 @@ public class TransformVisitor extends Default {
         this.molkiCode.get(blockNr).add(INDENT + molkiCode);
     }
 
-    public TransformVisitor(HashMap<Node, Integer> proj2regIndex, HashMap<Node, List<Integer>> nodeToPhiReg) {
+    public MolkiTransformer(HashMap<Node, Integer> proj2regIndex) {
         this.nodeToRegIndex = proj2regIndex;
-        this.nodeToPhiReg = nodeToPhiReg;
     }
-
-    // METHODS
-    //private boolean stackSlotAssigned(Node node) {
-    //    return false;
-    //}
-
-    //private int getStackSlotOffset(Node node) {
-    //    return 0;
-    //}
-
-    //private void getValue(Node node, int destReg) {
-    //    if (stackSlotAssigned(node)) {
-    //        int offset = getStackSlotOffset(node);
-    //        System.out.printf("\tmovl %d(%%rbp), %@d # reload for %s\n", offset, destReg, node);
-    //        return;
-    //    }
-    //    createValue(node);
-    //}
 
     public void createValue(int blockNr, Node node) {
         this.currentBlockNr = blockNr;
@@ -211,11 +190,11 @@ public class TransformVisitor extends Default {
         // ignore first two preds, ie memory and function adress
         int start = 2;
 
-        if (!functionName.equals("minijava_main") && !functionName.equals("system_out_println")
-                        && !functionName.equals("system_out_write") && !functionName.equals("system_out_flush")
-                        && !functionName.equals("system_in_read") && !functionName.equals("alloc_mem")) {
-            start++; // ignore this pred, which is object pointer
-        }
+        //if (!functionName.equals("minijava_main") && !functionName.equals("system_out_println")
+        //                && !functionName.equals("system_out_write") && !functionName.equals("system_out_flush")
+        //                && !functionName.equals("system_in_read") && !functionName.equals("alloc_mem")) {
+        //    start++; // ignore this pred, which is object pointer
+        //}
 
         String args = "";
 
@@ -236,7 +215,6 @@ public class TransformVisitor extends Default {
                 this.appendMolkiCode("call __stdlib_println [ " + args + " ]");
                 break;
             case "system_out_write":
-                this.appendMolkiCode("# block nr " + call.getBlock().getNr());
                 this.appendMolkiCode("call __stdlib_write [ " + args + " ]");
                 break;
             case "system_out_flush":
@@ -249,8 +227,8 @@ public class TransformVisitor extends Default {
                 break;
             case "alloc_mem":
                 targetReg = this.nodeToRegIndex.get(call);
-                int srcReg1 = this.nodeToRegIndex.get(call.getPred(3));
-                int srcReg2 = this.nodeToRegIndex.get(call.getPred(2));
+                int srcReg1 = this.nodeToRegIndex.get(call.getPred(2));
+                int srcReg2 = this.nodeToRegIndex.get(call.getPred(3));
                 args = REG_PREFIX + srcReg1 + " | " + REG_PREFIX + srcReg2;
                 this.appendMolkiCode("call __stdlib_calloc [ " + args + " ] -> %@" + targetReg);
                 break;
@@ -264,114 +242,14 @@ public class TransformVisitor extends Default {
     public void visit(Cmp cmp) {
         int srcReg1 = this.nodeToRegIndex.get(cmp.getRight());
         int srcReg2 = this.nodeToRegIndex.get(cmp.getLeft());
-        int blockNr = cmp.getBlock().getNr();
 
         // cmp asm
         this.appendMolkiCode("cmp %@" + srcReg1 + ", %@" + srcReg2);
-
-        // jmp asm
-        int succBlockNr = -1;
-        boolean hasReturn = false;
-        boolean hasOnlyMemPred = false;
-        List<Integer> blockNrs = new ArrayList<>();
-        List<Integer> projNrs = new ArrayList<>();
-        List<Integer> registerNrs = new ArrayList<>();
-
-        // get Conditions
-        for (BackEdges.Edge edge : BackEdges.getOuts(cmp)) {
-            // get Projections
-            for (BackEdges.Edge condEdge : BackEdges.getOuts(edge.node)) {
-                // get Blocks
-                for (BackEdges.Edge projEdge : BackEdges.getOuts(condEdge.node)) {
-                    Block block = (Block) projEdge.node;
-
-                    for (BackEdges.Edge blockEdge : BackEdges.getOuts(block)) {
-                        if (blockEdge.node instanceof Return) {
-                            Return aReturn = (Return) blockEdge.node;
-                            hasReturn = true;
-                            hasOnlyMemPred = aReturn.getPredCount() <= 1;
-
-                            if (!hasOnlyMemPred) {
-                                succBlockNr = block.getGraph().getEndBlock().getNr();
-                                registerNrs.add(this.nodeToRegIndex.get(aReturn.getPred(1)));
-                            }
-                        }
-                    }
-                    blockNrs.add(block.getNr());
-                    projNrs.add(condEdge.node.getNr());
-                }
-            }
-            break;
-        }
-
-        // sometimes, firm switches the position of the proj nodes
-        boolean projAreReversed = projNrs.get(0) > projNrs.get(1);
-        int trueNr = projAreReversed ? 1 : 0;
-
-        if (!hasReturn) {
-            succBlockNr = blockNrs.get(trueNr);
-        }
-        else if (!hasOnlyMemPred){
-            this.appendMolkiCode("mov %@" + registerNrs.get(trueNr) + ", %@r0");
-        }
-        else if (hasOnlyMemPred) {
-            succBlockNr = blockNrs.get(trueNr);
-        }
-
-        if (cmp.getRelation().equals(Relation.Less)) {
-            this.appendMolkiCode("jl L" + succBlockNr);
-        }
-        else if (cmp.getRelation().equals(Relation.LessEqual)) {
-            this.appendMolkiCode("jle L" + succBlockNr);
-        }
-        else if (cmp.getRelation().equals(Relation.GreaterEqual)) {
-            this.appendMolkiCode("jg L" + succBlockNr);
-        }
-        else if (cmp.getRelation().equals(Relation.GreaterEqual)) {
-            this.appendMolkiCode("jge L" + succBlockNr);
-        }
-        else if (cmp.getRelation().equals(Relation.Equal)) {
-            this.appendMolkiCode("je L" + succBlockNr);
-        }
-        // TODO: what is the diff between `negated` and `inversed`?
-        else if (cmp.getRelation().equals(Relation.Equal.negated())) {
-            this.appendMolkiCode("jne L" + succBlockNr);
-        }
     }
 
     @Override
     public void visit(Const aConst) {
-        if (aConst.getMode().equals(Mode.getb())) {
-            List<Integer> blockNrs = new ArrayList<>();
-            List<Integer> projNrs = new ArrayList<>();
-
-            // get Conditions
-            for (BackEdges.Edge edge : BackEdges.getOuts(aConst)) {
-                // get Projections
-                for (BackEdges.Edge condEdge : BackEdges.getOuts(edge.node)) {
-                    // get Blocks
-                    for (BackEdges.Edge projEdge : BackEdges.getOuts(condEdge.node)) {
-                        Block block = (Block) projEdge.node;
-                        blockNrs.add(block.getNr());
-                        projNrs.add(condEdge.node.getNr());
-                    }
-                }
-                break;
-            }
-
-            // sometimes, firm switches the position of the proj nodes
-            boolean projAreReversed = projNrs.get(0) > projNrs.get(1);
-            int trueNr = projAreReversed ? 1 : 0;
-            int falseNr = projAreReversed ? 0 : 1;
-
-            if (aConst.getTarval().equals(TargetValue.getBTrue())) {
-                this.appendMolkiCode("jmp L" + blockNrs.get(trueNr));
-            }
-            else {
-                this.appendMolkiCode("jmp L" + blockNrs.get(falseNr));
-            }
-        }
-        else {
+        if (!aConst.getMode().equals(Mode.getb())) {
             String constant = CONST_PREFIX + String.valueOf(aConst.getTarval().asInt());
             int targetReg = this.nodeToRegIndex.get(aConst);
 
@@ -422,9 +300,7 @@ public class TransformVisitor extends Default {
 
     @Override
     public void visit(Load load) {
-        int pointerReg = this.nodeToRegIndex.get(load.getPtr());
         int targetReg = this.nodeToRegIndex.get(load);
-        int blockNr = load.getBlock().getNr();
 
         if (load.getPred(1) instanceof Sel) {
             Sel sel = (Sel) load.getPred(1);
@@ -433,7 +309,17 @@ public class TransformVisitor extends Default {
 
             this.appendMolkiCode("mov (" + REG_PREFIX + baseReg + ", " + REG_PREFIX + indexReg + ", " + sel.getType().getAlignment() + "), " + REG_PREFIX + targetReg);
         }
+        else if (load.getPred(1) instanceof Member) {
+            Member member = (Member) load.getPred(1);
+            int baseReg = this.nodeToRegIndex.get(member.getPtr());
+            // TODO: how to calculate the offset for several members?
+            int offset = member.getEntity().getOffset();
+
+            this.appendMolkiCode("mov " + offset + "(" + REG_PREFIX + baseReg + "), " + REG_PREFIX + targetReg);
+        }
         else {
+            int pointerReg = this.nodeToRegIndex.get(load.getPtr());
+
             this.appendMolkiCode("mov " + "(" + REG_PREFIX + pointerReg + "), " + REG_PREFIX + targetReg);
         }
     }
@@ -509,15 +395,6 @@ public class TransformVisitor extends Default {
 
     @Override
     public void visit(Sel sel) {
-        int pointerReg = this.nodeToRegIndex.get(sel.getPtr());
-        int indexReg = this.nodeToRegIndex.get(sel.getIndex());
-        int targetReg = this.nodeToRegIndex.get(sel);
-
-        String indexString = REG_PREFIX + indexReg;
-        String pointerString = REG_PREFIX + pointerReg;
-        String targetString = REG_PREFIX + targetReg;
-        int blockNr = sel.getBlock().getNr();
-
     }
 
     @Override
@@ -527,9 +404,7 @@ public class TransformVisitor extends Default {
 
     @Override
     public void visit(Store store) {
-        int pointerReg = this.nodeToRegIndex.get(store.getPtr());
         int storeReg = this.nodeToRegIndex.get(store.getValue());
-        int blockNr = store.getBlock().getNr();
 
         if (store.getPred(1) instanceof Sel) {
             Sel sel = (Sel) store.getPred(1);
@@ -538,7 +413,16 @@ public class TransformVisitor extends Default {
 
             this.appendMolkiCode("mov " + REG_PREFIX + storeReg + ", (" + REG_PREFIX + baseReg + ", " + REG_PREFIX + indexReg + ", " + sel.getType().getAlignment() + ")");
         }
+        else if (store.getPred(1) instanceof Member) {
+            Member member = (Member) store.getPred(1);
+            int baseReg = this.nodeToRegIndex.get(member.getPtr());
+            // TODO: how to calculate the offset for several members?
+            int offset = member.getEntity().getOffset();
+
+            this.appendMolkiCode("mov " + REG_PREFIX + storeReg + ", " + offset + "(" + REG_PREFIX + baseReg + ")");
+        }
         else {
+            int pointerReg = this.nodeToRegIndex.get(store.getPtr());
             this.appendMolkiCode("mov " + REG_PREFIX + storeReg + ", (" + REG_PREFIX + pointerReg + ")");
         }
     }
@@ -560,8 +444,98 @@ public class TransformVisitor extends Default {
     }
 
     @Override
-    public void visit(Cond node) {
-        //nothing to do
+    public void visit(Cond cond) {
+        // jmp asm
+        int succBlockNr = -1;
+        boolean hasReturn = false;
+        boolean hasOnlyMemPred = false;
+
+        List<Integer> blockNrs = new ArrayList<>();
+        List<Integer> projNrs = new ArrayList<>();
+        List<Integer> registerNrs = new ArrayList<>();
+
+        // get projections out of Condition
+        for (BackEdges.Edge condEdge : BackEdges.getOuts(cond)) {
+            // get Blocks
+            for (BackEdges.Edge projEdge : BackEdges.getOuts(condEdge.node)) {
+                Block block = (Block) projEdge.node;
+
+                // get first node of block
+                // TODO: can this be solved more elegantly?
+                for (BackEdges.Edge blockEdge : BackEdges.getOuts(block)) {
+                    if (blockEdge.node instanceof Return) {
+                        Return aReturn = (Return) blockEdge.node;
+                        hasReturn = true;
+                        hasOnlyMemPred = aReturn.getPredCount() <= 1;
+
+                        if (!hasOnlyMemPred) {
+                            succBlockNr = block.getGraph().getEndBlock().getNr();
+                            registerNrs.add(this.nodeToRegIndex.get(aReturn.getPred(1)));
+                        }
+                    }
+                }
+                blockNrs.add(block.getNr());
+                projNrs.add(condEdge.node.getNr());
+            }
+        }
+
+        // sometimes, firm switches the position of the proj nodes
+        boolean projAreReversed = projNrs.get(0) > projNrs.get(1);
+        boolean blocksReversed = blockNrs.get(0) < blockNrs.get(1);
+        int trueNr = projAreReversed ? 1 : 0;
+        int falseNr = projAreReversed ? 0 : 1;
+
+        if (!hasReturn) {
+            succBlockNr = blocksReversed ? blockNrs.get(falseNr) : blockNrs.get(trueNr);
+        }
+        else if (!hasOnlyMemPred){
+            this.appendMolkiCode("mov %@" + registerNrs.get(trueNr) + ", %@r0");
+        }
+        else if (hasOnlyMemPred) {
+            succBlockNr = blockNrs.get(trueNr);
+        }
+
+        Node selector = cond.getSelector();
+
+        if (selector instanceof Cmp) {
+            Cmp cmp = (Cmp) selector;
+
+            if (cmp.getRelation().equals(Relation.Less)) {
+                String jmp = blocksReversed ? "jge" : "jl";
+                this.appendMolkiCode(jmp + " L" + succBlockNr);
+            }
+            else if (cmp.getRelation().equals(Relation.LessEqual)) {
+                String jmp = blocksReversed ? "jg" : "jle";
+                this.appendMolkiCode(jmp + " L" + succBlockNr);
+            }
+            else if (cmp.getRelation().equals(Relation.Greater)) {
+                String jmp = blocksReversed ? "jle" : "jg";
+                this.appendMolkiCode(jmp + " L" + succBlockNr);
+            }
+            else if (cmp.getRelation().equals(Relation.GreaterEqual)) {
+                String jmp = blocksReversed ? "jl" : "jge";
+                this.appendMolkiCode(jmp + " L" + succBlockNr);
+            }
+            else if (cmp.getRelation().equals(Relation.Equal)) {
+                String jmp = blocksReversed ? "jne" : "je";
+                this.appendMolkiCode(jmp + " L" + succBlockNr);
+            }
+            else if (cmp.getRelation().equals(Relation.Equal.negated())) {
+                String jmp = blocksReversed ? "je" : "jne";
+                this.appendMolkiCode(jmp + " L" + succBlockNr);
+            }
+        }
+        // in all other cases we should be a boolean constant
+        else {
+            Const aConst = (Const) selector;
+
+            if (aConst.getTarval().equals(TargetValue.getBTrue())) {
+                this.appendMolkiCode("jmp L" + blockNrs.get(trueNr));
+            }
+            else {
+                this.appendMolkiCode("jmp L" + blockNrs.get(falseNr));
+            }
+        }
     }
 
     @Override
