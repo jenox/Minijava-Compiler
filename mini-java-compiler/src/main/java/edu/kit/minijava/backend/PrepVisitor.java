@@ -23,7 +23,7 @@ public class PrepVisitor extends Default {
         return this.blockId2Nodes;
     }
     public HashMap<Graph, List<Integer>> getGraph2BlockId() {
-        return graph2BlockId;
+        return this.graph2BlockId;
     }
 
     @Override
@@ -214,10 +214,11 @@ public class PrepVisitor extends Default {
     }
 
     private void addInstrToBlock(Integer blockNr, Node node) {
-        blockNr = blockNr == null ? node.getBlock().getNr() : blockNr;
-        if (this.blockId2Nodes.get(blockNr) == null) {
-            this.blockId2Nodes.put(blockNr, new ArrayList<>());
+        int temp = blockNr == null ? node.getBlock().getNr() : blockNr;
+
+        if (this.blockId2Nodes.get(temp) == null) {
+            this.blockId2Nodes.put(temp, new ArrayList<>());
         }
-        this.blockId2Nodes.get(blockNr).add(node);
+        this.blockId2Nodes.get(temp).add(node);
     }
 }

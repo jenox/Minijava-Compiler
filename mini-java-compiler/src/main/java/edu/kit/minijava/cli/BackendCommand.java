@@ -1,4 +1,4 @@
-        package edu.kit.minijava.cli;
+package edu.kit.minijava.cli;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -80,7 +80,7 @@ public class BackendCommand extends Command {
                 graph2BlockId.get(g).forEach(i -> {
                     // move jmps to the end of the block
                     String jmpString = null;
-                    for(String str : molkiCode.get(i)) {
+                    for (String str : molkiCode.get(i)) {
                         if (str.contains("jmp")) {
                             jmpString = str;
                         }
@@ -103,6 +103,9 @@ public class BackendCommand extends Command {
 
             Path file = Paths.get("a.molki.s");
             Files.write(file, output, Charset.forName("UTF-8"));
+
+            Runtime rt = Runtime.getRuntime();
+            Process pr = rt.exec("python3.6 ../molki/molki.py compile a.molki.s -o a.out");
 
             return 0;
         }

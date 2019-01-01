@@ -1,4 +1,4 @@
-            package edu.kit.minijava.backend;
+package edu.kit.minijava.backend;
 
 import java.util.*;
 
@@ -55,91 +55,91 @@ public class MolkiTransformer extends Default {
         switch (node.getOpCode()) {
             case iro_Add:
                 Add add = (Add) node;
-                visit(add);
+                this.visit(add);
                 break;
             case iro_Sub:
                 Sub sub = (Sub) node;
-                visit(sub);
+                this.visit(sub);
                 break;
             case iro_Mul:
                 Mul mul = (Mul) node;
-                visit(mul);
+                this.visit(mul);
                 break;
             case iro_Div:
                 Div div = (Div) node;
-                visit(div);
+                this.visit(div);
                 break;
             case iro_Mod:
                 Mod mod = (Mod) node;
-                visit(mod);
+                this.visit(mod);
                 break;
             case iro_Address:
                 Address address = (Address) node;
-                visit(address);
+                this.visit(address);
                 break;
             case iro_Call:
                 Call call = (Call) node;
-                visit(call);
+                this.visit(call);
                 break;
             case iro_Cmp:
                 Cmp cmp = (Cmp) node;
-                visit(cmp);
+                this.visit(cmp);
                 break;
             case iro_Const:
                 Const aConst = (Const) node;
-                visit(aConst);
+                this.visit(aConst);
                 break;
             case iro_End:
                 End aEnd = (End) node;
-                visit(aEnd);
+                this.visit(aEnd);
                 break;
             case iro_Jmp:
                 Jmp aJmp = (Jmp) node;
-                visit(aJmp);
+                this.visit(aJmp);
                 break;
             case iro_Load:
                 Load aLoad = (Load) node;
-                visit(aLoad);
+                this.visit(aLoad);
                 break;
             case iro_Minus:
                 Minus aMinus = (Minus) node;
-                visit(aMinus);
+                this.visit(aMinus);
                 break;
             case iro_Not:
                 Not aNot = (Not) node;
-                visit(aNot);
+                this.visit(aNot);
                 break;
             case iro_Phi:
                 Phi aPhi = (Phi) node;
-                visit(aPhi);
+                this.visit(aPhi);
                 break;
             case iro_Return:
                 Return aReturn = (Return) node;
-                visit(aReturn);
+                this.visit(aReturn);
                 break;
             case iro_Sel:
                 Sel aSel = (Sel) node;
-                visit(aSel);
+                this.visit(aSel);
                 break;
             case iro_Start:
                 Start aStart = (Start) node;
-                visit(aStart);
+                this.visit(aStart);
                 break;
             case iro_Store:
                 Store aStore = (Store) node;
-                visit(aStore);
+                this.visit(aStore);
                 break;
             case iro_Proj:
                 Proj aProj = (Proj) node;
-                visit(aProj);
+                this.visit(aProj);
                 break;
             case iro_Cond:
                 Cond aCond = (Cond) node;
-                visit(aCond);
+                this.visit(aCond);
                 break;
             case iro_Member:
                 Member aMember = (Member) node;
-                visit(aMember);
+                this.visit(aMember);
                 break;
             default:
                 throw new UnsupportedOperationException("unknown node " + node.getClass());
@@ -163,19 +163,7 @@ public class MolkiTransformer extends Default {
 
     @Override
     public void visit(Block block) {
-
-        // TODO: what does this access to nodeToPhiReg do?
-        //if (this.currentBlock != null && this.nodeToPhiReg.containsKey(this.currentBlock)) {
-        //    int sourceReg = this.nodeToRegIndex.get(block);
-        //    for (int targetReg : this.nodeToPhiReg.get(this.currentBlock)) {
-        //        this.appendTwoAdressCommand(blockNr, "mov", sourceReg, targetReg);
-        //    }
-        //}
-
-        //this.currentBlock = block;
-
-        //String name = "L" + block.getNr();
-        //this.appendMolkiCodeNoIndent(name + ":");
+        // nothing to do here
     }
 
     @Override
@@ -183,18 +171,9 @@ public class MolkiTransformer extends Default {
 
         Address address = (Address) call.getPred(1);
         String functionName = address.getEntity().getName().replace('.', '_');
-        int blockNr = call.getBlock().getNr();
-
-        // TODO: check, if this works as intended
 
         // ignore first two preds, ie memory and function adress
         int start = 2;
-
-        //if (!functionName.equals("minijava_main") && !functionName.equals("system_out_println")
-        //                && !functionName.equals("system_out_write") && !functionName.equals("system_out_flush")
-        //                && !functionName.equals("system_in_read") && !functionName.equals("alloc_mem")) {
-        //    start++; // ignore this pred, which is object pointer
-        //}
 
         String args = "";
 
@@ -307,7 +286,10 @@ public class MolkiTransformer extends Default {
             int baseReg = this.nodeToRegIndex.get(sel.getPtr());
             int indexReg = this.nodeToRegIndex.get(sel.getIndex());
 
-            this.appendMolkiCode("mov (" + REG_PREFIX + baseReg + ", " + REG_PREFIX + indexReg + ", " + sel.getType().getAlignment() + "), " + REG_PREFIX + targetReg);
+            this.appendMolkiCode(
+                    "mov (" + REG_PREFIX + baseReg  + ", "
+                            + REG_PREFIX + indexReg + ", "
+                            + sel.getType().getAlignment() + "), " + REG_PREFIX + targetReg);
         }
         else if (load.getPred(1) instanceof Member) {
             Member member = (Member) load.getPred(1);
@@ -364,22 +346,27 @@ public class MolkiTransformer extends Default {
 
     @Override
     public void visit(Phi phi) {
-        int blockNr = phi.getBlock().getNr();
-
         if (!phi.getMode().equals(Mode.getM())) {
             // TODO: don't know what to do here
-            // if preds are in the same block, just take the left one
-            int predZeroBlockNr = phi.getPred(0).getBlock().getNr();
-            int predOneBlockNr = phi.getPred(1).getBlock().getNr();
+            // if preds are in same block, the second one has to get into the follower block
+            int predZeroNr = phi.getPred(0).getBlock().getNr();
+            int predOneNr = phi.getPred(1).getBlock().getNr();
+
+            if (predZeroNr == predOneNr) {
+                int predZeroReg = this.nodeToRegIndex.get(phi.getPred(0));
+                this.appendMolkiCode("mov %@" + predZeroReg + ", %@"
+                        + this.nodeToRegIndex.get(phi), phi.getPred(0).getBlock().getNr());
 
 
-            if (predZeroBlockNr == predOneBlockNr) {
-                this.appendMolkiCode("mov %@" + this.nodeToRegIndex.get(phi.getPred(0)) + ", %@" + this.nodeToRegIndex.get(phi));
+                // TODO: is the `loop` block always the first pred?
+                int predOneReg = this.nodeToRegIndex.get(phi.getPred(1));
+                this.appendMolkiCode("mov %@" + predOneReg + ", %@"
+                        + this.nodeToRegIndex.get(phi), phi.getBlock().getPred(1).getBlock().getNr());
             }
             else {
-                // if preds are in different blocks, put store instructions there
                 phi.getPreds().forEach(pred -> {
-                    this.appendMolkiCode("mov %@" + this.nodeToRegIndex.get(pred) + ", %@" + this.nodeToRegIndex.get(phi), pred.getBlock().getNr());
+                    this.appendMolkiCode("mov %@" + this.nodeToRegIndex.get(pred) + ", %@"
+                            + this.nodeToRegIndex.get(phi), pred.getBlock().getNr());
                 });
             }
 
@@ -411,7 +398,10 @@ public class MolkiTransformer extends Default {
             int baseReg = this.nodeToRegIndex.get(sel.getPtr());
             int indexReg = this.nodeToRegIndex.get(sel.getIndex());
 
-            this.appendMolkiCode("mov " + REG_PREFIX + storeReg + ", (" + REG_PREFIX + baseReg + ", " + REG_PREFIX + indexReg + ", " + sel.getType().getAlignment() + ")");
+            this.appendMolkiCode("mov " + REG_PREFIX + storeReg
+                    + ", (" + REG_PREFIX + baseReg + ", "
+                    + REG_PREFIX + indexReg + ", "
+                    + sel.getType().getAlignment() + ")");
         }
         else if (store.getPred(1) instanceof Member) {
             Member member = (Member) store.getPred(1);
@@ -488,8 +478,9 @@ public class MolkiTransformer extends Default {
         if (!hasReturn) {
             succBlockNr = blocksReversed ? blockNrs.get(falseNr) : blockNrs.get(trueNr);
         }
-        else if (!hasOnlyMemPred){
+        else if (!hasOnlyMemPred) {
             this.appendMolkiCode("mov %@" + registerNrs.get(trueNr) + ", %@r0");
+            blocksReversed = false;
         }
         else if (hasOnlyMemPred) {
             succBlockNr = blockNrs.get(trueNr);
