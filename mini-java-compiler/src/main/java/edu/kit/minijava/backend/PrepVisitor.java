@@ -134,12 +134,19 @@ public class PrepVisitor extends Default {
                             && !proj.getMode().equals(Mode.getM())) {
                 register = this.node2regIndex.get(pred.getPred(0));
             }
+            else if (pred.getPredCount() > 1 && !proj.getMode().equals(Mode.getX())
+                        && !proj.getMode().equals(Mode.getT())
+                        && !proj.getMode().equals(Mode.getM())
+                        && pred.getPred(0) instanceof Phi) {
+                register = this.node2regIndex.get(pred);
+            }
             // existing memory predecessor
             else if (pred.getPredCount() > 1 && !proj.getMode().equals(Mode.getX())
                         && !proj.getMode().equals(Mode.getT())
                         && !proj.getMode().equals(Mode.getM())) {
-                    register = this.node2regIndex.get(pred.getPred(1));
+                register = this.node2regIndex.get(pred.getPred(1));
             }
+
             else {
                 return;
             }
@@ -232,6 +239,13 @@ public class PrepVisitor extends Default {
         this.node2regIndex.put(not, reg);
 
         this.addInstrToBlock(null, not);
+    }
+
+    @Override
+    public void visit(Store store) {
+        this.node2regIndex.put(store, this.registerIndex++);
+
+        this.addInstrToBlock(null, store);
     }
 
     @Override

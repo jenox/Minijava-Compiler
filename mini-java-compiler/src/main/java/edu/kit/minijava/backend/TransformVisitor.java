@@ -341,8 +341,6 @@ public class TransformVisitor extends Default {
 
     @Override
     public void visit(Const aConst) {
-        int blockNr = aConst.getBlock().getNr();
-
         if (aConst.getMode().equals(Mode.getb())) {
             List<Integer> blockNrs = new ArrayList<>();
             List<Integer> projNrs = new ArrayList<>();
@@ -377,7 +375,18 @@ public class TransformVisitor extends Default {
             String constant = CONST_PREFIX + String.valueOf(aConst.getTarval().asInt());
             int targetReg = this.nodeToRegIndex.get(aConst);
 
-            this.appendMolkiCode("mov " + constant + ", %@" + targetReg);
+            boolean isUsedInPhi = false;
+            for (BackEdges.Edge edge : BackEdges.getOuts(aConst)) {
+                if (edge.node instanceof Phi) {
+                    isUsedInPhi = true;
+
+                    this.appendMolkiCode("mov " + constant + ", %@" + targetReg, aConst.getBlock().getNr());
+                }
+            }
+
+            if (!isUsedInPhi) {
+                this.appendMolkiCode("mov " + constant + ", %@" + targetReg);
+            }
         }
     }
 
@@ -417,7 +426,16 @@ public class TransformVisitor extends Default {
         int targetReg = this.nodeToRegIndex.get(load);
         int blockNr = load.getBlock().getNr();
 
-        this.appendMolkiCode("mov " + "(" + REG_PREFIX + pointerReg + "), " + REG_PREFIX + targetReg);
+        if (load.getPred(1) instanceof Sel) {
+            Sel sel = (Sel) load.getPred(1);
+            int baseReg = this.nodeToRegIndex.get(sel.getPtr());
+            int indexReg = this.nodeToRegIndex.get(sel.getIndex());
+
+            this.appendMolkiCode("mov (" + REG_PREFIX + baseReg + ", " + REG_PREFIX + indexReg + ", " + sel.getType().getAlignment() + "), " + REG_PREFIX + targetReg);
+        }
+        else {
+            this.appendMolkiCode("mov " + "(" + REG_PREFIX + pointerReg + "), " + REG_PREFIX + targetReg);
+        }
     }
 
     @Override
@@ -500,7 +518,6 @@ public class TransformVisitor extends Default {
         String targetString = REG_PREFIX + targetReg;
         int blockNr = sel.getBlock().getNr();
 
-        this.appendMolkiCode("mov " + indexString + "(" + pointerString + "), %@" + targetString);
     }
 
     @Override
@@ -511,10 +528,19 @@ public class TransformVisitor extends Default {
     @Override
     public void visit(Store store) {
         int pointerReg = this.nodeToRegIndex.get(store.getPtr());
-        int storeReg = this.nodeToRegIndex.get(store);
+        int storeReg = this.nodeToRegIndex.get(store.getValue());
         int blockNr = store.getBlock().getNr();
 
-        this.appendMolkiCode("mov " + REG_PREFIX + storeReg + ", (" + REG_PREFIX + pointerReg + ")");
+        if (store.getPred(1) instanceof Sel) {
+            Sel sel = (Sel) store.getPred(1);
+            int baseReg = this.nodeToRegIndex.get(sel.getPtr());
+            int indexReg = this.nodeToRegIndex.get(sel.getIndex());
+
+            this.appendMolkiCode("mov " + REG_PREFIX + storeReg + ", (" + REG_PREFIX + baseReg + ", " + REG_PREFIX + indexReg + ", " + sel.getType().getAlignment() + ")");
+        }
+        else {
+            this.appendMolkiCode("mov " + REG_PREFIX + storeReg + ", (" + REG_PREFIX + pointerReg + ")");
+        }
     }
 
     @Override
