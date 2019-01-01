@@ -15,21 +15,18 @@ public class TransformVisitor extends Default {
     private static final String INDENT = "    "; // 4 spaces
     private static final String REG_PREFIX = "%@";
     private static final String CONST_PREFIX = "$";
+    private int currentBlockNr;
 
     // ATTRIBUTES
-    private ArrayList<String> molkiCode = new ArrayList<>();
+    private HashMap<Integer, List<String>> molkiCode = new HashMap<>();
 
-    private HashMap<Address, String> ptr2Name = new HashMap<>();
-    // primarily for jmps to look up the block where they jump to
-    private HashMap<Node, List<Integer>> jmp2BlockName;
     // primarily for projections to save their register index
     private HashMap<Node, Integer> nodeToRegIndex;
     private HashMap<Node, List<Integer>> nodeToPhiReg;
 
-    private Node currentBlock = null;
 
     // GETTERS & SETTERS
-    public ArrayList<String> getMolkiCode() {
+    public HashMap<Integer, List<String>> getMolkiCode() {
         return this.molkiCode;
     }
 
@@ -39,41 +36,43 @@ public class TransformVisitor extends Default {
      * @param molkiCode string inserted with correct indentation and linebreak at end.
      */
     public void appendMolkiCode(String molkiCode) {
-        this.molkiCode.add(INDENT + molkiCode);
+        if (this.molkiCode.get(this.currentBlockNr) == null) {
+            this.molkiCode.put(this.currentBlockNr, new ArrayList<>());
+        }
+
+        this.molkiCode.get(this.currentBlockNr).add(INDENT + molkiCode);
     }
 
-    public void appendMolkiCodeNoIndent(String code) {
-        this.molkiCode.add(code);
+    public void appendMolkiCode(String molkiCode, int blockNr) {
+        this.molkiCode.get(blockNr).add(INDENT + molkiCode);
     }
 
-    public TransformVisitor(HashMap<Node, List<Integer>> jmp2BlockName, HashMap<Node, Integer> proj2regIndex,
-                    HashMap<Node, List<Integer>> nodeToPhiReg, HashMap<Address, String> ptr2Name) {
-        this.jmp2BlockName = jmp2BlockName;
+    public TransformVisitor(HashMap<Node, Integer> proj2regIndex, HashMap<Node, List<Integer>> nodeToPhiReg) {
         this.nodeToRegIndex = proj2regIndex;
         this.nodeToPhiReg = nodeToPhiReg;
-        this.ptr2Name = ptr2Name;
     }
 
     // METHODS
-    private boolean stackSlotAssigned(Node node) {
-        return false;
-    }
+    //private boolean stackSlotAssigned(Node node) {
+    //    return false;
+    //}
 
-    private int getStackSlotOffset(Node node) {
-        return 0;
-    }
+    //private int getStackSlotOffset(Node node) {
+    //    return 0;
+    //}
 
-    private void getValue(Node node, int destReg) {
-        if (stackSlotAssigned(node)) {
-            int offset = getStackSlotOffset(node);
-            System.out.printf("\tmovl %d(%%rbp), %@d # reload for %s\n", offset, destReg, node);
-            return;
-        }
-        createValue(node);
-    }
+    //private void getValue(Node node, int destReg) {
+    //    if (stackSlotAssigned(node)) {
+    //        int offset = getStackSlotOffset(node);
+    //        System.out.printf("\tmovl %d(%%rbp), %@d # reload for %s\n", offset, destReg, node);
+    //        return;
+    //    }
+    //    createValue(node);
+    //}
 
-    public void createValue(Node node) {
-        // TODO: change visit methods to use printf
+    public void createValue(int blockNr, Node node) {
+        this.currentBlockNr = blockNr;
+
         switch (node.getOpCode()) {
             case iro_Add:
                 Add add = (Add) node;
@@ -173,8 +172,9 @@ public class TransformVisitor extends Default {
         int srcReg1 = this.nodeToRegIndex.get(add.getLeft());
         int srcReg2 = this.nodeToRegIndex.get(add.getRight());
         int targetReg = this.nodeToRegIndex.get(add);
+        int blockNr = add.getBlock().getNr();
 
-        this.appendThreeAdressCommand("add", srcReg1, srcReg2, targetReg);
+        this.appendThreeAdressCommand(blockNr, "add", srcReg1, srcReg2, targetReg);
     }
 
     @Override
@@ -189,7 +189,7 @@ public class TransformVisitor extends Default {
         //if (this.currentBlock != null && this.nodeToPhiReg.containsKey(this.currentBlock)) {
         //    int sourceReg = this.nodeToRegIndex.get(block);
         //    for (int targetReg : this.nodeToPhiReg.get(this.currentBlock)) {
-        //        this.appendTwoAdressCommand("mov", sourceReg, targetReg);
+        //        this.appendTwoAdressCommand(blockNr, "mov", sourceReg, targetReg);
         //    }
         //}
 
@@ -202,7 +202,9 @@ public class TransformVisitor extends Default {
     @Override
     public void visit(Call call) {
 
-        String functionName = this.ptr2Name.get(call.getPtr());
+        Address address = (Address) call.getPred(1);
+        String functionName = address.getEntity().getName().replace('.', '_');
+        int blockNr = call.getBlock().getNr();
 
         // TODO: check, if this works as intended
 
@@ -262,14 +264,18 @@ public class TransformVisitor extends Default {
     public void visit(Cmp cmp) {
         int srcReg1 = this.nodeToRegIndex.get(cmp.getRight());
         int srcReg2 = this.nodeToRegIndex.get(cmp.getLeft());
+        int blockNr = cmp.getBlock().getNr();
 
         this.appendMolkiCode("cmp %@" + srcReg1 + ", %@" + srcReg2);
     }
 
     @Override
     public void visit(Const aConst) {
+        int blockNr = aConst.getBlock().getNr();
+
         if (aConst.getMode().equals(Mode.getb())) {
             List<Integer> blockNrs = new ArrayList<>();
+            List<Integer> projNrs = new ArrayList<>();
 
             // get Conditions
             for (BackEdges.Edge edge : BackEdges.getOuts(aConst)) {
@@ -279,12 +285,23 @@ public class TransformVisitor extends Default {
                     for (BackEdges.Edge projEdge : BackEdges.getOuts(condEdge.node)) {
                         Block block = (Block) projEdge.node;
                         blockNrs.add(block.getNr());
+                        projNrs.add(condEdge.node.getNr());
                     }
                 }
                 break;
             }
 
-            this.appendMolkiCode("jmp L" + blockNrs.get(0));
+            // sometimes, firm switches the position of the proj nodes
+            boolean projAreReversed = projNrs.get(0) > projNrs.get(1);
+            int trueNr = projAreReversed ? 1 : 0;
+            int falseNr = projAreReversed ? 0 : 1;
+
+            if (aConst.getTarval().equals(TargetValue.getBTrue())) {
+                this.appendMolkiCode("jmp L" + blockNrs.get(trueNr));
+            }
+            else {
+                this.appendMolkiCode("jmp L" + blockNrs.get(falseNr));
+            }
         }
         else {
             String constant = CONST_PREFIX + String.valueOf(aConst.getTarval().asInt());
@@ -301,6 +318,7 @@ public class TransformVisitor extends Default {
 
         int targetReg1 = this.nodeToRegIndex.get(div);
         int targetReg2 = targetReg1 + 1; // by convention used in PrepVisitor
+        int blockNr = div.getBlock().getNr();
 
         this.appendMolkiCode("idiv [ %@" + left + " | %@" + right + " ]" + " -> [ %@" + targetReg1 + ", " + REG_PREFIX
                         + targetReg2 + "]");
@@ -313,9 +331,12 @@ public class TransformVisitor extends Default {
 
     @Override
     public void visit(Jmp jmp) {
-        this.appendMolkiCode("# jmp ");
-        this.appendMolkiCode("# block nr " + jmp.getBlock().getNr());
-        this.appendMolkiCode("jmp " + this.getBlockLabel(jmp));
+        int blockNr = jmp.getBlock().getNr();
+        for (BackEdges.Edge edge : BackEdges.getOuts(jmp)) {
+            Block block = (Block) edge.node;
+            this.appendMolkiCode("jmp L" + block.getNr());
+            break;
+        }
     }
 
 
@@ -324,6 +345,7 @@ public class TransformVisitor extends Default {
     public void visit(Load load) {
         int pointerReg = this.nodeToRegIndex.get(load.getPtr());
         int targetReg = this.nodeToRegIndex.get(load);
+        int blockNr = load.getBlock().getNr();
 
         this.appendMolkiCode("mov " + "(" + REG_PREFIX + pointerReg + "), " + REG_PREFIX + targetReg);
     }
@@ -331,6 +353,7 @@ public class TransformVisitor extends Default {
     @Override
     public void visit(Minus minus) {
         int reg = this.nodeToRegIndex.get(minus.getOp());
+        int blockNr = minus.getBlock().getNr();
         this.appendMolkiCode("neg " + REG_PREFIX + reg);
     }
 
@@ -341,6 +364,7 @@ public class TransformVisitor extends Default {
 
         int targetReg1 = this.nodeToRegIndex.get(mod);
         int targetReg2 = targetReg1 + 1; // by convention used in PrepVisitor
+        int blockNr = mod.getBlock().getNr();
 
         this.appendMolkiCode("imod [ " + REG_PREFIX + srcReg1 + " | " + REG_PREFIX + srcReg2 + " ]" + " -> [ %@"
                         + REG_PREFIX + targetReg1 + " | %@" + targetReg2 + "]");
@@ -352,23 +376,39 @@ public class TransformVisitor extends Default {
         int srcReg2 = this.nodeToRegIndex.get(mul.getRight());
 
         int targetReg = this.nodeToRegIndex.get(mul);
+        int blockNr = mul.getBlock().getNr();
 
-        this.appendThreeAdressCommand("mul", srcReg1, srcReg2, targetReg);
+        this.appendThreeAdressCommand(blockNr, "mul", srcReg1, srcReg2, targetReg);
     }
 
     @Override
     public void visit(Not not) {
         int reg = this.nodeToRegIndex.get(not.getOp());
+        int blockNr = not.getBlock().getNr();
         this.appendMolkiCode("not " + REG_PREFIX + reg);
     }
 
     @Override
     public void visit(Phi phi) {
-        // TODO: this is wrong
+        int blockNr = phi.getBlock().getNr();
+
         if (!phi.getMode().equals(Mode.getM())) {
-            phi.getPreds().forEach(pred -> {
-                this.appendMolkiCode("mov %@" + this.nodeToRegIndex.get(pred) + ", %@" + this.nodeToRegIndex.get(phi));
-            });
+            // TODO: don't know what to do here
+            // if preds are in the same block, just take the left one
+            int predZeroBlockNr = phi.getPred(0).getBlock().getNr();
+            int predOneBlockNr = phi.getPred(1).getBlock().getNr();
+
+
+            if (predZeroBlockNr == predOneBlockNr) {
+                this.appendMolkiCode("mov %@" + this.nodeToRegIndex.get(phi.getPred(0)) + ", %@" + this.nodeToRegIndex.get(phi));
+            }
+            else {
+                // if preds are in different blocks, put store instructions there
+                phi.getPreds().forEach(pred -> {
+                    this.appendMolkiCode("mov %@" + this.nodeToRegIndex.get(pred) + ", %@" + this.nodeToRegIndex.get(phi), pred.getBlock().getNr());
+                });
+            }
+
         }
     }
 
@@ -376,6 +416,7 @@ public class TransformVisitor extends Default {
     public void visit(Return aReturn) {
         Node currentBlock = aReturn.getBlock();
         Block startBlock = currentBlock.getGraph().getStartBlock();
+        int blockNr = aReturn.getBlock().getNr();
 
         // check if we're the main function
         if (!currentBlock.equals(startBlock)) {
@@ -387,10 +428,10 @@ public class TransformVisitor extends Default {
             // check if we aren't in the fallthrough block
             if (!currentBlock.equals(aReturn.getPred(0).getBlock())) {
                 // get block nr of the successor block
-                int blockNr = -1;
+                int succBlockNr = -1;
                 for (BackEdges.Edge edge : BackEdges.getOuts(aReturn)) {
                     Block block = (Block) edge.node;
-                    blockNr = block.getNr();
+                    succBlockNr = block.getNr();
                     break;
                 }
 
@@ -400,27 +441,27 @@ public class TransformVisitor extends Default {
                     Cmp tempCmp = (Cmp) aReturn.getBlock().getPred(0).getPred(0).getPred(0);
 
                     if (tempCmp.getRelation().equals(Relation.Less)) {
-                        this.appendMolkiCode("jl L" + blockNr);
+                        this.appendMolkiCode("jl L" + succBlockNr);
                     }
                     else if (tempCmp.getRelation().equals(Relation.LessEqual)) {
-                        this.appendMolkiCode("jle L" + blockNr);
+                        this.appendMolkiCode("jle L" + succBlockNr);
                     }
                     else if (tempCmp.getRelation().equals(Relation.GreaterEqual)) {
-                        this.appendMolkiCode("jg L" + blockNr);
+                        this.appendMolkiCode("jg L" + succBlockNr);
                     }
                     else if (tempCmp.getRelation().equals(Relation.GreaterEqual)) {
-                        this.appendMolkiCode("jge L" + blockNr);
+                        this.appendMolkiCode("jge L" + succBlockNr);
                     }
                     else if (tempCmp.getRelation().equals(Relation.Equal)) {
-                        this.appendMolkiCode("je L" + blockNr);
+                        this.appendMolkiCode("je L" + succBlockNr);
                     }
                     // TODO: what is the diff between `negated` and `inversed`?
                     else if (tempCmp.getRelation().equals(Relation.Equal.negated())) {
-                        this.appendMolkiCode("jne L" + blockNr);
+                        this.appendMolkiCode("jne L" + succBlockNr);
                     }
                 }
                 else {
-                    this.appendMolkiCode("jmp L" + blockNr);
+                    this.appendMolkiCode("jmp L" + succBlockNr);
                 }
             }
         }
@@ -435,6 +476,7 @@ public class TransformVisitor extends Default {
         String indexString = REG_PREFIX + indexReg;
         String pointerString = REG_PREFIX + pointerReg;
         String targetString = REG_PREFIX + targetReg;
+        int blockNr = sel.getBlock().getNr();
 
         this.appendMolkiCode("mov " + indexString + "(" + pointerString + "), %@" + targetString);
     }
@@ -448,6 +490,7 @@ public class TransformVisitor extends Default {
     public void visit(Store store) {
         int pointerReg = this.nodeToRegIndex.get(store.getPtr());
         int storeReg = this.nodeToRegIndex.get(store);
+        int blockNr = store.getBlock().getNr();
 
         this.appendMolkiCode("mov " + REG_PREFIX + storeReg + ", (" + REG_PREFIX + pointerReg + ")");
     }
@@ -458,8 +501,9 @@ public class TransformVisitor extends Default {
         int srcReg2 = this.nodeToRegIndex.get(sub.getLeft());
 
         int targetReg = this.nodeToRegIndex.get(sub);
+        int blockNr = sub.getBlock().getNr();
 
-        this.appendThreeAdressCommand("sub", srcReg1, srcReg2, targetReg);
+        this.appendThreeAdressCommand(blockNr, "sub", srcReg1, srcReg2, targetReg);
     }
 
     @Override
@@ -487,28 +531,13 @@ public class TransformVisitor extends Default {
      * UTILITY FUNCTIONS
      */
 
-    private void appendTwoAdressCommand(String cmd, int srcReg, int targetReg) {
+    private void appendTwoAdressCommand(int blockNr, String cmd, int srcReg, int targetReg) {
         this.appendMolkiCode(cmd + " " + REG_PREFIX + srcReg + ", " + REG_PREFIX + targetReg);
         this.appendMolkiCode(NEW_LINE);
 
     }
 
-    public void appendThreeAdressCommand(String cmd, int srcReg1, int srcReg2, int targetReg) {
+    public void appendThreeAdressCommand(int blockNr, String cmd, int srcReg1, int srcReg2, int targetReg) {
         this.appendMolkiCode(cmd + " [ %@" + srcReg1 + " | %@" + srcReg2 + " ] -> %@" + targetReg);
-    }
-
-    private String getBlockLabel(Node node) {
-        List<Integer> blockNrs = this.jmp2BlockName.get(node);
-
-        int blockNr = -1;
-        if (blockNrs.size() == 1) {
-            blockNr = blockNrs.get(0);
-        }
-        else {
-            Collections.sort(blockNrs);
-            blockNr = blockNrs.get(1);
-        }
-
-        return "L" + blockNr;
     }
 }

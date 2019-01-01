@@ -1,4 +1,4 @@
-package edu.kit.minijava.cli;
+        package edu.kit.minijava.cli;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -49,27 +49,10 @@ public class BackendCommand extends Command {
                 g.walkTopological(prepVisitor);
             });
 
-            // move jmp instructions to the end of the basic blocks
             HashMap<Integer, List<Node>> blockId2Nodes = prepVisitor.getBlockId2Nodes();
-            List<Integer> indices = new ArrayList<>(blockId2Nodes.keySet());
-
-            indices.stream().map(blockId2Nodes::get).forEach(instructions -> {
-                Node jmp = null;
-                for (Node instr : instructions){
-                    if (instr instanceof Jmp || instr instanceof Const && instr.getMode().equals(Mode.getb())) {
-                        jmp = instr;
-                    }
-                }
-
-                if (jmp != null) {
-                    instructions.remove(jmp);
-                    instructions.add(jmp);
-                }
-            });
-
             HashMap<Graph, List<Integer>> graph2BlockId = prepVisitor.getGraph2BlockId();
-
-            TransformVisitor transformVisitor = new TransformVisitor(prepVisitor.getJmp2BlockName(), prepVisitor.getProj2regIndex(), prepVisitor.getBlockToPhiReg(), prepVisitor.getPtr2Name());
+            TransformVisitor transformVisitor = new TransformVisitor(prepVisitor.getProj2regIndex(), prepVisitor.getBlockToPhiReg());
+            ArrayList output = new ArrayList();
 
             graphs.forEach(g -> {
                 String methodName = g.getEntity().getName();
@@ -86,19 +69,39 @@ public class BackendCommand extends Command {
                     methodName = methodName.substring(2);
                 }
 
-                transformVisitor.appendMolkiCodeNoIndent(".function " + methodName + " " + numArgs + " " + noResults);
-
-                // TODO: create asm
+                output.add(".function " + methodName + " " + numArgs + " " + noResults);
 
                 graph2BlockId.get(g).forEach(i -> {
-                    transformVisitor.appendMolkiCodeNoIndent("L" + i + ":");
-                    blockId2Nodes.get(i).forEach(instr -> transformVisitor.createValue(instr));
+                    transformVisitor.getMolkiCode().put(i, new ArrayList<>());
+
+                    blockId2Nodes.get(i).forEach(node -> transformVisitor.createValue(i, node));
                 });
 
-                transformVisitor.appendMolkiCodeNoIndent(".endfunction\n");
+                HashMap<Integer, List<String>> molkiCode = transformVisitor.getMolkiCode();
+
+                graph2BlockId.get(g).forEach(i -> {
+                    // move jmps to the end of the block
+                    String jmpString = null;
+                    for(String str : molkiCode.get(i)) {
+                        if (str.contains("jmp")) {
+                            jmpString = str;
+                        }
+
+                    }
+
+                    if (jmpString != null) {
+                        molkiCode.get(i).remove(jmpString);
+                        molkiCode.get(i).add(jmpString);
+                    }
+
+                    // output asm
+                    output.add("L" + i + ":");
+                    molkiCode.get(i).forEach(str -> output.add(str));
+                });
+
+                output.add(".endfunction\n");
             });
 
-            ArrayList output = transformVisitor.getMolkiCode();
 
             Path file = Paths.get("a.molki.s");
             Files.write(file, output, Charset.forName("UTF-8"));

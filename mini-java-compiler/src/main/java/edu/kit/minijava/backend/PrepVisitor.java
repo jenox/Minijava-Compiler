@@ -11,21 +11,12 @@ import firm.nodes.NodeVisitor.Default;
 public class PrepVisitor extends Default {
     // ATTRIBUTES
     private int registerIndex = 0;
-
-    private HashMap<Node, List<Integer>> jmp2BlockName = new HashMap<>();
-    private HashMap<Address, String> ptr2Name = new HashMap<>();
     private HashMap<Node, Integer> node2regIndex = new HashMap<>();
     private HashMap<Node, List<Integer>> nodeToPhiReg = new HashMap<>();
     private HashMap<Integer, List<Node>> blockId2Nodes = new HashMap<>();
     private HashMap<Graph, List<Integer>> graph2BlockId = new HashMap<>();
 
     // GETTERS
-    public HashMap<Address, String> getPtr2Name() {
-        return ptr2Name;
-    }
-    public HashMap<Node, List<Integer>> getJmp2BlockName() {
-        return this.jmp2BlockName;
-    }
     public HashMap<Node, Integer> getProj2regIndex() {
         return this.node2regIndex;
     }
@@ -44,45 +35,24 @@ public class PrepVisitor extends Default {
         int currentIndex = this.registerIndex++;
         this.node2regIndex.put(add, currentIndex);
 
-        this.blockId2Nodes.get(add.getBlock().getNr()).add(add);
+        this.addInstrToBlock(null, add);
     }
 
     @Override
     public void visit(Address address) {
         String name = address.getEntity().getName().replace('.', '_');
-        this.ptr2Name.put(address, name);
     }
 
     @Override
     public void visit(Block block) {
-        if (block.getPredCount() > 0) {
-
-            // this is also adding non-Jmp nodes to the hashmap,
-            // which is ok, because only jmp nodes should use the hashmap
-            block.getPreds().forEach(p -> {
-                if (p instanceof Jmp) {
-                    if (this.jmp2BlockName.get(p) == null) {
-                        this.jmp2BlockName.put(p, new ArrayList<>());
-                    }
-                    this.jmp2BlockName.get(p).add(block.getNr());
-                }
-                else if (p.getPredCount() > 0 && p.getPred(0).getPredCount() > 0) {
-                    //       Proj  Cond     Cmp / Const
-                    Node ppp = p.getPred(0).getPred(0);
-                    if (this.jmp2BlockName.get(ppp) == null) {
-                        this.jmp2BlockName.put(ppp, new ArrayList<>());
-                    }
-                    this.jmp2BlockName.get(ppp).add(block.getNr());
-                }
-            });
-        }
-
         if (this.graph2BlockId.get(block.getGraph()) == null) {
             this.graph2BlockId.put(block.getGraph(), new ArrayList<>());
         }
         this.graph2BlockId.get(block.getGraph()).add(block.getNr());
 
-        this.blockId2Nodes.put(block.getNr(), new ArrayList<>());
+        if (this.blockId2Nodes.get(block.getNr()) == null) {
+            this.blockId2Nodes.put(block.getNr(), new ArrayList<>());
+        }
     }
 
     @Override
@@ -91,13 +61,13 @@ public class PrepVisitor extends Default {
         this.node2regIndex.put(call, this.registerIndex);
         this.registerIndex++;
 
-        this.blockId2Nodes.get(call.getBlock().getNr()).add(call);
+        this.addInstrToBlock(null, call);
     }
 
     @Override
     public void visit(Cmp cmp) {
         // nothing to do
-        this.blockId2Nodes.get(cmp.getBlock().getNr()).add(cmp);
+        this.addInstrToBlock(null, cmp);
     }
 
     @Override
@@ -113,7 +83,7 @@ public class PrepVisitor extends Default {
             }
         }
 
-        this.blockId2Nodes.get(blockNr).add(aConst);
+        this.addInstrToBlock(blockNr, aConst);
     }
 
     @Override
@@ -124,7 +94,7 @@ public class PrepVisitor extends Default {
 
         this.registerIndex += 2;
 
-        this.blockId2Nodes.get(div.getBlock().getNr()).add(div);
+        this.addInstrToBlock(null, div);
     }
 
     @Override
@@ -135,7 +105,7 @@ public class PrepVisitor extends Default {
 
         this.registerIndex += 2;
 
-        this.blockId2Nodes.get(mod.getBlock().getNr()).add(mod);
+        this.addInstrToBlock(null, mod);
     }
 
     @Override
@@ -145,7 +115,7 @@ public class PrepVisitor extends Default {
         //}
         this.node2regIndex.put(phi, this.registerIndex++);
 
-        this.blockId2Nodes.get(phi.getBlock().getNr()).add(phi);
+        this.addInstrToBlock(null, phi);
     }
 
     @Override
@@ -177,28 +147,28 @@ public class PrepVisitor extends Default {
 
         this.node2regIndex.put(proj, register);
 
-        this.blockId2Nodes.get(proj.getBlock().getNr()).add(proj);
+        this.addInstrToBlock(null, proj);
     }
 
     @Override
     public void visit(Return aReturn) {
         this.node2regIndex.put(aReturn, this.registerIndex++);
 
-        this.blockId2Nodes.get(aReturn.getBlock().getNr()).add(aReturn);
+        this.addInstrToBlock(null, aReturn);
     }
 
     @Override
     public void visit(Sel sel) {
         this.node2regIndex.put(sel, this.registerIndex++);
 
-        this.blockId2Nodes.get(sel.getBlock().getNr()).add(sel);
+        this.addInstrToBlock(null, sel);
     }
 
     @Override
     public void visit(Sub sub) {
         this.node2regIndex.put(sub, this.registerIndex++);
 
-        this.blockId2Nodes.get(sub.getBlock().getNr()).add(sub);
+        this.addInstrToBlock(null, sub);
     }
 
     /**
@@ -234,7 +204,7 @@ public class PrepVisitor extends Default {
 
     @Override
     public void visit(Jmp node) {
-        this.blockId2Nodes.get(node.getBlock().getNr()).add(node);
+        this.addInstrToBlock(null, node);
     }
 
     @Override
@@ -246,14 +216,14 @@ public class PrepVisitor extends Default {
     public void visit(Member node) {
         this.node2regIndex.put(node, this.registerIndex++);
 
-        this.blockId2Nodes.get(node.getBlock().getNr()).add(node);
+        this.addInstrToBlock(null, node);
     }
 
     @Override
     public void visit(Load node) {
         this.node2regIndex.put(node, this.registerIndex++);
 
-        this.blockId2Nodes.get(node.getBlock().getNr()).add(node);
+        this.addInstrToBlock(null, node);
     }
 
     @Override
@@ -261,7 +231,7 @@ public class PrepVisitor extends Default {
         int reg = this.node2regIndex.get(not.getOp());
         this.node2regIndex.put(not, reg);
 
-        this.blockId2Nodes.get(not.getBlock().getNr()).add(not);
+        this.addInstrToBlock(null, not);
     }
 
     @Override
@@ -271,6 +241,14 @@ public class PrepVisitor extends Default {
 
     public void setRegisterIndex(int registerIndex) {
         this.registerIndex = registerIndex;
+    }
+
+    private void addInstrToBlock(Integer blockNr, Node node) {
+        blockNr = blockNr == null ? node.getBlock().getNr() : blockNr;
+        if (this.blockId2Nodes.get(blockNr) == null) {
+            this.blockId2Nodes.put(blockNr, new ArrayList<>());
+        }
+        this.blockId2Nodes.get(blockNr).add(node);
     }
 
 }
