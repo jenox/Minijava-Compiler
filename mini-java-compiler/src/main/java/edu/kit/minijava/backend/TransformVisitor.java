@@ -1,4 +1,4 @@
-package edu.kit.minijava.backend;
+        package edu.kit.minijava.backend;
 
 import java.util.*;
 
@@ -266,7 +266,77 @@ public class TransformVisitor extends Default {
         int srcReg2 = this.nodeToRegIndex.get(cmp.getLeft());
         int blockNr = cmp.getBlock().getNr();
 
+        // cmp asm
         this.appendMolkiCode("cmp %@" + srcReg1 + ", %@" + srcReg2);
+
+        // jmp asm
+        int succBlockNr = -1;
+        boolean hasReturn = false;
+        boolean hasOnlyMemPred = false;
+        List<Integer> blockNrs = new ArrayList<>();
+        List<Integer> projNrs = new ArrayList<>();
+        List<Integer> registerNrs = new ArrayList<>();
+
+        // get Conditions
+        for (BackEdges.Edge edge : BackEdges.getOuts(cmp)) {
+            // get Projections
+            for (BackEdges.Edge condEdge : BackEdges.getOuts(edge.node)) {
+                // get Blocks
+                for (BackEdges.Edge projEdge : BackEdges.getOuts(condEdge.node)) {
+                    Block block = (Block) projEdge.node;
+
+                    for (BackEdges.Edge blockEdge : BackEdges.getOuts(block)) {
+                        if (blockEdge.node instanceof Return) {
+                            Return aReturn = (Return) blockEdge.node;
+                            hasReturn = true;
+                            hasOnlyMemPred = aReturn.getPredCount() <= 1;
+
+                            if (!hasOnlyMemPred) {
+                                succBlockNr = block.getGraph().getEndBlock().getNr();
+                                registerNrs.add(this.nodeToRegIndex.get(aReturn.getPred(1)));
+                            }
+                        }
+                    }
+                    blockNrs.add(block.getNr());
+                    projNrs.add(condEdge.node.getNr());
+                }
+            }
+            break;
+        }
+
+        // sometimes, firm switches the position of the proj nodes
+        boolean projAreReversed = projNrs.get(0) > projNrs.get(1);
+        int trueNr = projAreReversed ? 1 : 0;
+
+        if (!hasReturn) {
+            succBlockNr = blockNrs.get(trueNr);
+        }
+        else if (!hasOnlyMemPred){
+            this.appendMolkiCode("mov %@" + registerNrs.get(trueNr) + ", %@r0");
+        }
+        else if (hasOnlyMemPred) {
+            succBlockNr = blockNrs.get(trueNr);
+        }
+
+        if (cmp.getRelation().equals(Relation.Less)) {
+            this.appendMolkiCode("jl L" + succBlockNr);
+        }
+        else if (cmp.getRelation().equals(Relation.LessEqual)) {
+            this.appendMolkiCode("jle L" + succBlockNr);
+        }
+        else if (cmp.getRelation().equals(Relation.GreaterEqual)) {
+            this.appendMolkiCode("jg L" + succBlockNr);
+        }
+        else if (cmp.getRelation().equals(Relation.GreaterEqual)) {
+            this.appendMolkiCode("jge L" + succBlockNr);
+        }
+        else if (cmp.getRelation().equals(Relation.Equal)) {
+            this.appendMolkiCode("je L" + succBlockNr);
+        }
+        // TODO: what is the diff between `negated` and `inversed`?
+        else if (cmp.getRelation().equals(Relation.Equal.negated())) {
+            this.appendMolkiCode("jne L" + succBlockNr);
+        }
     }
 
     @Override
@@ -414,56 +484,8 @@ public class TransformVisitor extends Default {
 
     @Override
     public void visit(Return aReturn) {
-        Node currentBlock = aReturn.getBlock();
-        Block startBlock = currentBlock.getGraph().getStartBlock();
-        int blockNr = aReturn.getBlock().getNr();
-
-        // check if we're the main function
-        if (!currentBlock.equals(startBlock)) {
-            // assumption: we always have at most one pred for return
-            if (aReturn.getPredCount() == 2) {
-                this.appendMolkiCode("mov %@" + this.nodeToRegIndex.get(aReturn.getPred(1)) + ", %@r0");
-            }
-
-            // check if we aren't in the fallthrough block
-            if (!currentBlock.equals(aReturn.getPred(0).getBlock())) {
-                // get block nr of the successor block
-                int succBlockNr = -1;
-                for (BackEdges.Edge edge : BackEdges.getOuts(aReturn)) {
-                    Block block = (Block) edge.node;
-                    succBlockNr = block.getNr();
-                    break;
-                }
-
-                // check if we are able to produce a jmp
-                // TODO: if Bedingung überprüfen / vereinfachen
-                if (aReturn.getBlock().getPred(0).getPred(0).getPred(0) instanceof Cmp) {
-                    Cmp tempCmp = (Cmp) aReturn.getBlock().getPred(0).getPred(0).getPred(0);
-
-                    if (tempCmp.getRelation().equals(Relation.Less)) {
-                        this.appendMolkiCode("jl L" + succBlockNr);
-                    }
-                    else if (tempCmp.getRelation().equals(Relation.LessEqual)) {
-                        this.appendMolkiCode("jle L" + succBlockNr);
-                    }
-                    else if (tempCmp.getRelation().equals(Relation.GreaterEqual)) {
-                        this.appendMolkiCode("jg L" + succBlockNr);
-                    }
-                    else if (tempCmp.getRelation().equals(Relation.GreaterEqual)) {
-                        this.appendMolkiCode("jge L" + succBlockNr);
-                    }
-                    else if (tempCmp.getRelation().equals(Relation.Equal)) {
-                        this.appendMolkiCode("je L" + succBlockNr);
-                    }
-                    // TODO: what is the diff between `negated` and `inversed`?
-                    else if (tempCmp.getRelation().equals(Relation.Equal.negated())) {
-                        this.appendMolkiCode("jne L" + succBlockNr);
-                    }
-                }
-                else {
-                    this.appendMolkiCode("jmp L" + succBlockNr);
-                }
-            }
+        if (aReturn.getPredCount() == 2) {
+            this.appendMolkiCode("mov %@" + this.nodeToRegIndex.get(aReturn.getPred(1)) + ", %@r0");
         }
     }
 
