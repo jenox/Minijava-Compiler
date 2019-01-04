@@ -28,7 +28,7 @@ public class CompileCommand extends Command {
 
             new ReferenceAndExpressionTypeResolver(program);
 
-            String asmOutputFilename = "a.s";
+            String asmOutputFilename = "a.molki.s";
             String executableFilename = "a.out";
 
             EntityVisitor visitor = new EntityVisitor();
