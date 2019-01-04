@@ -1,13 +1,18 @@
 package edu.kit.minijava.cli;
 
 import java.io.*;
-import java.util.Map;
+import java.nio.charset.Charset;
+import java.nio.file.*;
+import java.util.*;
 
 import edu.kit.minijava.ast.nodes.Program;
+import edu.kit.minijava.backend.*;
 import edu.kit.minijava.lexer.Lexer;
 import edu.kit.minijava.parser.*;
 import edu.kit.minijava.semantic.*;
 import edu.kit.minijava.transformation.EntityVisitor;
+import firm.*;
+import firm.nodes.Node;
 
 public class CompileCommand extends Command {
 
@@ -32,7 +37,73 @@ public class CompileCommand extends Command {
             String executableFilename = "a.out";
 
             EntityVisitor visitor = new EntityVisitor();
-            visitor.transform(program, asmOutputFilename);
+            Iterable<Graph> graphs = visitor.molkiTransform(program);
+
+            // MOLKI TRANSFORMATION
+            PrepVisitor prepVisitor = new PrepVisitor();
+
+            graphs.forEach(g -> {
+                BackEdges.enable(g);
+                int numArgs = ((MethodType) g.getEntity().getType()).getNParams();
+                prepVisitor.setRegisterIndex(numArgs);
+                g.walkTopological(prepVisitor);
+            });
+
+            HashMap<Integer, List<Node>> blockId2Nodes = prepVisitor.getBlockId2Nodes();
+            HashMap<Graph, List<Integer>> graph2BlockId = prepVisitor.getGraph2BlockId();
+            MolkiTransformer molkiTransformer = new MolkiTransformer(prepVisitor.getProj2regIndex());
+            ArrayList output = new ArrayList();
+
+            graphs.forEach(g -> {
+                String methodName = g.getEntity().getName();
+                MethodType methodType = (MethodType) g.getEntity().getType();
+                // non-main methods have additional `this` parameter
+                int numArgs = Math.max(0, methodType.getNParams());
+                int noResults = methodType.getNRess();
+
+                // replace '.' with '_' for correct molki syntax
+                methodName = methodName.replace('.', '_');
+
+                // replace `__minijava_main` with `minijava_main`
+                if (methodName.equals("__minijava_main")) {
+                    methodName = methodName.substring(2);
+                }
+
+                output.add(".function " + methodName + " " + numArgs + " " + noResults);
+
+                graph2BlockId.get(g).forEach(i -> {
+                    molkiTransformer.getMolkiCode().put(i, new ArrayList<>());
+
+                    blockId2Nodes.get(i).forEach(node -> molkiTransformer.createValue(i, node));
+                });
+
+                HashMap<Integer, List<String>> molkiCode = molkiTransformer.getMolkiCode();
+
+                graph2BlockId.get(g).forEach(i -> {
+                    // move jmps to the end of the block
+                    String jmpString = null;
+                    for (String str : molkiCode.get(i)) {
+                        if (str.contains("jmp")) {
+                            jmpString = str;
+                        }
+
+                    }
+
+                    if (jmpString != null) {
+                        molkiCode.get(i).remove(jmpString);
+                        molkiCode.get(i).add(jmpString);
+                    }
+
+                    // output asm
+                    output.add("L" + i + ":");
+                    molkiCode.get(i).forEach(str -> output.add(str));
+                });
+
+                output.add(".endfunction\n");
+            });
+
+            Path file = Paths.get(asmOutputFilename);
+            Files.write(file, output, Charset.forName("UTF-8"));
 
             // Retrieve runtime path from environment variable
             Map<String, String> env = System.getenv();
@@ -46,10 +117,11 @@ public class CompileCommand extends Command {
 
             if (molkiPath == null) {
                 System.err.println("error: Environment variable " + MOLKI_PATH_KEY + " not set!");
-                return 1;
             }
 
-            Process molkiProcess = Runtime.getRuntime().exec(molkiPath + " assemble " + asmOutputFilename);
+            Runtime rt = Runtime.getRuntime();
+            Process molkiProcess = rt
+                    .exec("python3.6 " + molkiPath + " compile " + asmOutputFilename + " -o " + executableFilename);
 
             int molki_result;
 
@@ -67,13 +139,13 @@ public class CompileCommand extends Command {
 
             // Assemble and link runtime and code
 
-            Process p = Runtime.getRuntime()
-                    .exec("gcc" + " " + asmOutputFilename + " " + runtimeLibPath + " -o " + executableFilename);
+           // Process p = Runtime.getRuntime()
+           //         .exec("gcc" + " " + asmOutputFilename + " " + runtimeLibPath + " -o " + executableFilename);
 
-            int result;
+            int result = 0;
 
             try {
-                result = p.waitFor();
+               // result = p.waitFor();
             }
             catch (Throwable t) {
                 result = -1;
