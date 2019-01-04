@@ -67,7 +67,7 @@ public class CompileCommand extends Command {
 
                 // replace `__minijava_main` with `minijava_main`
                 if (methodName.equals("__minijava_main")) {
-                    methodName = methodName.substring(2);
+                    // methodName = methodName.substring(2);
                 }
 
                 output.add(".function " + methodName + " " + numArgs + " " + noResults);
@@ -122,8 +122,11 @@ public class CompileCommand extends Command {
             }
 
             Runtime rt = Runtime.getRuntime();
-            Process molkiProcess = rt.exec(
-                    "python3.6 " + molkiPath + " assemble " + asmOutputFilenameMolki + " -o " + asmOutputFileName);
+
+            String compileCommand = "python3 " + molkiPath +
+                " assemble " + asmOutputFilenameMolki + " -o " + asmOutputFileName;
+
+            Process molkiProcess = rt.exec(compileCommand);
 
             int molki_result;
 
@@ -141,8 +144,10 @@ public class CompileCommand extends Command {
 
             // Assemble and link runtime and code
 
-            Process p = Runtime.getRuntime()
-                    .exec("gcc" + " " + asmOutputFileName + ".s" + " " + runtimeLibPath + " -o " + executableFilename);
+            String linkingCommand = "gcc" + " " + asmOutputFileName + ".s" + " " + runtimeLibPath + " -o " + executableFilename;
+            System.out.println(linkingCommand);
+
+            Process p = Runtime.getRuntime().exec(linkingCommand);
 
             int result = 0;
 
