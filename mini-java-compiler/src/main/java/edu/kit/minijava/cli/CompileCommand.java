@@ -33,7 +33,8 @@ public class CompileCommand extends Command {
 
             new ReferenceAndExpressionTypeResolver(program);
 
-            String asmOutputFilename = "a.molki.s";
+            String asmOutputFilenameMolki = "a.molki.s";
+            String asmOutputFileName = "a.s";
             String executableFilename = "a.out";
 
             EntityVisitor visitor = new EntityVisitor();
@@ -102,7 +103,7 @@ public class CompileCommand extends Command {
                 output.add(".endfunction\n");
             });
 
-            Path file = Paths.get(asmOutputFilename);
+            Path file = Paths.get(asmOutputFilenameMolki);
             Files.write(file, output, Charset.forName("UTF-8"));
 
             // Retrieve runtime path from environment variable
@@ -117,11 +118,12 @@ public class CompileCommand extends Command {
 
             if (molkiPath == null) {
                 System.err.println("error: Environment variable " + MOLKI_PATH_KEY + " not set!");
+                return 1;
             }
 
             Runtime rt = Runtime.getRuntime();
             Process molkiProcess = rt
-                    .exec("python3.6 " + molkiPath + " compile " + asmOutputFilename + " -o " + executableFilename);
+                    .exec("python3.6 " + molkiPath + " compile " + asmOutputFilenameMolki + " -o " + asmOutputFileName);
 
             int molki_result;
 
@@ -139,13 +141,13 @@ public class CompileCommand extends Command {
 
             // Assemble and link runtime and code
 
-           // Process p = Runtime.getRuntime()
-           //         .exec("gcc" + " " + asmOutputFilename + " " + runtimeLibPath + " -o " + executableFilename);
+            Process p = Runtime.getRuntime()
+                    .exec("gcc" + " " + asmOutputFileName + " " + runtimeLibPath + " -o " + executableFilename);
 
             int result = 0;
 
             try {
-               // result = p.waitFor();
+                result = p.waitFor();
             }
             catch (Throwable t) {
                 result = -1;
