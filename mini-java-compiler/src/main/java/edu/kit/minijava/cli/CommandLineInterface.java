@@ -32,6 +32,9 @@ public class CommandLineInterface {
             case "--backend":
                 command = new BackendCommand();
                 break;
+            case "--compile":
+                command = new CompileCommand();
+                break;
             default:
                 CommandLineInterface.printErrorAndExit();
                 return;
