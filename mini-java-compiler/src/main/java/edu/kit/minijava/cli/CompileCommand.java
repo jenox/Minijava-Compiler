@@ -34,7 +34,7 @@ public class CompileCommand extends Command {
             new ReferenceAndExpressionTypeResolver(program);
 
             String asmOutputFilenameMolki = "a.molki.s";
-            String asmOutputFileName = "a.s";
+            String asmOutputFileName = "a"; //without .s suffix as it will be added by molki.py
             String executableFilename = "a.out";
 
             EntityVisitor visitor = new EntityVisitor();
@@ -122,8 +122,8 @@ public class CompileCommand extends Command {
             }
 
             Runtime rt = Runtime.getRuntime();
-            Process molkiProcess = rt
-                    .exec("python3.6 " + molkiPath + " compile " + asmOutputFilenameMolki + " -o " + asmOutputFileName);
+            Process molkiProcess = rt.exec(
+                    "python3.6 " + molkiPath + " assemble " + asmOutputFilenameMolki + " -o " + asmOutputFileName);
 
             int molki_result;
 
@@ -142,7 +142,7 @@ public class CompileCommand extends Command {
             // Assemble and link runtime and code
 
             Process p = Runtime.getRuntime()
-                    .exec("gcc" + " " + asmOutputFileName + " " + runtimeLibPath + " -o " + executableFilename);
+                    .exec("gcc" + " " + asmOutputFileName + ".s" + " " + runtimeLibPath + " -o " + executableFilename);
 
             int result = 0;
 
