@@ -144,7 +144,8 @@ public class CompileCommand extends Command {
 
             // Assemble and link runtime and code
 
-            String linkingCommand = "gcc" + " " + asmOutputFileName + ".s" + " " + runtimeLibPath + " -o " + executableFilename;
+            String linkingCommand =
+                "gcc" + " " + asmOutputFileName + ".s" + " " + runtimeLibPath + " -o " + executableFilename;
             System.out.println(linkingCommand);
 
             Process p = Runtime.getRuntime().exec(linkingCommand);
