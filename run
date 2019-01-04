@@ -6,5 +6,6 @@ export LD_LIBRARY_PATH="$SCRIPT_PATH/mini-java-compiler/lib:$LD_LIBRARY_PATH"
 export DYLD_LIBRARY_PATH="$SCRIPT_PATH/mini-java-compiler/lib:$DYLD_LIBRARY_PATH"
 
 export MJ_RUNTIME_LIB_PATH="$SCRIPT_PATH/mini-java-compiler/build/libs/stdlib.o"
+export MOLKI_PATH="$SCRIPT_PATH/molki/molki.py"
 
 java -jar -ea -Djna.library.path="$SCRIPT_PATH/mini-java-compiler/lib" "$SCRIPT_PATH/mini-java-compiler/build/libs/mini-java-compiler-1.0-SNAPSHOT.jar" "$@"
