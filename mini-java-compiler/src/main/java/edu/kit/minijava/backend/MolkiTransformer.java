@@ -191,25 +191,25 @@ public class MolkiTransformer extends Default {
 
         switch (functionName) {
             case "system_out_println":
-                this.appendMolkiCode("call system_out_println [ " + args + " ]");
+                this.appendMolkiCode("call __stdlib_println [ " + args + " ]");
                 break;
             case "system_out_write":
-                this.appendMolkiCode("call system_out_write [ " + args + " ]");
+                this.appendMolkiCode("call __stdlib_write [ " + args + " ]");
                 break;
             case "system_out_flush":
                 int targetReg = this.nodeToRegIndex.get(call);
-                this.appendMolkiCode("call system_out_flush [ ] -> %@" + targetReg);
+                this.appendMolkiCode("call __stdlib_flush [ ] -> %@" + targetReg);
                 break;
             case "system_in_read":
                 targetReg = this.nodeToRegIndex.get(call);
-                this.appendMolkiCode("call system_in_read [ " + args + " ] -> %@" + targetReg);
+                this.appendMolkiCode("call __stdlib_read [ " + args + " ] -> %@" + targetReg);
                 break;
             case "alloc_mem":
                 targetReg = this.nodeToRegIndex.get(call);
                 int srcReg1 = this.nodeToRegIndex.get(call.getPred(2));
                 int srcReg2 = this.nodeToRegIndex.get(call.getPred(3));
                 args = REG_PREFIX + srcReg1 + " | " + REG_PREFIX + srcReg2;
-                this.appendMolkiCode("call alloc_mem [ " + args + " ] -> %@" + targetReg);
+                this.appendMolkiCode("call __stdlib_calloc [ " + args + " ] -> %@" + targetReg);
                 break;
             default:
                 targetReg = this.nodeToRegIndex.get(call);

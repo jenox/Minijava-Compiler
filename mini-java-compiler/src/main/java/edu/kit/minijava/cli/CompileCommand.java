@@ -2,6 +2,7 @@ package edu.kit.minijava.cli;
 
 import java.io.*;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.*;
 
@@ -67,7 +68,8 @@ public class CompileCommand extends Command {
 
                 // replace `__minijava_main` with `minijava_main`
                 if (methodName.equals("__minijava_main")) {
-                    // methodName = methodName.substring(2);
+                    methodName = methodName.substring(2);
+                    noResults = 1;
                 }
 
                 output.add(".function " + methodName + " " + numArgs + " " + noResults);
@@ -104,7 +106,7 @@ public class CompileCommand extends Command {
             });
 
             Path file = Paths.get(asmOutputFilenameMolki);
-            Files.write(file, output, Charset.forName("UTF-8"));
+            Files.write(file, output, StandardCharsets.UTF_8);
 
             // Retrieve runtime path from environment variable
             Map<String, String> env = System.getenv();
@@ -123,8 +125,9 @@ public class CompileCommand extends Command {
 
             Runtime rt = Runtime.getRuntime();
 
+            //String compileCommand = "python3 ../molki/molki.py" + molkiPath +
             String compileCommand = "python3 " + molkiPath +
-                " assemble " + asmOutputFilenameMolki + " -o " + asmOutputFileName;
+                " compile " + asmOutputFilenameMolki + " -o " + executableFilename;
 
             Process molkiProcess = rt.exec(compileCommand);
 
@@ -144,25 +147,25 @@ public class CompileCommand extends Command {
 
             // Assemble and link runtime and code
 
-            String linkingCommand =
-                "gcc" + " " + asmOutputFileName + ".s" + " " + runtimeLibPath + " -o " + executableFilename;
-            System.out.println(linkingCommand);
+            //String linkingCommand =
+            //    "gcc" + " " + asmOutputFileName + ".s" + " " + runtimeLibPath + " -o " + executableFilename;
+            //System.out.println(linkingCommand);
 
-            Process p = Runtime.getRuntime().exec(linkingCommand);
+            //Process p = Runtime.getRuntime().exec(linkingCommand);
 
-            int result = 0;
+            //int result = 0;
 
-            try {
-                result = p.waitFor();
-            }
-            catch (Throwable t) {
-                result = -1;
-            }
+            //try {
+            //    result = p.waitFor();
+            //}
+            //catch (Throwable t) {
+            //    result = -1;
+            //}
 
-            if (result != 0) {
-                System.err.println("error: Linking step failed!");
-                return 1;
-            }
+            //if (result != 0) {
+            //    System.err.println("error: Linking step failed!");
+            //    return 1;
+            //}
 
             return 0;
         }
