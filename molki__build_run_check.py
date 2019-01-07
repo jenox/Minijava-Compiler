@@ -6,9 +6,9 @@ from os import walk
 from subprocess import *
 
 test_files = []
-test_dir   = "../mjtest/tests/exec"
+test_dir   = "./mjtest/tests/exec"
 run_cmd    = "run"
-molki_cmd  = "../molki/molki.py"
+molki_cmd  = "./molki/molki.py"
 
 exit_code = 0 
 
