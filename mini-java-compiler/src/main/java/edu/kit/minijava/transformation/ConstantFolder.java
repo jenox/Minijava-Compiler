@@ -244,11 +244,11 @@ public class ConstantFolder extends ConstantFolderBase {
     }
 
     private void print(String operator, TargetValue lhs, TargetValue rhs) {
-        System.out.println(describe(lhs) + " " + operator + " " + describe(rhs) + " = " +
-                describe(this.resultOfLastVisitedNode));
+        //System.out.println(describe(lhs) + " " + operator + " " + describe(rhs) + " = " +
+        //        describe(this.resultOfLastVisitedNode));
     }
 
     private void print(String operator, TargetValue value) {
-        System.out.println(operator + describe(value) + " = " + describe(this.resultOfLastVisitedNode));
+        //System.out.println(operator + describe(value) + " = " + describe(this.resultOfLastVisitedNode));
     }
 }

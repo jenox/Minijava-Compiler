@@ -16,15 +16,15 @@ import firm.nodes.Node;
 
 public class CompileCommand extends Command {
 
-    public static final String RUNTIME_LIB_ENV_KEY = "MJ_RUNTIME_LIB_PATH";
-    public static final String MOLKI_PATH_KEY = "MOLKI_PATH";
+    private static final String RUNTIME_LIB_ENV_KEY = "MJ_RUNTIME_LIB_PATH";
+    private static final String MOLKI_PATH_KEY = "MOLKI_PATH";
 
     @Override
     public int execute(String path) {
 
         try {
             FileInputStream stream = new FileInputStream(path);
-            InputStreamReader reader = new InputStreamReader(stream, "US-ASCII");
+            InputStreamReader reader = new InputStreamReader(stream, StandardCharsets.US_ASCII);
 
             Lexer lexer = new Lexer(reader);
             Parser parser = new Parser(lexer);
@@ -52,7 +52,7 @@ public class CompileCommand extends Command {
 
             HashMap<Integer, List<Node>> blockId2Nodes = prepVisitor.getBlockId2Nodes();
             HashMap<Graph, List<Integer>> graph2BlockId = prepVisitor.getGraph2BlockId();
-            MolkiTransformer molkiTransformer = new MolkiTransformer(prepVisitor.getProj2regIndex());
+            MolkiTransformer molkiTransformer = new MolkiTransformer(prepVisitor.getNode2RegIndex());
             ArrayList output = new ArrayList();
 
             graphs.forEach(g -> {
@@ -65,14 +65,17 @@ public class CompileCommand extends Command {
                 // replace '.' with '_' for correct molki syntax
                 methodName = methodName.replace('.', '_');
 
-                // replace `__minijava_main` with `minijava_main`
                 if (methodName.equals("__minijava_main")) {
+                    // replace `__minijava_main` with `minijava_main`
                     methodName = methodName.substring(2);
+                    // if main has `noResults` == 0, then exit code is != 0
                     noResults = 1;
                 }
 
                 output.add(".function " + methodName + " " + numArgs + " " + noResults);
 
+                // for each block, create an arraylist
+                // and for each instruction in that block, transform it into a valid molki string
                 graph2BlockId.get(g).forEach(i -> {
                     molkiTransformer.getMolkiCode().put(i, new ArrayList<>());
 
@@ -81,11 +84,18 @@ public class CompileCommand extends Command {
 
                 HashMap<Integer, List<String>> molkiCode = molkiTransformer.getMolkiCode();
 
+                // go through all blocks of that graph
                 graph2BlockId.get(g).forEach(i -> {
                     // move jmps to the end of the block
                     String jmpString = null;
                     for (String str : molkiCode.get(i)) {
-                        if (str.contains("jmp")) {
+                        if (str.contains("jmp ")
+                                || str.contains("jle ")
+                                || str.contains("jl ")
+                                || str.contains("jge ")
+                                || str.contains("jg ")
+                                || str.contains("jne ")
+                                || str.contains("je ")) {
                             jmpString = str;
                         }
 
@@ -96,7 +106,8 @@ public class CompileCommand extends Command {
                         molkiCode.get(i).add(jmpString);
                     }
 
-                    // output asm
+
+                    // output asm for the block
                     output.add("L" + i + ":");
                     molkiCode.get(i).forEach(str -> output.add(str));
                 });

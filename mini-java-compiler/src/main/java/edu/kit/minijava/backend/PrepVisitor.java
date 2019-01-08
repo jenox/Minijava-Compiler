@@ -16,7 +16,7 @@ public class PrepVisitor extends Default {
     private HashMap<Graph, List<Integer>> graph2BlockId = new HashMap<>();
 
     // GETTERS
-    public HashMap<Node, Integer> getProj2regIndex() {
+    public HashMap<Node, Integer> getNode2RegIndex() {
         return this.node2regIndex;
     }
     public HashMap<Integer, List<Node>> getBlockId2Nodes() {
@@ -36,7 +36,7 @@ public class PrepVisitor extends Default {
 
     @Override
     public void visit(Address address) {
-        String name = address.getEntity().getName().replace('.', '_');
+        // nothing to do
     }
 
     @Override
@@ -111,7 +111,7 @@ public class PrepVisitor extends Default {
 
     @Override
     public void visit(Proj proj) {
-        // this projection is parameter if predecessor is args node
+        // this projection is a parameter if its predecessor is an args node
         boolean isParam = proj.getPred().equals(proj.getGraph().getArgs());
         int register = 0;
 
@@ -126,6 +126,7 @@ public class PrepVisitor extends Default {
             }
         }
 
+        // the projection points to the register of its predecessor
         this.node2regIndex.put(proj, register);
 
         this.addInstrToBlock(null, proj);
@@ -170,11 +171,6 @@ public class PrepVisitor extends Default {
     @Override
     public void visit(Jmp node) {
         this.addInstrToBlock(null, node);
-    }
-
-    @Override
-    public void visit(Conv node) {
-        // nothing to do
     }
 
     @Override
