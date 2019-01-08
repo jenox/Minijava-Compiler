@@ -67,7 +67,7 @@ public class CompileCommand extends Command {
 
                 if (methodName.equals("__minijava_main")) {
                     // replace `__minijava_main` with `minijava_main`
-                    methodName = methodName.substring(2);
+                    // methodName = methodName.substring(2);
                     // if main has `noResults` == 0, then exit code is != 0
                     noResults = 1;
                 }
