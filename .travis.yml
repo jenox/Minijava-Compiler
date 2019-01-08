@@ -21,19 +21,7 @@ jobs:
       name: Build
       script: ./build
     - stage: test
-      name: Style Check
-      script: ./mini-java-compiler/gradlew -b ./mini-java-compiler/build.gradle checkstyleMain checkstyleTest
-    - name: Lexer Tests
-      script: ./build && ./mjtest/mjt.py lexer --ci_testing --parallel
-    - name: Parser Tests
-      script: ./build && ./mjtest/mjt.py syntax --ci_testing --parallel
-    - name: AST Tests
-      script: ./build && ./mjtest/mjt.py ast --ci_testing --parallel
-    - name: Semantic Tests
-      script: ./build && ./mjtest/mjt.py semantic --ci_testing --parallel
-    - name: Firm Compilation Tests
-      script: ./build && ./mjtest/mjt.py compile-firm --ci_testing --parallel
-    - name: Swift Test
+      name: Swift Test
       install: eval "$(curl -sL https://swiftenv.fuller.li/install.sh)"
       script:
         - swiftc -o swift.out test.swift
