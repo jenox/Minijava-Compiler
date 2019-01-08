@@ -224,18 +224,7 @@ public class MolkiTransformer extends Default {
             String constant = CONST_PREFIX + String.valueOf(aConst.getTarval().asInt());
             int targetReg = this.node2RegIndex.get(aConst);
 
-            boolean isUsedInPhi = false;
-            for (BackEdges.Edge edge : BackEdges.getOuts(aConst)) {
-                if (edge.node instanceof Phi) {
-                    isUsedInPhi = true;
-
-                    this.appendMolkiCode("mov " + constant + ", %@" + targetReg, aConst.getBlock().getNr());
-                }
-            }
-
-            if (!isUsedInPhi) {
-                this.appendMolkiCode("mov " + constant + ", %@" + targetReg);
-            }
+            this.appendMolkiCode("mov " + constant + ", %@" + targetReg);
         }
     }
 
