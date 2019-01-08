@@ -16,7 +16,7 @@ import firm.nodes.Node;
 
 public class CompileCommand extends Command {
 
-    private static final String RUNTIME_LIB_ENV_KEY = "MJ_RUNTIME_LIB_PATH";
+    private static final String RUNTIME_LIB_ENV_KEY = "MJ_RUNTIME_LIB_PATH_STACK_ARGS";
     private static final String MOLKI_PATH_KEY = "MOLKI_PATH";
 
     @Override
@@ -137,7 +137,7 @@ public class CompileCommand extends Command {
 
             //String compileCommand = "python3 ../molki/molki.py" + molkiPath +
             String compileCommand = "python3 " + molkiPath +
-                " compile " + asmOutputFilenameMolki + " -o " + executableFilename;
+                " assemble " + asmOutputFilenameMolki + " -o " + executableFilename;
 
             Process molkiProcess = rt.exec(compileCommand);
 
@@ -157,25 +157,25 @@ public class CompileCommand extends Command {
 
             // Assemble and link runtime and code
 
-            //String linkingCommand =
-            //    "gcc" + " " + asmOutputFileName + ".s" + " " + runtimeLibPath + " -o " + executableFilename;
-            //System.out.println(linkingCommand);
+            String linkingCommand =
+                "gcc" + " " + asmOutputFileName + ".s" + " " + runtimeLibPath + " -o " + executableFilename;
+            System.out.println(linkingCommand);
 
-            //Process p = Runtime.getRuntime().exec(linkingCommand);
+            Process p = Runtime.getRuntime().exec(linkingCommand);
 
-            //int result = 0;
+            int result = 0;
 
-            //try {
-            //    result = p.waitFor();
-            //}
-            //catch (Throwable t) {
-            //    result = -1;
-            //}
+            try {
+                result = p.waitFor();
+            }
+            catch (Throwable t) {
+                result = -1;
+            }
 
-            //if (result != 0) {
-            //    System.err.println("error: Linking step failed!");
-            //    return 1;
-            //}
+            if (result != 0) {
+                System.err.println("error: Linking step failed!");
+                return 1;
+            }
 
             return 0;
         }
