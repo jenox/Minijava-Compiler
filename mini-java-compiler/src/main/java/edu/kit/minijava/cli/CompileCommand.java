@@ -137,7 +137,7 @@ public class CompileCommand extends Command {
 
             //String compileCommand = "python3 ../molki/molki.py" + molkiPath +
             String compileCommand = "python3 " + molkiPath +
-                " assemble " + asmOutputFilenameMolki + " -o " + executableFilename;
+                " assemble " + asmOutputFilenameMolki + " -o " + asmOutputFileName;
 
             Process molkiProcess = rt.exec(compileCommand);
 
