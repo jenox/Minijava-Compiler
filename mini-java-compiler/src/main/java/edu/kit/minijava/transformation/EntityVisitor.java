@@ -48,6 +48,8 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
             g.check();
         }
 
+        Lower.fixNames();
+
         return firm.Program.getGraphs();
     }
 
