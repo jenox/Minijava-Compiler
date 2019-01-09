@@ -1184,7 +1184,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
     }
 
     private String getUniqueMemberName(String methodName) {
-        return this.currentClassName + "." + methodName;
+        return this.currentClassName + "$" + methodName;
     }
 
     private Mode getModeForType(TypeOfExpression type) {
