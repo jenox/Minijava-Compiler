@@ -10,7 +10,7 @@ MJ_RUNTIME_LIB_PATH_STACK_ARGS=$SCRIPT_PATH/mini-java-compiler/build/libs/stdlib
 # use the runtime supplied with molki instead of our own runtime
 # This avoids problems with the standard calling convention for x86_64
 MJ_RUNTIME_SOURCE_PATH=$SCRIPT_PATH/mini-java-compiler/lib/stdlib.c
-MJ_RUNTIME_SOURCE_PATH_STACK_ARGS=$SCRIPT_PATH/molki/runtime.c
+MJ_RUNTIME_SOURCE_PATH_STACK_ARGS=$SCRIPT_PATH/mini-java-compiler/lib/stdlib-stack.c
 
 echo "Building MiniJava runtime:"
 
