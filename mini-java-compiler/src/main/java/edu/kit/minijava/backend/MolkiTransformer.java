@@ -185,28 +185,30 @@ public class MolkiTransformer extends Default {
 
         }
 
+        int targetReg;
+
         switch (functionName) {
-            case "system_out_println":
-                this.appendMolkiCode("call __stdlib_println [ " + args + " ]");
-                break;
-            case "system_out_write":
-                this.appendMolkiCode("call __stdlib_write [ " + args + " ]");
-                break;
-            case "system_out_flush":
-                int targetReg = this.node2RegIndex.get(call);
-                this.appendMolkiCode("call __stdlib_flush [ ] -> %@" + targetReg);
-                break;
-            case "system_in_read":
-                targetReg = this.node2RegIndex.get(call);
-                this.appendMolkiCode("call __stdlib_read [ " + args + " ] -> %@" + targetReg);
-                break;
-            case "alloc_mem":
-                targetReg = this.node2RegIndex.get(call);
-                int srcReg1 = this.node2RegIndex.get(call.getPred(2));
-                int srcReg2 = this.node2RegIndex.get(call.getPred(3));
-                args = REG_PREFIX + srcReg1 + " | " + REG_PREFIX + srcReg2;
-                this.appendMolkiCode("call __stdlib_calloc [ " + args + " ] -> %@" + targetReg);
-                break;
+//            case "system_out_println":
+//                this.appendMolkiCode("call system_out_println [ " + args + " ]");
+//                break;
+//            case "system_out_write":
+//                this.appendMolkiCode("call system_out_write [ " + args + " ]");
+//                break;
+//            case "system_out_flush":
+//                int targetReg = this.node2RegIndex.get(call);
+//                this.appendMolkiCode("call system_out_flush [ ] -> %@" + targetReg);
+//                break;
+//            case "system_in_read":
+//                targetReg = this.node2RegIndex.get(call);
+//                this.appendMolkiCode("call system_in_read [ " + args + " ] -> %@" + targetReg);
+//                break;
+//            case "alloc_mem":
+//                targetReg = this.node2RegIndex.get(call);
+//                int srcReg1 = this.node2RegIndex.get(call.getPred(2));
+//                int srcReg2 = this.node2RegIndex.get(call.getPred(3));
+//                args = REG_PREFIX + srcReg1 + " | " + REG_PREFIX + srcReg2;
+//                this.appendMolkiCode("call __stdlib_calloc [ " + args + " ] -> %@" + targetReg);
+//                break;
             default:
                 targetReg = this.node2RegIndex.get(call);
                 this.appendMolkiCode("call " + functionName + " [ " + args + " ] " + "-> %@" + targetReg);
