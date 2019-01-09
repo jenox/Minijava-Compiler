@@ -2,7 +2,6 @@ package edu.kit.minijava.backend;
 
 import java.util.*;
 
-import firm.BackEdges;
 import firm.Graph;
 import firm.Mode;
 import firm.nodes.*;
@@ -68,16 +67,7 @@ public class PrepVisitor extends Default {
     public void visit(Const aConst) {
         this.node2regIndex.put(aConst, this.registerIndex++);
 
-        // just calling `.getBlock.getNr()` leads to false numbers, really weird
-        // a constant should normally have a successor which is using it
-        int blockNr = aConst.getBlock().getNr();
-        for (BackEdges.Edge e : BackEdges.getOuts(aConst)) {
-            if (e.node.getBlock().getNr() != aConst.getBlock().getNr()) {
-                blockNr = e.node.getBlock().getNr();
-            }
-        }
-
-        this.addInstrToBlock(blockNr, aConst);
+        this.addInstrToBlock(null, aConst);
     }
 
     @Override
