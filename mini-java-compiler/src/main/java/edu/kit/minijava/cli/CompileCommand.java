@@ -34,7 +34,7 @@ public class CompileCommand extends Command {
             new ReferenceAndExpressionTypeResolver(program);
 
             String asmOutputFilenameMolki = "a.molki.s";
-            String asmOutputFileName = "a"; //without .s suffix as it will be added by molki.py
+            String asmOutputFileName = "a.out.s";
             String executableFilename = "a.out";
 
             EntityVisitor visitor = new EntityVisitor();
@@ -133,20 +133,12 @@ public class CompileCommand extends Command {
                 return 1;
             }
 
-            Runtime rt = Runtime.getRuntime();
-
-            //String compileCommand = "python3 ../molki/molki.py" + molkiPath +
-            String compileCommand = "python3 " + molkiPath +
-                " assemble " + asmOutputFilenameMolki + " -o " + asmOutputFileName;
-
-            Process molkiProcess = rt.exec(compileCommand);
-
             int molki_result;
 
             try {
-                molki_result = molkiProcess.waitFor();
+                molki_result = this.exec(molkiPath + " " + asmOutputFilenameMolki + " " + asmOutputFileName);
             }
-            catch (Throwable t) {
+            catch (Throwable throwable) {
                 molki_result = -1;
             }
 
@@ -156,20 +148,11 @@ public class CompileCommand extends Command {
             }
 
             // Assemble and link runtime and code
-
-            String linkingCommand =
-                "gcc" + " " + asmOutputFileName + ".s" + " " + runtimeLibPath + " -o " + executableFilename;
-
-            // System.out.println(linkingCommand);
-
-            Process p = Runtime.getRuntime().exec(linkingCommand);
-
             int result = 0;
-
             try {
-                result = p.waitFor();
+                result = this.exec("gcc" + " " + asmOutputFileName + " " + runtimeLibPath + " -o " + executableFilename);
             }
-            catch (Throwable t) {
+            catch (Throwable throwable) {
                 result = -1;
             }
 
@@ -195,5 +178,34 @@ public class CompileCommand extends Command {
 
             return 1;
         }
+    }
+
+    private int exec(String command) throws Throwable {
+        System.out.println("Executing command “" + command + "”");
+
+        Process process = Runtime.getRuntime().exec(command);
+        int result = process.waitFor();
+
+        {
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            String line = reader.readLine();
+
+            while (line != null) {
+                System.out.println(line);
+                line = reader.readLine();
+            }
+        }
+
+        {
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+            String line = reader.readLine();
+
+            while (line != null) {
+                System.out.println(line);
+                line = reader.readLine();
+            }
+        }
+
+        return result;
     }
 }

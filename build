@@ -1,7 +1,13 @@
 #!/bin/bash
 
 SCRIPT_PATH=$(dirname "$0")
+
 "$SCRIPT_PATH/mini-java-compiler/gradlew" -b "$SCRIPT_PATH/mini-java-compiler/build.gradle" build
+
+if [ "$1" != "--no-swift" ]
+then
+  swiftc -o "$SCRIPT_PATH/swift.out" $SCRIPT_PATH/Molki-Swift/Sources/*.swift $SCRIPT_PATH/Molki-Swift/Sources/*/*.swift
+fi
 
 MJ_RUNTIME_LIB_PATH=$SCRIPT_PATH/mini-java-compiler/build/libs/stdlib.o
 MJ_RUNTIME_LIB_PATH_STACK_ARGS=$SCRIPT_PATH/mini-java-compiler/build/libs/stdlib-stack.o
