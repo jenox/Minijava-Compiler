@@ -1,13 +1,19 @@
 language: java
+sudo: required
+dist: trusty
 
 jdk:
   - oraclejdk8
+
+# Due to the time required to run the Swift installation, the install script
+# > eval "$(curl -sL https://swiftenv.fuller.li/install.sh)"
+# should only be present in jobs that actually need Swift installed.
 
 before_script:
   - source ~/virtualenv/python3.6/bin/activate
 
 env:
-  - MJ_RUN="./run" MJ_TIMEOUT=60
+  - MJ_RUN="./run" MJ_TIMEOUT=60 SWIFT_VERSION="4.2"
 
 jobs:
   include:
@@ -31,3 +37,8 @@ jobs:
       script: ./build && ./mjtest/mjt.py compile --ci_testing --parallel
     - name: MJ Compilation Tests
       script: ./build && ./molki__build_run_check.py
+    - name: Swift Test
+      install: eval "$(curl -sL https://swiftenv.fuller.li/install.sh)"
+      script:
+        - swiftc -o swift.out test.swift
+        - ./swift.out
