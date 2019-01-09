@@ -56,7 +56,7 @@ public class CompileCommand extends Command {
             ArrayList output = new ArrayList();
 
             graphs.forEach(g -> {
-                String methodName = g.getEntity().getName();
+                String methodName = g.getEntity().getLdName();
                 MethodType methodType = (MethodType) g.getEntity().getType();
                 // non-main methods have additional `this` parameter
                 int numArgs = Math.max(0, methodType.getNParams());
