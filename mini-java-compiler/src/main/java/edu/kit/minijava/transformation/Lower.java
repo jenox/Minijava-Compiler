@@ -82,4 +82,9 @@ public class Lower {
         instance.fixEntityNames();
         Util.lowerSels();
     }
+
+    public static void fixNames() {
+        Lower instance = new Lower();
+        instance.fixEntityNames();
+    }
 }
