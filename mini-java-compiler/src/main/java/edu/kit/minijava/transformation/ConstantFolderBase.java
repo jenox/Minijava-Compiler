@@ -69,7 +69,7 @@ abstract class ConstantFolderBase extends NodeVisitor.Default {
             TargetValue value = this.values.get(node);
 
             if (value.isConstant() && !(node instanceof Const)) {
-                System.out.println(node + ": " + value);
+                //System.out.println(node + ": " + value);
             }
         }
     }
@@ -152,7 +152,7 @@ abstract class ConstantFolderBase extends NodeVisitor.Default {
     // MARK: - Graph Operations
 
     static void safeReplaceNodeWithConstant(Node oldValue, Const newValue, @Nullable Node memoryBeforeOperation) {
-        System.out.println("Replacing " + oldValue + " -> " + newValue);
+        //System.out.println("Replacing " + oldValue + " -> " + newValue);
         List<Node> successors = getSuccessorsOf(oldValue);
 
         Graph.exchange(oldValue, newValue);
