@@ -93,6 +93,17 @@ public class PrepVisitor extends Default {
     }
 
     @Override
+    public void visit(Mul node) {
+        //TODO: implement
+    }
+
+    @Override
+    public void visit(Minus node) {
+        //TODO: implement
+    }
+
+
+    @Override
     public void visit(Phi phi) {
         this.node2regIndex.put(phi, this.registerIndex++);
 
@@ -154,6 +165,11 @@ public class PrepVisitor extends Default {
     }
 
     @Override
+    public void visit(Conv node) {
+        //nothing to do
+    }
+
+    @Override
     public void visit(End node) {
         // nothing to do
     }
@@ -192,7 +208,7 @@ public class PrepVisitor extends Default {
 
     @Override
     public void defaultVisit(Node n) {
-        throw new UnsupportedOperationException("unknown node: " + n + " " + n.getClass());
+        throw new UnsupportedOperationException("unknown node: " + n + " " + n.getClass() + "\tmode " + n.getMode());
     }
 
     public void setRegisterIndex(int registerIndex) {
