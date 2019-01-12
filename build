@@ -2,26 +2,26 @@
 
 SCRIPT_PATH=$(dirname "$0")
 
-"$SCRIPT_PATH/mini-java-compiler/gradlew" -b "$SCRIPT_PATH/mini-java-compiler/build.gradle" build || exit 1
+"$SCRIPT_PATH/"mini-java-compiler/gradlew -b "$SCRIPT_PATH"/mini-java-compiler/build.gradle build || exit 1
 
 if [ "$1" != "--no-swift" ]
 then
-  swiftc -o "$SCRIPT_PATH/swift.out" $SCRIPT_PATH/Molki-Swift/Sources/*.swift $SCRIPT_PATH/Molki-Swift/Sources/*/*.swift || exit 1
+  swiftc -o "$SCRIPT_PATH/"swift.out "$SCRIPT_PATH"/Molki-Swift/Sources/*.swift "$SCRIPT_PATH"/Molki-Swift/Sources/*/*.swift || exit 1
 fi
 
-MJ_RUNTIME_LIB_PATH=$SCRIPT_PATH/mini-java-compiler/build/libs/stdlib.o
-MJ_RUNTIME_LIB_PATH_STACK_ARGS=$SCRIPT_PATH/mini-java-compiler/build/libs/stdlib-stack.o
+MJ_RUNTIME_LIB_PATH="$SCRIPT_PATH"/mini-java-compiler/build/libs/stdlib.o
+MJ_RUNTIME_LIB_PATH_STACK_ARGS="$SCRIPT_PATH"/mini-java-compiler/build/libs/stdlib-stack.o
 
 # For now, for compiling with our own backend,
 # use the runtime supplied with molki instead of our own runtime
 # This avoids problems with the standard calling convention for x86_64
-MJ_RUNTIME_SOURCE_PATH=$SCRIPT_PATH/mini-java-compiler/lib/stdlib.c
-MJ_RUNTIME_SOURCE_PATH_STACK_ARGS=$SCRIPT_PATH/mini-java-compiler/lib/stdlib-stack.c
+MJ_RUNTIME_SOURCE_PATH="$SCRIPT_PATH"/mini-java-compiler/lib/stdlib.c
+MJ_RUNTIME_SOURCE_PATH_STACK_ARGS="$SCRIPT_PATH"/mini-java-compiler/lib/stdlib-stack.c
 
 echo "Building MiniJava runtime:"
 
 echo "- default calling convention, writing to: $MJ_RUNTIME_LIB_PATH"
-gcc -c -o $MJ_RUNTIME_LIB_PATH $MJ_RUNTIME_SOURCE_PATH || exit 1
+gcc -c -o "$MJ_RUNTIME_LIB_PATH" "$MJ_RUNTIME_SOURCE_PATH" || exit 1
 
 echo "- stack calling convention, writing to:   $MJ_RUNTIME_LIB_PATH_STACK_ARGS"
-gcc -c -o $MJ_RUNTIME_LIB_PATH_STACK_ARGS $MJ_RUNTIME_SOURCE_PATH_STACK_ARGS || exit 1
+gcc -c -o "$MJ_RUNTIME_LIB_PATH_STACK_ARGS" "$MJ_RUNTIME_SOURCE_PATH_STACK_ARGS" || exit 1
