@@ -31,7 +31,9 @@ class AssemblerGenerator {
             self.table[.identified(index)] = 16 + 8 * index
         }
 
-        self.reserveStackSlot(for: .returnValue)
+        if function.hasReturnValue {
+            self.reserveStackSlot(for: .returnValue)
+        }
 
         for instruction in function.instructions {
             self.handle(instruction)
@@ -41,6 +43,8 @@ class AssemblerGenerator {
         func print(_ text: String) {
             lines.append(text)
         }
+
+        let size = (abs(self.currentOffset) - 8).ceiled(toMultipleOf: 16) + 8
 
         print("\n/* prologue of function \(function.name) */")
         #if os(Linux)
@@ -53,7 +57,7 @@ class AssemblerGenerator {
         #endif
         print("pushq %rbp")
         print("movq %rsp, %rbp")
-        print("sub $\(-self.currentOffset), %rsp")
+        print("sub $\(size), %rsp")
 
         for line in self.body {
             print(line)
@@ -63,9 +67,8 @@ class AssemblerGenerator {
             print("movq \(self.table[.returnValue]!)(%rbp), %rax")
         }
 
-        print("add $\(-self.currentOffset), %rsp")
-
         print("\n/* epilogue of function \(function.name) */")
+        print("movq %rbp, %rsp")
         print("popq %rbp")
         print("ret")
 
@@ -158,6 +161,12 @@ class AssemblerGenerator {
     private func handle(_ instruction: CallInstruction) {
         self.emit("\n/* \(instruction) */")
 
+        let needsDummyArgument = instruction.arguments.count.isMultiple(of: 2)
+
+        if needsDummyArgument {
+            self.emit("pushq $4", comment: "dummy argument to align")
+        }
+
         for (index, argument) in instruction.arguments.enumerated().reversed() {
             self.load(argument, into: "%r8")
             self.emit("pushq %r8", comment: "push argument #\(index) onto stack")
@@ -169,12 +178,16 @@ class AssemblerGenerator {
         self.emit("callq \(instruction.name)")
         #endif
 
-        if let returnValue = instruction.returnValue {
-            self.store("%rax", to: returnValue)
-        }
-
         for index in instruction.arguments.indices {
             self.emit("popq %rbx", comment: "pop argument #\(index) from stack")
+        }
+
+        if needsDummyArgument {
+            self.emit("popq %rbx", comment: "pop dummy argument")
+        }
+
+        if let returnValue = instruction.returnValue {
+            self.store("%rax", to: returnValue)
         }
     }
 
@@ -199,11 +212,6 @@ class AssemblerGenerator {
             return offset
         }
         else {
-            // TODO: python script decreases first? what is offset 0 used for?
-//            let offset = self.currentOffset
-//            self.currentOffset -= 8
-//            self.table[pseudoregister] = offset
-//            return offset
             self.currentOffset -= 8
             self.table[pseudoregister] = self.currentOffset
             return self.currentOffset

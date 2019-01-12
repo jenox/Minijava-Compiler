@@ -58,3 +58,28 @@ extension Collection where Element: Equatable {
         return try self.reduce(0, { $0 + (try predicate($1) ? 1 : 0) })
     }
 }
+
+extension Int {
+    public func floored(toMultipleOf divisor: Int) -> Int {
+        precondition(self >= 0)
+        precondition(divisor >= 0)
+
+        return self / divisor * divisor
+    }
+
+    public func ceiled(toMultipleOf divisor: Int) -> Int {
+        precondition(self >= 0)
+        precondition(divisor >= 0)
+
+        return (self + divisor - 1) / divisor * divisor
+    }
+
+    public func isMultiple(of other: Int) -> Bool {
+        // Nothing but zero is a multiple of zero.
+        if other == 0 { return self == 0 }
+        // Special case to avoid overflow on .min / -1 for signed types.
+        if Int.isSigned && other == -1 { return true }
+        // Having handled those special cases, this is safe.
+        return self % other == 0
+    }
+}
