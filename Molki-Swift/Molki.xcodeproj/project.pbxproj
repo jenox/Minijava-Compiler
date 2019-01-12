@@ -15,7 +15,6 @@
 		AAD777BD21D128C3001F01A1 /* Token.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAD777BC21D128C3001F01A1 /* Token.swift */; };
 		CB73628721D7FE9700A49E17 /* Parser.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB73628621D7FE9700A49E17 /* Parser.swift */; };
 		CB73628921DA89E400A49E17 /* AssemblerGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB73628821DA89E400A49E17 /* AssemblerGenerator.swift */; };
-		CB73628C21E003A800A49E17 /* Printing.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB73628B21E003A800A49E17 /* Printing.swift */; };
 		CB73628E21E0048E00A49E17 /* TokenType.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB73628D21E0048E00A49E17 /* TokenType.swift */; };
 		CB73629021E004A500A49E17 /* TokenProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB73628F21E004A500A49E17 /* TokenProvider.swift */; };
 		CB73629221E006B300A49E17 /* TokenLocation.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB73629121E006B300A49E17 /* TokenLocation.swift */; };
@@ -64,7 +63,6 @@
 		AAD777BC21D128C3001F01A1 /* Token.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Token.swift; sourceTree = "<group>"; };
 		CB73628621D7FE9700A49E17 /* Parser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Parser.swift; sourceTree = "<group>"; };
 		CB73628821DA89E400A49E17 /* AssemblerGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssemblerGenerator.swift; sourceTree = "<group>"; };
-		CB73628B21E003A800A49E17 /* Printing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Printing.swift; sourceTree = "<group>"; };
 		CB73628D21E0048E00A49E17 /* TokenType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenType.swift; sourceTree = "<group>"; };
 		CB73628F21E004A500A49E17 /* TokenProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenProvider.swift; sourceTree = "<group>"; };
 		CB73629121E006B300A49E17 /* TokenLocation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenLocation.swift; sourceTree = "<group>"; };
@@ -120,7 +118,6 @@
 			isa = PBXGroup;
 			children = (
 				AA067C1721CFFF84009CA48A /* main.swift */,
-				CB73628B21E003A800A49E17 /* Printing.swift */,
 				CB73629521E01A6A00A49E17 /* Reader */,
 				CB73628A21E0017B00A49E17 /* Token */,
 				CB73629C21E0277500A49E17 /* Lexer */,
@@ -278,7 +275,6 @@
 				CB7362A421E02BFC00A49E17 /* PseudoRegisterValue.swift in Sources */,
 				CB73629921E01A8100A49E17 /* StringReader.swift in Sources */,
 				CB7362A821E02C2100A49E17 /* PseudoValue.swift in Sources */,
-				CB73628C21E003A800A49E17 /* Printing.swift in Sources */,
 				CB73628721D7FE9700A49E17 /* Parser.swift in Sources */,
 				AAD777BD21D128C3001F01A1 /* Token.swift in Sources */,
 				CB73629221E006B300A49E17 /* TokenLocation.swift in Sources */,
