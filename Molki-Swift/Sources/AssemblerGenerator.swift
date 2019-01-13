@@ -95,19 +95,28 @@ class AssemblerGenerator {
 
     private func handle(_ instruction: Instruction) {
         switch instruction {
-            case .twoAddressCodeInstruction(let instruction):
+        case .oneAddressCodeInstruction(let instruction):
             self.handle(instruction)
-            case .threeAddressCodeInstruction(let instruction):
+        case .twoAddressCodeInstruction(let instruction):
             self.handle(instruction)
-            case .fourAddressCodeInstruction(let instruction):
+        case .threeAddressCodeInstruction(let instruction):
             self.handle(instruction)
-            case .jumpInstruction(let instruction):
+        case .fourAddressCodeInstruction(let instruction):
             self.handle(instruction)
-            case .callInstruction(let instruction):
+        case .jumpInstruction(let instruction):
             self.handle(instruction)
-            case .labelInstruction(let instruction):
+        case .callInstruction(let instruction):
+            self.handle(instruction)
+        case .labelInstruction(let instruction):
             self.handle(instruction)
         }
+    }
+
+    private func handle(_ instruction: OneAddressCodeInstruction) {
+        self.emit("\n/* \(instruction) */")
+        self.load(instruction.first, into: "%r8")
+        self.emit("\(instruction.operation) %r8")
+        self.store("%r8", to: instruction.first)
     }
 
     private func handle(_ instruction: TwoAddressCodeInstruction) {

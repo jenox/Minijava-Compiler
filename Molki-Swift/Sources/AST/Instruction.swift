@@ -10,6 +10,7 @@ import Swift
 
 
 public enum Instruction {
+    case oneAddressCodeInstruction(OneAddressCodeInstruction)
     case twoAddressCodeInstruction(TwoAddressCodeInstruction)
     case threeAddressCodeInstruction(ThreeAddressCodeInstruction)
     case fourAddressCodeInstruction(FourAddressCodeInstruction)

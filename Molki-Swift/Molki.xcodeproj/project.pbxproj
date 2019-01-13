@@ -13,6 +13,7 @@
 		AA067C2921D00B87009CA48A /* runtime.c in Copy Files */ = {isa = PBXBuildFile; fileRef = AA067C2621D00B76009CA48A /* runtime.c */; };
 		AAD777BB21D128AB001F01A1 /* Lexer.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAD777BA21D128AB001F01A1 /* Lexer.swift */; };
 		AAD777BD21D128C3001F01A1 /* Token.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAD777BC21D128C3001F01A1 /* Token.swift */; };
+		CB19082F21EBCAFE0079ECD5 /* OneAddressCodeInstruction.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB19082E21EBCAFE0079ECD5 /* OneAddressCodeInstruction.swift */; };
 		CB73628721D7FE9700A49E17 /* Parser.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB73628621D7FE9700A49E17 /* Parser.swift */; };
 		CB73628921DA89E400A49E17 /* AssemblerGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB73628821DA89E400A49E17 /* AssemblerGenerator.swift */; };
 		CB73628E21E0048E00A49E17 /* TokenType.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB73628D21E0048E00A49E17 /* TokenType.swift */; };
@@ -61,6 +62,7 @@
 		AA067C2621D00B76009CA48A /* runtime.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = runtime.c; sourceTree = "<group>"; };
 		AAD777BA21D128AB001F01A1 /* Lexer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Lexer.swift; sourceTree = "<group>"; };
 		AAD777BC21D128C3001F01A1 /* Token.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Token.swift; sourceTree = "<group>"; };
+		CB19082E21EBCAFE0079ECD5 /* OneAddressCodeInstruction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OneAddressCodeInstruction.swift; sourceTree = "<group>"; };
 		CB73628621D7FE9700A49E17 /* Parser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Parser.swift; sourceTree = "<group>"; };
 		CB73628821DA89E400A49E17 /* AssemblerGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssemblerGenerator.swift; sourceTree = "<group>"; };
 		CB73628D21E0048E00A49E17 /* TokenType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenType.swift; sourceTree = "<group>"; };
@@ -174,6 +176,7 @@
 			children = (
 				CB7362A921E02C6900A49E17 /* Function.swift */,
 				CB7362AB21E02C6D00A49E17 /* Instruction.swift */,
+				CB19082E21EBCAFE0079ECD5 /* OneAddressCodeInstruction.swift */,
 				CB7362AD21E02C7400A49E17 /* TwoAddressCodeInstruction.swift */,
 				CB7362AF21E02C7900A49E17 /* ThreeAddressCodeInstruction.swift */,
 				CB7362B121E02C8000A49E17 /* FourAddressCodeInstruction.swift */,
@@ -270,6 +273,7 @@
 				CB7362A621E02C1B00A49E17 /* PseudoMemoryAddress.swift in Sources */,
 				AA067C1821CFFF84009CA48A /* main.swift in Sources */,
 				CB7362AA21E02C6900A49E17 /* Function.swift in Sources */,
+				CB19082F21EBCAFE0079ECD5 /* OneAddressCodeInstruction.swift in Sources */,
 				AA067C2121CFFFB8009CA48A /* Python.swift in Sources */,
 				CB73628921DA89E400A49E17 /* AssemblerGenerator.swift in Sources */,
 				CB7362A421E02BFC00A49E17 /* PseudoRegisterValue.swift in Sources */,

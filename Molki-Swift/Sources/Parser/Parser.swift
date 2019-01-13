@@ -188,12 +188,20 @@ public class Parser {
             }
             else {
                 let first = try self.parseValue()
-                try self.consume(.comma)
-                let second = try self.parseValue()
 
-                let instruction = TwoAddressCodeInstruction(operation: opcode, first: first, second: second)
+                if try self.lookahead(.comma) {
+                    try self.consume(.comma)
+                    let second = try self.parseValue()
 
-                return .twoAddressCodeInstruction(instruction)
+                    let instruction = TwoAddressCodeInstruction(operation: opcode, first: first, second: second)
+
+                    return .twoAddressCodeInstruction(instruction)
+                }
+                else {
+                    let instruction = OneAddressCodeInstruction(operation: opcode, first: first)
+
+                    return .oneAddressCodeInstruction(instruction)
+                }
             }
         }
     }
