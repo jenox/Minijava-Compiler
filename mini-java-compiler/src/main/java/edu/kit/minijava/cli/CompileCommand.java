@@ -150,7 +150,8 @@ public class CompileCommand extends Command {
             // Assemble and link runtime and code
             int result = 0;
             try {
-                result = this.exec("gcc" + " " + asmOutputFileName + " " + runtimeLibPath + " -o " + executableFilename);
+                result = this.exec("gcc" + " " + asmOutputFileName + " " + runtimeLibPath + " -o " +
+                        executableFilename);
             }
             catch (Throwable throwable) {
                 result = -1;
