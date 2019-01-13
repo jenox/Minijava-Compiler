@@ -239,8 +239,11 @@ class AssemblerGenerator {
                 precondition(register != "%r12")
                 self.loadPseudoregister(base, into: "%r12")
                 self.emit("movq \(register), \(offset)(%r12)", comment: "dereference \(base) + \(offset)")
-            case .indexed(base: _ , index: _, scale: _, offset: _):
-                fatalError("not implemented yet: write \(register) to \(value)")
+            case .indexed(base: let base , index: let index, scale: let scale, offset: let offset):
+                precondition(register != "%r12" && register != "%r13")
+                self.loadPseudoregister(base, into: "%r12")
+                self.loadPseudoregister(index, into: "%r13")
+                self.emit("movq \(register), \(offset)(%r12, %r13, \(scale))")
             }
         }
     }
@@ -304,8 +307,10 @@ class AssemblerGenerator {
         case .relative(base: let base, offset: let offset):
             self.loadPseudoregister(base, into: "%r8")
             self.emit("movq \(offset)(%r8), \(register)", comment: "dereference \(base) + \(offset)")
-        case .indexed(base: _ , index: _, scale: _, offset: _):
-            fatalError("not implemented yet: read \(address) to \(register)")
+        case .indexed(base: let base, index: let index, scale: let scale, offset: let offset):
+            self.loadPseudoregister(base, into: "%r8")
+            self.loadPseudoregister(index, into: "%r9")
+            self.emit("movq \(offset)(%r8, %r9, \(scale)), \(register)")
         }
     }
 
