@@ -221,11 +221,18 @@ class AssemblerGenerator {
     func store(_ register: String, to value: Value) {
         switch value {
         case .constant:
-        break // noop, constants cannot be written
+            fatalError("Cannot write to constant")
         case .register(let pseudoregister):
             self.store(register, to: pseudoregister)
-        case .memory(_):
-            fatalError("not implemented yet")
+        case .memory(let address):
+            switch address {
+            case .relative(base: let base, offset: let offset):
+                precondition(register != "%r12")
+                self.loadPseudoregister(base, into: "%r12")
+                self.emit("movq \(register), \(offset)(%r12)", comment: "dereference \(base) + \(offset)")
+            case .indexed(base: _ , index: _, scale: _, offset: _):
+                fatalError("not implemented yet: write \(register) to \(value)")
+            }
         }
     }
 
@@ -284,8 +291,13 @@ class AssemblerGenerator {
     }
 
     func loadMemory(_ address: MemoryAddress, into register: String) {
-        fatalError("not implemented yet")
-        // resolve pseudoregs in addr first
+        switch address {
+        case .relative(base: let base, offset: let offset):
+            self.loadPseudoregister(base, into: "%r8")
+            self.emit("movq \(offset)(%r8), \(register)", comment: "dereference \(base) + \(offset)")
+        case .indexed(base: _ , index: _, scale: _, offset: _):
+            fatalError("not implemented yet: read \(address) to \(register)")
+        }
     }
 
 
