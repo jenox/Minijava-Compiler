@@ -57,6 +57,8 @@ do {
         lines.append(contentsOf: generator.lines)
     }
 
+    lines.append("")
+
     let data = lines.joined(separator: "\n").data(using: .utf8)!
     try! data.write(to: targetURL)
 }
