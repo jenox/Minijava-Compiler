@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		AA067C1821CFFF84009CA48A /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA067C1721CFFF84009CA48A /* main.swift */; };
-		AA067C2121CFFFB8009CA48A /* Python.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA067C2021CFFFB8009CA48A /* Python.swift */; };
 		AA067C2821D00B85009CA48A /* example_fib.s in Copy Files */ = {isa = PBXBuildFile; fileRef = AA067C2221CFFFF1009CA48A /* example_fib.s */; };
 		AA067C2921D00B87009CA48A /* runtime.c in Copy Files */ = {isa = PBXBuildFile; fileRef = AA067C2621D00B76009CA48A /* runtime.c */; };
 		AAD777BB21D128AB001F01A1 /* Lexer.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAD777BA21D128AB001F01A1 /* Lexer.swift */; };
@@ -49,7 +48,6 @@
 /* Begin PBXFileReference section */
 		AA067C1421CFFF84009CA48A /* Molki */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Molki; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA067C1721CFFF84009CA48A /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
-		AA067C2021CFFFB8009CA48A /* Python.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Python.swift; sourceTree = "<group>"; };
 		AA067C2221CFFFF1009CA48A /* example_fib.s */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.asm; path = example_fib.s; sourceTree = "<group>"; };
 		AA067C2621D00B76009CA48A /* runtime.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = runtime.c; sourceTree = "<group>"; };
 		AAD777BA21D128AB001F01A1 /* Lexer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Lexer.swift; sourceTree = "<group>"; };
@@ -111,7 +109,6 @@
 				CB7362A021E02B7F00A49E17 /* Parser */,
 				CB73628821DA89E400A49E17 /* AssemblerGenerator.swift */,
 				CB73629A21E01AF100A49E17 /* Misc.swift */,
-				AA067C2021CFFFB8009CA48A /* Python.swift */,
 			);
 			path = Sources;
 			sourceTree = "<group>";
@@ -243,7 +240,6 @@
 				CB96B9D621ED10AE003D7AEE /* Values.swift in Sources */,
 				CB73629E21E0278100A49E17 /* LexerError.swift in Sources */,
 				AA067C1821CFFF84009CA48A /* main.swift in Sources */,
-				AA067C2121CFFFB8009CA48A /* Python.swift in Sources */,
 				CB73628921DA89E400A49E17 /* AssemblerGenerator.swift in Sources */,
 				CB96B9DA21ED11C2003D7AEE /* Instructions.swift in Sources */,
 				CB73629921E01A8100A49E17 /* StringReader.swift in Sources */,
