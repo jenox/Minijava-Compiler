@@ -3,40 +3,58 @@ package edu.kit.minijava.cli;
 public class CommandLineInterface {
     public static void main(String[] arguments) {
 
-        if (arguments.length != 2) {
-            CommandLineInterface.printErrorAndExit();
+        final Command command;
+        String fileArgument = "";
+
+        if (arguments.length == 1) {
+            // Directly compile the file
+            fileArgument = arguments[0];
+            command = new CompileCommand();
         }
 
-        final Command command;
+        else if (arguments.length != 2) {
+            command = new CompileCommand();
+            CommandLineInterface.printErrorAndExit();
+        }
+        else {
 
-        switch (arguments[0]) {
-            case "--echo":
-                command = new EchoCommand();
-                break;
-            case "--lextest":
-                command = new LextestCommand();
-                break;
-            case "--parsetest":
-                command = new ParserCommand(false);
-                break;
-            case "--print-ast":
-                command = new ParserCommand(true);
-                break;
-            case "--check":
-                command = new ValidateCommand();
-                break;
-            case "--transform":
-            case "--compile-firm":
-                command = new TransformerCommand();
-                break;
-            default:
-                CommandLineInterface.printErrorAndExit();
-                return;
+            fileArgument = arguments[1];
+
+            switch (arguments[0]) {
+                case "--echo":
+                    command = new EchoCommand();
+                    break;
+                case "--lextest":
+                    command = new LextestCommand();
+                    break;
+                case "--parsetest":
+                    command = new ParserCommand(false);
+                    break;
+                case "--print-ast":
+                    command = new ParserCommand(true);
+                    break;
+                case "--check":
+                    command = new ValidateCommand();
+                    break;
+                case "--transform":
+                case "--compile-firm":
+                    command = new TransformerCommand();
+                    break;
+                case "--backend":
+                    command = new BackendCommand();
+                    break;
+                case "--compile":
+                    command = new CompileCommand();
+                    break;
+                default:
+                    CommandLineInterface.printErrorAndExit();
+                    return;
+            }
         }
 
         int status = 0;
         try {
-            status = command.execute(arguments[1]);
+            status = command.execute(fileArgument);
         }
         catch (Throwable exception) {
             String message = exception.getLocalizedMessage();
