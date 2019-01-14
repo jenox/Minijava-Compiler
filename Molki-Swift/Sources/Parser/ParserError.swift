@@ -17,6 +17,8 @@ public enum ParserError: Error, CustomStringConvertible {
     case unexpectedEOF(context: String)
     case expectedEOF(found: Token)
     case integerOutOfRange(Token)
+    case unrecognizedOpcode(String, token: Token)
+    case incompatibleRegisterWidth(RegisterWidth, expected: RegisterWidth, location: Token)
 
     public var description: String {
         switch self {
@@ -34,6 +36,10 @@ public enum ParserError: Error, CustomStringConvertible {
             return "Expected EOF but found token of type “\(token.type)”"
         case .integerOutOfRange(_):
             return "Integer out of range"
+        case .unrecognizedOpcode(let opcode, token: _):
+            return "Unrecognized opcode “\(opcode)”"
+        case .incompatibleRegisterWidth(let found, expected: let expected, location: _):
+            return "Incompatible register width “\(found)”, expected “\(expected)”"
         }
     }
 
@@ -52,6 +58,10 @@ public enum ParserError: Error, CustomStringConvertible {
         case .expectedEOF(found: let token):
             return token
         case .integerOutOfRange(let token):
+            return token
+        case .unrecognizedOpcode(_, token: let token):
+            return token
+        case .incompatibleRegisterWidth(_, expected: _, location: let token):
             return token
         }
     }
