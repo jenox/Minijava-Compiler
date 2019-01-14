@@ -36,7 +36,12 @@ for file_name in test_files:
         temp, _ = Popen([ "./a.out" ], stdout=PIPE).communicate()
         tempStr = str(temp.decode()).strip()
 
-        file = open(test_dir + "/" + file_name + ".out", "r")
+        if os.path.isfile(test_dir + "/" + file_name + ".out"):
+            file = open(test_dir + "/" + file_name + ".out", "r")
+        else:
+            assert file_name.endswith(".mj") and os.path.isfile(test_dir + "/" + file_name[:-3] + ".out"), "file is not an mj file or output file is missing"
+            file = open(test_dir + "/" + file_name[:-3] + ".out", "r")
+
         temp2 = file.read().strip()
         file.close()
 
@@ -49,25 +54,3 @@ for file_name in test_files:
             exit_code = 1
 
 sys.exit(exit_code)
-
-
-        # file2 = open(result_file_name, "a")
-        # file2.write(file_name + "\n")
-        # file2.write(str(tempStr == temp2) + "\n")
-        # if tempStr != temp2:
-        #     file2.write(test_dir + "/" + file_name + ".out")
-        #     file2.write("\n")
-        #     file2.write(tempStr + "\n")
-        #     file2.write(temp2 + "\n")
-        # file2.write("\n")
-        # file2.close()
-
-# out_file = "a.out"
-# out_s_file = "a.out.s"
-# molki_file = "a.molki.s"
-# if os.path.isfile(out_file):
-#     os.remove(out_file)
-# if os.path.isfile(out_s_file):
-#     os.remove(out_s_file)
-# if os.path.isfile(molki_file):
-#     os.remove(molki_file)
