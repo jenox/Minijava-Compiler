@@ -140,6 +140,10 @@ public class MolkiTransformer extends Default {
                 Member aMember = (Member) node;
                 this.molkify(aMember);
                 break;
+            case iro_Conv:
+                Conv aConv = (Conv) node;
+                this.molkify(aConv);
+                break;
             default:
                 throw new UnsupportedOperationException("unknown node " + node.getClass());
         }
@@ -239,7 +243,16 @@ public class MolkiTransformer extends Default {
         int targetReg1 = this.node2RegIndex.get(div);
         int targetReg2 = targetReg1 + 1; // by convention used in PrepVisitor
 
-        this.appendMolkiCode("idiv [ %@" + left + " | %@" + right + " ]" + " -> [ %@" + targetReg1 + ", " + REG_PREFIX
+        // TODO Div instruction has to handle sign extension of the operands.
+        // but this requires knowledge of the length of used register sizes for virtual registers.
+
+        // Reference code that should be generated for div instruction:
+        // mov %edi, %eax
+        // movslq %eax, %rax
+        // cqto
+        // movslq %esi, %rsi
+        // idivq %rsi
+        this.appendMolkiCode("idiv [ %@" + left + " | %@" + right + " ]" + " -> [ %@" + targetReg1 + " | " + REG_PREFIX
                         + targetReg2 + "]");
     }
 
@@ -301,8 +314,18 @@ public class MolkiTransformer extends Default {
         int targetReg1 = this.node2RegIndex.get(mod);
         int targetReg2 = targetReg1 + 1; // by convention used in PrepVisitor
 
-        this.appendMolkiCode("imod [ " + REG_PREFIX + srcReg1 + " | " + REG_PREFIX + srcReg2 + " ]" + " -> [ %@"
-                        + REG_PREFIX + targetReg1 + " | %@" + targetReg2 + "]");
+        // TODO Div instruction has to handle sign extension of the operands.
+        // but this requires knowledge of the length of used register sizes for virtual registers.
+
+        // Reference code that should be generated for div instruction:
+        // mov %edi, %eax
+        // movslq %eax, %rax
+        // cqto
+        // movslq %esi, %rsi
+        // idivq %rsi
+
+        this.appendMolkiCode("idiv [ " + REG_PREFIX + srcReg1 + " | " + REG_PREFIX + srcReg2 + " ]" + " -> [ "
+                        + REG_PREFIX + targetReg2 + " | " + REG_PREFIX + targetReg1 + "]");
     }
 
     private void molkify(Mul mul) {
@@ -481,6 +504,11 @@ public class MolkiTransformer extends Default {
 
     private void molkify(Member node) {
         //nothing to do
+    }
+
+    private void molkify(Conv node) {
+        // Nothing to do here as conversion nodes are only constructed for div and mod
+        // operations and conversion of the operands instead should be handled there.
     }
 
     /*
