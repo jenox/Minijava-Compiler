@@ -9,7 +9,7 @@
 import Swift
 
 
-public struct RegisterValue<RegisterType: Register>: CustomStringConvertible {
+public struct RegisterValue<RegisterType: Register>: Equatable, CustomStringConvertible {
     public var register: RegisterType
     public var width: RegisterWidth
 
@@ -18,7 +18,7 @@ public struct RegisterValue<RegisterType: Register>: CustomStringConvertible {
     }
 }
 
-public struct ConstantValue: CustomStringConvertible {
+public struct ConstantValue: Equatable, CustomStringConvertible {
     public var value: Int
 
     public var description: String {
@@ -26,7 +26,7 @@ public struct ConstantValue: CustomStringConvertible {
     }
 }
 
-public enum MemoryValue<RegisterType: Register>: CustomStringConvertible {
+public enum MemoryValue<RegisterType: Register>: Equatable, CustomStringConvertible {
     case relative(base: RegisterValue<RegisterType>, offset: Int)
     case indexed(base: RegisterValue<RegisterType>, index: RegisterValue<RegisterType>, scale: Int, offset: Int)
 

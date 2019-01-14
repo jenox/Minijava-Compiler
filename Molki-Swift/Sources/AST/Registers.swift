@@ -16,8 +16,14 @@ public enum RegisterWidth {
     case quad
 }
 
-public protocol Register {
+public protocol Register: Hashable {
     func name(for width: RegisterWidth) -> String
+}
+
+extension Register {
+    public func with(_ width: RegisterWidth) -> RegisterValue<Self> {
+        return RegisterValue(register: self, width: width)
+    }
 }
 
 public enum Pseudoregister: Register {

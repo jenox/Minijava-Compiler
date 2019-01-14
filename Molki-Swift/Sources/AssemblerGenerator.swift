@@ -9,7 +9,6 @@
 import Foundation
 
 
-/*
 // https://cs.brown.edu/courses/cs033/docs/guides/x64_cheatsheet.pdf
 class AssemblerGenerator {
 
@@ -29,11 +28,11 @@ class AssemblerGenerator {
             // 2 slots reserved:
             //  - return address
             //  - old base pointer? (pushq %rbp in prologue)
-            self.table[.identified(index)] = 16 + 8 * index
+            self.table[.numbered(index)] = 16 + 8 * index
         }
 
         if function.hasReturnValue {
-            self.reserveStackSlot(for: .returnValue)
+            self.reserveStackSlot(for: .reserved)
         }
 
         for instruction in function.instructions {
@@ -65,7 +64,7 @@ class AssemblerGenerator {
         }
 
         if function.hasReturnValue {
-            print("movq \(self.table[.returnValue]!)(%rbp), %rax")
+            print("movq \(self.table[.reserved]!)(%rbp), %rax")
         }
 
         print("\n/* epilogue of function \(function.name) */")
@@ -96,108 +95,28 @@ class AssemblerGenerator {
 
     private func handle(_ instruction: Instruction) {
         switch instruction {
-        case .oneAddressCodeInstruction(let instruction):
-            self.handle(instruction)
-        case .twoAddressCodeInstruction(let instruction):
-            self.handle(instruction)
-        case .threeAddressCodeInstruction(let instruction):
-            self.handle(instruction)
-        case .fourAddressCodeInstruction(let instruction):
+        case .labelInstruction(let instruction):
             self.handle(instruction)
         case .jumpInstruction(let instruction):
             self.handle(instruction)
         case .callInstruction(let instruction):
             self.handle(instruction)
-        case .labelInstruction(let instruction):
+        case .moveInstruction(let instruction):
             self.handle(instruction)
-        }
-    }
-
-    private func handle(_ instruction: OneAddressCodeInstruction) {
-        self.emit("\n/* \(instruction) */")
-        self.load(instruction.first, into: "%r8")
-        self.emit("\(instruction.operation) %r8")
-        self.store("%r8", to: instruction.first)
-    }
-
-    private func handle(_ instruction: TwoAddressCodeInstruction) {
-        if instruction.operation.hasPrefix("cmp") || instruction.operation.hasPrefix("test") {
-            self.emit("\n/* \(instruction) */")
-            self.load(instruction.first, into: "%r8")
-            self.load(instruction.second, into: "%r9")
-            self.emit("\(instruction.operation) %r8, %r9")
-        }
-        else if instruction.operation.hasPrefix("mov") {
-            self.emit("\n/* \(instruction) */")
-            self.load(instruction.first, into: "%r8")
-            self.store("%r8", to: instruction.second)
-        }
-        else {
-            self.emit("\n/* \(instruction) */")
-            self.emit("/* warning: unrecognized two address code instruction “\(instruction.operation)” */")
-            self.load(instruction.first, into: "%r8")
-            self.load(instruction.second, into: "%r9")
-            self.emit("\(instruction.operation) %r8, %r9")
-            self.store("%r8", to: instruction.first)
-            self.store("%r9", to: instruction.second)
-        }
-    }
-
-    private func handle(_ instruction: ThreeAddressCodeInstruction) {
-        self.emit("\n/* \(instruction) */")
-        self.load(instruction.first, into: "%r8")
-        self.load(instruction.second, into: "%r9")
-        self.emit("\(instruction.operation) %r8, %r9")
-        self.store("%r9", to: instruction.third)
-    }
-
-    private func handle(_ instruction: FourAddressCodeInstruction) {
-        precondition(["div", "idiv"].contains(instruction.operation))
-
-        self.emit("\n/* \(instruction) */")
-        self.load(instruction.first, into: "%rax")
-        self.load(instruction.second, into: "%rbx")
-        self.emit("cltd")
-        self.emit("\(instruction.operation) %rbx")
-        self.store("%rax", to: instruction.third)
-        self.store("%rdx", to: instruction.fourth)
-    }
-
-    private func handle(_ instruction: JumpInstruction) {
-        self.emit("\n/* \(instruction) */")
-        self.emit("\(instruction.operation) \(instruction.target)")
-    }
-
-    private func handle(_ instruction: CallInstruction) {
-        self.emit("\n/* \(instruction) */")
-
-        let needsDummyArgument = instruction.arguments.count.isMultiple(of: 2)
-
-        if needsDummyArgument {
-            self.emit("pushq $4", comment: "dummy argument to align")
-        }
-
-        for (index, argument) in instruction.arguments.enumerated().reversed() {
-            self.load(argument, into: "%r8")
-            self.emit("pushq %r8", comment: "push argument #\(index) onto stack")
-        }
-
-        #if os(Linux)
-        self.emit("callq \(instruction.name)")
-        #else
-        self.emit("callq \(instruction.name)")
-        #endif
-
-        for index in instruction.arguments.indices {
-            self.emit("popq %rbx", comment: "pop argument #\(index) from stack")
-        }
-
-        if needsDummyArgument {
-            self.emit("popq %rbx", comment: "pop dummy argument")
-        }
-
-        if let returnValue = instruction.returnValue {
-            self.store("%rax", to: returnValue)
+        case .comparisonInstruction(let instruction):
+            self.handle(instruction)
+        case .additionInstruction(let instruction):
+            self.handle(instruction)
+        case .subtractionInstruction(let instruction):
+            self.handle(instruction)
+        case .multiplicationInstruction(let instruction):
+            self.handle(instruction)
+        case .divisionInstruction(let instruction):
+            self.handle(instruction)
+        case .numericNegationInstruction(let instruction):
+            self.handle(instruction)
+        case .logicalNegationInstruction(let instruction):
+            self.handle(instruction)
         }
     }
 
@@ -206,18 +125,144 @@ class AssemblerGenerator {
         self.emit("\(instruction.name):")
     }
 
+    private func handle(_ instruction: JumpInstruction) {
+        self.emit("\n/* \(instruction) */")
+        self.emit("\(instruction.condition.rawValue) \(instruction.target)")
+    }
 
+    private func handle(_ instruction: CallInstruction) {
+        self.emit("\n/* \(instruction) */")
+
+        let needsDummyArgument = instruction.arguments.count.isMultiple(of: 2)
+
+        if needsDummyArgument {
+            self.emit("pushq $0", comment: "dummy argument to align stack")
+        }
+
+        for (index, argument) in instruction.arguments.enumerated().reversed() {
+            let register = X86Register.r8.with(argument.width ?? .quad)
+
+            self.load(argument, into: register)
+            self.emit("pushq %r8", comment: "push argument #\(index) onto stack")
+        }
+
+        #if os(Linux)
+        self.emit("callq \(instruction.target)")
+        #else
+        self.emit("callq \(instruction.target)")
+        #endif
+
+        for index in instruction.arguments.indices {
+            self.emit("popq %rbx", comment: "pop argument #\(index) from stack")
+        }
+
+        if needsDummyArgument {
+            self.emit("popq %rbx", comment: "pop dummy argument from stack")
+        }
+
+        if let result = instruction.result {
+            let register = X86Register.rax.with(.quad)
+            self.store(register, to: result)
+        }
+    }
+
+    private func handle(_ instruction: MoveInstruction) {
+        let reg = X86Register.r8.with(instruction.width)
+
+        self.emit("\n/* \(instruction) */")
+        self.load(instruction.source, into: reg)
+        self.store(reg, to: instruction.target)
+    }
+
+    private func handle(_ instruction: ComparisonInstruction) {
+        let lhs_reg = X86Register.r8.with(instruction.width)
+        let rhs_reg = X86Register.r9.with(instruction.width)
+
+        self.emit("\n/* \(instruction) */")
+        self.load(instruction.lhs, into: lhs_reg)
+        self.load(instruction.rhs, into: rhs_reg)
+
+        switch instruction.width {
+        case .byte: self.emit("cmpb \(rhs_reg), \(lhs_reg)")
+        case .word: self.emit("cmpw \(rhs_reg), \(lhs_reg)")
+        case .double: self.emit("cmpl \(rhs_reg), \(lhs_reg)")
+        case .quad: self.emit("cmpq \(rhs_reg), \(lhs_reg)")
+        }
+    }
+
+    private func handle(_ instruction: AdditionInstruction) {
+        let src = X86Register.r8.with(.double)
+        let dest = X86Register.r9.with(.double)
+
+        self.emit("\n/* \(instruction) */")
+        self.load(instruction.augend, into: dest)
+        self.load(instruction.addend, into: src)
+        self.emit("addl \(src), \(dest)")
+        self.store(dest, to: instruction.sum)
+    }
+
+    private func handle(_ instruction: SubtractionInstruction) {
+        let src = X86Register.r8.with(.double)
+        let dest = X86Register.r9.with(.double)
+
+        self.emit("\n/* \(instruction) */")
+        self.load(instruction.minuend, into: dest)
+        self.load(instruction.subtrahend, into: src)
+        self.emit("subl \(src), \(dest)")
+        self.store(dest, to: instruction.difference)
+    }
+
+    private func handle(_ instruction: MultiplicationInstruction) {
+        let src = X86Register.r8.with(.double)
+        let dest = X86Register.r9.with(.double)
+
+        self.emit("\n/* \(instruction) */")
+        self.load(instruction.multiplicand, into: dest)
+        self.load(instruction.multiplier, into: src)
+        self.emit("imull \(src), \(dest)") // TODO: imul or mul?
+        self.store(dest, to: instruction.product)
+    }
+
+    private func handle(_ instruction: DivisionInstruction) {
+        let reg = X86Register.r8.with(.double)
+
+        self.emit("\n/* \(instruction) */")
+        self.load(instruction.dividend, into: X86Register.rax.with(.double))
+        self.load(instruction.divisor, into: reg)
+        self.emit("cltd", comment: "sing-extend eax -> edx:eax")
+        self.emit("idivl \(reg)")
+        self.store(X86Register.rax.with(.double), to: instruction.quotient)
+        self.store(X86Register.rdx.with(.double), to: instruction.remainder)
+    }
+
+    private func handle(_ instruction: NumericNegationInstruction) {
+        let reg = X86Register.r8.with(.double)
+
+        self.emit("\n/* \(instruction) */")
+        self.load(instruction.source, into: reg)
+        self.emit("negl \(reg)")
+        self.store(reg, to: instruction.target)
+    }
+
+    private func handle(_ instruction: LogicalNegationInstruction) {
+        let reg = X86Register.r8.with(.byte)
+
+        self.emit("\n/* \(instruction) */")
+        self.load(instruction.source, into: reg)
+        self.emit("notb \(reg)")
+        self.store(reg, to: instruction.target)
+    }
 
 
 
     // MARK: - Spilling
 
     /// pseudoregister -> frame offset
-    private var table: [Register: Int] = [:]
+    private var table: [Pseudoregister: Int] = [:]
     private var currentOffset = 0
 
     @discardableResult
-    private func reserveStackSlot(for pseudoregister: Register) -> Int {
+    private func reserveStackSlot(for pseudoregister: Pseudoregister) -> Int {
         if let offset = self.table[pseudoregister] {
             return offset
         }
@@ -228,40 +273,70 @@ class AssemblerGenerator {
         }
     }
 
-    func store(_ register: String, to value: Value) {
+    func store(_ register: RegisterValue<X86Register>, to value: Result<Pseudoregister>) {
         switch value {
-        case .constant:
-            fatalError("Cannot write to constant")
-        case .register(let pseudoregister):
-            self.store(register, to: pseudoregister)
-        case .memory(let address):
-            switch address {
-            case .relative(base: let base, offset: let offset):
-                precondition(register != "%r12")
-                self.loadPseudoregister(base, into: "%r12")
-                self.emit("movq \(register), \(offset)(%r12)", comment: "dereference \(base) + \(offset)")
-            case .indexed(base: let base , index: let index, scale: let scale, offset: let offset):
-                precondition(register != "%r12" && register != "%r13")
-                self.loadPseudoregister(base, into: "%r12")
-                self.loadPseudoregister(index, into: "%r13")
-                self.emit("movq \(register), \(offset)(%r12, %r13, \(scale))")
-            }
+        case .register(let value):
+            self.store(register, to: value)
+        case .memory(let value):
+            self.store(register, to: value)
         }
     }
 
-    func store(_ register: String, to value: RegisterValue) {
-        //        self.emit("movq \(register), ")
+    func store(_ register: RegisterValue<X86Register>, to value: RegisterValue<Pseudoregister>) {
+        precondition(register.width == value.width)
+
         let offset = self.reserveStackSlot(for: value.register)
 
-        switch value.width {
-        case .byte: self.emit("movb \(register)l, \(offset)(%rbp)", comment: "write pseudoregister \(value)")
-        case .word: self.emit("movw \(register)w, \(offset)(%rbp)", comment: "write pseudoregister \(value)")
-        case .double: self.emit("movl \(register)d, \(offset)(%rbp)", comment: "write pseudoregister \(value)")
+        switch register.width {
+        case .byte: self.emit("movb \(register), \(offset)(%rbp)", comment: "write pseudoregister \(value)")
+        case .word: self.emit("movw \(register), \(offset)(%rbp)", comment: "write pseudoregister \(value)")
+        case .double: self.emit("movl \(register), \(offset)(%rbp)", comment: "write pseudoregister \(value)")
         case .quad: self.emit("movq \(register), \(offset)(%rbp)", comment: "write pseudoregister \(value)")
         }
     }
 
-    func load(_ value: Value, into register: String) {
+    func store(_ register: RegisterValue<X86Register>, to value: MemoryValue<Pseudoregister>) {
+        switch value {
+        case .relative(base: let base, offset: let offset):
+            let base_reg = X86Register.r12.with(base.width)
+            precondition(register != base_reg)
+
+            self.loadPseudoregister(base, into: base_reg)
+
+            switch register.width {
+            case .byte:
+                self.emit("movb \(register), \(offset)(\(base_reg))")
+            case .word:
+                self.emit("movw \(register), \(offset)(\(base_reg))")
+            case .double:
+                self.emit("movl \(register), \(offset)(\(base_reg))")
+            case .quad:
+                self.emit("movq \(register), \(offset)(\(base_reg))")
+            }
+        case .indexed(base: let base , index: let index, scale: let scale, offset: let offset):
+            let base_reg = X86Register.r12.with(base.width)
+            let index_reg = X86Register.r13.with(index.width)
+            precondition(register != base_reg && register != index_reg)
+
+            // TODO: x86 does not allow different widths for base and index, but we need it for array access
+
+            self.loadPseudoregister(base, into: base_reg)
+            self.loadPseudoregister(index, into: index_reg)
+
+            switch register.width {
+            case .byte:
+                self.emit("movb \(register), \(offset)(\(base_reg), \(index_reg), \(scale))")
+            case .word:
+                self.emit("movw \(register), \(offset)(\(base_reg), \(index_reg), \(scale))")
+            case .double:
+                self.emit("movl \(register), \(offset)(\(base_reg), \(index_reg), \(scale))")
+            case .quad:
+                self.emit("movq \(register), \(offset)(\(base_reg), \(index_reg), \(scale))")
+            }
+        }
+    }
+
+    func load(_ value: Argument<Pseudoregister>, into register: RegisterValue<X86Register>) {
         switch value {
         case .constant(let value):
             self.loadConstant(value, into: register)
@@ -272,47 +347,65 @@ class AssemblerGenerator {
         }
     }
 
-    func loadConstant(_ value: Int, into register: String) {
-        precondition(register.hasPrefix("%"))
-
-        // e.g. `movq $2, %r8`
-        self.emit("movq $\(value), \(register)", comment: "load constant \(value)")
+    func loadConstant(_ value: ConstantValue, into register: RegisterValue<X86Register>) {
+        switch register.width {
+        case .byte: self.emit("movb \(value), \(register)", comment: "load constant \(value)")
+        case .word: self.emit("movw \(value), \(register)", comment: "load constant \(value)")
+        case .double: self.emit("movl \(value), \(register)", comment: "load constant \(value)")
+        case .quad: self.emit("movq \(value), \(register)", comment: "load constant \(value)")
+        }
     }
 
-    func loadPseudoregister(_ value: RegisterValue, into register: String) {
-        precondition(register.hasPrefix("%"))
-
-        // https://stackoverflow.com/questions/1898834/why-would-one-use-movl-1-eax-as-opposed-to-say-movb-1-eax
-        // command and register suffixes
-        // byte b l
-        // word w w
-        // double l d
-        // quad q -
-
-        if self.table[value.register] == nil {
-            self.emit("/* warning: use of undeclared pseudoregister \(value.register) */")
-        }
+    func loadPseudoregister(_ value: RegisterValue<Pseudoregister>, into register: RegisterValue<X86Register>) {
+        precondition(self.table[value.register] != nil)
+        precondition(register.width == value.width)
 
         let offset = self.reserveStackSlot(for: value.register)
 
-        switch value.width {
-        case .byte: self.emit("movb \(offset)(%rbp), \(register)l", comment: "read pseudoregister \(value)")
-        case .word: self.emit("movw \(offset)(%rbp), \(register)w", comment: "read pseudoregister \(value)")
-        case .double: self.emit("movl \(offset)(%rbp), \(register)d", comment: "read pseudoregister \(value)")
+        switch register.width {
+        case .byte: self.emit("movb \(offset)(%rbp), \(register)", comment: "read pseudoregister \(value)")
+        case .word: self.emit("movw \(offset)(%rbp), \(register)", comment: "read pseudoregister \(value)")
+        case .double: self.emit("movl \(offset)(%rbp), \(register)", comment: "read pseudoregister \(value)")
         case .quad: self.emit("movq \(offset)(%rbp), \(register)", comment: "read pseudoregister \(value)")
         }
     }
 
-    func loadMemory(_ address: MemoryAddress, into register: String) {
+    func loadMemory(_ address: MemoryValue<Pseudoregister>, into register: RegisterValue<X86Register>) {
         switch address {
         case .relative(base: let base, offset: let offset):
-            self.loadPseudoregister(base, into: "%r8")
-            self.emit("movq \(offset)(%r8), \(register)", comment: "dereference \(base) + \(offset)")
+            let base_reg = X86Register.r8.with(base.width)
+
+            self.loadPseudoregister(base, into: base_reg)
+
+            switch register.width {
+            case .byte:
+                self.emit("movb \(offset)(\(base_reg)), \(register)")
+            case .word:
+                self.emit("movw \(offset)(\(base_reg)), \(register)")
+            case .double:
+                self.emit("movl \(offset)(\(base_reg)), \(register)")
+            case .quad:
+                self.emit("movq \(offset)(\(base_reg)), \(register)")
+            }
         case .indexed(base: let base, index: let index, scale: let scale, offset: let offset):
-            self.loadPseudoregister(base, into: "%r8")
-            self.loadPseudoregister(index, into: "%r9")
-            self.emit("movq \(offset)(%r8, %r9, \(scale)), \(register)")
+            let base_reg = X86Register.r8.with(base.width)
+            let index_reg = X86Register.r9.with(index.width)
+
+            // TODO: x86 does not allow different widths for base and index, but we need it for array access
+
+            self.loadPseudoregister(base, into: base_reg)
+            self.loadPseudoregister(index, into: index_reg)
+
+            switch register.width {
+            case .byte:
+                self.emit("movb \(offset)(\(base_reg), \(index_reg), \(scale)), \(register)")
+            case .word:
+                self.emit("movl \(offset)(\(base_reg), \(index_reg), \(scale)), \(register)")
+            case .double:
+                self.emit("movw \(offset)(\(base_reg), \(index_reg), \(scale)), \(register)")
+            case .quad:
+                self.emit("movq \(offset)(\(base_reg), \(index_reg), \(scale)), \(register)")
+            }
         }
     }
 }
-*/

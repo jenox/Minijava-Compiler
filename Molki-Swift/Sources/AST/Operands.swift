@@ -25,6 +25,17 @@ public enum Argument<RegisterType: Register>: CustomStringConvertible {
         }
     }
 
+    public var width: RegisterWidth? {
+        switch self {
+        case .constant(_):
+            return nil
+        case .register(let value):
+            return value.width
+        case .memory(_):
+            return nil
+        }
+    }
+
     public var description: String {
         switch self {
         case .constant(let value):
@@ -47,6 +58,15 @@ public enum Result<RegisterType: Register>: CustomStringConvertible {
             return value.width == width
         case .memory(_):
             return true
+        }
+    }
+
+    public var width: RegisterWidth? {
+        switch self {
+        case .register(let value):
+            return value.width
+        case .memory(_):
+            return nil
         }
     }
 
