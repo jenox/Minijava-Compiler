@@ -334,7 +334,7 @@ public class MolkiTransformer extends Default {
 
         int targetReg = this.node2RegIndex.get(mul);
 
-        this.appendThreeAdressCommand("mul", srcReg1, srcReg2, targetReg);
+        this.appendThreeAdressCommand("imul", srcReg1, srcReg2, targetReg);
     }
 
     private void molkify(Not not) {
