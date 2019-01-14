@@ -151,6 +151,7 @@ public class MolkiTransformer extends Default {
         int srcReg2 = this.node2RegIndex.get(add.getRight());
         int targetReg = this.node2RegIndex.get(add);
 
+        this.appendMolkiCode("add [ %@" + srcReg1 + "d | %@" + srcReg2 + "d ]" + " -> [ %@" + targetReg + "d" + " ]");
         this.appendThreeAdressCommand("add", srcReg1, srcReg2, targetReg);
     }
 
@@ -174,15 +175,15 @@ public class MolkiTransformer extends Default {
 
         // build args string
         for (int i = start; i < call.getPredCount(); i++) {
+            String regSuffix = this.mode2RegSuffix(call.getPred(i).getMode());
 
             int arg = this.node2RegIndex.get(call.getPred(i));
             if (call.getPredCount() - i == 1) {
-                args += REG_PREFIX + arg;
+                args += REG_PREFIX + arg + regSuffix;
             }
             else {
-                args += REG_PREFIX + arg + " | ";
+                args += REG_PREFIX + arg + regSuffix + " | ";
             }
-
         }
 
         int targetReg;
@@ -227,8 +228,10 @@ public class MolkiTransformer extends Default {
         if (!aConst.getMode().equals(Mode.getb())) {
             String constant = CONST_PREFIX + String.valueOf(aConst.getTarval().asInt());
             int targetReg = this.node2RegIndex.get(aConst);
+            String regSuffix = this.mode2RegSuffix(aConst.getMode());
+            String movSuffix = this.mode2MovSuffix(aConst.getMode());
 
-            this.appendMolkiCode("mov " + constant + ", %@" + targetReg);
+            this.appendMolkiCode("mov" + movSuffix + " " + constant + ", %@" + targetReg + regSuffix);
         }
     }
 
@@ -248,8 +251,8 @@ public class MolkiTransformer extends Default {
         // cqto
         // movslq %esi, %rsi
         // idivq %rsi
-        this.appendMolkiCode("idiv [ %@" + left + " | %@" + right + " ]" + " -> [ %@" + targetReg1 + " | " + REG_PREFIX
-                + targetReg2 + "]");
+        this.appendMolkiCode("idiv [ %@" + left + "d | %@" + right + "d ]"
+                + " -> [ %@" + targetReg1 + "d | " + REG_PREFIX + targetReg2 + "d ]");
     }
 
     private void molkify(End end) {
@@ -271,32 +274,37 @@ public class MolkiTransformer extends Default {
 
     private void molkify(Load load) {
         int targetReg = this.node2RegIndex.get(load);
+        String regSuffix = this.mode2RegSuffix(load.getLoadMode());
+        String movSuffix = this.mode2MovSuffix(load.getLoadMode());
 
         if (load.getPred(1) instanceof Sel) {
             Sel sel = (Sel) load.getPred(1);
             int baseReg = this.node2RegIndex.get(sel.getPtr());
             int indexReg = this.node2RegIndex.get(sel.getIndex());
 
-            this.appendMolkiCode("mov (" + REG_PREFIX + baseReg + ", " + REG_PREFIX + indexReg + ", "
-                    + sel.getType().getAlignment() + "), " + REG_PREFIX + targetReg);
+            this.appendMolkiCode("mov" + movSuffix + " " + " (" + REG_PREFIX + baseReg + ", "
+                    + REG_PREFIX + indexReg + "d" + ", " + sel.getType().getAlignment() + "), "
+                    + REG_PREFIX + targetReg + regSuffix);
         }
         else if (load.getPred(1) instanceof Member) {
             Member member = (Member) load.getPred(1);
             int baseReg = this.node2RegIndex.get(member.getPtr());
             int offset = member.getEntity().getOffset();
 
-            this.appendMolkiCode("mov " + offset + "(" + REG_PREFIX + baseReg + "), " + REG_PREFIX + targetReg);
+            this.appendMolkiCode("mov" + movSuffix + " " + offset + "(" + REG_PREFIX + baseReg + "), "
+                    + REG_PREFIX + targetReg + regSuffix);
         }
         else {
             int pointerReg = this.node2RegIndex.get(load.getPtr());
 
-            this.appendMolkiCode("mov " + "(" + REG_PREFIX + pointerReg + "), " + REG_PREFIX + targetReg);
+            this.appendMolkiCode("mov" + movSuffix + " " + "(" + REG_PREFIX + pointerReg + "), "
+                    + REG_PREFIX + targetReg + regSuffix);
         }
     }
 
     private void molkify(Minus minus) {
         int reg = this.node2RegIndex.get(minus.getOp());
-        this.appendMolkiCode("neg " + REG_PREFIX + reg);
+        this.appendMolkiCode("neg " + REG_PREFIX + reg + "d");
     }
 
     private void molkify(Mod mod) {
@@ -316,8 +324,8 @@ public class MolkiTransformer extends Default {
         // movslq %esi, %rsi
         // idivq %rsi
 
-        this.appendMolkiCode("idiv [ " + REG_PREFIX + srcReg1 + " | " + REG_PREFIX + srcReg2 + " ]" + " -> [ "
-                + REG_PREFIX + targetReg2 + " | " + REG_PREFIX + targetReg1 + "]");
+        this.appendMolkiCode("idiv [ " + REG_PREFIX + srcReg1 + "d | " + REG_PREFIX + srcReg2 + "d ]" + " -> [ "
+                + REG_PREFIX + targetReg2 + "d | " + REG_PREFIX + targetReg1 + "d ]");
     }
 
     private void molkify(Mul mul) {
@@ -327,14 +335,19 @@ public class MolkiTransformer extends Default {
         int targetReg = this.node2RegIndex.get(mul);
 
         this.appendThreeAdressCommand("imul", srcReg1, srcReg2, targetReg);
+        this.appendMolkiCode("imul [ " + REG_PREFIX + srcReg1 + "d | " + REG_PREFIX + srcReg2 + "d ]" + " -> [ "
+                + REG_PREFIX + targetReg + "d ]");
     }
 
     private void molkify(Not not) {
         int reg = this.node2RegIndex.get(not.getOp());
-        this.appendMolkiCode("not " + REG_PREFIX + reg);
+        this.appendMolkiCode("not " + REG_PREFIX + reg + "l");
     }
 
     private void molkify(Phi phi) {
+        String regSuffix = this.mode2RegSuffix(phi.getMode());
+        String movSuffix = this.mode2MovSuffix(phi.getMode());
+
         if (!phi.getMode().equals(Mode.getM())) {
 
             for (int i = 0; i < phi.getPredCount(); i++) {
@@ -343,17 +356,23 @@ public class MolkiTransformer extends Default {
                 int regIndexOfPhi = this.node2RegIndex.get(phi);
                 int blockNumOfIthPred = phi.getBlock().getPred(i).getBlock().getNr();
 
-                this.appendMolkiCode("mov %@" + regIndexOfIthPred + ", %@" + regIndexOfPhi, blockNumOfIthPred);
+                this.appendMolkiCode("mov" + movSuffix + " %@" + regIndexOfIthPred + regSuffix
+                        + ", %@" + regIndexOfPhi + regSuffix, blockNumOfIthPred);
             }
         }
     }
 
     private void molkify(Return aReturn) {
+        String regSuffix = this.mode2RegSuffix(aReturn.getMode());
+        String movSuffix = this.mode2MovSuffix(aReturn.getMode());
+
         if (aReturn.getPredCount() == 1 && !aReturn.getPred(0).getMode().equals(Mode.getM())) {
-            this.appendMolkiCode("mov %@" + this.node2RegIndex.get(aReturn.getPred(0)) + ", %@r0");
+            this.appendMolkiCode("mov" + movSuffix + " %@" + regSuffix
+                    + this.node2RegIndex.get(aReturn.getPred(0)) + ", %@$");
         }
         else if (aReturn.getPredCount() > 1) {
-            this.appendMolkiCode("mov %@" + this.node2RegIndex.get(aReturn.getPred(1)) + ", %@r0");
+            this.appendMolkiCode("mov" + movSuffix + " %@" + regSuffix
+                    + this.node2RegIndex.get(aReturn.getPred(1)) + ", %@$");
         }
     }
 
@@ -366,25 +385,29 @@ public class MolkiTransformer extends Default {
 
     private void molkify(Store store) {
         int storeReg = this.node2RegIndex.get(store.getValue());
+        String regSuffix = this.mode2RegSuffix(store.getMode());
+        String movSuffix = this.mode2MovSuffix(store.getMode());
 
         if (store.getPred(1) instanceof Sel) {
             Sel sel = (Sel) store.getPred(1);
             int baseReg = this.node2RegIndex.get(sel.getPtr());
             int indexReg = this.node2RegIndex.get(sel.getIndex());
 
-            this.appendMolkiCode("mov " + REG_PREFIX + storeReg + ", (" + REG_PREFIX + baseReg + ", " + REG_PREFIX
-                    + indexReg + ", " + sel.getType().getAlignment() + ")");
+            this.appendMolkiCode("mov" + movSuffix + " " + REG_PREFIX + storeReg + regSuffix + ", ("
+                    + REG_PREFIX + baseReg + ", " + REG_PREFIX + indexReg + ", " + sel.getType().getAlignment() + ")");
         }
         else if (store.getPred(1) instanceof Member) {
             Member member = (Member) store.getPred(1);
             int baseReg = this.node2RegIndex.get(member.getPtr());
             int offset = member.getEntity().getOffset();
 
-            this.appendMolkiCode("mov " + REG_PREFIX + storeReg + ", " + offset + "(" + REG_PREFIX + baseReg + ")");
+            this.appendMolkiCode("mov" + movSuffix + " " + REG_PREFIX + storeReg + regSuffix + ", "
+                    + offset + "(" + REG_PREFIX + baseReg + ")");
         }
         else {
             int pointerReg = this.node2RegIndex.get(store.getPtr());
-            this.appendMolkiCode("mov " + REG_PREFIX + storeReg + ", (" + REG_PREFIX + pointerReg + ")");
+            this.appendMolkiCode("mov" + movSuffix + " " + REG_PREFIX + storeReg + regSuffix + ", ("
+                    + REG_PREFIX + pointerReg + ")");
         }
     }
 
@@ -394,7 +417,8 @@ public class MolkiTransformer extends Default {
 
         int targetReg = this.node2RegIndex.get(sub);
 
-        this.appendThreeAdressCommand("sub", srcReg1, srcReg2, targetReg);
+        this.appendMolkiCode("sub" + " [ " + REG_PREFIX + srcReg1 + " | " + REG_PREFIX + srcReg2
+                + " ] -> " + REG_PREFIX + targetReg);
     }
 
     private void molkify(Proj node) {
@@ -495,5 +519,30 @@ public class MolkiTransformer extends Default {
 
     private void appendThreeAdressCommand(String cmd, int srcReg1, int srcReg2, int targetReg) {
         this.appendMolkiCode(cmd + " [ %@" + srcReg1 + " | %@" + srcReg2 + " ] -> %@" + targetReg);
+    }
+
+    private String mode2RegSuffix(Mode mode) {
+        if (mode.equals(Mode.getIs())) {
+            return "d";
+        }
+        else if (mode.equals(Mode.getBs())) {
+            return "l";
+        }
+
+        return "";
+    }
+
+    private String mode2MovSuffix(Mode mode) {
+        if (mode.equals(Mode.getIs())) {
+            return "l";
+        }
+        else if (mode.equals(Mode.getBs())) {
+            return "b";
+        }
+        else if (mode.equals(Mode.getBs())) {
+            return "q";
+        }
+
+        return "";
     }
 }
