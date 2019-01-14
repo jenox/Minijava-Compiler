@@ -94,12 +94,14 @@ public class PrepVisitor extends Default {
 
     @Override
     public void visit(Mul node) {
-        //TODO: implement
+        this.node2regIndex.put(node, this.registerIndex++);
+        this.addInstrToBlock(null, node);
     }
 
     @Override
     public void visit(Minus node) {
-        //TODO: implement
+        this.node2regIndex.put(node, this.registerIndex++);
+        this.addInstrToBlock(null, node);
     }
 
 
