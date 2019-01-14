@@ -2,8 +2,7 @@ package edu.kit.minijava.backend;
 
 import java.util.*;
 
-import firm.Graph;
-import firm.Mode;
+import firm.*;
 import firm.nodes.*;
 import firm.nodes.NodeVisitor.Default;
 
@@ -228,9 +227,13 @@ public class PrepVisitor extends Default {
     private void addInstrToBlock(Integer blockNr, Node node) {
         int temp = blockNr == null ? node.getBlock().getNr() : blockNr;
 
-        if (this.blockId2Nodes.get(temp) == null) {
-            this.blockId2Nodes.put(temp, new ArrayList<>());
+        List<Node> tempList = this.blockId2Nodes.get(temp);
+
+        if (tempList == null) {
+            tempList = new ArrayList<>();
+            this.blockId2Nodes.put(temp, tempList);
         }
-        this.blockId2Nodes.get(temp).add(node);
+
+        tempList.add(node);
     }
 }
