@@ -170,7 +170,11 @@ public class PrepVisitor extends Default {
     @Override
     public void visit(Conv node) {
         Integer operandRegisterIndex = this.node2regIndex.get(node.getOp());
-        assert operandRegisterIndex != null : "No register index set for previous node in conv node!";
+
+        if (operandRegisterIndex == null) {
+            operandRegisterIndex = this.registerIndex++;
+            this.node2regIndex.put(node.getOp(), operandRegisterIndex);
+        }
 
         this.node2regIndex.put(node, operandRegisterIndex);
     }
