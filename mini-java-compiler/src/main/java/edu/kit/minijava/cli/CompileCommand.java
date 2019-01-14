@@ -85,12 +85,17 @@ public class CompileCommand extends Command {
                 HashMap<Integer, List<String>> molkiCode = molkiTransformer.getMolkiCode();
 
                 // go through all blocks of that graph
+
+                // TODO This should not be handled at this point, but instead directly when generating code,
+                // e.g. by generating compare and jump instructions in a separate list which is later appended
+                // to the instructions from the basic block.
+
                 graph2BlockId.get(g).forEach(block -> {
 
-                    // Move all the jump instructions to the end
+                    // Move all the jump and compare instructions to the end
 
-                    // TODO This should also apply to the compare instructions before conditional jumps,
-                    // which are currently not shifted to the end of the basic block.
+                    // TODO Can we move all cmp instructions to the end as well without the risk of
+                    // breaking any semantics?
 
                     List<String> instructions = molkiCode.get(block);
                     List<String> jmpInstructions = new ArrayList<>();
@@ -103,7 +108,9 @@ public class CompileCommand extends Command {
                             || str.contains("jge")
                             || str.contains("jg")
                             || str.contains("jne")
-                            || str.contains("je")) {
+                            || str.contains("je")
+                            // Also move cmp instructions so they are not separated from the jump instructions
+                            || str.contains("cmp")) {
 
                             instructions.remove(i);
                             i--;
