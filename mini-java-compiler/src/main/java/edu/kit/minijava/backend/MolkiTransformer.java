@@ -2,10 +2,7 @@ package edu.kit.minijava.backend;
 
 import java.util.*;
 
-import firm.BackEdges;
-import firm.Mode;
-import firm.Relation;
-import firm.TargetValue;
+import firm.*;
 import firm.nodes.*;
 import firm.nodes.NodeVisitor.Default;
 
@@ -191,7 +188,7 @@ public class MolkiTransformer extends Default {
         int targetReg;
 
         switch (functionName) {
-            // TODO Are these special cases for the standard library functions  required?
+            // TODO Are these special cases for the standard library functions required?
             case "system_out_println":
                 this.appendMolkiCode("call system_out_println [ " + args + " ]");
                 break;
@@ -252,7 +249,7 @@ public class MolkiTransformer extends Default {
         // movslq %esi, %rsi
         // idivq %rsi
         this.appendMolkiCode("idiv [ %@" + left + " | %@" + right + " ]" + " -> [ %@" + targetReg1 + " | " + REG_PREFIX
-                        + targetReg2 + "]");
+                + targetReg2 + "]");
     }
 
     private void molkify(End end) {
@@ -272,8 +269,6 @@ public class MolkiTransformer extends Default {
         }
     }
 
-
-
     private void molkify(Load load) {
         int targetReg = this.node2RegIndex.get(load);
 
@@ -282,10 +277,8 @@ public class MolkiTransformer extends Default {
             int baseReg = this.node2RegIndex.get(sel.getPtr());
             int indexReg = this.node2RegIndex.get(sel.getIndex());
 
-            this.appendMolkiCode(
-                    "mov (" + REG_PREFIX + baseReg  + ", "
-                            + REG_PREFIX + indexReg + ", "
-                            + sel.getType().getAlignment() + "), " + REG_PREFIX + targetReg);
+            this.appendMolkiCode("mov (" + REG_PREFIX + baseReg + ", " + REG_PREFIX + indexReg + ", "
+                    + sel.getType().getAlignment() + "), " + REG_PREFIX + targetReg);
         }
         else if (load.getPred(1) instanceof Member) {
             Member member = (Member) load.getPred(1);
@@ -324,7 +317,7 @@ public class MolkiTransformer extends Default {
         // idivq %rsi
 
         this.appendMolkiCode("idiv [ " + REG_PREFIX + srcReg1 + " | " + REG_PREFIX + srcReg2 + " ]" + " -> [ "
-                        + REG_PREFIX + targetReg2 + " | " + REG_PREFIX + targetReg1 + "]");
+                + REG_PREFIX + targetReg2 + " | " + REG_PREFIX + targetReg1 + "]");
     }
 
     private void molkify(Mul mul) {
@@ -345,8 +338,12 @@ public class MolkiTransformer extends Default {
         if (!phi.getMode().equals(Mode.getM())) {
 
             for (int i = 0; i < phi.getPredCount(); i++) {
-                this.appendMolkiCode("mov %@" + this.node2RegIndex.get(phi.getPred(i)) + ", %@"
-                    + this.node2RegIndex.get(phi), phi.getBlock().getPred(i).getBlock().getNr());
+
+                int regIndexOfIthPred = this.node2RegIndex.get(phi.getPred(i));
+                int regIndexOfPhi = this.node2RegIndex.get(phi);
+                int blockNumOfIthPred = phi.getBlock().getPred(i).getBlock().getNr();
+
+                this.appendMolkiCode("mov %@" + regIndexOfIthPred + ", %@" + regIndexOfPhi, blockNumOfIthPred);
             }
         }
     }
@@ -364,7 +361,7 @@ public class MolkiTransformer extends Default {
     }
 
     private void molkify(Start start) {
-        //nothing to do
+        // nothing to do
     }
 
     private void molkify(Store store) {
@@ -375,10 +372,8 @@ public class MolkiTransformer extends Default {
             int baseReg = this.node2RegIndex.get(sel.getPtr());
             int indexReg = this.node2RegIndex.get(sel.getIndex());
 
-            this.appendMolkiCode("mov " + REG_PREFIX + storeReg
-                    + ", (" + REG_PREFIX + baseReg + ", "
-                    + REG_PREFIX + indexReg + ", "
-                    + sel.getType().getAlignment() + ")");
+            this.appendMolkiCode("mov " + REG_PREFIX + storeReg + ", (" + REG_PREFIX + baseReg + ", " + REG_PREFIX
+                    + indexReg + ", " + sel.getType().getAlignment() + ")");
         }
         else if (store.getPred(1) instanceof Member) {
             Member member = (Member) store.getPred(1);
@@ -403,7 +398,7 @@ public class MolkiTransformer extends Default {
     }
 
     private void molkify(Proj node) {
-        //nothing to do
+        // nothing to do
     }
 
     private void molkify(Cond cond) {
@@ -517,12 +512,10 @@ public class MolkiTransformer extends Default {
                 assert selector instanceof Const && selector.getMode().equals(Mode.getb());
                 Const aConst = (Const) selector;
 
-                if (proj.getNum() == Cond.pnTrue
-                    && aConst.getTarval().equals(TargetValue.getBTrue())) {
+                if (proj.getNum() == Cond.pnTrue && aConst.getTarval().equals(TargetValue.getBTrue())) {
                     uncondJump = "jmp L" + block.getNr();
                 }
-                else if (proj.getNum() == Cond.pnFalse
-                    && aConst.getTarval().equals(TargetValue.getBFalse())) {
+                else if (proj.getNum() == Cond.pnFalse && aConst.getTarval().equals(TargetValue.getBFalse())) {
                     uncondJump = "jmp L" + block.getNr();
                 }
             }
@@ -538,7 +531,7 @@ public class MolkiTransformer extends Default {
     }
 
     private void molkify(Member node) {
-        //nothing to do
+        // nothing to do
     }
 
     private void molkify(Conv node) {
