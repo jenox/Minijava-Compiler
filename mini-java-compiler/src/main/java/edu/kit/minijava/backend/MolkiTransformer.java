@@ -168,7 +168,6 @@ public class MolkiTransformer extends Default {
     private void molkify(Call call) {
 
         Address address = (Address) call.getPred(1);
-//        String functionName = address.getEntity().getLdName().replace('.', '$');
         String functionName = address.getEntity().getLdName();
 
         // ignore first two preds, i.e. memory and function adress
