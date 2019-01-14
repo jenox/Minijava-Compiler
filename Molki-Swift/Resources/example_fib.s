@@ -5,10 +5,10 @@
     subl [ $2 | %@0d ] -> %@2d
     call fib [ %@1 ] -> %@3
     call fib [ %@2 ] -> %@4
-    addl [ %@3d | %@4d ] -> %@r0 d
+    addl [ %@3d | %@4d ] -> %@$d
     jmp fib_end
 fib_basecase:
-    movq %@0 -> %@r0
+    movq %@0 -> %@$
 fib_end:
 .endfunction
 

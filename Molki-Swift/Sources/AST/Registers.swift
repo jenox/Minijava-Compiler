@@ -38,7 +38,7 @@ public enum Pseudoregister: Register {
         case .numbered(let number):
             return "@\(number)"
         case .reserved:
-            return "@r0"
+            return "@$"
         }
     }
 }

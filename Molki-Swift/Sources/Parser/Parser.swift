@@ -380,8 +380,8 @@ public class Parser {
 
             return .numbered(number)
         }
-        else if try self.lookahead(.identifier) {
-            try self.consume(.identifier, text: "r0")
+        else if try self.lookahead(.dollar) {
+            try self.consume(.dollar)
 
             return .reserved
         }
