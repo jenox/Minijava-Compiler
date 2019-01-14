@@ -407,97 +407,133 @@ public class MolkiTransformer extends Default {
     }
 
     private void molkify(Cond cond) {
-        // jmp asm
-        int succBlockNr = -1;
-        boolean hasReturn = false;
-        boolean hasOnlyMemPred = false;
-
-        List<Integer> blockNrs = new ArrayList<>();
-        List<Integer> projNrs = new ArrayList<>();
-        List<Integer> registerNrs = new ArrayList<>();
-
-        // get projections out of Condition
-        for (BackEdges.Edge condEdge : BackEdges.getOuts(cond)) {
-            // get Blocks
-            for (BackEdges.Edge projEdge : BackEdges.getOuts(condEdge.node)) {
-                Block block = (Block) projEdge.node;
-
-                // get first node of block
-                for (BackEdges.Edge blockEdge : BackEdges.getOuts(block)) {
-                    if (blockEdge.node instanceof Return) {
-                        Return aReturn = (Return) blockEdge.node;
-                        hasReturn = true;
-                        hasOnlyMemPred = aReturn.getPredCount() <= 1;
-
-                        if (!hasOnlyMemPred) {
-                            succBlockNr = block.getGraph().getEndBlock().getNr();
-                            registerNrs.add(this.node2RegIndex.get(aReturn.getPred(1)));
-                        }
-                    }
-                }
-                blockNrs.add(block.getNr());
-                projNrs.add(condEdge.node.getNr());
-            }
-        }
-
-        // sometimes, firm switches the position of the proj nodes
-        boolean projAreReversed = projNrs.get(0) > projNrs.get(1);
-        boolean blocksReversed = blockNrs.get(0) < blockNrs.get(1);
-        int trueNr = projAreReversed ? 1 : 0;
-        int falseNr = projAreReversed ? 0 : 1;
-
-        if (!hasReturn) {
-            succBlockNr = blocksReversed ? blockNrs.get(falseNr) : blockNrs.get(trueNr);
-        }
-        else if (!hasOnlyMemPred) {
-            this.appendMolkiCode("mov %@" + registerNrs.get(trueNr) + ", %@r0");
-            blocksReversed = false;
-        }
-        else {
-            succBlockNr = blockNrs.get(trueNr);
-        }
+//        // jmp asm
+//        int succBlockNr = -1;
+//        boolean hasReturn = false;
+//        boolean hasOnlyMemPred = false;
+//
+//        List<Integer> blockNrs = new ArrayList<>();
+//        List<Integer> projNrs = new ArrayList<>();
+//        List<Integer> registerNrs = new ArrayList<>();
+//
+//        // get projections out of Condition
+//        for (BackEdges.Edge condEdge : BackEdges.getOuts(cond)) {
+//            // get Blocks
+//            for (BackEdges.Edge projEdge : BackEdges.getOuts(condEdge.node)) {
+//                Block block = (Block) projEdge.node;
+//
+//                // get first node of block
+//                for (BackEdges.Edge blockEdge : BackEdges.getOuts(block)) {
+//                    if (blockEdge.node instanceof Return) {
+//                        Return aReturn = (Return) blockEdge.node;
+//                        hasReturn = true;
+//                         hasOnlyMemPred = aReturn.getPredCount() <= 1;
+//
+//                         if (!hasOnlyMemPred) {
+////                             succBlockNr = block.getGraph().getEndBlock().getNr();
+//                             registerNrs.add(this.node2RegIndex.get(aReturn.getPred(1)));
+//                         }
+//                    }
+//                }
+//                blockNrs.add(block.getNr());
+//                projNrs.add(condEdge.node.getNr());
+//            }
+//        }
+//
+//        // sometimes, firm switches the position of the proj nodes
+//        boolean projAreReversed = projNrs.get(0) > projNrs.get(1);
+//        boolean blocksReversed = blockNrs.get(0) < blockNrs.get(1);
+//        int trueNr = projAreReversed ? 1 : 0;
+//        int falseNr = projAreReversed ? 0 : 1;
+//
+//        if (!hasReturn) {
+//            succBlockNr = blocksReversed ? blockNrs.get(falseNr) : blockNrs.get(trueNr);
+//        }
+//        else if (!hasOnlyMemPred) {
+//            this.appendMolkiCode("mov %@" + registerNrs.get(trueNr) + ", %@r0");
+//            blocksReversed = false;
+//        }
+//        else {
+//            succBlockNr = blockNrs.get(trueNr);
+//        }
 
         Node selector = cond.getSelector();
 
-        if (selector instanceof Cmp) {
-            Cmp cmp = (Cmp) selector;
+        String condJump = null;
+        String uncondJump = null;
 
-            if (cmp.getRelation().equals(Relation.Less)) {
-                String jmp = blocksReversed ? "jge" : "jl";
-                this.appendMolkiCode(jmp + " L" + succBlockNr);
-            }
-            else if (cmp.getRelation().equals(Relation.LessEqual)) {
-                String jmp = blocksReversed ? "jg" : "jle";
-                this.appendMolkiCode(jmp + " L" + succBlockNr);
-            }
-            else if (cmp.getRelation().equals(Relation.Greater)) {
-                String jmp = blocksReversed ? "jle" : "jg";
-                this.appendMolkiCode(jmp + " L" + succBlockNr);
-            }
-            else if (cmp.getRelation().equals(Relation.GreaterEqual)) {
-                String jmp = blocksReversed ? "jl" : "jge";
-                this.appendMolkiCode(jmp + " L" + succBlockNr);
-            }
-            else if (cmp.getRelation().equals(Relation.Equal)) {
-                String jmp = blocksReversed ? "jne" : "je";
-                this.appendMolkiCode(jmp + " L" + succBlockNr);
-            }
-            else if (cmp.getRelation().equals(Relation.Equal.negated())) {
-                String jmp = blocksReversed ? "je" : "jne";
-                this.appendMolkiCode(jmp + " L" + succBlockNr);
-            }
-        }
-        // in all other cases we should be a boolean constant
-        else {
-            assert selector instanceof Const && selector.getMode().equals(Mode.getb());
-            Const aConst = (Const) selector;
+        for (BackEdges.Edge edge : BackEdges.getOuts(cond)) {
 
-            if (aConst.getTarval().equals(TargetValue.getBTrue())) {
-                this.appendMolkiCode("jmp L" + blockNrs.get(trueNr));
+            // Cond nodes should always be succeeded by proj nodes (with X mode set)
+            Proj proj = (Proj) edge.node;
+
+            // Get block which is the successor of the proj node
+            // iterator().next() always yields the first entry in the iteration
+            Block block = (Block) BackEdges.getOuts(proj).iterator().next().node;
+
+            if (selector instanceof Cmp) {
+
+                Cmp cmp = (Cmp) selector;
+                Relation relation = cmp.getRelation();
+
+                // Only generate a conditional jump for the true part, otherwise generate an unconditional jump
+                if (proj.getNum() == Cond.pnTrue) {
+
+                    // TODO Allow conditions to be inverted.
+
+                    switch (relation) {
+                        case Less:
+                            condJump = "jl";
+                            break;
+                        case LessEqual:
+                            condJump = "jle";
+                            break;
+                        case Greater:
+                            condJump = "jg";
+                            break;
+                        case GreaterEqual:
+                            condJump = "jge";
+                            break;
+                        case Equal:
+                            condJump = "je";
+                            break;
+                        case LessGreater:
+                        case UnorderedLessGreater:
+                            condJump = "jne";
+                            break;
+                        default:
+                            // This should not happen
+                            assert false : "Unknown relation in cond node code generation!";
+                            condJump = "";
+                    }
+
+                    condJump += " " + "L" + block.getNr();
+                }
+                else {
+                    uncondJump = "jmp " + "L" + block.getNr();
+                }
             }
             else {
-                this.appendMolkiCode("jmp L" + blockNrs.get(falseNr));
+                assert selector instanceof Const && selector.getMode().equals(Mode.getb());
+                Const aConst = (Const) selector;
+
+                if (proj.getNum() == Cond.pnTrue
+                    && aConst.getTarval().equals(TargetValue.getBTrue())) {
+                    uncondJump = "jmp L" + block.getNr();
+                }
+                else if (proj.getNum() == Cond.pnFalse
+                    && aConst.getTarval().equals(TargetValue.getBFalse())) {
+                    uncondJump = "jmp L" + block.getNr();
+                }
             }
+
+        }
+
+        if (condJump != null) {
+            this.appendMolkiCode(condJump);
+        }
+        if (uncondJump != null) {
+            this.appendMolkiCode(uncondJump);
         }
     }
 
