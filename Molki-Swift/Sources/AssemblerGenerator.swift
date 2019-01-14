@@ -140,7 +140,9 @@ class AssemblerGenerator {
         }
 
         for (index, argument) in instruction.arguments.enumerated().reversed() {
-            let register = X86Register.r8.with(argument.width ?? .quad)
+
+            // TODO: how do we know how many bytes to load if argument is memory?
+            let register = X86Register.r8.with(argument.width!)
 
             self.load(argument, into: register)
             self.emit("pushq %r8", comment: "push argument #\(index) onto stack")
@@ -161,7 +163,9 @@ class AssemblerGenerator {
         }
 
         if let result = instruction.result {
-            let register = X86Register.rax.with(.quad)
+
+            // TODO: how do we know how many bytes to write if result is memory?
+            let register = X86Register.rax.with(result.width!)
             self.store(register, to: result)
         }
     }
@@ -259,6 +263,7 @@ class AssemblerGenerator {
 
     /// pseudoregister -> frame offset
     private var table: [Pseudoregister: Int] = [:]
+    private var lastWrittenWidth: [Pseudoregister: RegisterWidth] = [:]
     private var currentOffset = 0
 
     @discardableResult
@@ -283,7 +288,7 @@ class AssemblerGenerator {
     }
 
     func store(_ register: RegisterValue<X86Register>, to value: RegisterValue<Pseudoregister>) {
-        precondition(register.width == value.width)
+        precondition(register.width == value.width, "register width mismatch")
 
         let offset = self.reserveStackSlot(for: value.register)
 
@@ -293,6 +298,8 @@ class AssemblerGenerator {
         case .double: self.emit("movl \(register), \(offset)(%rbp)", comment: "write pseudoregister \(value)")
         case .quad: self.emit("movq \(register), \(offset)(%rbp)", comment: "write pseudoregister \(value)")
         }
+
+        self.lastWrittenWidth[value.register] = register.width
     }
 
     func store(_ register: RegisterValue<X86Register>, to value: MemoryValue<Pseudoregister>) {
@@ -357,8 +364,15 @@ class AssemblerGenerator {
     }
 
     func loadPseudoregister(_ value: RegisterValue<Pseudoregister>, into register: RegisterValue<X86Register>) {
-        precondition(self.table[value.register] != nil)
-        precondition(register.width == value.width)
+        precondition(self.table[value.register] != nil, "attempting to load uninitialized pseudoregister")
+        precondition(register.width == value.width, "register width mismatch")
+
+        if let writtenWidth = self.lastWrittenWidth[value.register] {
+            precondition(writtenWidth == register.width, "pseudoreg was previously assigned \(writtenWidth), now attempting to load as \(register.width)")
+        }
+        else {
+            print("missing information about pseudoreg width: is \(value.register) argument?")
+        }
 
         let offset = self.reserveStackSlot(for: value.register)
 

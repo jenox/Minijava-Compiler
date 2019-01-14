@@ -3,8 +3,8 @@
     jle fib_basecase
     subl [ %@0d | $1 ] -> %@1d
     subl [ %@0d | $2 ] -> %@2d
-    call _fib [ %@1d ] -> %@3
-    call _fib [ %@2d ] -> %@4
+    call _fib [ %@1d ] -> %@3d
+    call _fib [ %@2d ] -> %@4d
     addl [ %@3d | %@4d ] -> %@$d
     jmp fib_end
 fib_basecase:
