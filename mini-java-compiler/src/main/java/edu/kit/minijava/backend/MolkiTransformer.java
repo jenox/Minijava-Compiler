@@ -402,56 +402,6 @@ public class MolkiTransformer extends Default {
     }
 
     private void molkify(Cond cond) {
-//        // jmp asm
-//        int succBlockNr = -1;
-//        boolean hasReturn = false;
-//        boolean hasOnlyMemPred = false;
-//
-//        List<Integer> blockNrs = new ArrayList<>();
-//        List<Integer> projNrs = new ArrayList<>();
-//        List<Integer> registerNrs = new ArrayList<>();
-//
-//        // get projections out of Condition
-//        for (BackEdges.Edge condEdge : BackEdges.getOuts(cond)) {
-//            // get Blocks
-//            for (BackEdges.Edge projEdge : BackEdges.getOuts(condEdge.node)) {
-//                Block block = (Block) projEdge.node;
-//
-//                // get first node of block
-//                for (BackEdges.Edge blockEdge : BackEdges.getOuts(block)) {
-//                    if (blockEdge.node instanceof Return) {
-//                        Return aReturn = (Return) blockEdge.node;
-//                        hasReturn = true;
-//                         hasOnlyMemPred = aReturn.getPredCount() <= 1;
-//
-//                         if (!hasOnlyMemPred) {
-////                             succBlockNr = block.getGraph().getEndBlock().getNr();
-//                             registerNrs.add(this.node2RegIndex.get(aReturn.getPred(1)));
-//                         }
-//                    }
-//                }
-//                blockNrs.add(block.getNr());
-//                projNrs.add(condEdge.node.getNr());
-//            }
-//        }
-//
-//        // sometimes, firm switches the position of the proj nodes
-//        boolean projAreReversed = projNrs.get(0) > projNrs.get(1);
-//        boolean blocksReversed = blockNrs.get(0) < blockNrs.get(1);
-//        int trueNr = projAreReversed ? 1 : 0;
-//        int falseNr = projAreReversed ? 0 : 1;
-//
-//        if (!hasReturn) {
-//            succBlockNr = blocksReversed ? blockNrs.get(falseNr) : blockNrs.get(trueNr);
-//        }
-//        else if (!hasOnlyMemPred) {
-//            this.appendMolkiCode("mov %@" + registerNrs.get(trueNr) + ", %@r0");
-//            blocksReversed = false;
-//        }
-//        else {
-//            succBlockNr = blockNrs.get(trueNr);
-//        }
-
         Node selector = cond.getSelector();
 
         String condJump = null;
