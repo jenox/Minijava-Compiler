@@ -107,8 +107,9 @@ public class PrepVisitor extends Default {
 
     @Override
     public void visit(Phi phi) {
-        this.node2regIndex.put(phi, this.registerIndex++);
-
+        if (!this.node2regIndex.containsKey(phi)) {
+            this.node2regIndex.put(phi, this.registerIndex++);
+        }
         this.addInstrToBlock(null, phi);
     }
 
