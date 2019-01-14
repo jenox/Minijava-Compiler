@@ -25,7 +25,15 @@ void system_out_flush() {
 }
 
 void* alloc_mem(int num, int size) {
-    void* pointer = calloc(num, size);
+    int bytes = num * size;
+
+    // allocate some multiple of quadwords (8 bytes)
+    bytes = (bytes + 8 - 1) / 8 * 8;
+
+    // prevent null pointer for zero-size types or arrays
+    bytes = (bytes == 0) ? 8 : bytes;
+
+    void* pointer = calloc(1, bytes);
 
     // Catch null pointer on zero-sized or failed allocation
     // We abort execution at this point

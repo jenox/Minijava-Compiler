@@ -50,7 +50,7 @@ public class BackendCommand extends Command {
             HashMap<Integer, List<Node>> blockId2Nodes = prepVisitor.getBlockId2Nodes();
             HashMap<Graph, List<Integer>> graph2BlockId = prepVisitor.getGraph2BlockId();
             MolkiTransformer molkiTransformer = new MolkiTransformer(prepVisitor.getNode2RegIndex());
-            ArrayList output = new ArrayList();
+            List<String> output = new ArrayList<>();
 
             graphs.forEach(g -> {
                 String methodName = g.getEntity().getName();
