@@ -48,12 +48,20 @@ void system_out_flush(void)
 
 void* alloc_mem(void)
 {
-    uint32_t nmemb;
+    uint32_t count;
     uint32_t size;
     asm("movl 24(%%rbp), %0\n\t" : "=r" (size));
-    asm("movl 16(%%rbp), %0\n\t" : "=r" (nmemb));
+    asm("movl 16(%%rbp), %0\n\t" : "=r" (count));
 
-    void* pointer = calloc(nmemb, size);
+    uint32_t bytes = count * size;
+
+    // allocate some multiple of quadwords (8 bytes)
+    bytes = (bytes + 8 - 1) / 8 * 8;
+
+    // prevent null pointer for zero-size types or arrays
+    bytes = (bytes == 0) ? 8 : bytes;
+
+    void* pointer = calloc(1, bytes);
 
     // Catch null pointer on zero-sized or failed allocation
     // We abort execution at this point
