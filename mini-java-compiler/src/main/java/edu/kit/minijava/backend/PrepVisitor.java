@@ -2,8 +2,7 @@ package edu.kit.minijava.backend;
 
 import java.util.*;
 
-import firm.Graph;
-import firm.Mode;
+import firm.*;
 import firm.nodes.*;
 import firm.nodes.NodeVisitor.Default;
 
@@ -93,9 +92,23 @@ public class PrepVisitor extends Default {
     }
 
     @Override
-    public void visit(Phi phi) {
-        this.node2regIndex.put(phi, this.registerIndex++);
+    public void visit(Mul node) {
+        this.node2regIndex.put(node, this.registerIndex++);
+        this.addInstrToBlock(null, node);
+    }
 
+    @Override
+    public void visit(Minus node) {
+        this.node2regIndex.put(node, this.registerIndex++);
+        this.addInstrToBlock(null, node);
+    }
+
+
+    @Override
+    public void visit(Phi phi) {
+        if (!this.node2regIndex.containsKey(phi)) {
+            this.node2regIndex.put(phi, this.registerIndex++);
+        }
         this.addInstrToBlock(null, phi);
     }
 
@@ -154,6 +167,18 @@ public class PrepVisitor extends Default {
     }
 
     @Override
+    public void visit(Conv node) {
+        Integer operandRegisterIndex = this.node2regIndex.get(node.getOp());
+
+        if (operandRegisterIndex == null) {
+            operandRegisterIndex = this.registerIndex++;
+            this.node2regIndex.put(node.getOp(), operandRegisterIndex);
+        }
+
+        this.node2regIndex.put(node, operandRegisterIndex);
+    }
+
+    @Override
     public void visit(End node) {
         // nothing to do
     }
@@ -192,7 +217,7 @@ public class PrepVisitor extends Default {
 
     @Override
     public void defaultVisit(Node n) {
-        throw new UnsupportedOperationException("unknown node: " + n + " " + n.getClass());
+        throw new UnsupportedOperationException("unknown node: " + n + " " + n.getClass() + "\tmode " + n.getMode());
     }
 
     public void setRegisterIndex(int registerIndex) {
@@ -202,9 +227,13 @@ public class PrepVisitor extends Default {
     private void addInstrToBlock(Integer blockNr, Node node) {
         int temp = blockNr == null ? node.getBlock().getNr() : blockNr;
 
-        if (this.blockId2Nodes.get(temp) == null) {
-            this.blockId2Nodes.put(temp, new ArrayList<>());
+        List<Node> tempList = this.blockId2Nodes.get(temp);
+
+        if (tempList == null) {
+            tempList = new ArrayList<>();
+            this.blockId2Nodes.put(temp, tempList);
         }
-        this.blockId2Nodes.get(temp).add(node);
+
+        tempList.add(node);
     }
 }

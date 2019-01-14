@@ -2,10 +2,7 @@ package edu.kit.minijava.backend;
 
 import java.util.*;
 
-import firm.BackEdges;
-import firm.Mode;
-import firm.Relation;
-import firm.TargetValue;
+import firm.*;
 import firm.nodes.*;
 import firm.nodes.NodeVisitor.Default;
 
@@ -140,6 +137,10 @@ public class MolkiTransformer extends Default {
                 Member aMember = (Member) node;
                 this.molkify(aMember);
                 break;
+            case iro_Conv:
+                Conv aConv = (Conv) node;
+                this.molkify(aConv);
+                break;
             default:
                 throw new UnsupportedOperationException("unknown node " + node.getClass());
         }
@@ -164,7 +165,6 @@ public class MolkiTransformer extends Default {
     private void molkify(Call call) {
 
         Address address = (Address) call.getPred(1);
-//        String functionName = address.getEntity().getLdName().replace('.', '$');
         String functionName = address.getEntity().getLdName();
 
         // ignore first two preds, i.e. memory and function adress
@@ -188,7 +188,7 @@ public class MolkiTransformer extends Default {
         int targetReg;
 
         switch (functionName) {
-            // TODO Are these special cases for the standard library functions  required?
+            // TODO Are these special cases for the standard library functions required?
             case "system_out_println":
                 this.appendMolkiCode("call system_out_println [ " + args + " ]");
                 break;
@@ -239,8 +239,17 @@ public class MolkiTransformer extends Default {
         int targetReg1 = this.node2RegIndex.get(div);
         int targetReg2 = targetReg1 + 1; // by convention used in PrepVisitor
 
-        this.appendMolkiCode("idiv [ %@" + left + " | %@" + right + " ]" + " -> [ %@" + targetReg1 + ", " + REG_PREFIX
-                        + targetReg2 + "]");
+        // TODO Div instruction has to handle sign extension of the operands.
+        // but this requires knowledge of the length of used register sizes for virtual registers.
+
+        // Reference code that should be generated for div instruction:
+        // mov %edi, %eax
+        // movslq %eax, %rax
+        // cqto
+        // movslq %esi, %rsi
+        // idivq %rsi
+        this.appendMolkiCode("idiv [ %@" + left + " | %@" + right + " ]" + " -> [ %@" + targetReg1 + " | " + REG_PREFIX
+                + targetReg2 + "]");
     }
 
     private void molkify(End end) {
@@ -260,8 +269,6 @@ public class MolkiTransformer extends Default {
         }
     }
 
-
-
     private void molkify(Load load) {
         int targetReg = this.node2RegIndex.get(load);
 
@@ -270,10 +277,8 @@ public class MolkiTransformer extends Default {
             int baseReg = this.node2RegIndex.get(sel.getPtr());
             int indexReg = this.node2RegIndex.get(sel.getIndex());
 
-            this.appendMolkiCode(
-                    "mov (" + REG_PREFIX + baseReg  + ", "
-                            + REG_PREFIX + indexReg + ", "
-                            + sel.getType().getAlignment() + "), " + REG_PREFIX + targetReg);
+            this.appendMolkiCode("mov (" + REG_PREFIX + baseReg + ", " + REG_PREFIX + indexReg + ", "
+                    + sel.getType().getAlignment() + "), " + REG_PREFIX + targetReg);
         }
         else if (load.getPred(1) instanceof Member) {
             Member member = (Member) load.getPred(1);
@@ -301,8 +306,18 @@ public class MolkiTransformer extends Default {
         int targetReg1 = this.node2RegIndex.get(mod);
         int targetReg2 = targetReg1 + 1; // by convention used in PrepVisitor
 
-        this.appendMolkiCode("imod [ " + REG_PREFIX + srcReg1 + " | " + REG_PREFIX + srcReg2 + " ]" + " -> [ %@"
-                        + REG_PREFIX + targetReg1 + " | %@" + targetReg2 + "]");
+        // TODO Div instruction has to handle sign extension of the operands.
+        // but this requires knowledge of the length of used register sizes for virtual registers.
+
+        // Reference code that should be generated for div instruction:
+        // mov %edi, %eax
+        // movslq %eax, %rax
+        // cqto
+        // movslq %esi, %rsi
+        // idivq %rsi
+
+        this.appendMolkiCode("idiv [ " + REG_PREFIX + srcReg1 + " | " + REG_PREFIX + srcReg2 + " ]" + " -> [ "
+                + REG_PREFIX + targetReg2 + " | " + REG_PREFIX + targetReg1 + "]");
     }
 
     private void molkify(Mul mul) {
@@ -311,7 +326,7 @@ public class MolkiTransformer extends Default {
 
         int targetReg = this.node2RegIndex.get(mul);
 
-        this.appendThreeAdressCommand("mul", srcReg1, srcReg2, targetReg);
+        this.appendThreeAdressCommand("imul", srcReg1, srcReg2, targetReg);
     }
 
     private void molkify(Not not) {
@@ -323,8 +338,12 @@ public class MolkiTransformer extends Default {
         if (!phi.getMode().equals(Mode.getM())) {
 
             for (int i = 0; i < phi.getPredCount(); i++) {
-                this.appendMolkiCode("mov %@" + this.node2RegIndex.get(phi.getPred(i)) + ", %@"
-                    + this.node2RegIndex.get(phi), phi.getBlock().getPred(i).getBlock().getNr());
+
+                int regIndexOfIthPred = this.node2RegIndex.get(phi.getPred(i));
+                int regIndexOfPhi = this.node2RegIndex.get(phi);
+                int blockNumOfIthPred = phi.getBlock().getPred(i).getBlock().getNr();
+
+                this.appendMolkiCode("mov %@" + regIndexOfIthPred + ", %@" + regIndexOfPhi, blockNumOfIthPred);
             }
         }
     }
@@ -342,7 +361,7 @@ public class MolkiTransformer extends Default {
     }
 
     private void molkify(Start start) {
-        //nothing to do
+        // nothing to do
     }
 
     private void molkify(Store store) {
@@ -353,10 +372,8 @@ public class MolkiTransformer extends Default {
             int baseReg = this.node2RegIndex.get(sel.getPtr());
             int indexReg = this.node2RegIndex.get(sel.getIndex());
 
-            this.appendMolkiCode("mov " + REG_PREFIX + storeReg
-                    + ", (" + REG_PREFIX + baseReg + ", "
-                    + REG_PREFIX + indexReg + ", "
-                    + sel.getType().getAlignment() + ")");
+            this.appendMolkiCode("mov " + REG_PREFIX + storeReg + ", (" + REG_PREFIX + baseReg + ", " + REG_PREFIX
+                    + indexReg + ", " + sel.getType().getAlignment() + ")");
         }
         else if (store.getPred(1) instanceof Member) {
             Member member = (Member) store.getPred(1);
@@ -381,106 +398,145 @@ public class MolkiTransformer extends Default {
     }
 
     private void molkify(Proj node) {
-        //nothing to do
+        // nothing to do
     }
 
     private void molkify(Cond cond) {
-        // jmp asm
-        int succBlockNr = -1;
-        boolean hasReturn = false;
-        boolean hasOnlyMemPred = false;
-
-        List<Integer> blockNrs = new ArrayList<>();
-        List<Integer> projNrs = new ArrayList<>();
-        List<Integer> registerNrs = new ArrayList<>();
-
-        // get projections out of Condition
-        for (BackEdges.Edge condEdge : BackEdges.getOuts(cond)) {
-            // get Blocks
-            for (BackEdges.Edge projEdge : BackEdges.getOuts(condEdge.node)) {
-                Block block = (Block) projEdge.node;
-
-                // get first node of block
-                for (BackEdges.Edge blockEdge : BackEdges.getOuts(block)) {
-                    if (blockEdge.node instanceof Return) {
-                        Return aReturn = (Return) blockEdge.node;
-                        hasReturn = true;
-                        hasOnlyMemPred = aReturn.getPredCount() <= 1;
-
-                        if (!hasOnlyMemPred) {
-                            succBlockNr = block.getGraph().getEndBlock().getNr();
-                            registerNrs.add(this.node2RegIndex.get(aReturn.getPred(1)));
-                        }
-                    }
-                }
-                blockNrs.add(block.getNr());
-                projNrs.add(condEdge.node.getNr());
-            }
-        }
-
-        // sometimes, firm switches the position of the proj nodes
-        boolean projAreReversed = projNrs.get(0) > projNrs.get(1);
-        boolean blocksReversed = blockNrs.get(0) < blockNrs.get(1);
-        int trueNr = projAreReversed ? 1 : 0;
-        int falseNr = projAreReversed ? 0 : 1;
-
-        if (!hasReturn) {
-            succBlockNr = blocksReversed ? blockNrs.get(falseNr) : blockNrs.get(trueNr);
-        }
-        else if (!hasOnlyMemPred) {
-            this.appendMolkiCode("mov %@" + registerNrs.get(trueNr) + ", %@r0");
-            blocksReversed = false;
-        }
-        else {
-            succBlockNr = blockNrs.get(trueNr);
-        }
+//        // jmp asm
+//        int succBlockNr = -1;
+//        boolean hasReturn = false;
+//        boolean hasOnlyMemPred = false;
+//
+//        List<Integer> blockNrs = new ArrayList<>();
+//        List<Integer> projNrs = new ArrayList<>();
+//        List<Integer> registerNrs = new ArrayList<>();
+//
+//        // get projections out of Condition
+//        for (BackEdges.Edge condEdge : BackEdges.getOuts(cond)) {
+//            // get Blocks
+//            for (BackEdges.Edge projEdge : BackEdges.getOuts(condEdge.node)) {
+//                Block block = (Block) projEdge.node;
+//
+//                // get first node of block
+//                for (BackEdges.Edge blockEdge : BackEdges.getOuts(block)) {
+//                    if (blockEdge.node instanceof Return) {
+//                        Return aReturn = (Return) blockEdge.node;
+//                        hasReturn = true;
+//                         hasOnlyMemPred = aReturn.getPredCount() <= 1;
+//
+//                         if (!hasOnlyMemPred) {
+////                             succBlockNr = block.getGraph().getEndBlock().getNr();
+//                             registerNrs.add(this.node2RegIndex.get(aReturn.getPred(1)));
+//                         }
+//                    }
+//                }
+//                blockNrs.add(block.getNr());
+//                projNrs.add(condEdge.node.getNr());
+//            }
+//        }
+//
+//        // sometimes, firm switches the position of the proj nodes
+//        boolean projAreReversed = projNrs.get(0) > projNrs.get(1);
+//        boolean blocksReversed = blockNrs.get(0) < blockNrs.get(1);
+//        int trueNr = projAreReversed ? 1 : 0;
+//        int falseNr = projAreReversed ? 0 : 1;
+//
+//        if (!hasReturn) {
+//            succBlockNr = blocksReversed ? blockNrs.get(falseNr) : blockNrs.get(trueNr);
+//        }
+//        else if (!hasOnlyMemPred) {
+//            this.appendMolkiCode("mov %@" + registerNrs.get(trueNr) + ", %@r0");
+//            blocksReversed = false;
+//        }
+//        else {
+//            succBlockNr = blockNrs.get(trueNr);
+//        }
 
         Node selector = cond.getSelector();
 
-        if (selector instanceof Cmp) {
-            Cmp cmp = (Cmp) selector;
+        String condJump = null;
+        String uncondJump = null;
 
-            if (cmp.getRelation().equals(Relation.Less)) {
-                String jmp = blocksReversed ? "jge" : "jl";
-                this.appendMolkiCode(jmp + " L" + succBlockNr);
-            }
-            else if (cmp.getRelation().equals(Relation.LessEqual)) {
-                String jmp = blocksReversed ? "jg" : "jle";
-                this.appendMolkiCode(jmp + " L" + succBlockNr);
-            }
-            else if (cmp.getRelation().equals(Relation.Greater)) {
-                String jmp = blocksReversed ? "jle" : "jg";
-                this.appendMolkiCode(jmp + " L" + succBlockNr);
-            }
-            else if (cmp.getRelation().equals(Relation.GreaterEqual)) {
-                String jmp = blocksReversed ? "jl" : "jge";
-                this.appendMolkiCode(jmp + " L" + succBlockNr);
-            }
-            else if (cmp.getRelation().equals(Relation.Equal)) {
-                String jmp = blocksReversed ? "jne" : "je";
-                this.appendMolkiCode(jmp + " L" + succBlockNr);
-            }
-            else if (cmp.getRelation().equals(Relation.Equal.negated())) {
-                String jmp = blocksReversed ? "je" : "jne";
-                this.appendMolkiCode(jmp + " L" + succBlockNr);
-            }
-        }
-        // in all other cases we should be a boolean constant
-        else {
-            assert selector instanceof Const && selector.getMode().equals(Mode.getb());
-            Const aConst = (Const) selector;
+        for (BackEdges.Edge edge : BackEdges.getOuts(cond)) {
 
-            if (aConst.getTarval().equals(TargetValue.getBTrue())) {
-                this.appendMolkiCode("jmp L" + blockNrs.get(trueNr));
+            // Cond nodes should always be succeeded by proj nodes (with X mode set)
+            Proj proj = (Proj) edge.node;
+
+            // Get block which is the successor of the proj node
+            // iterator().next() always yields the first entry in the iteration
+            Block block = (Block) BackEdges.getOuts(proj).iterator().next().node;
+
+            if (selector instanceof Cmp) {
+
+                Cmp cmp = (Cmp) selector;
+                Relation relation = cmp.getRelation();
+
+                // Only generate a conditional jump for the true part, otherwise generate an unconditional jump
+                if (proj.getNum() == Cond.pnTrue) {
+
+                    // TODO Allow conditions to be inverted.
+
+                    switch (relation) {
+                        case Less:
+                            condJump = "jl";
+                            break;
+                        case LessEqual:
+                            condJump = "jle";
+                            break;
+                        case Greater:
+                            condJump = "jg";
+                            break;
+                        case GreaterEqual:
+                            condJump = "jge";
+                            break;
+                        case Equal:
+                            condJump = "je";
+                            break;
+                        case LessGreater:
+                        case UnorderedLessGreater:
+                            condJump = "jne";
+                            break;
+                        default:
+                            // This should not happen
+                            assert false : "Unknown relation in cond node code generation!";
+                            condJump = "";
+                    }
+
+                    condJump += " " + "L" + block.getNr();
+                }
+                else {
+                    uncondJump = "jmp " + "L" + block.getNr();
+                }
             }
             else {
-                this.appendMolkiCode("jmp L" + blockNrs.get(falseNr));
+                assert selector instanceof Const && selector.getMode().equals(Mode.getb());
+                Const aConst = (Const) selector;
+
+                if (proj.getNum() == Cond.pnTrue && aConst.getTarval().equals(TargetValue.getBTrue())) {
+                    uncondJump = "jmp L" + block.getNr();
+                }
+                else if (proj.getNum() == Cond.pnFalse && aConst.getTarval().equals(TargetValue.getBFalse())) {
+                    uncondJump = "jmp L" + block.getNr();
+                }
             }
+
+        }
+
+        if (condJump != null) {
+            this.appendMolkiCode(condJump);
+        }
+        if (uncondJump != null) {
+            this.appendMolkiCode(uncondJump);
         }
     }
 
     private void molkify(Member node) {
-        //nothing to do
+        // nothing to do
+    }
+
+    private void molkify(Conv node) {
+        // Nothing to do here as conversion nodes are only constructed for div and mod
+        // operations and conversion of the operands instead should be handled there.
     }
 
     /*

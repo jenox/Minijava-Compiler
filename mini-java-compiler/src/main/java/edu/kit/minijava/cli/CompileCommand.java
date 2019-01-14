@@ -85,31 +85,38 @@ public class CompileCommand extends Command {
                 HashMap<Integer, List<String>> molkiCode = molkiTransformer.getMolkiCode();
 
                 // go through all blocks of that graph
-                graph2BlockId.get(g).forEach(i -> {
-                    // move jmps to the end of the block
-                    String jmpString = null;
-                    for (String str : molkiCode.get(i)) {
-                        if (str.contains("jmp ")
-                                || str.contains("jle ")
-                                || str.contains("jl ")
-                                || str.contains("jge ")
-                                || str.contains("jg ")
-                                || str.contains("jne ")
-                                || str.contains("je ")) {
-                            jmpString = str;
+                graph2BlockId.get(g).forEach(block -> {
+
+                    // Move all the jump instructions to the end
+
+                    // TODO This should also apply to the compare instructions before conditional jumps,
+                    // which are currently not shifted to the end of the basic block.
+
+                    List<String> instructions = molkiCode.get(block);
+                    List<String> jmpInstructions = new ArrayList<>();
+                    for (int i = 0; i < instructions.size(); i++) {
+                        String str = instructions.get(i);
+
+                        if (str.contains("jmp")
+                            || str.contains("jle")
+                            || str.contains("jl")
+                            || str.contains("jge")
+                            || str.contains("jg")
+                            || str.contains("jne")
+                            || str.contains("je")) {
+
+                            instructions.remove(i);
+                            i--;
+
+                            jmpInstructions.add(str);
                         }
-
                     }
 
-                    if (jmpString != null) {
-                        molkiCode.get(i).remove(jmpString);
-                        molkiCode.get(i).add(jmpString);
-                    }
-
+                    instructions.addAll(jmpInstructions);
 
                     // output asm for the block
-                    output.add("L" + i + ":");
-                    molkiCode.get(i).forEach(str -> output.add(str));
+                    output.add("L" + block + ":");
+                    molkiCode.get(block).forEach(str -> output.add(str));
                 });
 
                 output.add(".endfunction\n");
