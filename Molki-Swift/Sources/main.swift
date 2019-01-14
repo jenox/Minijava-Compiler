@@ -53,8 +53,9 @@ do {
     var lines: [String] = []
 
     for function in try parser.parseFunctions() {
-        let generator = AssemblerGenerator(function: function)
-        lines.append(contentsOf: generator.lines)
+        print(function)
+//        let generator = AssemblerGenerator(function: function)
+//        lines.append(contentsOf: generator.lines)
     }
 
     lines.append("")

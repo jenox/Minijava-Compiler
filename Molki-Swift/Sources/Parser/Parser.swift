@@ -46,6 +46,13 @@ public class Parser {
         return true
     }
 
+    private func lookahead(_ types: Set<TokenType>) throws -> Bool {
+        guard let token = try self.token(atOffset: 0) else { return false }
+        guard types.contains(token.type) else { return false }
+
+        return true
+    }
+
     @discardableResult
     private func consume(_ type: TokenType, text: String? = nil) throws -> Token {
         guard let currentToken = try self.token(atOffset: 0) else {
@@ -114,140 +121,218 @@ public class Parser {
 
             return .labelInstruction(instruction)
         }
-        else if try self.lookahead(.identifier, .identifier) {
-            let opcode = try self.consume(.identifier).payload
+        else {
+            let token = try self.consume(.identifier)
+            let opcode = token.payload
 
-            if opcode == "call" {
-                let name = try self.consume(.identifier).payload
-                var arguments: [Value] = []
-
-                try self.consume(.openingBracket)
-
-                if try self.lookahead(.dollar) || self.lookahead(.pseudoregister) {
-                    arguments.append(try self.parseValue())
-                }
-
-                while try self.lookahead(.pipe) {
-                    try self.consume(.pipe)
-                    arguments.append(try self.parseValue())
-                }
-
-                try self.consume(.closingBracket)
-
-                if try self.lookahead(.arrow) {
-                    try self.consume(.arrow)
-                    let returnRegister = try self.parseValue()
-
-                    let instruction = CallInstruction(name: name, arguments: arguments, returnValue: returnRegister)
-
-                    return .callInstruction(instruction)
-                }
-                else {
-                    let instruction = CallInstruction(name: name, arguments: arguments, returnValue: nil)
-
-                    return .callInstruction(instruction)
-                }
-            }
-            else {
+            switch opcode {
+            case "jmp", "jl", "jle", "jg", "jge", "je", "jne":
+                let condition = JumpCondition(rawValue: opcode)!
                 let target = try self.consume(.identifier).payload
 
-                let instruction = JumpInstruction(operation: opcode, target: target)
+                let instruction = JumpInstruction(target: target, condition: condition)
 
                 return .jumpInstruction(instruction)
-            }
-        }
-        else {
-            let opcode = try self.consume(.identifier).payload
-
-            if try self.lookahead(.openingBracket) {
-                try self.consume(.openingBracket)
-                let first = try self.parseValue()
-                try self.consume(.pipe)
-                let second = try self.parseValue()
-                try self.consume(.closingBracket)
-                try self.consume(.arrow)
+            case "call":
+                let target = try self.consume(.identifier).payload
+                var arguments: [Argument<Pseudoregister>] = []
+                var result: Result<Pseudoregister>? = nil
 
                 if try self.lookahead(.openingBracket) {
                     try self.consume(.openingBracket)
-                    let third = try self.parseValue()
-                    try self.consume(.pipe)
-                    let fourth = try self.parseValue()
+
+                    if try self.lookahead([.dollar, .pseudoregister, .integer, .minus]) {
+                        arguments.append(try self.parseArgument())
+                    }
+
+                    while try self.lookahead(.pipe) {
+                        try self.consume(.pipe)
+                        arguments.append(try self.parseArgument())
+                    }
+
                     try self.consume(.closingBracket)
-
-                    let instruction = FourAddressCodeInstruction.init(operation: opcode, first: first, second: second, third: third, fourth: fourth)
-
-                    return .fourAddressCodeInstruction(instruction)
                 }
-                else {
-                    let third = try self.parseValue()
 
-                    let instruction = ThreeAddressCodeInstruction.init(operation: opcode, first: first, second: second, third: third)
-
-                    return .threeAddressCodeInstruction(instruction)
+                if try self.lookahead(.arrow) {
+                    try self.consume(.arrow)
+                    result = try self.parseResult()
                 }
-            }
-            else {
-                let first = try self.parseValue()
 
-                if try self.lookahead(.comma) {
-                    try self.consume(.comma)
-                    let second = try self.parseValue()
+                let instruction = CallInstruction(target: target, arguments: arguments, result: result)
 
-                    let instruction = TwoAddressCodeInstruction(operation: opcode, first: first, second: second)
+                return .callInstruction(instruction)
+            case "movb", "movw", "movl", "movq":
+                let width: RegisterWidth
 
-                    return .twoAddressCodeInstruction(instruction)
+                switch opcode {
+                case "movb": width = .byte
+                case "movw": width = .word
+                case "movl": width = .double
+                case "movq": width = .quad
+                default: fatalError()
                 }
-                else {
-                    let instruction = OneAddressCodeInstruction(operation: opcode, first: first)
 
-                    return .oneAddressCodeInstruction(instruction)
+                let source = try self.parseArgument(width)
+                try self.consume(.arrow)
+                let target = try self.parseResult(width)
+
+                let instruction = MoveInstruction(width: width, source: source, target: target)
+
+                return .moveInstruction(instruction)
+            case "cmpb", "cmpw", "cmpl", "cmpq":
+                let width: RegisterWidth
+
+                switch opcode {
+                case "cmpb": width = .byte
+                case "cmpw": width = .word
+                case "cmpl": width = .double
+                case "cmpq": width = .quad
+                default: fatalError()
                 }
+
+                try self.consume(.openingBracket)
+                let lhs = try self.parseArgument(width)
+                try self.consume(.pipe)
+                let rhs = try self.parseArgument(width)
+                try self.consume(.closingBracket)
+
+                let instruction = ComparisonInstruction(width: width, lhs: lhs, rhs: rhs)
+
+                return .comparisonInstruction(instruction)
+            case "addl":
+                try self.consume(.openingBracket)
+                let augend = try self.parseArgument(.double)
+                try self.consume(.pipe)
+                let addend = try self.parseArgument(.double)
+                try self.consume(.closingBracket)
+                try self.consume(.arrow)
+                let sum = try self.parseResult(.double)
+
+                let instruction = AdditionInstruction(augend: augend, addend: addend, sum: sum)
+
+                return .additionInstruction(instruction)
+            case "subl":
+                try self.consume(.openingBracket)
+                let minuend = try self.parseArgument(.double)
+                try self.consume(.pipe)
+                let subtrahend = try self.parseArgument(.double)
+                try self.consume(.closingBracket)
+                try self.consume(.arrow)
+                let difference = try self.parseResult(.double)
+
+                let instruction = SubtractionInstruction(minuend: minuend, subtrahend: subtrahend, difference: difference)
+
+                return .subtractionInstruction(instruction)
+            case "mull":
+                try self.consume(.openingBracket)
+                let multiplicand = try self.parseArgument(.double)
+                try self.consume(.pipe)
+                let multiplier = try self.parseArgument(.double)
+                try self.consume(.closingBracket)
+                try self.consume(.arrow)
+                let product = try self.parseResult(.double)
+
+                let instruction = MultiplicationInstruction(multiplicand: multiplicand, multiplier: multiplier, product: product)
+
+                return .multiplicationInstruction(instruction)
+            case "divl":
+                try self.consume(.openingBracket)
+                let dividend = try self.parseArgument(.double)
+                try self.consume(.pipe)
+                let divisor = try self.parseArgument(.double)
+                try self.consume(.closingBracket)
+                try self.consume(.arrow)
+                try self.consume(.openingBracket)
+                let quotient = try self.parseResult(.double)
+                try self.consume(.pipe)
+                let remainder = try self.parseResult(.double)
+                try self.consume(.closingBracket)
+
+                let instruction = DivisionInstruction(dividend: dividend, divisor: divisor, quotient: quotient, remainder: remainder)
+
+                return .divisionInstruction(instruction)
+            case "negl":
+                let source = try self.parseArgument(.double)
+                try self.consume(.arrow)
+                let target = try self.parseResult(.double)
+
+                let instruction = NumericNegationInstruction(source: source, target: target)
+
+                return .numericNegationInstruction(instruction)
+            case "notb":
+                let source = try self.parseArgument(.byte)
+                try self.consume(.arrow)
+                let target = try self.parseResult(.byte)
+
+                let instruction = LogicalNegationInstruction(source: source, target: target)
+
+                return .logicalNegationInstruction(instruction)
+            default:
+                throw ParserError.unrecognizedOpcode(opcode, token: token)
             }
         }
     }
 
-    private func parseRegister() throws -> Register {
-        try self.consume(.pseudoregister)
-
-        if try self.lookahead(.integer) {
-            let text = try self.consume(.integer).payload
-            let number = Int(text)!
-
-            return .identified(number)
+    private func parseArgument(_ width: RegisterWidth? = nil) throws -> Argument<Pseudoregister> {
+        if try self.lookahead(.dollar) {
+            return .constant(try self.parseConstantValue())
         }
-        else if try self.lookahead(.identifier) {
-            try self.consume(.identifier, text: "r0")
-
-            return .returnValue
+        else if try self.lookahead(.pseudoregister) {
+            return .register(try self.parseRegisterValue(width))
         }
         else {
-            throw try self.unexpectedToken(context: "Register")
+            return .memory(try self.parseMemoryValue())
         }
     }
 
-    private func parseRegisterValue() throws -> RegisterValue {
+    private func parseResult(_ width: RegisterWidth? = nil) throws -> Result<Pseudoregister> {
+        if try self.lookahead(.pseudoregister) {
+            return .register(try self.parseRegisterValue(width))
+        }
+        else {
+            return .memory(try self.parseMemoryValue())
+        }
+    }
+
+    private func parseConstantValue() throws -> ConstantValue {
+        try self.consume(.dollar)
+
+        return ConstantValue(value: try self.parseInteger())
+    }
+
+    private func parseRegisterValue(_ expected: RegisterWidth? = nil) throws -> RegisterValue<Pseudoregister> {
+        let start = try self.token(atOffset: 0)
+
         let register = try self.parseRegister()
+        let width: RegisterWidth
 
         if let currentToken = try self.token(atOffset: 0), currentToken.type == .identifier {
             switch currentToken.payload {
             case "l":
                 try self.consume(.identifier)
-                return RegisterValue(register: register, width: .byte)
+                width = .byte
             case "w":
                 try self.consume(.identifier)
-                return RegisterValue(register: register, width: .word)
+                width = .word
             case "d":
                 try self.consume(.identifier)
-                return RegisterValue(register: register, width: .double)
+                width = .double
             default:
-                break
+                width = .quad
             }
         }
+        else {
+            width = .quad
+        }
 
-        return RegisterValue(register: register, width: .quad)
+        if let expected = expected, width != expected {
+            throw ParserError.incompatibleRegisterWidth(width, expected: expected, location: start!)
+        }
+
+        return RegisterValue(register: register, width: width)
     }
 
-    private func parseMemoryAddress() throws -> MemoryAddress {
+    private func parseMemoryValue() throws -> MemoryValue<Pseudoregister> {
         let offset: Int
 
         if try self.lookahead(.minus) || self.lookahead(.integer) {
@@ -283,18 +368,25 @@ public class Parser {
 
             return .relative(base: base, offset: offset)
         }
+
     }
 
-    private func parseValue() throws -> Value {
-        if try self.lookahead(.dollar) {
-            try self.consume(.dollar)
-            return .constant(try self.parseInteger())
+    private func parseRegister() throws -> Pseudoregister {
+        try self.consume(.pseudoregister)
+
+        if try self.lookahead(.integer) {
+            let text = try self.consume(.integer).payload
+            let number = Int(text)!
+
+            return .numbered(number)
         }
-        else if try self.lookahead(.pseudoregister) {
-            return .register(try self.parseRegisterValue())
+        else if try self.lookahead(.identifier) {
+            try self.consume(.identifier, text: "r0")
+
+            return .reserved
         }
         else {
-            return .memory(try self.parseMemoryAddress())
+            throw try self.unexpectedToken(context: "Register")
         }
     }
 
