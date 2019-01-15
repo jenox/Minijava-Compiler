@@ -9,11 +9,15 @@
 import Swift
 
 
-public enum RegisterWidth {
-    case byte
-    case word
-    case double
-    case quad
+public enum RegisterWidth: Int, Comparable {
+    case byte = 1
+    case word = 2
+    case double = 4
+    case quad = 8
+
+    public static func < (lhs: RegisterWidth, rhs: RegisterWidth) -> Bool {
+        return lhs.rawValue < rhs.rawValue
+    }
 }
 
 public protocol Register: Hashable {

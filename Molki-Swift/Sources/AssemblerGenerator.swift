@@ -301,7 +301,7 @@ class AssemblerGenerator {
         precondition(register.width == value.width, "value width mismatch")
 
         if let prev = self.lastWrittenWidth[value.register] {
-            precondition(register.width == prev, "cannot write pseudoreg \(value.register) (prev written as \(prev)) as \(register.width)")
+            precondition(value.width == prev, "cannot write pseudoreg \(value.register) (prev written as \(prev)) as \(value.width)")
         }
 
         let offset = self.reserveStackSlot(for: value.register)
@@ -337,14 +337,14 @@ class AssemblerGenerator {
                 self.emit("movq \(register), \(offset)(\(base_reg))")
             }
         case .indexed(base: let base , index: let index, scale: let scale, offset: let offset):
-            let base_reg = X86Register.r12.with(base.width)
-            let index_reg = X86Register.r13.with(index.width)
+            let address_width = max(base.width, index.width)
+            let base_reg = X86Register.r12.with(address_width)
+            let index_reg = X86Register.r13.with(address_width)
+
             precondition(register != base_reg && register != index_reg)
 
-            // TODO: x86 does not allow different widths for base and index, but we need it for array access
-
-            self.loadPseudoregister(base, into: base_reg)
-            self.loadPseudoregister(index, into: index_reg)
+            self.loadPseudoregister(base, into: base_reg, extend: true)
+            self.loadPseudoregister(index, into: index_reg, extend: true)
 
             switch register.width {
             case .byte:
@@ -381,21 +381,30 @@ class AssemblerGenerator {
         }
     }
 
-    func loadPseudoregister(_ value: RegisterValue<Pseudoregister>, into register: RegisterValue<X86Register>) {
+    func loadPseudoregister(_ value: RegisterValue<Pseudoregister>, into register: RegisterValue<X86Register>, extend: Bool = false) {
         precondition(self.table[value.register] != nil, "attempting to load uninitialized pseudoregister")
-        precondition(value.width == register.width, "value width mismatch")
+        if extend {
+            precondition(value.width <= register.width, "value width mismatch")
+        }
+        else {
+            precondition(value.width == register.width, "value width mismatch")
+        }
 
         if let prev = self.lastWrittenWidth[value.register] {
-            precondition(register.width == prev, "cannot read pseudoreg \(value.register) (prev written as \(prev)) as \(register.width)")
+            precondition(value.width == prev, "cannot read pseudoreg \(value.register) (prev written as \(prev)) as \(value.width)")
         }
 
         let offset = self.reserveStackSlot(for: value.register)
 
-        switch register.width {
-        case .byte: self.emit("movb \(offset)(%rbp), \(register)", comment: "read pseudoregister \(value)")
-        case .word: self.emit("movw \(offset)(%rbp), \(register)", comment: "read pseudoregister \(value)")
-        case .double: self.emit("movl \(offset)(%rbp), \(register)", comment: "read pseudoregister \(value)")
-        case .quad: self.emit("movq \(offset)(%rbp), \(register)", comment: "read pseudoregister \(value)")
+        switch value.width {
+        case .byte: self.emit("movb \(offset)(%rbp), \(register.with(value.width))", comment: "read pseudoregister \(value)")
+        case .word: self.emit("movw \(offset)(%rbp), \(register.with(value.width))", comment: "read pseudoregister \(value)")
+        case .double: self.emit("movl \(offset)(%rbp), \(register.with(value.width))", comment: "read pseudoregister \(value)")
+        case .quad: self.emit("movq \(offset)(%rbp), \(register.with(value.width))", comment: "read pseudoregister \(value)")
+        }
+
+        if value.width < register.width {
+            self.emit("movsx \(register.with(value.width)), \(register)", comment: "sign extend pseudoregister \(value)")
         }
     }
 
@@ -419,21 +428,20 @@ class AssemblerGenerator {
                 self.emit("movq \(offset)(\(base_reg)), \(register)")
             }
         case .indexed(base: let base, index: let index, scale: let scale, offset: let offset):
-            let base_reg = X86Register.r8.with(base.width)
-            let index_reg = X86Register.r9.with(index.width)
+            let address_width = max(base.width, index.width)
+            let base_reg = X86Register.r8.with(address_width)
+            let index_reg = X86Register.r9.with(address_width)
 
-            // TODO: x86 does not allow different widths for base and index, but we need it for array access
-
-            self.loadPseudoregister(base, into: base_reg)
-            self.loadPseudoregister(index, into: index_reg)
+            self.loadPseudoregister(base, into: base_reg, extend: true)
+            self.loadPseudoregister(index, into: index_reg, extend: true)
 
             switch register.width {
             case .byte:
                 self.emit("movb \(offset)(\(base_reg), \(index_reg), \(scale)), \(register)")
             case .word:
-                self.emit("movl \(offset)(\(base_reg), \(index_reg), \(scale)), \(register)")
-            case .double:
                 self.emit("movw \(offset)(\(base_reg), \(index_reg), \(scale)), \(register)")
+            case .double:
+                self.emit("movl \(offset)(\(base_reg), \(index_reg), \(scale)), \(register)")
             case .quad:
                 self.emit("movq \(offset)(\(base_reg), \(index_reg), \(scale)), \(register)")
             }

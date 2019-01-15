@@ -13,6 +13,10 @@ public struct RegisterValue<RegisterType: Register>: Equatable, CustomStringConv
     public var register: RegisterType
     public var width: RegisterWidth
 
+    public func with(_ width: RegisterWidth) -> RegisterValue<RegisterType> {
+        return RegisterValue(register: self.register, width: width)
+    }
+
     public var description: String {
         return self.register.name(for: self.width)
     }
