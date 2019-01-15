@@ -1,17 +1,34 @@
 //
-//  PseudoMemoryAddress.swift
+//  Operands.swift
 //  Molki
 //
-//  Created by Christian Schnorr on 05.01.19.
+//  Created by Christian Schnorr on 14.01.19.
 //  Copyright © 2019 Christian Schnorr. All rights reserved.
 //
 
 import Swift
 
 
-public enum MemoryAddress: CustomStringConvertible {
-    case relative(base: RegisterValue, offset: Int)
-    case indexed(base: RegisterValue, index: RegisterValue, scale: Int, offset: Int)
+public struct RegisterValue<RegisterType: Register>: Equatable, CustomStringConvertible {
+    public var register: RegisterType
+    public var width: RegisterWidth
+
+    public var description: String {
+        return self.register.name(for: self.width)
+    }
+}
+
+public struct ConstantValue: Equatable, CustomStringConvertible {
+    public var value: Int
+
+    public var description: String {
+        return "$\(self.value)"
+    }
+}
+
+public enum MemoryValue<RegisterType: Register>: Equatable, CustomStringConvertible {
+    case relative(base: RegisterValue<RegisterType>, offset: Int)
+    case indexed(base: RegisterValue<RegisterType>, index: RegisterValue<RegisterType>, scale: Int, offset: Int)
 
     public var description: String {
         switch self {
