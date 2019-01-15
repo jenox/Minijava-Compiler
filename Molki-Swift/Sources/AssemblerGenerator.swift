@@ -223,7 +223,7 @@ class AssemblerGenerator {
         self.emit("\n/* \(instruction) */")
         self.load(instruction.multiplicand, into: dest)
         self.load(instruction.multiplier, into: src)
-        self.emit("imull \(src), \(dest)") // TODO: imul or mul?
+        self.emit("imull \(src), \(dest)")
         self.store(dest, to: instruction.product)
     }
 
@@ -368,7 +368,7 @@ class AssemblerGenerator {
         precondition(register.width == value.width, "register width mismatch")
 
         if let writtenWidth = self.lastWrittenWidth[value.register] {
-            precondition(writtenWidth == register.width, "pseudoreg was previously assigned \(writtenWidth), now attempting to load as \(register.width)")
+            precondition(writtenWidth == register.width, "pseudoreg \(value.register) was previously assigned \(writtenWidth), now attempting to load as \(register.width)")
         }
         else {
             print("missing information about pseudoreg width: is \(value.register) argument?")

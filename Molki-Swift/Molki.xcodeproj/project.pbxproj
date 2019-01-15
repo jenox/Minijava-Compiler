@@ -9,7 +9,6 @@
 /* Begin PBXBuildFile section */
 		AA067C1821CFFF84009CA48A /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA067C1721CFFF84009CA48A /* main.swift */; };
 		AA067C2821D00B85009CA48A /* example_fib.s in Copy Files */ = {isa = PBXBuildFile; fileRef = AA067C2221CFFFF1009CA48A /* example_fib.s */; };
-		AA067C2921D00B87009CA48A /* runtime.c in Copy Files */ = {isa = PBXBuildFile; fileRef = AA067C2621D00B76009CA48A /* runtime.c */; };
 		AAD777BB21D128AB001F01A1 /* Lexer.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAD777BA21D128AB001F01A1 /* Lexer.swift */; };
 		AAD777BD21D128C3001F01A1 /* Token.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAD777BC21D128C3001F01A1 /* Token.swift */; };
 		CB73628721D7FE9700A49E17 /* Parser.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB73628621D7FE9700A49E17 /* Parser.swift */; };
@@ -27,6 +26,7 @@
 		CB96B9D821ED1171003D7AEE /* Operands.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB96B9D721ED1171003D7AEE /* Operands.swift */; };
 		CB96B9DA21ED11C2003D7AEE /* Instructions.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB96B9D921ED11C2003D7AEE /* Instructions.swift */; };
 		CB96B9DC21ED1C11003D7AEE /* Function.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB96B9DB21ED1C11003D7AEE /* Function.swift */; };
+		CB96B9DF21ED5967003D7AEE /* fib.mj.s in Copy Files */ = {isa = PBXBuildFile; fileRef = CB96B9DD21ED5943003D7AEE /* fib.mj.s */; };
 		CBD459AA21E50AEF00AF5F9D /* ParserError.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBD459A921E50AEF00AF5F9D /* ParserError.swift */; };
 /* End PBXBuildFile section */
 
@@ -37,7 +37,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 7;
 			files = (
-				AA067C2921D00B87009CA48A /* runtime.c in Copy Files */,
+				CB96B9DF21ED5967003D7AEE /* fib.mj.s in Copy Files */,
 				AA067C2821D00B85009CA48A /* example_fib.s in Copy Files */,
 			);
 			name = "Copy Files";
@@ -49,7 +49,6 @@
 		AA067C1421CFFF84009CA48A /* Molki */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Molki; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA067C1721CFFF84009CA48A /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		AA067C2221CFFFF1009CA48A /* example_fib.s */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.asm; path = example_fib.s; sourceTree = "<group>"; };
-		AA067C2621D00B76009CA48A /* runtime.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = runtime.c; sourceTree = "<group>"; };
 		AAD777BA21D128AB001F01A1 /* Lexer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Lexer.swift; sourceTree = "<group>"; };
 		AAD777BC21D128C3001F01A1 /* Token.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Token.swift; sourceTree = "<group>"; };
 		CB73628621D7FE9700A49E17 /* Parser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Parser.swift; sourceTree = "<group>"; };
@@ -67,6 +66,7 @@
 		CB96B9D721ED1171003D7AEE /* Operands.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Operands.swift; sourceTree = "<group>"; };
 		CB96B9D921ED11C2003D7AEE /* Instructions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Instructions.swift; sourceTree = "<group>"; };
 		CB96B9DB21ED1C11003D7AEE /* Function.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Function.swift; sourceTree = "<group>"; };
+		CB96B9DD21ED5943003D7AEE /* fib.mj.s */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.asm; path = fib.mj.s; sourceTree = "<group>"; };
 		CBD459A921E50AEF00AF5F9D /* ParserError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParserError.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -117,7 +117,7 @@
 			isa = PBXGroup;
 			children = (
 				AA067C2221CFFFF1009CA48A /* example_fib.s */,
-				AA067C2621D00B76009CA48A /* runtime.c */,
+				CB96B9DD21ED5943003D7AEE /* fib.mj.s */,
 			);
 			path = Resources;
 			sourceTree = "<group>";

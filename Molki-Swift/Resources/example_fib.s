@@ -12,7 +12,7 @@ fib_basecase:
 fib_end:
 .endfunction
 
-.function _minijava_main 0 0
+.function ___minijava_main 0 0
     movq $9 -> %@0
     call _fib [ %@0 ] -> %@1
     call _system_out_println [ %@1 ]
