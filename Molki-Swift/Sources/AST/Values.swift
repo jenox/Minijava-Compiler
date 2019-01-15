@@ -13,6 +13,10 @@ public struct RegisterValue<RegisterType: Register>: Equatable, CustomStringConv
     public var register: RegisterType
     public var width: RegisterWidth
 
+    public func with(_ width: RegisterWidth) -> RegisterValue<RegisterType> {
+        return RegisterValue(register: self.register, width: width)
+    }
+
     public var description: String {
         return self.register.name(for: self.width)
     }
@@ -20,13 +24,33 @@ public struct RegisterValue<RegisterType: Register>: Equatable, CustomStringConv
 
 public struct ConstantValue: Equatable, CustomStringConvertible {
     public var value: Int
+    public var width: RegisterWidth
 
     public var description: String {
-        return "$\(self.value)"
+        switch self.width {
+        case .byte: return "$\(self.value)l"
+        case .word: return "$\(self.value)w"
+        case .double: return "$\(self.value)d"
+        case .quad: return "$\(self.value)"
+        }
     }
 }
 
-public enum MemoryValue<RegisterType: Register>: Equatable, CustomStringConvertible {
+public struct MemoryValue<RegisterType: Register>: Equatable, CustomStringConvertible {
+    public var address: MemoryAddress<RegisterType>
+    public var width: RegisterWidth
+
+    public var description: String {
+        switch self.width {
+        case .byte: return "\(self.address)l"
+        case .word: return "\(self.address)w"
+        case .double: return "\(self.address)d"
+        case .quad: return "\(self.address)"
+        }
+    }
+}
+
+public enum MemoryAddress<RegisterType: Register>: Equatable, CustomStringConvertible {
     case relative(base: RegisterValue<RegisterType>, offset: Int)
     case indexed(base: RegisterValue<RegisterType>, index: RegisterValue<RegisterType>, scale: Int, offset: Int)
 
