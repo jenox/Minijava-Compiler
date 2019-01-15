@@ -275,13 +275,13 @@ public class Parser {
 
     private func parseArgument(_ width: RegisterWidth? = nil) throws -> Argument<Pseudoregister> {
         if try self.lookahead(.dollar) {
-            return .constant(try self.parseConstantValue())
+            return .constant(try self.parseConstantValue(width))
         }
         else if try self.lookahead(.pseudoregister) {
             return .register(try self.parseRegisterValue(width))
         }
         else {
-            return .memory(try self.parseMemoryValue())
+            return .memory(try self.parseMemoryValue(width))
         }
     }
 
@@ -290,20 +290,38 @@ public class Parser {
             return .register(try self.parseRegisterValue(width))
         }
         else {
-            return .memory(try self.parseMemoryValue())
+            return .memory(try self.parseMemoryValue(width))
         }
     }
 
-    private func parseConstantValue() throws -> ConstantValue {
-        try self.consume(.dollar)
+    private func parseConstantValue(_ expected: RegisterWidth? = nil) throws -> ConstantValue {
+        let location = try self.consume(.dollar)
 
-        return ConstantValue(value: try self.parseInteger())
+        let value = try self.parseInteger()
+        let width = try self.parseValueWidth(expected, at: location)
+
+        return ConstantValue(value: value, width: width)
     }
 
     private func parseRegisterValue(_ expected: RegisterWidth? = nil) throws -> RegisterValue<Pseudoregister> {
-        let start = try self.token(atOffset: 0)
+        let location = try self.token(atOffset: 0)
 
         let register = try self.parseRegister()
+        let width = try self.parseValueWidth(expected, at: location!)
+
+        return RegisterValue(register: register, width: width)
+    }
+
+    private func parseMemoryValue(_ expected: RegisterWidth? = nil) throws -> MemoryValue<Pseudoregister> {
+        let location = try self.token(atOffset: 0)
+
+        let address = try self.parseMemoryAddress()
+        let width = try self.parseValueWidth(expected, at: location!)
+
+        return MemoryValue(address: address, width: width)
+    }
+
+    private func parseValueWidth(_ expected: RegisterWidth? = nil, at location: Token) throws -> RegisterWidth {
         let width: RegisterWidth
 
         if let currentToken = try self.token(atOffset: 0), currentToken.type == .identifier {
@@ -326,13 +344,13 @@ public class Parser {
         }
 
         if let expected = expected, width != expected {
-            throw ParserError.incompatibleRegisterWidth(width, expected: expected, location: start!)
+            throw ParserError.incompatibleValueWidth(width, expected: expected, location: location)
         }
 
-        return RegisterValue(register: register, width: width)
+        return width
     }
 
-    private func parseMemoryValue() throws -> MemoryValue<Pseudoregister> {
+    private func parseMemoryAddress() throws -> MemoryAddress<Pseudoregister> {
         let offset: Int
 
         if try self.lookahead(.minus) || self.lookahead(.integer) {
@@ -368,7 +386,6 @@ public class Parser {
 
             return .relative(base: base, offset: offset)
         }
-
     }
 
     private func parseRegister() throws -> Pseudoregister {

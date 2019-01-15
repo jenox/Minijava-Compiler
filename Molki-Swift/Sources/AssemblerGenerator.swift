@@ -288,7 +288,7 @@ class AssemblerGenerator {
     }
 
     func store(_ register: RegisterValue<X86Register>, to value: RegisterValue<Pseudoregister>) {
-        precondition(register.width == value.width, "register width mismatch")
+        precondition(register.width == value.width, "value width mismatch")
 
         let offset = self.reserveStackSlot(for: value.register)
 
@@ -303,7 +303,9 @@ class AssemblerGenerator {
     }
 
     func store(_ register: RegisterValue<X86Register>, to value: MemoryValue<Pseudoregister>) {
-        switch value {
+        precondition(register.width == value.width, "value width mismatch")
+
+        switch value.address {
         case .relative(base: let base, offset: let offset):
             let base_reg = X86Register.r12.with(base.width)
             precondition(register != base_reg)
@@ -355,17 +357,19 @@ class AssemblerGenerator {
     }
 
     func loadConstant(_ value: ConstantValue, into register: RegisterValue<X86Register>) {
+        precondition(value.width == register.width, "value width mismatch")
+
         switch register.width {
-        case .byte: self.emit("movb \(value), \(register)", comment: "load constant \(value)")
-        case .word: self.emit("movw \(value), \(register)", comment: "load constant \(value)")
-        case .double: self.emit("movl \(value), \(register)", comment: "load constant \(value)")
-        case .quad: self.emit("movq \(value), \(register)", comment: "load constant \(value)")
+        case .byte: self.emit("movb $\(value.value), \(register)", comment: "load constant \(value)")
+        case .word: self.emit("movw $\(value.value), \(register)", comment: "load constant \(value)")
+        case .double: self.emit("movl $\(value.value), \(register)", comment: "load constant \(value)")
+        case .quad: self.emit("movq $\(value.value), \(register)", comment: "load constant \(value)")
         }
     }
 
     func loadPseudoregister(_ value: RegisterValue<Pseudoregister>, into register: RegisterValue<X86Register>) {
         precondition(self.table[value.register] != nil, "attempting to load uninitialized pseudoregister")
-        precondition(register.width == value.width, "register width mismatch")
+        precondition(value.width == register.width, "value width mismatch")
 
         if let writtenWidth = self.lastWrittenWidth[value.register] {
             precondition(writtenWidth == register.width, "pseudoreg \(value.register) was previously assigned \(writtenWidth), now attempting to load as \(register.width)")
@@ -384,8 +388,10 @@ class AssemblerGenerator {
         }
     }
 
-    func loadMemory(_ address: MemoryValue<Pseudoregister>, into register: RegisterValue<X86Register>) {
-        switch address {
+    func loadMemory(_ value: MemoryValue<Pseudoregister>, into register: RegisterValue<X86Register>) {
+        precondition(value.width == register.width, "value width mismatch")
+
+        switch value.address {
         case .relative(base: let base, offset: let offset):
             let base_reg = X86Register.r8.with(base.width)
 

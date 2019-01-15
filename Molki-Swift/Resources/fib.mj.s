@@ -1,10 +1,10 @@
 .function _Fib$fib 2 1
 L77:
-    movl $2 -> %@2d
+    movl $2d -> %@2d
     cmpl [ %@1d | %@2d ]
     movl %@1d -> %@$d
-    movl $1 -> %@4d
-    movl $2 -> %@7d
+    movl $1d -> %@4d
+    movl $2d -> %@7d
     jl L75
 L91:
     movl %@1d -> %@$d
@@ -20,10 +20,10 @@ L75:
 
 .function ___minijava_main 0 0
 L120:
-    movl $1 -> %@0d
-    movl $0 -> %@1d
+    movl $1d -> %@0d
+    movl $0d -> %@1d
     call _alloc_mem [ %@0d | %@1d ] -> %@2
-    movl $24 -> %@3d
+    movl $24d -> %@3d
     call _Fib$fib [ %@2 | %@3d ] -> %@4d
     call _system_out_println [ %@4d ]
 L118:
