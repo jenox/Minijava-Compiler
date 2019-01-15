@@ -355,6 +355,11 @@ public class MolkiTransformer extends Default {
         else if (aReturn.getPredCount() > 1) {
             this.appendMolkiCode("mov %@" + this.node2RegIndex.get(aReturn.getPred(1)) + ", %@r0");
         }
+
+        // Select single successor
+        Block successorBlock = (Block) BackEdges.getOuts(aReturn).iterator().next().node;
+
+        this.appendMolkiCode("jmp " + "L" + successorBlock.getNr());
     }
 
     private void molkify(Sel sel) {
