@@ -1,4 +1,4 @@
-.function _Fib$fib 2 1
+.function _Fib$fib [ q | l ] -> l
 L77:
     movl $2d -> %@2d
     cmpl [ %@1d | %@2d ]
@@ -18,7 +18,7 @@ L95:
 L75:
 .endfunction
 
-.function ___minijava_main 0 0
+.function ___minijava_main
 L120:
     movl $1d -> %@0d
     movl $0d -> %@1d

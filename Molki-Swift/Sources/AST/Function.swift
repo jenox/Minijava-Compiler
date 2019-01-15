@@ -11,7 +11,7 @@ import Swift
 
 public struct Function {
     public var name: String
-    public var numberOfParameters: Int
-    public var hasReturnValue: Bool
+    public var parameterWidths: [RegisterWidth]
+    public var returnValueWidth: RegisterWidth?
     public var instructions: [Instruction]
 }

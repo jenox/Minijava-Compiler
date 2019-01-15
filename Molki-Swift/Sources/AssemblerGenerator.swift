@@ -23,16 +23,18 @@ class AssemblerGenerator {
     init(function: Function) {
 
         // caller pushes arguments on stack, their offset is fixed
-        for index in 0..<function.numberOfParameters {
+        for (index, width) in function.parameterWidths.enumerated() {
 
             // 2 slots reserved:
             //  - return address
             //  - old base pointer? (pushq %rbp in prologue)
             self.table[.numbered(index)] = 16 + 8 * index
+            self.lastWrittenWidth[.numbered(index)] = width
         }
 
-        if function.hasReturnValue {
+        if let width = function.returnValueWidth {
             self.reserveStackSlot(for: .reserved)
+            self.lastWrittenWidth[.reserved] = width
         }
 
         for instruction in function.instructions {
@@ -63,8 +65,20 @@ class AssemblerGenerator {
             print(line)
         }
 
-        if function.hasReturnValue {
-            print("movq \(self.table[.reserved]!)(%rbp), %rax")
+        if let width = function.returnValueWidth {
+            let reg = X86Register.rax
+
+            // cant use loadPseudoregister here cause we are no longer buffering
+            switch width {
+            case .byte:
+                print("movb \(self.table[.reserved]!)(%rbp), \(reg.name(for: width))")
+            case .word:
+                print("movw \(self.table[.reserved]!)(%rbp), \(reg.name(for: width))")
+            case .double:
+                print("movl \(self.table[.reserved]!)(%rbp), \(reg.name(for: width))")
+            case .quad:
+                print("movq \(self.table[.reserved]!)(%rbp), \(reg.name(for: width))")
+            }
         }
 
         print("\n/* epilogue of function \(function.name) */")
@@ -290,6 +304,10 @@ class AssemblerGenerator {
     func store(_ register: RegisterValue<X86Register>, to value: RegisterValue<Pseudoregister>) {
         precondition(register.width == value.width, "value width mismatch")
 
+        if let prev = self.lastWrittenWidth[value.register] {
+            precondition(register.width == prev, "cannot write pseudoreg \(value.register) (prev written as \(prev)) as \(register.width)")
+        }
+
         let offset = self.reserveStackSlot(for: value.register)
 
         switch register.width {
@@ -371,11 +389,8 @@ class AssemblerGenerator {
         precondition(self.table[value.register] != nil, "attempting to load uninitialized pseudoregister")
         precondition(value.width == register.width, "value width mismatch")
 
-        if let writtenWidth = self.lastWrittenWidth[value.register] {
-            precondition(writtenWidth == register.width, "pseudoreg \(value.register) was previously assigned \(writtenWidth), now attempting to load as \(register.width)")
-        }
-        else {
-            print("missing information about pseudoreg width: is \(value.register) argument?")
+        if let prev = self.lastWrittenWidth[value.register] {
+            precondition(register.width == prev, "cannot read pseudoreg \(value.register) (prev written as \(prev)) as \(register.width)")
         }
 
         let offset = self.reserveStackSlot(for: value.register)

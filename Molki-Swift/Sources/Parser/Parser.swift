@@ -53,6 +53,13 @@ public class Parser {
         return true
     }
 
+    private func lookahead(_ type: TokenType, payloads: Set<String>) throws -> Bool {
+        guard let token = try self.token(atOffset: 0) else { return false }
+        guard payloads.contains(token.payload) else { return false }
+
+        return true
+    }
+
     @discardableResult
     private func consume(_ type: TokenType, text: String? = nil) throws -> Token {
         guard let currentToken = try self.token(atOffset: 0) else {
@@ -97,10 +104,27 @@ public class Parser {
 
         let name = try self.consume(.identifier).payload
 
-        let numberOfParameters = try self.parseInteger(0...)
-        let numberOfReturnValues = try self.parseInteger(0...1)
-        let hasReturnValue = numberOfReturnValues > 0
+        var parameterWidths: [RegisterWidth] = []
+        var returnValueWidth: RegisterWidth? = nil
         var instructions: [Instruction] = []
+
+        if try self.lookahead(.openingBracket) {
+            try self.consume(.openingBracket)
+
+            parameterWidths.append(try self.parseArgumentOrResultWidth())
+
+            while try self.lookahead(.pipe) {
+                try self.consume(.pipe)
+                parameterWidths.append(try self.parseArgumentOrResultWidth())
+            }
+
+            try self.consume(.closingBracket)
+        }
+
+        if try self.lookahead(.arrow) {
+            try self.consume(.arrow)
+            returnValueWidth = try self.parseArgumentOrResultWidth()
+        }
 
         while try self.lookahead(.identifier) {
             instructions.append(try self.parseInstruction())
@@ -109,7 +133,24 @@ public class Parser {
         try self.consume(.period)
         try self.consume(.identifier, text: "endfunction")
 
-        return Function(name: name, numberOfParameters: numberOfParameters, hasReturnValue: hasReturnValue, instructions: instructions)
+        return Function(name: name, parameterWidths: parameterWidths, returnValueWidth: returnValueWidth, instructions: instructions)
+    }
+
+    private func parseArgumentOrResultWidth() throws -> RegisterWidth {
+        let token = try self.consume(.identifier)
+
+        switch token.payload {
+        case "b":
+            return .byte
+        case "w":
+            return .word
+        case "l":
+            return .double
+        case "q":
+            return .quad
+        default:
+            throw ParserError.unexpectedTokenPayload(token, expected: "b/w/l/q")
+        }
     }
 
     private func parseInstruction() throws -> Instruction {

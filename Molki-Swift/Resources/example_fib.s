@@ -1,4 +1,4 @@
-.function _fib 1 1
+.function _fib [ l ] -> l
     cmpl [ %@0d | $1d ]
     jle fib_basecase
     subl [ %@0d | $1d ] -> %@1d
@@ -8,11 +8,11 @@
     addl [ %@3d | %@4d ] -> %@$d
     jmp fib_end
 fib_basecase:
-    movq %@0 -> %@$
+    movl %@0d -> %@$d
 fib_end:
 .endfunction
 
-.function ___minijava_main 0 0
+.function ___minijava_main
     movl $9d -> %@0d
     call _fib [ %@0d ] -> %@1d
     call _system_out_println [ %@1d ]
