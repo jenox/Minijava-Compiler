@@ -322,7 +322,7 @@ public class MolkiTransformer extends Default {
 
     private void molkify(Minus minus) {
         int reg = this.node2RegIndex.get(minus.getOp());
-        this.appendMolkiCode("negl " + REG_PREFIX + reg + "d");
+        this.appendMolkiCode("negl " + REG_PREFIX + reg + "d -> " + REG_PREFIX + reg + "d");
     }
 
     private void molkify(Mod mod) {
@@ -358,7 +358,7 @@ public class MolkiTransformer extends Default {
 
     private void molkify(Not not) {
         int reg = this.node2RegIndex.get(not.getOp());
-        this.appendMolkiCode("notb " + REG_PREFIX + reg + "l");
+        this.appendMolkiCode("notb " + REG_PREFIX + reg + "l -> " + REG_PREFIX + reg + "l");
     }
 
     private void molkify(Phi phi) {
@@ -417,8 +417,9 @@ public class MolkiTransformer extends Default {
             int baseReg = this.node2RegIndex.get(sel.getPtr());
             int indexReg = this.node2RegIndex.get(sel.getIndex());
 
-            this.appendMolkiCode("mov" + movSuffix + " " + REG_PREFIX + storeReg + regSuffix + " -> ("
-                    + REG_PREFIX + baseReg + ", " + REG_PREFIX + indexReg + "d, " + sel.getType().getAlignment() + ")" + regSuffix);
+            this.appendMolkiCode("mov" + movSuffix + " " + REG_PREFIX + storeReg + regSuffix
+                    + " -> (" + REG_PREFIX + baseReg + ", "
+                    + REG_PREFIX + indexReg + "d, " + sel.getType().getAlignment() + ")" + regSuffix);
         }
         else if (store.getPred(1) instanceof Member) {
             Member member = (Member) store.getPred(1);

@@ -72,14 +72,14 @@ public class CompileCommand extends Command {
 
                 for (int i = 0; i < numArgs; i++) {
                     // this argument is the last
-                    String argSuffix = util.mode2MovSuffix(methodType.getParamType(i).getMode());
+                    String argSuffix = this.util.mode2MovSuffix(methodType.getParamType(i).getMode());
 
                     // fix suffix, if it's a pointer
                     if (argSuffix.equals("")) {
                         argSuffix = "q";
                     }
 
-                    if (i+1 == numArgs) {
+                    if (i + 1 == numArgs) {
                         args +=  argSuffix;
                     }
                     else {
@@ -88,8 +88,12 @@ public class CompileCommand extends Command {
                 }
                 args += " ] ";
 
+                if (numResults > 0) {
+                    results += "-> ";
+                }
+
                 for (int i = 0; i < numResults; i++) {
-                    results = util.mode2MovSuffix(methodType.getResType(i).getMode());
+                    results += this.util.mode2MovSuffix(methodType.getResType(i).getMode());
                 }
 
 
@@ -98,7 +102,7 @@ public class CompileCommand extends Command {
                 }
                 else {
 
-                    output.add(".function " + methodName + " " + args + " -> " + results);
+                    output.add(".function " + methodName + " " + args + results);
                 }
 
                 // for each block, create an arraylist
@@ -129,13 +133,13 @@ public class CompileCommand extends Command {
                     for (int i = 0; i < instructions.size(); i++) {
                         String str = instructions.get(i);
 
-                        if (str.contains("jmp")
-                            || str.contains("jle")
-                            || str.contains("jl")
-                            || str.contains("jge")
-                            || str.contains("jg")
-                            || str.contains("jne")
-                            || str.contains("je")
+                        if (str.contains(Util.INDENT + "jmp ")
+                            || str.contains(Util.INDENT + "jle ")
+                            || str.contains(Util.INDENT + "jl ")
+                            || str.contains(Util.INDENT + "jge ")
+                            || str.contains(Util.INDENT + "jg ")
+                            || str.contains(Util.INDENT + "jne ")
+                            || str.contains(Util.INDENT + "je ")
                             // Also move cmp instructions so they are not separated from the jump instructions
                             || str.contains("cmp")) {
 

@@ -7,6 +7,7 @@ public class Util {
      * UTILITY FUNCTIONS
      */
 
+    public static final String INDENT = "    "; // 4 spaces
 
     public String mode2RegSuffix(Mode mode) {
         if (mode.equals(Mode.getIs())) {
