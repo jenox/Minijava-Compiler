@@ -154,9 +154,7 @@ class AssemblerGenerator {
         }
 
         for (index, argument) in instruction.arguments.enumerated().reversed() {
-
-            // TODO: how do we know how many bytes to load if argument is memory?
-            let register = X86Register.r8.with(argument.width!)
+            let register = X86Register.r8.with(argument.width)
 
             self.load(argument, into: register)
             self.emit("pushq %r8", comment: "push argument #\(index) onto stack")
@@ -177,9 +175,7 @@ class AssemblerGenerator {
         }
 
         if let result = instruction.result {
-
-            // TODO: how do we know how many bytes to write if result is memory?
-            let register = X86Register.rax.with(result.width!)
+            let register = X86Register.rax.with(result.width)
             self.store(register, to: result)
         }
     }
