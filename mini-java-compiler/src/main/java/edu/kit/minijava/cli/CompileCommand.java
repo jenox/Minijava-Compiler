@@ -7,6 +7,7 @@ import java.util.*;
 
 import edu.kit.minijava.ast.nodes.Program;
 import edu.kit.minijava.backend.*;
+import edu.kit.minijava.backend.Util;
 import edu.kit.minijava.lexer.Lexer;
 import edu.kit.minijava.parser.*;
 import edu.kit.minijava.semantic.*;
@@ -18,6 +19,7 @@ public class CompileCommand extends Command {
 
     private static final String RUNTIME_LIB_ENV_KEY = "MJ_RUNTIME_LIB_PATH_STACK_ARGS";
     private static final String MOLKI_PATH_KEY = "MOLKI_PATH";
+    private Util util = new Util();
 
     @Override
     public int execute(String path) {
@@ -60,19 +62,44 @@ public class CompileCommand extends Command {
                 MethodType methodType = (MethodType) g.getEntity().getType();
                 // non-main methods have additional `this` parameter
                 int numArgs = Math.max(0, methodType.getNParams());
-                int noResults = methodType.getNRess();
+                int numResults = methodType.getNRess();
 
                 // replace '.' with '_' for correct molki syntax
                 methodName = methodName.replace('.', '_');
 
-                if (methodName.equals("__minijava_main")) {
-                    // replace `__minijava_main` with `minijava_main`
-                    // methodName = methodName.substring(2);
-                    // if main has `noResults` == 0, then exit code is != 0
-                    noResults = 1;
+                String args = " [ ";
+                String results = "";
+
+                for (int i = 0; i < numArgs; i++) {
+                    // this argument is the last
+                    String argSuffix = util.mode2MovSuffix(methodType.getParamType(i).getMode());
+
+                    // fix suffix, if it's a pointer
+                    if (argSuffix.equals("")) {
+                        argSuffix = "q";
+                    }
+
+                    if (i+1 == numArgs) {
+                        args +=  argSuffix;
+                    }
+                    else {
+                        args += argSuffix + " | ";
+                    }
+                }
+                args += " ] ";
+
+                for (int i = 0; i < numResults; i++) {
+                    results = util.mode2MovSuffix(methodType.getResType(i).getMode());
                 }
 
-                output.add(".function " + methodName + " " + numArgs + " " + noResults);
+
+                if (methodName.equals("__minijava_main")) {
+                    output.add(".function " + methodName);
+                }
+                else {
+
+                    output.add(".function " + methodName + " " + args + " -> " + results);
+                }
 
                 // for each block, create an arraylist
                 // and for each instruction in that block, transform it into a valid molki string

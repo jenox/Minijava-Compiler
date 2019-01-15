@@ -19,6 +19,8 @@ public class MolkiTransformer extends Default {
     // primarily for projections to save their register index
     private HashMap<Node, Integer> node2RegIndex;
 
+    private Util util = new Util();
+
     // GETTERS & SETTERS
     public HashMap<Integer, List<String>> getMolkiCode() {
         return this.molkiCode;
@@ -176,7 +178,7 @@ public class MolkiTransformer extends Default {
 
         // build args string
         for (int i = start; i < call.getPredCount(); i++) {
-            regSuffix = this.mode2RegSuffix(call.getPred(i).getMode());
+            regSuffix = this.util.mode2RegSuffix(call.getPred(i).getMode());
 
             int arg = this.node2RegIndex.get(call.getPred(i));
             if (call.getPredCount() - i == 1) {
@@ -194,7 +196,7 @@ public class MolkiTransformer extends Default {
         for (BackEdges.Edge edge : BackEdges.getOuts(call)) {
             if (edge.node.getMode().equals(Mode.getT())) {
                 for (BackEdges.Edge projEdge : BackEdges.getOuts(edge.node)) {
-                    regSuffix = this.mode2RegSuffix(projEdge.node.getMode());
+                    regSuffix = this.util.mode2RegSuffix(projEdge.node.getMode());
                 }
             }
         }
@@ -218,9 +220,9 @@ public class MolkiTransformer extends Default {
             case "alloc_mem":
                 targetReg = this.node2RegIndex.get(call);
                 int srcReg1 = this.node2RegIndex.get(call.getPred(2));
-                String regSuffix1 = this.mode2RegSuffix(call.getPred(2).getMode());
+                String regSuffix1 = this.util.mode2RegSuffix(call.getPred(2).getMode());
                 int srcReg2 = this.node2RegIndex.get(call.getPred(3));
-                String regSuffix2 = this.mode2RegSuffix(call.getPred(2).getMode());
+                String regSuffix2 = this.util.mode2RegSuffix(call.getPred(2).getMode());
                 args = REG_PREFIX + srcReg1 + regSuffix1 + " | " + REG_PREFIX + srcReg2 + regSuffix2;
                 this.appendMolkiCode("call alloc_mem [ " + args + " ] -> %@" + targetReg + regSuffix);
                 break;
@@ -234,8 +236,8 @@ public class MolkiTransformer extends Default {
         int srcReg1 = this.node2RegIndex.get(cmp.getLeft());
         int srcReg2 = this.node2RegIndex.get(cmp.getRight());
 
-        String regSuffix = this.mode2RegSuffix(cmp.getLeft().getMode());
-        String cmpSuffix = this.mode2MovSuffix(cmp.getLeft().getMode());
+        String regSuffix = this.util.mode2RegSuffix(cmp.getLeft().getMode());
+        String cmpSuffix = this.util.mode2MovSuffix(cmp.getLeft().getMode());
 
         this.appendMolkiCode("cmp" + cmpSuffix + " [ %@" + srcReg1 + regSuffix + " | %@" + srcReg2 + regSuffix + " ]");
     }
@@ -244,10 +246,10 @@ public class MolkiTransformer extends Default {
         if (!aConst.getMode().equals(Mode.getb())) {
             String constant = CONST_PREFIX + String.valueOf(aConst.getTarval().asInt());
             int targetReg = this.node2RegIndex.get(aConst);
-            String regSuffix = this.mode2RegSuffix(aConst.getMode());
-            String movSuffix = this.mode2MovSuffix(aConst.getMode());
+            String regSuffix = this.util.mode2RegSuffix(aConst.getMode());
+            String movSuffix = this.util.mode2MovSuffix(aConst.getMode());
 
-            this.appendMolkiCode("mov" + movSuffix + " " + constant + " -> %@" + targetReg + regSuffix);
+            this.appendMolkiCode("mov" + movSuffix + " " + constant + regSuffix + " -> %@" + targetReg + regSuffix);
         }
     }
 
@@ -290,8 +292,8 @@ public class MolkiTransformer extends Default {
 
     private void molkify(Load load) {
         int targetReg = this.node2RegIndex.get(load);
-        String regSuffix = this.mode2RegSuffix(load.getLoadMode());
-        String movSuffix = this.mode2MovSuffix(load.getLoadMode());
+        String regSuffix = this.util.mode2RegSuffix(load.getLoadMode());
+        String movSuffix = this.util.mode2MovSuffix(load.getLoadMode());
 
         if (load.getPred(1) instanceof Sel) {
             Sel sel = (Sel) load.getPred(1);
@@ -299,16 +301,16 @@ public class MolkiTransformer extends Default {
             int indexReg = this.node2RegIndex.get(sel.getIndex());
 
             this.appendMolkiCode("mov" + movSuffix + " " + " (" + REG_PREFIX + baseReg + ", "
-                    + REG_PREFIX + indexReg + "d" + ", " + sel.getType().getAlignment() + ") -> "
-                    + REG_PREFIX + targetReg + regSuffix);
+                    + REG_PREFIX + indexReg + "d" + ", " + sel.getType().getAlignment() + ")" + regSuffix
+                    + " -> " + REG_PREFIX + targetReg + regSuffix);
         }
         else if (load.getPred(1) instanceof Member) {
             Member member = (Member) load.getPred(1);
             int baseReg = this.node2RegIndex.get(member.getPtr());
             int offset = member.getEntity().getOffset();
 
-            this.appendMolkiCode("mov" + movSuffix + " " + offset + "(" + REG_PREFIX + baseReg + ") -> "
-                    + REG_PREFIX + targetReg + regSuffix);
+            this.appendMolkiCode("mov" + movSuffix + " " + offset + "(" + REG_PREFIX + baseReg + ")" + regSuffix
+                    + " -> " + REG_PREFIX + targetReg + regSuffix);
         }
         else {
             int pointerReg = this.node2RegIndex.get(load.getPtr());
@@ -360,8 +362,8 @@ public class MolkiTransformer extends Default {
     }
 
     private void molkify(Phi phi) {
-        String regSuffix = this.mode2RegSuffix(phi.getMode());
-        String movSuffix = this.mode2MovSuffix(phi.getMode());
+        String regSuffix = this.util.mode2RegSuffix(phi.getMode());
+        String movSuffix = this.util.mode2MovSuffix(phi.getMode());
 
         if (!phi.getMode().equals(Mode.getM())) {
 
@@ -380,14 +382,14 @@ public class MolkiTransformer extends Default {
     private void molkify(Return aReturn) {
 
         if (aReturn.getPredCount() == 1 && !aReturn.getPred(0).getMode().equals(Mode.getM())) {
-            String regSuffix = this.mode2RegSuffix(aReturn.getPred(0).getMode());
-            String movSuffix = this.mode2MovSuffix(aReturn.getPred(0).getMode());
+            String regSuffix = this.util.mode2RegSuffix(aReturn.getPred(0).getMode());
+            String movSuffix = this.util.mode2MovSuffix(aReturn.getPred(0).getMode());
             this.appendMolkiCode("mov" + movSuffix + " %@"
                     + this.node2RegIndex.get(aReturn.getPred(0)) + regSuffix + " -> %@$" + regSuffix);
         }
         else if (aReturn.getPredCount() > 1) {
-            String regSuffix = this.mode2RegSuffix(aReturn.getPred(1).getMode());
-            String movSuffix = this.mode2MovSuffix(aReturn.getPred(1).getMode());
+            String regSuffix = this.util.mode2RegSuffix(aReturn.getPred(1).getMode());
+            String movSuffix = this.util.mode2MovSuffix(aReturn.getPred(1).getMode());
             this.appendMolkiCode("mov" + movSuffix + " %@"
                     + this.node2RegIndex.get(aReturn.getPred(1)) + regSuffix + " -> %@$" + regSuffix);
         }
@@ -407,8 +409,8 @@ public class MolkiTransformer extends Default {
 
     private void molkify(Store store) {
         int storeReg = this.node2RegIndex.get(store.getValue());
-        String regSuffix = this.mode2RegSuffix(store.getMode());
-        String movSuffix = this.mode2MovSuffix(store.getMode());
+        String regSuffix = this.util.mode2RegSuffix(store.getValue().getMode());
+        String movSuffix = this.util.mode2MovSuffix(store.getValue().getMode());
 
         if (store.getPred(1) instanceof Sel) {
             Sel sel = (Sel) store.getPred(1);
@@ -416,7 +418,7 @@ public class MolkiTransformer extends Default {
             int indexReg = this.node2RegIndex.get(sel.getIndex());
 
             this.appendMolkiCode("mov" + movSuffix + " " + REG_PREFIX + storeReg + regSuffix + " -> ("
-                    + REG_PREFIX + baseReg + ", " + REG_PREFIX + indexReg + ", " + sel.getType().getAlignment() + ")");
+                    + REG_PREFIX + baseReg + ", " + REG_PREFIX + indexReg + "d, " + sel.getType().getAlignment() + ")" + regSuffix);
         }
         else if (store.getPred(1) instanceof Member) {
             Member member = (Member) store.getPred(1);
@@ -424,12 +426,12 @@ public class MolkiTransformer extends Default {
             int offset = member.getEntity().getOffset();
 
             this.appendMolkiCode("mov" + movSuffix + " " + REG_PREFIX + storeReg + regSuffix + " -> "
-                    + offset + "(" + REG_PREFIX + baseReg + ")");
+                    + offset + "(" + REG_PREFIX + baseReg + ")" + regSuffix);
         }
         else {
             int pointerReg = this.node2RegIndex.get(store.getPtr());
             this.appendMolkiCode("mov" + movSuffix + " " + REG_PREFIX + storeReg + regSuffix + " -> ("
-                    + REG_PREFIX + pointerReg + ")");
+                    + REG_PREFIX + pointerReg + ")" + regSuffix);
         }
     }
 
@@ -439,10 +441,10 @@ public class MolkiTransformer extends Default {
 
         int targetReg = this.node2RegIndex.get(sub);
 
-        String regSuffix = this.mode2RegSuffix(sub.getMode());
+        String regSuffix = this.util.mode2RegSuffix(sub.getMode());
 
-        this.appendMolkiCode("subl" + " [ " + REG_PREFIX + srcReg1 + regSuffix + " | " + REG_PREFIX + srcReg2 + regSuffix
-                + " ] -> " + REG_PREFIX + targetReg + regSuffix);
+        this.appendMolkiCode("subl" + " [ " + REG_PREFIX + srcReg1 + regSuffix + " | "
+                + REG_PREFIX + srcReg2 + regSuffix + " ] -> " + REG_PREFIX + targetReg + regSuffix);
     }
 
     private void molkify(Proj node) {
@@ -537,36 +539,8 @@ public class MolkiTransformer extends Default {
         // operations and conversion of the operands instead should be handled there.
     }
 
-    /*
-     * UTILITY FUNCTIONS
-     */
 
     private void appendThreeAdressCommand(String cmd, int srcReg1, int srcReg2, int targetReg) {
         this.appendMolkiCode(cmd + " [ %@" + srcReg1 + " | %@" + srcReg2 + " ] -> %@" + targetReg);
-    }
-
-    private String mode2RegSuffix(Mode mode) {
-        if (mode.equals(Mode.getIs())) {
-            return "d";
-        }
-        else if (mode.equals(Mode.getBs())) {
-            return "l";
-        }
-
-        return "";
-    }
-
-    private String mode2MovSuffix(Mode mode) {
-        if (mode.equals(Mode.getIs())) {
-            return "l";
-        }
-        else if (mode.equals(Mode.getBs())) {
-            return "b";
-        }
-        else if (mode.equals(Mode.getBs())) {
-            return "q";
-        }
-
-        return "";
     }
 }
