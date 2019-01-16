@@ -27,8 +27,9 @@ public class Util {
         else if (mode.equals(Mode.getBs())) {
             return "b";
         }
-        else if (mode.equals(Mode.getP())) {
-            return "q";
+        else if (mode.equals(Mode.getP())
+                        || mode.equals(Mode.getLs())) {
+            return "q"; //TODO: is q correct choice for mode Ls?
         }
 
         return "";
