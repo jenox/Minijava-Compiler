@@ -9,7 +9,7 @@ public class Util {
 
     public static final String INDENT = "    "; // 4 spaces
 
-    public String mode2RegSuffix(Mode mode) {
+    public static String mode2RegSuffix(Mode mode) {
         if (mode.equals(Mode.getIs())) {
             return "d";
         }
@@ -20,7 +20,7 @@ public class Util {
         return "";
     }
 
-    public String mode2MovSuffix(Mode mode) {
+    public static String mode2MovSuffix(Mode mode) {
         if (mode.equals(Mode.getIs())) {
             return "l";
         }
