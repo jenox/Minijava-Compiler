@@ -352,8 +352,8 @@ public class MolkiTransformer extends Default {
 
         int targetReg = this.node2RegIndex.get(mul);
 
-        this.appendMolkiCode("mull [ " + REG_PREFIX + srcReg1 + "d | " + REG_PREFIX + srcReg2 + "d ]" + " -> [ "
-                + REG_PREFIX + targetReg + "d ]");
+        this.appendMolkiCode("mull [ " + REG_PREFIX + srcReg1 + "d | " + REG_PREFIX + srcReg2 + "d ]" + " -> "
+                + REG_PREFIX + targetReg + "d ");
     }
 
     private void molkify(Not not) {
