@@ -21,6 +21,7 @@ class AssemblerGenerator {
     //    var map: [String: Register] = [:]
 
     init(function: Function) {
+        self.function = function
 
         // caller pushes arguments on stack, their offset is fixed
         for (index, width) in function.parameterWidths.enumerated() {
@@ -38,7 +39,9 @@ class AssemblerGenerator {
         }
 
         for instruction in function.instructions {
+            self.currentInstruction = instruction
             self.handle(instruction)
+            self.currentInstructionIndex += 1
         }
 
         var lines: [String] = []
@@ -90,9 +93,20 @@ class AssemblerGenerator {
     }
 
 
-
+    private let function: Function
+    private var currentInstruction: Instruction? = nil
+    private var currentInstructionIndex: Int = 0
     private var body: [String] = []
     public var lines: [String] = []
+
+    private func precondition(_ condition: Bool, _ message: @autoclosure () -> String) {
+        if !condition {
+            print("Assertion Error: \(message())")
+            print("Current Function:", self.function.name)
+            print("Current Instruction:", self.currentInstruction!, "(index \(self.currentInstructionIndex + 1))")
+            exit(-1)
+        }
+    }
 
     func emit(_ assembler: String, comment: String? = nil) {
         if let comment = comment {
@@ -102,7 +116,6 @@ class AssemblerGenerator {
             self.body.append(assembler)
         }
     }
-
 
 
 
@@ -322,7 +335,7 @@ class AssemblerGenerator {
         switch value.address {
         case .relative(base: let base, offset: let offset):
             let base_reg = X86Register.r12.with(base.width)
-            precondition(register != base_reg)
+            precondition(register != base_reg, "-")
 
             self.loadPseudoregister(base, into: base_reg)
 
@@ -341,7 +354,7 @@ class AssemblerGenerator {
             let base_reg = X86Register.r12.with(address_width)
             let index_reg = X86Register.r13.with(address_width)
 
-            precondition(register != base_reg && register != index_reg)
+            precondition(register != base_reg && register != index_reg, "-")
 
             self.loadPseudoregister(base, into: base_reg, extend: true)
             self.loadPseudoregister(index, into: index_reg, extend: true)
@@ -382,7 +395,8 @@ class AssemblerGenerator {
     }
 
     func loadPseudoregister(_ value: RegisterValue<Pseudoregister>, into register: RegisterValue<X86Register>, extend: Bool = false) {
-        precondition(self.table[value.register] != nil, "attempting to load uninitialized pseudoregister")
+        precondition(self.table[value.register] != nil, "attempting to load uninitialized pseudoregister \(value)")
+
         if extend {
             precondition(value.width <= register.width, "value width mismatch")
         }
