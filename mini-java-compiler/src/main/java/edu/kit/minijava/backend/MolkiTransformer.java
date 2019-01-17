@@ -323,8 +323,9 @@ public class MolkiTransformer extends Default {
     }
 
     private void molkify(Minus minus) {
-        int reg = this.node2RegIndex.get(minus.getOp());
-        this.appendMolkiCode("negl " + REG_PREFIX + reg + "d -> " + REG_PREFIX + reg + "d");
+        int inputReg = this.node2RegIndex.get(minus.getOp());
+        int reg = this.node2RegIndex.get(minus);
+        this.appendMolkiCode("negl " + REG_PREFIX + inputReg + "d -> " + REG_PREFIX + reg + "d");
     }
 
     private void molkify(Mod mod) {
