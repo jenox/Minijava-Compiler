@@ -145,14 +145,14 @@ public class CompileCommand extends Command {
 
                             jmpInstructions.add(str);
                         }
-                        //else if (str.contains(Util.INDENT + "cmp ")) {
-                        //    if (i+1 < instructions.size() && Util.containsJmp(instructions.get(i+1))) {
-                        //        instructions.remove(i);
-                        //        i--;
+                        else if (str.contains(Util.INDENT + "cmp")) {
+                            //if (i+1 < instructions.size() && Util.containsJmp(instructions.get(i+1))) {
+                                instructions.remove(i);
+                                i--;
 
-                        //        jmpInstructions.add(str);
-                        //    }
-                        //}
+                                jmpInstructions.add(str);
+                            //}
+                        }
                     }
 
                     instructions.addAll(jmpInstructions);

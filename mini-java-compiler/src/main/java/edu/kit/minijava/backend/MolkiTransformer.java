@@ -237,7 +237,7 @@ public class MolkiTransformer extends Default {
         String regSuffix = Util.mode2RegSuffix(cmp.getLeft().getMode());
         String cmpSuffix = Util.mode2MovSuffix(cmp.getLeft().getMode());
 
-        this.appendMolkiCode(cmp.getNr() + "cmp" + cmpSuffix + " [ %@" + srcReg1 + regSuffix + " | %@" + srcReg2 + regSuffix + " ]");
+        this.appendMolkiCode("cmp" + cmpSuffix + " [ %@" + srcReg1 + regSuffix + " | %@" + srcReg2 + regSuffix + " ]");
     }
 
     private void molkify(Const aConst) {
@@ -471,9 +471,6 @@ public class MolkiTransformer extends Default {
                 int truePredRegIndex = this.node2RegIndex.get(truePred);
                 int falsePredRegIndex = this.node2RegIndex.get(falsePred);
 
-                System.out.println(truePred.getBlock().getNr());
-                System.out.println(falsePred.getBlock().getNr());
-
                 int labelNr = phi.getBlock().getNr() + 3;
 
                 if (otherCond.getSelector() instanceof Cmp) {
@@ -491,8 +488,6 @@ public class MolkiTransformer extends Default {
                     Const tempConst = (Const) otherCond.getSelector();
                     boolean isTrue = tempConst.getTarval().equals(TargetValue.getBTrue());
 
-                    //this.appendMolkiCode("mov" + movSuffix + " %@" + truePredRegIndex + regSuffix + " -> %@" + regIndexOfPhi + regSuffix);
-                    //this.appendMolkiCode("mov" + movSuffix + " %@" + falsePredRegIndex + regSuffix + " -> %@" + regIndexOfPhi + regSuffix);
                     if (isTrue) {
                         this.appendMolkiCode("mov" + movSuffix + " %@" + truePredRegIndex + regSuffix + " -> %@" + regIndexOfPhi + regSuffix);
                     }
