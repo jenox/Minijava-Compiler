@@ -395,7 +395,7 @@ class AssemblerGenerator {
     }
 
     func loadPseudoregister(_ value: RegisterValue<Pseudoregister>, into register: RegisterValue<X86Register>, extend: Bool = false) {
-        precondition(self.table[value.register] != nil, "attempting to load uninitialized pseudoregister \(value)")
+        //precondition(self.table[value.register] != nil, "attempting to load uninitialized pseudoregister \(value)")
 
         if extend {
             precondition(value.width <= register.width, "value width mismatch")

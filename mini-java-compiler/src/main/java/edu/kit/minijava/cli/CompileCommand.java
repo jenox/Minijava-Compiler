@@ -1,4 +1,4 @@
-package edu.kit.minijava.cli;
+    package edu.kit.minijava.cli;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -133,21 +133,26 @@ public class CompileCommand extends Command {
                     for (int i = 0; i < instructions.size(); i++) {
                         String str = instructions.get(i);
 
-                        if (str.contains(Util.INDENT + "jmp ")
-                            || str.contains(Util.INDENT + "jle ")
-                            || str.contains(Util.INDENT + "jl ")
-                            || str.contains(Util.INDENT + "jge ")
-                            || str.contains(Util.INDENT + "jg ")
-                            || str.contains(Util.INDENT + "jne ")
-                            || str.contains(Util.INDENT + "je ")
-                            // Also move cmp instructions so they are not separated from the jump instructions
-                            || str.contains("cmp")) {
+                        if (str.startsWith(Util.INDENT + "phi_")) {
+                            instructions.remove(i);
 
+                            String temp = str.substring(Util.INDENT.length() + 4);
+                            instructions.add(i, Util.INDENT + temp);
+                        }
+                        if (Util.containsJmp(str)) {
                             instructions.remove(i);
                             i--;
 
                             jmpInstructions.add(str);
                         }
+                        //else if (str.contains(Util.INDENT + "cmp ")) {
+                        //    if (i+1 < instructions.size() && Util.containsJmp(instructions.get(i+1))) {
+                        //        instructions.remove(i);
+                        //        i--;
+
+                        //        jmpInstructions.add(str);
+                        //    }
+                        //}
                     }
 
                     instructions.addAll(jmpInstructions);

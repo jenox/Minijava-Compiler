@@ -1,4 +1,4 @@
-package edu.kit.minijava.backend;
+                        package edu.kit.minijava.backend;
 
 import java.util.*;
 
@@ -237,7 +237,7 @@ public class MolkiTransformer extends Default {
         String regSuffix = Util.mode2RegSuffix(cmp.getLeft().getMode());
         String cmpSuffix = Util.mode2MovSuffix(cmp.getLeft().getMode());
 
-        this.appendMolkiCode("cmp" + cmpSuffix + " [ %@" + srcReg1 + regSuffix + " | %@" + srcReg2 + regSuffix + " ]");
+        this.appendMolkiCode(cmp.getNr() + "cmp" + cmpSuffix + " [ %@" + srcReg1 + regSuffix + " | %@" + srcReg2 + regSuffix + " ]");
     }
 
     private void molkify(Const aConst) {
@@ -246,6 +246,10 @@ public class MolkiTransformer extends Default {
             int targetReg = this.node2RegIndex.get(aConst);
             String regSuffix = Util.mode2RegSuffix(aConst.getMode());
             String movSuffix = Util.mode2MovSuffix(aConst.getMode());
+
+            if (constant.equals("256")) {
+                System.out.println(aConst.getMode());
+            }
 
             this.appendMolkiCode("mov" + movSuffix + " " + constant + regSuffix + " -> %@" + targetReg + regSuffix);
         }
@@ -359,23 +363,7 @@ public class MolkiTransformer extends Default {
         this.appendMolkiCode("notb " + REG_PREFIX + reg + "l -> " + REG_PREFIX + reg + "l");
     }
 
-    private void molkify(Phi phi) {
-        String regSuffix = Util.mode2RegSuffix(phi.getMode());
-        String movSuffix = Util.mode2MovSuffix(phi.getMode());
 
-        if (!phi.getMode().equals(Mode.getM())) {
-
-            for (int i = 0; i < phi.getPredCount(); i++) {
-
-                int regIndexOfIthPred = this.node2RegIndex.get(phi.getPred(i));
-                int regIndexOfPhi = this.node2RegIndex.get(phi);
-                int blockNumOfIthPred = phi.getBlock().getPred(i).getBlock().getNr();
-
-                this.appendMolkiCode("mov" + movSuffix + " %@" + regIndexOfIthPred + regSuffix
-                        + " -> %@" + regIndexOfPhi + regSuffix, blockNumOfIthPred);
-            }
-        }
-    }
 
     private void molkify(Return aReturn) {
 
@@ -450,6 +438,81 @@ public class MolkiTransformer extends Default {
         // nothing to do
     }
 
+    private void molkify(Phi phi) {
+        String regSuffix = Util.mode2RegSuffix(phi.getMode());
+        String movSuffix = Util.mode2MovSuffix(phi.getMode());
+        int regIndexOfPhi = this.node2RegIndex.get(phi);
+
+        if (!phi.getMode().equals(Mode.getM())) {
+            // check if condition pred leads in both cases to this block
+            int blockNr = phi.getBlock().getNr();
+            boolean phiBlockIsOnlySuccessor = true;
+
+            if (phi.getBlock().getPred(0) instanceof Proj) {
+                Proj projNode = (Proj) phi.getBlock().getPred(0);
+                Cond cond = (Cond) projNode.getPred();
+
+                for (BackEdges.Edge edge : BackEdges.getOuts(cond)) {
+                    Block block = (Block) BackEdges.getOuts(edge.node).iterator().next().node;
+
+                    if (block.getNr() != blockNr) {
+                        phiBlockIsOnlySuccessor = false;
+                    }
+                }
+            }
+
+
+            if (phiBlockIsOnlySuccessor && phi.getBlock().getPred(0) instanceof Proj) {
+                Proj trueProj  = (Proj) phi.getBlock().getPred(0);
+                Cond otherCond = (Cond) trueProj.getPred();
+
+                Node truePred  = phi.getPred(Cond.pnFalse); // wtf, in den Graphen sieht es so aus, als ob 0 = pnTrue waere
+                Node falsePred = phi.getPred(Cond.pnTrue);
+                int truePredRegIndex = this.node2RegIndex.get(truePred);
+                int falsePredRegIndex = this.node2RegIndex.get(falsePred);
+
+                System.out.println(truePred.getBlock().getNr());
+                System.out.println(falsePred.getBlock().getNr());
+
+                int labelNr = phi.getBlock().getNr() + 3;
+
+                if (otherCond.getSelector() instanceof Cmp) {
+                    this.appendMolkiCode("mov" + movSuffix + " %@" + truePredRegIndex + regSuffix + " -> %@" + regIndexOfPhi + regSuffix);
+
+                    Cmp cmp = (Cmp) otherCond.getSelector();
+                    String condJmp = Util.relation2Jmp(cmp.getRelation());
+                    this.appendMolkiCode("phi_" + condJmp + " L" + labelNr );
+
+                    this.appendMolkiCode("mov" + movSuffix + " %@" + falsePredRegIndex + regSuffix + " -> %@" + regIndexOfPhi + regSuffix);
+
+                    this.appendMolkiCode("L" + labelNr + ":");
+                }
+                else if (otherCond.getSelector() instanceof Const) {
+                    Const tempConst = (Const) otherCond.getSelector();
+                    boolean isTrue = tempConst.getTarval().equals(TargetValue.getBTrue());
+
+                    //this.appendMolkiCode("mov" + movSuffix + " %@" + truePredRegIndex + regSuffix + " -> %@" + regIndexOfPhi + regSuffix);
+                    //this.appendMolkiCode("mov" + movSuffix + " %@" + falsePredRegIndex + regSuffix + " -> %@" + regIndexOfPhi + regSuffix);
+                    if (isTrue) {
+                        this.appendMolkiCode("mov" + movSuffix + " %@" + truePredRegIndex + regSuffix + " -> %@" + regIndexOfPhi + regSuffix);
+                    }
+                    else {
+                        this.appendMolkiCode("mov" + movSuffix + " %@" + falsePredRegIndex + regSuffix + " -> %@" + regIndexOfPhi + regSuffix);
+                    }
+                }
+            }
+            else {
+                for (int i = 0; i < phi.getPredCount(); i++) {
+                    int regIndexOfIthPred = this.node2RegIndex.get(phi.getPred(i));
+                    int blockNumOfIthPred = phi.getBlock().getPred(i).getBlock().getNr();
+
+                    this.appendMolkiCode("mov" + movSuffix + " %@" + regIndexOfIthPred + regSuffix
+                            + " -> %@" + regIndexOfPhi + regSuffix, blockNumOfIthPred);
+                }
+            }
+        }
+    }
+
     private void molkify(Cond cond) {
         Node selector = cond.getSelector();
 
@@ -474,32 +537,7 @@ public class MolkiTransformer extends Default {
                 if (proj.getNum() == Cond.pnTrue) {
 
                     // TODO Allow conditions to be inverted.
-
-                    switch (relation) {
-                        case Less:
-                            condJump = "jl";
-                            break;
-                        case LessEqual:
-                            condJump = "jle";
-                            break;
-                        case Greater:
-                            condJump = "jg";
-                            break;
-                        case GreaterEqual:
-                            condJump = "jge";
-                            break;
-                        case Equal:
-                            condJump = "je";
-                            break;
-                        case LessGreater:
-                        case UnorderedLessGreater:
-                            condJump = "jne";
-                            break;
-                        default:
-                            // This should not happen
-                            assert false : "Unknown relation in cond node code generation!";
-                            condJump = "";
-                    }
+                    condJump = Util.relation2Jmp(relation);
 
                     condJump += " " + "L" + block.getNr();
                 }
@@ -518,7 +556,6 @@ public class MolkiTransformer extends Default {
                     uncondJump = "jmp L" + block.getNr();
                 }
             }
-
         }
 
         if (condJump != null) {
