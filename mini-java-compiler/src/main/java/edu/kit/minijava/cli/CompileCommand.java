@@ -97,7 +97,7 @@ public class CompileCommand extends Command {
                 }
 
 
-                if (methodName.equals("__minijava_main")) {
+                if (methodName.equals("__minijava_main") || methodName.equals("___minijava_main")) {
                     output.add(".function " + methodName);
                 }
                 else {
