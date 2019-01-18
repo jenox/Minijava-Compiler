@@ -37,12 +37,12 @@ public class Util {
 
     public static boolean containsJmp(String str) {
         return str.contains(Util.INDENT + "jmp ")
-               || str.contains(Util.INDENT + "jle ")
-               || str.contains(Util.INDENT + "jl ")
-               || str.contains(Util.INDENT + "jge ")
-               || str.contains(Util.INDENT + "jg ")
-               || str.contains(Util.INDENT + "jne ")
-               || str.contains(Util.INDENT + "je ");
+                        || str.contains(Util.INDENT + "jle ")
+                        || str.contains(Util.INDENT + "jl ")
+                        || str.contains(Util.INDENT + "jge ")
+                        || str.contains(Util.INDENT + "jg ")
+                        || str.contains(Util.INDENT + "jne ")
+                        || str.contains(Util.INDENT + "je ");
     }
 
     public static String relation2Jmp(Relation relation) {
@@ -64,6 +64,6 @@ public class Util {
                 // This should not happen
                 assert false : "Unknown relation in cond node code generation!";
                 return "";
-            }
+        }
     }
 }

@@ -1,4 +1,4 @@
-    package edu.kit.minijava.cli;
+package edu.kit.minijava.cli;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -80,7 +80,7 @@ public class CompileCommand extends Command {
                     }
 
                     if (i + 1 == numArgs) {
-                        args +=  argSuffix;
+                        args += argSuffix;
                     }
                     else {
                         args += argSuffix + " | ";
@@ -95,7 +95,6 @@ public class CompileCommand extends Command {
                 for (int i = 0; i < numResults; i++) {
                     results += this.util.mode2MovSuffix(methodType.getResType(i).getMode());
                 }
-
 
                 if (methodName.equals("__minijava_main") || methodName.equals("___minijava_main")) {
                     output.add(".function " + methodName);
@@ -146,12 +145,12 @@ public class CompileCommand extends Command {
                             jmpInstructions.add(str);
                         }
                         else if (str.contains(Util.INDENT + "cmp")) {
-                            //if (i+1 < instructions.size() && Util.containsJmp(instructions.get(i+1))) {
-                                instructions.remove(i);
-                                i--;
+                            // if (i+1 < instructions.size() && Util.containsJmp(instructions.get(i+1))) {
+                            instructions.remove(i);
+                            i--;
 
-                                jmpInstructions.add(str);
-                            //}
+                            jmpInstructions.add(str);
+                            // }
                         }
                     }
 
@@ -201,7 +200,7 @@ public class CompileCommand extends Command {
             int result = 0;
             try {
                 result = this.exec("gcc" + " " + asmOutputFileName + " " + runtimeLibPath + " -o " +
-                        executableFilename);
+                                executableFilename);
             }
             catch (Throwable throwable) {
                 result = -1;
