@@ -164,7 +164,7 @@ public class MolkiTransformer extends Default {
         Address address = (Address) call.getPred(1);
         String functionName = address.getEntity().getLdName();
 
-        // ignore first two preds, i.e. memory and function adress
+        // Ignore first two preds, i.e. memory and function address
         int start = 2;
 
         String args = "";
@@ -241,10 +241,6 @@ public class MolkiTransformer extends Default {
             String regSuffix = Util.mode2RegSuffix(aConst.getMode());
             String movSuffix = Util.mode2MovSuffix(aConst.getMode());
 
-            if (constant.equals("256")) {
-                System.out.println(aConst.getMode());
-            }
-
             this.appendMolkiCode("mov" + movSuffix + " " + constant + regSuffix + " -> %@" + targetReg + regSuffix);
         }
     }
@@ -256,15 +252,6 @@ public class MolkiTransformer extends Default {
         int targetReg1 = this.node2RegIndex.get(div);
         int targetReg2 = targetReg1 + 1; // by convention used in PrepVisitor
 
-        // TODO Div instruction has to handle sign extension of the operands.
-        // but this requires knowledge of the length of used register sizes for virtual registers.
-
-        // Reference code that should be generated for div instruction:
-        // mov %edi, %eax
-        // movslq %eax, %rax
-        // cqto
-        // movslq %esi, %rsi
-        // idivq %rsi
         this.appendMolkiCode("divl [ %@" + left + "d | %@" + right + "d ]"
                         + " -> [ %@" + targetReg1 + "d | " + REG_PREFIX + targetReg2 + "d ]");
     }
@@ -328,16 +315,6 @@ public class MolkiTransformer extends Default {
 
         int targetReg1 = this.node2RegIndex.get(mod);
         int targetReg2 = targetReg1 + 1; // by convention used in PrepVisitor
-
-        // TODO Div instruction has to handle sign extension of the operands.
-        // but this requires knowledge of the length of used register sizes for virtual registers.
-
-        // Reference code that should be generated for div instruction:
-        // mov %edi, %eax
-        // movslq %eax, %rax
-        // cqto
-        // movslq %esi, %rsi
-        // idivq %rsi
 
         this.appendMolkiCode("divl [ " + REG_PREFIX + srcReg1 + "d | " + REG_PREFIX + srcReg2 + "d ]" + " -> [ "
                         + REG_PREFIX + targetReg2 + "d | " + REG_PREFIX + targetReg1 + "d ]");
