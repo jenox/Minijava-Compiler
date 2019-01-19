@@ -357,8 +357,9 @@ public class MolkiTransformer extends Default {
     }
 
     private void molkify(Not not) {
-        int reg = this.node2RegIndex.get(not.getOp());
-        this.appendMolkiCode("notb " + REG_PREFIX + reg + "l -> " + REG_PREFIX + reg + "l");
+        int inputReg = this.node2RegIndex.get(not.getOp());
+        int reg = this.node2RegIndex.get(not);
+        this.appendMolkiCode("notb " + REG_PREFIX + inputReg + "l -> " + REG_PREFIX + reg + "l");
     }
 
     private void molkify(Return aReturn) {
