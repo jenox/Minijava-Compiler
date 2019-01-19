@@ -30,10 +30,7 @@ public class MolkiTransformer extends Default {
      * @param molkiCode string inserted with correct indentation and linebreak at end.
      */
     private void appendMolkiCode(String molkiCode) {
-        if (this.molkiCode.get(this.currentBlockNr) == null) {
-            this.molkiCode.put(this.currentBlockNr, new ArrayList<>());
-        }
-
+        this.molkiCode.putIfAbsent(this.currentBlockNr, new ArrayList<>());
         this.molkiCode.get(this.currentBlockNr).add(INDENT + molkiCode);
     }
 
