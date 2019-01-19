@@ -193,35 +193,8 @@ public class MolkiTransformer extends Default {
             }
         }
 
-        switch (functionName) {
-            // TODO Are these special cases for the standard library functions required?
-            case "system_out_println":
-                this.appendMolkiCode("call system_out_println [ " + args + " ]");
-                break;
-            case "system_out_write":
-                this.appendMolkiCode("call system_out_write [ " + args + " ]");
-                break;
-            case "system_out_flush":
-                targetReg = this.node2RegIndex.get(call);
-                this.appendMolkiCode("call system_out_flush [ ] -> %@" + targetReg + regSuffix);
-                break;
-            case "system_in_read":
-                targetReg = this.node2RegIndex.get(call);
-                this.appendMolkiCode("call system_in_read [ " + args + " ] -> %@" + targetReg + regSuffix);
-                break;
-            case "alloc_mem":
-                targetReg = this.node2RegIndex.get(call);
-                int srcReg1 = this.node2RegIndex.get(call.getPred(2));
-                String regSuffix1 = Util.mode2RegSuffix(call.getPred(2).getMode());
-                int srcReg2 = this.node2RegIndex.get(call.getPred(3));
-                String regSuffix2 = Util.mode2RegSuffix(call.getPred(2).getMode());
-                args = REG_PREFIX + srcReg1 + regSuffix1 + " | " + REG_PREFIX + srcReg2 + regSuffix2;
-                this.appendMolkiCode("call alloc_mem [ " + args + " ] -> %@" + targetReg + regSuffix);
-                break;
-            default:
-                targetReg = this.node2RegIndex.get(call);
-                this.appendMolkiCode("call " + functionName + " [ " + args + " ] -> %@" + targetReg + regSuffix);
-        }
+        targetReg = this.node2RegIndex.get(call);
+        this.appendMolkiCode("call " + functionName + " [ " + args + " ] -> %@" + targetReg + regSuffix);
     }
 
     private void molkify(Cmp cmp) {
