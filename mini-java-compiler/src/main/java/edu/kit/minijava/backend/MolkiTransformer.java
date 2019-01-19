@@ -300,10 +300,16 @@ public class MolkiTransformer extends Default {
             Sel sel = (Sel) load.getPred(1);
             int baseReg = this.node2RegIndex.get(sel.getPtr());
             int indexReg = this.node2RegIndex.get(sel.getIndex());
+            int alignment = sel.getType().getAlignment();
 
-            this.appendMolkiCode("mov" + movSuffix + " " + " (" + REG_PREFIX + baseReg + ", " + REG_PREFIX + indexReg
-                    + "d" + ", " + sel.getType().getAlignment() + ")" + regSuffix + " -> " + REG_PREFIX + targetReg
-                    + regSuffix);
+            /*
+             * this.appendMolkiCode("mov" + movSuffix + " " + " (" + REG_PREFIX + baseReg + ", " + REG_PREFIX + indexReg
+             * + "d" + ", " + sel.getType().getAlignment() + ")" + regSuffix + " -> " + REG_PREFIX + targetReg +
+             * regSuffix);
+             */
+
+            this.appendMoveWithOffset(movSuffix, baseReg, indexReg, REG_WIDTH_D, alignment, regSuffix, targetReg,
+                    regSuffix);
         }
         else if (load.getPred(1) instanceof Member) {
             Member member = (Member) load.getPred(1);
@@ -312,6 +318,7 @@ public class MolkiTransformer extends Default {
 
             this.appendMolkiCode("mov" + movSuffix + " " + offset + "(" + REG_PREFIX + baseReg + ")" + regSuffix
                     + " -> " + REG_PREFIX + targetReg + regSuffix);
+
         }
         else {
             int pointerReg = this.node2RegIndex.get(load.getPtr());
@@ -638,7 +645,7 @@ public class MolkiTransformer extends Default {
         sb.append(moveSuffix).append(" ( ");
         sb.append(REG_PREFIX).append(baseReg);
         sb.append(", ").append(REG_PREFIX).append(indexReg).append(suffixIndexReg);
-        sb.append(alignment).append(")").append(suffixSrcReg);
+        sb.append(", ").append(alignment).append(")").append(suffixSrcReg);
         sb.append(" -> ").append(REG_PREFIX).append(targetReg).append(suffixTargetReg);
 
         this.appendMolkiCode(sb.toString());
