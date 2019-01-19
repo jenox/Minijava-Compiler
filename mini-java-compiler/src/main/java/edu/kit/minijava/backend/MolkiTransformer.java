@@ -316,8 +316,7 @@ public class MolkiTransformer extends Default {
             int baseReg = this.node2RegIndex.get(member.getPtr());
             int offset = member.getEntity().getOffset();
 
-            this.appendMolkiCode("mov" + movSuffix + " " + offset + "(" + REG_PREFIX + baseReg + ")" + regSuffix
-                    + " -> " + REG_PREFIX + targetReg + regSuffix);
+            this.appendMoveWithOffset(movSuffix, offset, baseReg, targetReg, regSuffix);
 
         }
         else {
@@ -651,6 +650,19 @@ public class MolkiTransformer extends Default {
         this.appendMolkiCode(sb.toString());
     }
 
+    /**
+     * <p>
+     * Example<br>
+     * <br>
+     * movd 7(%@19)d -> %@20d
+     * </p>
+     *
+     * @param movSuffix
+     * @param offset
+     * @param baseReg
+     * @param targetReg
+     * @param suffixTargetReg width of register
+     */
     private void appendMoveWithOffset(String movSuffix, int offset, int baseReg, int targetReg,
             String suffixTargetReg) {
         this.appendMolkiCode("mov" + movSuffix + " " + offset + "(" + REG_PREFIX + baseReg + ")" + suffixTargetReg
