@@ -459,14 +459,48 @@ public class MolkiTransformer extends Default {
             }
 
             if (phiBlockIsOnlySuccessor && phi.getBlock().getPred(0) instanceof Proj) {
-                Proj trueProj = (Proj) phi.getBlock().getPred(0);
-                Cond otherCond = (Cond) trueProj.getPred();
+                Proj firstPredProj = (Proj) phi.getBlock().getPred(0);
+                Proj secondPredProj = (Proj) phi.getBlock().getPred(1);
 
-                Node truePred = phi.getPred(Cond.pnFalse); // wtf, in den Graphen sieht es so aus, als ob 0 = pnTrue
-                                                           // waere
-                Node falsePred = phi.getPred(Cond.pnTrue);
+                Cond otherCond = (Cond) firstPredProj.getPred();
+
+                List<Node> phiPreds = new ArrayList<>();
+                phi.getPreds().forEach(phiPreds::add);
+
+                assert phiPreds.size() == 2 : "Incorrect number of phi predecessors: " + phiPreds.size();
+
+                Node firstPred = phiPreds.get(0);
+                Node secondPred = phiPreds.get(1);
+
+                Node truePred = null;
+                Node falsePred = null;
+
+                if (firstPredProj.getNum() == Cond.pnTrue) {
+                    truePred = firstPred;
+                }
+                else if (firstPredProj.getNum() == Cond.pnFalse) {
+                    falsePred = firstPred;
+                }
+                else {
+                    assert false : "Unknown predecessor for phi!" + phi.toString();
+                }
+
+                if (secondPredProj.getNum() == Cond.pnTrue) {
+                    truePred = secondPred;
+                }
+                else if (secondPredProj.getNum() == Cond.pnFalse) {
+                    falsePred = secondPred;
+                }
+                else {
+                    assert false : "Unknown predecessor for phi!" + phi.toString();
+                }
+
+                assert truePred != null && falsePred != null;
+
                 int truePredRegIndex = this.node2RegIndex.get(truePred);
                 int falsePredRegIndex = this.node2RegIndex.get(falsePred);
+
+                // TODO This might lead to conflicts between Phis in the same block, check for those!
 
                 int labelNr = phi.getBlock().getNr() + 3;
 
