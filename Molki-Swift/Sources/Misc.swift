@@ -61,17 +61,25 @@ extension Collection where Element: Equatable {
 
 extension Int {
     public func floored(toMultipleOf divisor: Int) -> Int {
-        precondition(self >= 0)
         precondition(divisor >= 0)
 
-        return self / divisor * divisor
+        if self > 0 {
+            return self / divisor * divisor
+        }
+        else {
+            return (self - divisor + 1) / divisor * divisor
+        }
     }
 
     public func ceiled(toMultipleOf divisor: Int) -> Int {
-        precondition(self >= 0)
         precondition(divisor >= 0)
 
-        return (self + divisor - 1) / divisor * divisor
+        if self > 0 {
+            return (self + divisor - 1) / divisor * divisor
+        }
+        else {
+            return self / divisor * divisor
+        }
     }
 
     public func isMultiple(of other: Int) -> Bool {

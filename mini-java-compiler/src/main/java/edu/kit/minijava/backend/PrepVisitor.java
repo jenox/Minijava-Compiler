@@ -202,8 +202,7 @@ public class PrepVisitor extends Default {
 
     @Override
     public void visit(Not not) {
-        int reg = this.node2regIndex.get(not.getOp());
-        this.node2regIndex.put(not, reg);
+        this.node2regIndex.put(not, this.registerIndex++);
 
         this.addInstrToBlock(null, not);
     }

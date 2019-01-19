@@ -7,6 +7,7 @@ import java.util.*;
 
 import edu.kit.minijava.ast.nodes.Program;
 import edu.kit.minijava.backend.*;
+import edu.kit.minijava.backend.Util;
 import edu.kit.minijava.lexer.Lexer;
 import edu.kit.minijava.parser.*;
 import edu.kit.minijava.semantic.*;
@@ -18,6 +19,7 @@ public class CompileCommand extends Command {
 
     private static final String RUNTIME_LIB_ENV_KEY = "MJ_RUNTIME_LIB_PATH_STACK_ARGS";
     private static final String MOLKI_PATH_KEY = "MOLKI_PATH";
+    private Util util = new Util();
 
     @Override
     public int execute(String path) {
@@ -53,26 +55,54 @@ public class CompileCommand extends Command {
             HashMap<Integer, List<Node>> blockId2Nodes = prepVisitor.getBlockId2Nodes();
             HashMap<Graph, List<Integer>> graph2BlockId = prepVisitor.getGraph2BlockId();
             MolkiTransformer molkiTransformer = new MolkiTransformer(prepVisitor.getNode2RegIndex());
-            ArrayList output = new ArrayList();
+            List<String> output = new ArrayList<>();
 
             graphs.forEach(g -> {
                 String methodName = g.getEntity().getLdName();
                 MethodType methodType = (MethodType) g.getEntity().getType();
                 // non-main methods have additional `this` parameter
                 int numArgs = Math.max(0, methodType.getNParams());
-                int noResults = methodType.getNRess();
+                int numResults = methodType.getNRess();
 
                 // replace '.' with '_' for correct molki syntax
                 methodName = methodName.replace('.', '_');
 
-                if (methodName.equals("__minijava_main")) {
-                    // replace `__minijava_main` with `minijava_main`
-                    // methodName = methodName.substring(2);
-                    // if main has `noResults` == 0, then exit code is != 0
-                    noResults = 1;
+                String args = " [ ";
+                String results = "";
+
+                for (int i = 0; i < numArgs; i++) {
+                    // this argument is the last
+                    String argSuffix = this.util.mode2MovSuffix(methodType.getParamType(i).getMode());
+
+                    // fix suffix, if it's a pointer
+                    if (argSuffix.equals("")) {
+                        argSuffix = "q";
+                    }
+
+                    if (i + 1 == numArgs) {
+                        args += argSuffix;
+                    }
+                    else {
+                        args += argSuffix + " | ";
+                    }
+                }
+                args += " ] ";
+
+                if (numResults > 0) {
+                    results += "-> ";
                 }
 
-                output.add(".function " + methodName + " " + numArgs + " " + noResults);
+                for (int i = 0; i < numResults; i++) {
+                    results += this.util.mode2MovSuffix(methodType.getResType(i).getMode());
+                }
+
+                if (methodName.equals("__minijava_main") || methodName.equals("___minijava_main")) {
+                    output.add(".function " + methodName);
+                }
+                else {
+
+                    output.add(".function " + methodName + " " + args + results);
+                }
 
                 // for each block, create an arraylist
                 // and for each instruction in that block, transform it into a valid molki string
@@ -85,30 +115,42 @@ public class CompileCommand extends Command {
                 HashMap<Integer, List<String>> molkiCode = molkiTransformer.getMolkiCode();
 
                 // go through all blocks of that graph
+
+                // TODO This should not be handled at this point, but instead directly when generating code,
+                // e.g. by generating compare and jump instructions in a separate list which is later appended
+                // to the instructions from the basic block.
+
                 graph2BlockId.get(g).forEach(block -> {
 
-                    // Move all the jump instructions to the end
+                    // Move all the jump and compare instructions to the end
 
-                    // TODO This should also apply to the compare instructions before conditional jumps,
-                    // which are currently not shifted to the end of the basic block.
+                    // TODO Can we move all cmp instructions to the end as well without the risk of
+                    // breaking any semantics?
 
                     List<String> instructions = molkiCode.get(block);
                     List<String> jmpInstructions = new ArrayList<>();
                     for (int i = 0; i < instructions.size(); i++) {
                         String str = instructions.get(i);
 
-                        if (str.contains("jmp")
-                            || str.contains("jle")
-                            || str.contains("jl")
-                            || str.contains("jge")
-                            || str.contains("jg")
-                            || str.contains("jne")
-                            || str.contains("je")) {
+                        if (str.startsWith(Util.INDENT + "phi_")) {
+                            instructions.remove(i);
 
+                            String temp = str.substring(Util.INDENT.length() + 4);
+                            instructions.add(i, Util.INDENT + temp);
+                        }
+                        if (Util.containsJmp(str)) {
                             instructions.remove(i);
                             i--;
 
                             jmpInstructions.add(str);
+                        }
+                        else if (str.contains(Util.INDENT + "cmp")) {
+                            // if (i+1 < instructions.size() && Util.containsJmp(instructions.get(i+1))) {
+                            instructions.remove(i);
+                            i--;
+
+                            jmpInstructions.add(str);
+                            // }
                         }
                     }
 
@@ -158,7 +200,7 @@ public class CompileCommand extends Command {
             int result = 0;
             try {
                 result = this.exec("gcc" + " " + asmOutputFileName + " " + runtimeLibPath + " -o " +
-                        executableFilename);
+                                executableFilename);
             }
             catch (Throwable throwable) {
                 result = -1;
