@@ -258,12 +258,6 @@ public class MolkiTransformer extends Default {
             int indexReg = this.node2RegIndex.get(sel.getIndex());
             int alignment = sel.getType().getAlignment();
 
-            /*
-             * this.appendMolkiCode("mov" + movSuffix + " " + " (" + REG_PREFIX + baseReg + ", " + REG_PREFIX + indexReg
-             * + "d" + ", " + sel.getType().getAlignment() + ")" + regSuffix + " -> " + REG_PREFIX + targetReg +
-             * regSuffix);
-             */
-
             this.appendMoveWithOffset(movSuffix, baseReg, indexReg, REG_WIDTH_D, alignment, regSuffix, targetReg,
                     regSuffix);
         }
@@ -278,8 +272,7 @@ public class MolkiTransformer extends Default {
         else {
             int pointerReg = this.node2RegIndex.get(load.getPtr());
 
-            this.appendMolkiCode("mov" + movSuffix + " " + "(" + REG_PREFIX + pointerReg + ") -> " + REG_PREFIX
-                    + targetReg + regSuffix);
+            this.moveWithOffset(movSuffix, pointerReg, targetReg, regSuffix);
         }
     }
 
@@ -647,5 +640,19 @@ public class MolkiTransformer extends Default {
             String suffixTargetReg) {
         this.appendMolkiCode("mov" + movSuffix + " " + offset + "(" + REG_PREFIX + baseReg + ")" + suffixTargetReg
                 + " -> " + REG_PREFIX + targetReg + suffixTargetReg);
+    }
+
+    /**
+     * <p>
+     * Example<br><br>
+     * movd (%@17) -> %@18d
+     * @param movSuffix
+     * @param pointerReg
+     * @param targetReg
+     * @param suffixTargetReg width of target register
+     */
+    private void moveWithOffset(String movSuffix, int pointerReg, int targetReg, String suffixTargetReg) {
+        this.appendMolkiCode("mov" + movSuffix + " " + "(" + REG_PREFIX + pointerReg + ") -> " + REG_PREFIX
+                + targetReg + suffixTargetReg);
     }
 }
