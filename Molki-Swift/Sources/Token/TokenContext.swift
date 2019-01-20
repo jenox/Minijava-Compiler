@@ -10,8 +10,8 @@ import Swift
 
 
 public struct TokenContext: CustomStringConvertible {
-    public var substring: Substring
-    public var range: Range<Substring.Index>
+    public var substring: ArraySlice<Character>
+    public var range: Range<Int>
 
     public var description: String {
         let offset = self.substring.distance(from: self.substring.startIndex, to: self.range.lowerBound)

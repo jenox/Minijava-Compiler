@@ -21,6 +21,8 @@
 		CB73629921E01A8100A49E17 /* StringReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB73629821E01A8100A49E17 /* StringReader.swift */; };
 		CB73629B21E01AF100A49E17 /* Misc.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB73629A21E01AF100A49E17 /* Misc.swift */; };
 		CB73629E21E0278100A49E17 /* LexerError.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB73629D21E0278100A49E17 /* LexerError.swift */; };
+		CB741ACA21F4B734006F6A08 /* a.molki.s in Copy Files */ = {isa = PBXBuildFile; fileRef = CB741AC821F4B729006F6A08 /* a.molki.s */; };
+		CB741ACC21F4B843006F6A08 /* Characters.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB741ACB21F4B843006F6A08 /* Characters.swift */; };
 		CB96B9D221ED109C003D7AEE /* Registers.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB96B9D121ED109C003D7AEE /* Registers.swift */; };
 		CB96B9D621ED10AE003D7AEE /* Values.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB96B9D521ED10AE003D7AEE /* Values.swift */; };
 		CB96B9D821ED1171003D7AEE /* Operands.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB96B9D721ED1171003D7AEE /* Operands.swift */; };
@@ -37,6 +39,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 7;
 			files = (
+				CB741ACA21F4B734006F6A08 /* a.molki.s in Copy Files */,
 				CB96B9DF21ED5967003D7AEE /* fib.mj.s in Copy Files */,
 				AA067C2821D00B85009CA48A /* example_fib.s in Copy Files */,
 			);
@@ -61,6 +64,8 @@
 		CB73629821E01A8100A49E17 /* StringReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StringReader.swift; sourceTree = "<group>"; };
 		CB73629A21E01AF100A49E17 /* Misc.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Misc.swift; sourceTree = "<group>"; };
 		CB73629D21E0278100A49E17 /* LexerError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LexerError.swift; sourceTree = "<group>"; };
+		CB741AC821F4B729006F6A08 /* a.molki.s */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.asm; path = a.molki.s; sourceTree = "<group>"; };
+		CB741ACB21F4B843006F6A08 /* Characters.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Characters.swift; sourceTree = "<group>"; };
 		CB96B9D121ED109C003D7AEE /* Registers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Registers.swift; sourceTree = "<group>"; };
 		CB96B9D521ED10AE003D7AEE /* Values.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Values.swift; sourceTree = "<group>"; };
 		CB96B9D721ED1171003D7AEE /* Operands.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Operands.swift; sourceTree = "<group>"; };
@@ -118,6 +123,7 @@
 			children = (
 				AA067C2221CFFFF1009CA48A /* example_fib.s */,
 				CB96B9DD21ED5943003D7AEE /* fib.mj.s */,
+				CB741AC821F4B729006F6A08 /* a.molki.s */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -148,6 +154,7 @@
 			children = (
 				AAD777BA21D128AB001F01A1 /* Lexer.swift */,
 				CB73629D21E0278100A49E17 /* LexerError.swift */,
+				CB741ACB21F4B843006F6A08 /* Characters.swift */,
 			);
 			path = Lexer;
 			sourceTree = "<group>";
@@ -250,6 +257,7 @@
 				AAD777BB21D128AB001F01A1 /* Lexer.swift in Sources */,
 				CB73629721E01A7200A49E17 /* BufferedReader.swift in Sources */,
 				CB96B9DC21ED1C11003D7AEE /* Function.swift in Sources */,
+				CB741ACC21F4B843006F6A08 /* Characters.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

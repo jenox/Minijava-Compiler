@@ -34,7 +34,7 @@ if CommandLine.arguments.count >= 2 {
 else {
     #if XCODE
     print("Not enough arguments, using sample input file.")
-    sourceURL = Bundle.main.url(forResource: "fib.mj", withExtension: "s")!
+    sourceURL = Bundle.main.url(forResource: "a.molki", withExtension: "s")!
     targetURL = relativeURL(from: "a.out.s")
     #else
     fatalError("Not enough arguments, using sample input file.")

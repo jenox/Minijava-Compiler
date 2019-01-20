@@ -11,10 +11,10 @@ import Swift
 
 public struct TokenLocation: CustomStringConvertible {
     public var path: String
-    public var row: Int
+    public var line: Int
     public var column: Int
 
     public var description: String {
-        return "\(self.path):\(self.row + 1):\(self.column + 1)"
+        return "\(self.path):\(self.line):\(self.column)"
     }
 }
