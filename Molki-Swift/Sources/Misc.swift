@@ -31,6 +31,15 @@ extension Character {
     }
 }
 
+extension Collection {
+    #if swift(>=4.2)
+    #else
+    public func allSatisfy(_ predicate: (Element) throws -> Bool) rethrows -> Bool {
+        return try !self.contains(where: { try !predicate($0) })
+    }
+    #endif
+}
+
 extension CharacterSet {
     public func contains(_ character: Character) -> Bool {
         return character.unicodeScalars.allSatisfy({ self.contains($0) })

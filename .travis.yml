@@ -13,7 +13,7 @@ before_script:
   - source ~/virtualenv/python3.6/bin/activate
 
 env:
-  - MJ_RUN="./run" MJ_TIMEOUT=60 SWIFT_VERSION="4.2"
+  - MJ_RUN="./run" MJ_TIMEOUT=60 SWIFT_VERSION="4.1"
 
 jobs:
   include:
