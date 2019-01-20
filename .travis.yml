@@ -13,7 +13,9 @@ before_script:
   - source ~/virtualenv/python3.6/bin/activate
 
 env:
-  - MJ_RUN="./run" MJ_TIMEOUT=60 SWIFT_VERSION="4.1"
+  # SWIFT_VERSION: Version to install with swiftenv
+  # TERM: Remove status updates in gradle output that only works with interactive shell
+  - MJ_RUN="./run" MJ_TIMEOUT=60 SWIFT_VERSION="4.1" TERM='dumb'
 
 jobs:
   include:
