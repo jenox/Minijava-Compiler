@@ -22,6 +22,25 @@ extension Collection {
     }
 }
 
+extension BidirectionalCollection {
+    #if swift(>=4.2)
+    #else
+    public func lastIndex(where predicate: (Element) throws -> Bool) rethrows -> Index? {
+        var index = self.endIndex
+
+        while index != self.startIndex {
+            self.formIndex(before: &index)
+
+            if try predicate(self[index]) {
+                return index
+            }
+        }
+
+        return nil
+    }
+    #endif
+}
+
 extension Collection where Element: Equatable {
     public func count(where predicate: (Element) throws -> Bool) rethrows -> Int {
         return try self.reduce(0, { $0 + (try predicate($1) ? 1 : 0) })
