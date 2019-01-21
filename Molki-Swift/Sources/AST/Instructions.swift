@@ -10,7 +10,24 @@ import Swift
 
 
 
-public enum Instruction: CustomStringConvertible {
+public protocol InstructionProtocol: CustomStringConvertible {
+    var arguments: [Argument<Pseudoregister>] { get }
+    var results: [Result<Pseudoregister>] { get }
+
+    var pseudoregisters: Set<Pseudoregister> { get }
+}
+
+extension InstructionProtocol {
+    public var pseudoregisters: Set<Pseudoregister> {
+        var pseudoregisters: Set<Pseudoregister> = []
+        pseudoregisters.formUnion(self.arguments.flatMap({ $0.registers }))
+        pseudoregisters.formUnion(self.results.flatMap({ $0.registers }))
+
+        return pseudoregisters
+    }
+}
+
+public enum Instruction: InstructionProtocol {
     case labelInstruction(LabelInstruction)
     case jumpInstruction(JumpInstruction)
     case callInstruction(CallInstruction)
@@ -23,37 +40,59 @@ public enum Instruction: CustomStringConvertible {
     case numericNegationInstruction(NumericNegationInstruction)
     case logicalNegationInstruction(LogicalNegationInstruction)
 
+    public var arguments: [Argument<Pseudoregister>] {
+        return self.instruction.arguments
+    }
+
+    public var results: [Result<Pseudoregister>] {
+        return self.instruction.results
+    }
+
     public var description: String {
+        return self.instruction.description
+    }
+
+    private var instruction: InstructionProtocol {
         switch self {
         case .labelInstruction(let instruction):
-            return instruction.description
+            return instruction
         case .jumpInstruction(let instruction):
-            return instruction.description
+            return instruction
         case .callInstruction(let instruction):
-            return instruction.description
+            return instruction
         case .moveInstruction(let instruction):
-            return instruction.description
+            return instruction
         case .comparisonInstruction(let instruction):
-            return instruction.description
+            return instruction
         case .additionInstruction(let instruction):
-            return instruction.description
+            return instruction
         case .subtractionInstruction(let instruction):
-            return instruction.description
+            return instruction
         case .multiplicationInstruction(let instruction):
-            return instruction.description
+            return instruction
         case .divisionInstruction(let instruction):
-            return instruction.description
+            return instruction
         case .logicalNegationInstruction(let instruction):
-            return instruction.description
+            return instruction
         case .numericNegationInstruction(let instruction):
-            return instruction.description
+            return instruction
         }
     }
 }
 
 
-public struct LabelInstruction: CustomStringConvertible {
+
+
+public struct LabelInstruction: InstructionProtocol {
     public var name: String
+
+    public var arguments: [Argument<Pseudoregister>] {
+        return []
+    }
+
+    public var results: [Result<Pseudoregister>] {
+        return []
+    }
 
     public var description: String {
         return "\(self.name):"
@@ -61,9 +100,17 @@ public struct LabelInstruction: CustomStringConvertible {
 }
 
 // jmp, jl, jle, jg, jge, je, jne
-public struct JumpInstruction: CustomStringConvertible {
+public struct JumpInstruction: InstructionProtocol {
     public var target: String
     public var condition: JumpCondition
+
+    public var arguments: [Argument<Pseudoregister>] {
+        return []
+    }
+
+    public var results: [Result<Pseudoregister>] {
+        return []
+    }
 
     public var description: String {
         return "\(self.condition.rawValue) \(self.target)"
@@ -83,10 +130,14 @@ public enum JumpCondition: String {
 // call
 // Syntax: call f [ a | b | c | ... ] -> z
 // Semantic: z = f(a, b, c, ...)
-public struct CallInstruction: CustomStringConvertible {
+public struct CallInstruction: InstructionProtocol {
     public var target: String
     public var arguments: [Argument<Pseudoregister>]
     public var result: Result<Pseudoregister>?
+
+    public var results: [Result<Pseudoregister>] {
+        return self.result.flatMap({ [$0] }) ?? []
+    }
 
     public var description: String {
         var description = "call \(self.target)"
@@ -108,10 +159,18 @@ public struct CallInstruction: CustomStringConvertible {
 // mov
 // Syntax: movx a -> b
 // Semantic: b := a
-public struct MoveInstruction: CustomStringConvertible {
+public struct MoveInstruction: InstructionProtocol {
     public var width: RegisterWidth
     public var source: Argument<Pseudoregister>
     public var target: Result<Pseudoregister>
+
+    public var arguments: [Argument<Pseudoregister>] {
+        return [self.source]
+    }
+
+    public var results: [Result<Pseudoregister>] {
+        return [self.target]
+    }
 
     public var description: String {
         switch self.width {
@@ -125,10 +184,18 @@ public struct MoveInstruction: CustomStringConvertible {
 
 // Synax: cmpx [ a | b ]
 // Semantic: flags := a ? b
-public struct ComparisonInstruction: CustomStringConvertible {
+public struct ComparisonInstruction: InstructionProtocol {
     public var width: RegisterWidth
     public var lhs: Argument<Pseudoregister>
     public var rhs: Argument<Pseudoregister>
+
+    public var arguments: [Argument<Pseudoregister>] {
+        return [self.lhs, self.rhs]
+    }
+
+    public var results: [Result<Pseudoregister>] {
+        return []
+    }
 
     public var description: String {
         switch self.width {
@@ -143,10 +210,18 @@ public struct ComparisonInstruction: CustomStringConvertible {
 // add
 // Syntax: add [ a | b ] -> c
 // Semantic: c := a + b
-public struct AdditionInstruction: CustomStringConvertible {
+public struct AdditionInstruction: InstructionProtocol {
     public var augend: Argument<Pseudoregister>
     public var addend: Argument<Pseudoregister>
     public var sum: Result<Pseudoregister>
+
+    public var arguments: [Argument<Pseudoregister>] {
+        return [self.augend, self.addend]
+    }
+
+    public var results: [Result<Pseudoregister>] {
+        return [self.sum]
+    }
 
     public var description: String {
         return "addl [ \(self.augend) | \(self.addend) ] -> \(self.sum)"
@@ -156,10 +231,18 @@ public struct AdditionInstruction: CustomStringConvertible {
 // sub
 // Syntax: sub [ a | b ] -> c
 // Semantic: c := a - b
-public struct SubtractionInstruction: CustomStringConvertible {
+public struct SubtractionInstruction: InstructionProtocol {
     public var minuend: Argument<Pseudoregister>
     public var subtrahend: Argument<Pseudoregister>
     public var difference: Result<Pseudoregister>
+
+    public var arguments: [Argument<Pseudoregister>] {
+        return [self.minuend, self.subtrahend]
+    }
+
+    public var results: [Result<Pseudoregister>] {
+        return [self.difference]
+    }
 
     public var description: String {
         return "subl [ \(self.minuend) | \(self.subtrahend) ] -> \(self.difference)"
@@ -169,10 +252,18 @@ public struct SubtractionInstruction: CustomStringConvertible {
 // imul
 // Syntax: mul [ a | b ] -> c
 // Semantic: c := a * b
-public struct MultiplicationInstruction: CustomStringConvertible {
+public struct MultiplicationInstruction: InstructionProtocol {
     public var multiplicand: Argument<Pseudoregister>
     public var multiplier: Argument<Pseudoregister>
     public var product: Result<Pseudoregister>
+
+    public var arguments: [Argument<Pseudoregister>] {
+        return [self.multiplicand, self.multiplier]
+    }
+
+    public var results: [Result<Pseudoregister>] {
+        return [self.product]
+    }
 
     public var description: String {
         return "mull [ \(self.multiplicand) | \(self.multiplier) ] -> \(self.product)"
@@ -183,11 +274,19 @@ public struct MultiplicationInstruction: CustomStringConvertible {
 // Syntax: div [ a | b ] -> [ c | d ]
 // Semantic: c := a / b
 // Semantic: d := a % b
-public struct DivisionInstruction: CustomStringConvertible {
+public struct DivisionInstruction: InstructionProtocol {
     public var dividend: Argument<Pseudoregister>
     public var divisor: Argument<Pseudoregister>
     public var quotient: Result<Pseudoregister>
     public var remainder: Result<Pseudoregister>
+
+    public var arguments: [Argument<Pseudoregister>] {
+        return [self.dividend, self.divisor]
+    }
+
+    public var results: [Result<Pseudoregister>] {
+        return [self.quotient, self.remainder]
+    }
 
     public var description: String {
         return "divl [ \(self.dividend) | \(self.divisor) ] -> [ \(self.quotient) | \(self.remainder) ]"
@@ -201,9 +300,17 @@ public struct DivisionInstruction: CustomStringConvertible {
 // Syntax: neg a
 // Semantic: a := -a
 // width is assumed to be 32bit
-public struct NumericNegationInstruction: CustomStringConvertible {
+public struct NumericNegationInstruction: InstructionProtocol {
     public var source: Argument<Pseudoregister>
     public var target: Result<Pseudoregister>
+
+    public var arguments: [Argument<Pseudoregister>] {
+        return [self.source]
+    }
+
+    public var results: [Result<Pseudoregister>] {
+        return [self.target]
+    }
 
     public var description: String {
         return "negl \(self.source) -> \(self.target)"
@@ -217,9 +324,17 @@ public struct NumericNegationInstruction: CustomStringConvertible {
 // width is assumbed to be 8bit
 // Syntax: not -> a
 // Semantic: a := !a
-public struct LogicalNegationInstruction: CustomStringConvertible {
+public struct LogicalNegationInstruction: InstructionProtocol {
     public var source: Argument<Pseudoregister>
     public var target: Result<Pseudoregister>
+
+    public var arguments: [Argument<Pseudoregister>] {
+        return [self.source]
+    }
+
+    public var results: [Result<Pseudoregister>] {
+        return [self.target]
+    }
 
     public var description: String {
         return "notb \(self.source) -> \(self.target)"

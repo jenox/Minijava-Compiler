@@ -36,6 +36,17 @@ public enum Argument<RegisterType: Register>: CustomStringConvertible {
         }
     }
 
+    public var registers: Set<RegisterType> {
+        switch self {
+        case .constant:
+            return []
+        case .register(let value):
+            return value.registers
+        case .memory(let value):
+            return value.registers
+        }
+    }
+
     public var description: String {
         switch self {
         case .constant(let value):
@@ -67,6 +78,15 @@ public enum Result<RegisterType: Register>: CustomStringConvertible {
             return value.width
         case .memory(let value):
             return value.width
+        }
+    }
+
+    public var registers: Set<RegisterType> {
+        switch self {
+        case .register(let value):
+            return value.registers
+        case .memory(let value):
+            return value.registers
         }
     }
 
