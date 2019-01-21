@@ -106,7 +106,6 @@ public class Parser {
 
         var parameterWidths: [RegisterWidth] = []
         var returnValueWidth: RegisterWidth? = nil
-        var instructions: [Instruction] = []
 
         if try self.lookahead(.openingBracket) {
             try self.consume(.openingBracket)
@@ -126,14 +125,38 @@ public class Parser {
             returnValueWidth = try self.parseArgumentOrResultWidth()
         }
 
-        while try self.lookahead(.identifier) {
-            instructions.append(try self.parseInstruction())
+        var blocks: [BasicBlock] = []
+        var instructions: [Instruction] = []
+
+        func commitBasicBlock() {
+            if !instructions.isEmpty {
+                let block = BasicBlock(instructions: instructions)
+
+                blocks.append(block)
+                instructions.removeAll()
+            }
         }
+
+        while try self.lookahead(.identifier) {
+            let instruction = try self.parseInstruction()
+
+            if instruction.rawInstruction is LabelInstruction {
+                commitBasicBlock()
+            }
+
+            instructions.append(instruction)
+
+            if instruction.rawInstruction is JumpInstruction {
+                commitBasicBlock()
+            }
+        }
+
+        commitBasicBlock()
 
         try self.consume(.period)
         try self.consume(.identifier, text: "endfunction")
 
-        return Function(name: name, parameterWidths: parameterWidths, returnValueWidth: returnValueWidth, instructions: instructions)
+        return Function(name: name, parameterWidths: parameterWidths, returnValueWidth: returnValueWidth, basicBlocks: blocks)
     }
 
     private func parseArgumentOrResultWidth() throws -> RegisterWidth {

@@ -41,18 +41,18 @@ public enum Instruction: InstructionProtocol {
     case logicalNegationInstruction(LogicalNegationInstruction)
 
     public var arguments: [Argument<Pseudoregister>] {
-        return self.instruction.arguments
+        return self.rawInstruction.arguments
     }
 
     public var results: [Result<Pseudoregister>] {
-        return self.instruction.results
+        return self.rawInstruction.results
     }
 
     public var description: String {
-        return self.instruction.description
+        return self.rawInstruction.description
     }
 
-    private var instruction: InstructionProtocol {
+    public var rawInstruction: InstructionProtocol {
         switch self {
         case .labelInstruction(let instruction):
             return instruction
