@@ -9,44 +9,28 @@
 import Foundation
 
 
-public func relativeURL(from string: String) -> URL {
-    if string.hasPrefix("/") {
-        fatalError()
-    }
-    else {
-        return URL(fileURLWithPath: FileManager.default.currentDirectoryPath).appendingPathComponent(string)
-    }
-}
-
 let sourceURL: URL
 let targetURL: URL
 
 if CommandLine.arguments.count >= 2 {
-    sourceURL = relativeURL(from: CommandLine.arguments[1])
+    sourceURL = URL(fileURLWithPath: CommandLine.arguments[1])
 
     if CommandLine.arguments.count >= 3 {
-        targetURL = relativeURL(from: CommandLine.arguments[2])
+        targetURL = URL(fileURLWithPath: CommandLine.arguments[2])
     }
     else {
-        targetURL = relativeURL(from: "a.out.s")
+        targetURL = URL(fileURLWithPath: "a.out.s")
     }
 }
 else {
-    #if XCODE
-    print("Not enough arguments, using sample input file.")
-    sourceURL = Bundle.main.url(forResource: "a.molki", withExtension: "s")!
-    targetURL = relativeURL(from: "a.out.s")
-    #else
     fatalError("Not enough arguments, using sample input file.")
-    #endif
 }
 
-print("Input:", sourceURL)
-print("Output:", targetURL)
-
-let input = String(data: try! Data(contentsOf: sourceURL), encoding: .utf8)!
+print("Input file:", sourceURL.path)
+print("Output file:", targetURL.path)
 
 do {
+    let input = String(data: try Data(contentsOf: sourceURL), encoding: .utf8)!
     let lexer = Lexer(path: sourceURL.lastPathComponent, text: input)
     let parser = Parser(tokenProvider: lexer)
 
