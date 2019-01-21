@@ -432,9 +432,8 @@ public class Parser {
     private func parseRegister() throws -> Pseudoregister {
         try self.consume(.pseudoregister)
 
-        if try self.lookahead(.integer) {
-            let text = try self.consume(.integer).payload
-            let number = Int(text)!
+        if try self.lookahead([.integer, .minus]) {
+            let number = try self.parseInteger()
 
             return .numbered(number)
         }

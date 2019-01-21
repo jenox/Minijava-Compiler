@@ -48,7 +48,7 @@ public class CompileCommand extends Command {
             graphs.forEach(g -> {
                 BackEdges.enable(g);
                 int numArgs = ((MethodType) g.getEntity().getType()).getNParams();
-                prepVisitor.setRegisterIndex(numArgs);
+                prepVisitor.setNumberOfRegularPseudoregisters(numArgs);
                 g.walkTopological(prepVisitor);
             });
 
