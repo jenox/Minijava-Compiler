@@ -26,6 +26,11 @@ public struct RegisterValue<RegisterType: Register>: Equatable, CustomStringConv
     }
 }
 
+public extension RegisterValue where RegisterType == X86Register {
+    public static let basePointer = X86Register.rbp.with(.quad)
+    public static let stackPointer = X86Register.rsp.with(.quad)
+}
+
 public struct ConstantValue: Equatable, CustomStringConvertible {
     public var value: Int
     public var width: RegisterWidth
