@@ -9,27 +9,27 @@
 import Foundation
 
 
-let sourceURL: URL
-let targetURL: URL
+do {
+    let sourceURL: URL
+    let targetURL: URL
 
-if CommandLine.arguments.count >= 2 {
-    sourceURL = URL(fileURLWithPath: CommandLine.arguments[1])
+    if CommandLine.arguments.count >= 2 {
+        sourceURL = URL(fileURLWithPath: CommandLine.arguments[1])
 
-    if CommandLine.arguments.count >= 3 {
-        targetURL = URL(fileURLWithPath: CommandLine.arguments[2])
+        if CommandLine.arguments.count >= 3 {
+            targetURL = URL(fileURLWithPath: CommandLine.arguments[2])
+        }
+        else {
+            targetURL = URL(fileURLWithPath: "a.out.s")
+        }
     }
     else {
-        targetURL = URL(fileURLWithPath: "a.out.s")
+        fatalError("Not enough arguments, using sample input file.")
     }
-}
-else {
-    fatalError("Not enough arguments, using sample input file.")
-}
 
-print("Input file:", sourceURL.path)
-print("Output file:", targetURL.path)
+    print("Input file:", sourceURL.path)
+    print("Output file:", targetURL.path)
 
-do {
     let input = String(data: try Data(contentsOf: sourceURL), encoding: .utf8)!
     let lexer = Lexer(path: sourceURL.lastPathComponent, text: input)
     let parser = Parser(tokenProvider: lexer)
