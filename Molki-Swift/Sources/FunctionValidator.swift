@@ -20,6 +20,34 @@ public class FunctionValidator {
         print("\nAnalyzing function \(self.function.name)")
 
         self.validateNumberOfReadsAndWrites()
+        self.validateThings()
+    }
+
+    private func validateThings() {
+//        let counter = ReadWriteCounter(function: self.function)
+//        var usedInBlocks: [Pseudoregister: Set<BasicBlock>] = [:]
+//
+//        for block in self.function.basicBlocks {
+//            for instruction in block.instructions {
+//                let pseudoregisters = instruction.pseudoregisters
+//
+//                for pseudoregister in pseudoregisters.read.union(pseudoregisters.written) {
+//                    usedInBlocks[pseudoregister, default: []].insert(block)
+//                }
+//            }
+//        }
+//
+//        for register in counter.uses.subtracting(counter.parameters) {
+//            print(register, "used in", usedInBlocks[register] ?? [])
+//        }
+//
+//        print(usedInBlocks)
+//
+//        for instruction in self.function.instructions {
+//            let pseudoregisters = instruction.pseudoregisters
+//
+//            pseudoregisters
+//        }
     }
 
     private func validateNumberOfReadsAndWrites() {
@@ -94,6 +122,10 @@ struct ReadWriteCounter {
 
     public var parameters: Set<Pseudoregister> {
         return Set((0..<self.function.parameterWidths.count).map({ Pseudoregister.regular($0) }))
+    }
+
+    public var uses: Set<Pseudoregister> {
+        return Set(self.numberOfReads.keys).union(self.numberOfWrites.keys)
     }
 
     public var reads: Set<Pseudoregister> {
