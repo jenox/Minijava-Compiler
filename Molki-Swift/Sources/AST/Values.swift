@@ -17,6 +17,10 @@ public struct RegisterValue<RegisterType: Register>: Equatable, CustomStringConv
         return RegisterValue(register: self.register, width: width)
     }
 
+    public var registers: Set<RegisterType> {
+        return [self.register]
+    }
+
     public var description: String {
         return self.register.name(for: self.width)
     }
@@ -40,6 +44,10 @@ public struct MemoryValue<RegisterType: Register>: Equatable, CustomStringConver
     public var address: MemoryAddress<RegisterType>
     public var width: RegisterWidth
 
+    public var registers: Set<RegisterType> {
+        return self.address.registers
+    }
+
     public var description: String {
         switch self.width {
         case .byte: return "\(self.address)l"
@@ -53,6 +61,15 @@ public struct MemoryValue<RegisterType: Register>: Equatable, CustomStringConver
 public enum MemoryAddress<RegisterType: Register>: Equatable, CustomStringConvertible {
     case relative(base: RegisterValue<RegisterType>, offset: Int)
     case indexed(base: RegisterValue<RegisterType>, index: RegisterValue<RegisterType>, scale: Int, offset: Int)
+
+    public var registers: Set<RegisterType> {
+        switch self {
+        case .relative(base: let base, offset: _):
+            return base.registers
+        case .indexed(base: let base, index: let index, scale: _, offset: _):
+            return base.registers.union(index.registers)
+        }
+    }
 
     public var description: String {
         switch self {
