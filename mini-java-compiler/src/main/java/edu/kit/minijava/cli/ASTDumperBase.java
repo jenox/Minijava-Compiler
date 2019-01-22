@@ -112,24 +112,24 @@ abstract class ASTDumperBase extends ASTVisitor<Void> {
     // MARK: - Writing Edges
 
     void outputReferencingEdge(Object source, Object target) {
-        this.outputEdge(source, target, "dashed");
+        this.outputEdge(source, target, "dashed", null);
     }
 
-    void outputOwningEdgeAndVisit(ASTNode source, @Nullable ASTNode target) {
+    void outputOwningEdgeAndVisit(ASTNode source, @Nullable ASTNode target, @Nullable String label) {
         if (target == null) return;
 
         target.accept(this);
 
-        this.outputEdge(source, target, "line");
+        this.outputEdge(source, target, "line", label);
     }
 
-    void outputOwningEdgeAndResolve(ASTNode source, Reference target) {
+    void outputOwningEdgeAndResolve(ASTNode source, Reference target, @Nullable String label) {
         this.outputReferenceNode(target);
-        this.outputEdge(source, target, "line");
+        this.outputEdge(source, target, "line", label);
         this.outputReferencingEdge(target, target.getDeclaration());
     }
 
-    private void outputEdge(Object source, Object target, String kind) {
+    private void outputEdge(Object source, Object target, String kind, @Nullable String label) {
         UUID id = UUID.randomUUID();
         UUID sid = this.getIdentifierForNode(source);
         UUID tid = this.getIdentifierForNode(target);
@@ -139,6 +139,11 @@ abstract class ASTDumperBase extends ASTVisitor<Void> {
         this.print("<y:PolyLineEdge>");
         this.print("<y:LineStyle color='#000000' width='1.0' type='" + kind + "'></y:LineStyle>");
         this.print("<y:Arrows source='none' target='standard'></y:Arrows>");
+
+        if (label != null) {
+            this.print("<y:EdgeLabel>" + this.escape(label) + "</y:EdgeLabel>");
+        }
+
         this.print("</y:PolyLineEdge>");
         this.print("</data>");
         this.print("</edge>");

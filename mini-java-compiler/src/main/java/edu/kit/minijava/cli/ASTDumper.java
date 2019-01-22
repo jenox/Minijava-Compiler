@@ -25,15 +25,15 @@ public final class ASTDumper extends ASTDumperBase {
         this.outputBasicTypeDeclarationNode(classDeclaration);
 
         for (MainMethodDeclaration methodDeclaration: classDeclaration.getMainMethodDeclarations()) {
-            this.outputOwningEdgeAndVisit(classDeclaration, methodDeclaration);
+            this.outputOwningEdgeAndVisit(classDeclaration, methodDeclaration, null);
         }
 
         for (MethodDeclaration methodDeclaration: classDeclaration.getMethodDeclarations()) {
-            this.outputOwningEdgeAndVisit(classDeclaration, methodDeclaration);
+            this.outputOwningEdgeAndVisit(classDeclaration, methodDeclaration, null);
         }
 
         for (FieldDeclaration fieldDeclaration: classDeclaration.getFieldDeclarations()) {
-            this.outputOwningEdgeAndVisit(classDeclaration, fieldDeclaration);
+            this.outputOwningEdgeAndVisit(classDeclaration, fieldDeclaration, null);
         }
     }
 
@@ -41,36 +41,37 @@ public final class ASTDumper extends ASTDumperBase {
     protected void visit(FieldDeclaration fieldDeclaration, Void context) {
         this.outputVariableDeclarationNode(fieldDeclaration);
 
-        this.outputOwningEdgeAndVisit(fieldDeclaration, fieldDeclaration.getType());
+        this.outputOwningEdgeAndVisit(fieldDeclaration, fieldDeclaration.getType(), "type");
     }
 
     @Override
     protected void visit(MainMethodDeclaration methodDeclaration, Void context) {
         this.outputSubroutineDeclarationNode(methodDeclaration);
 
-        this.outputOwningEdgeAndVisit(methodDeclaration, methodDeclaration.getReturnType());
-        this.outputOwningEdgeAndVisit(methodDeclaration, methodDeclaration.getArgumentsParameter());
-        this.outputOwningEdgeAndVisit(methodDeclaration, methodDeclaration.getBody());
+        this.outputOwningEdgeAndVisit(methodDeclaration, methodDeclaration.getReturnType(), "return type");
+        this.outputOwningEdgeAndVisit(methodDeclaration, methodDeclaration.getArgumentsParameter(), "arguments");
+        this.outputOwningEdgeAndVisit(methodDeclaration, methodDeclaration.getBody(), "body");
     }
 
     @Override
     protected void visit(MethodDeclaration methodDeclaration, Void context) {
         this.outputSubroutineDeclarationNode(methodDeclaration);
 
-        this.outputOwningEdgeAndVisit(methodDeclaration, methodDeclaration.getReturnType());
+        this.outputOwningEdgeAndVisit(methodDeclaration, methodDeclaration.getReturnType(), "return type");
 
         for (VariableDeclaration parameterDeclaration : methodDeclaration.getParameters()) {
-            this.outputOwningEdgeAndVisit(methodDeclaration, parameterDeclaration);
+            int index = methodDeclaration.getParameters().indexOf(parameterDeclaration);
+            this.outputOwningEdgeAndVisit(methodDeclaration, parameterDeclaration, "parameter #" + index);
         }
 
-        this.outputOwningEdgeAndVisit(methodDeclaration, methodDeclaration.getBody());
+        this.outputOwningEdgeAndVisit(methodDeclaration, methodDeclaration.getBody(), "body");
     }
 
     @Override
     protected void visit(ParameterDeclaration parameterDeclaration, Void context) {
         this.outputVariableDeclarationNode(parameterDeclaration);
 
-        this.outputOwningEdgeAndVisit(parameterDeclaration, parameterDeclaration.getType());
+        this.outputOwningEdgeAndVisit(parameterDeclaration, parameterDeclaration.getType(), "type");
     }
 
     @Override
@@ -91,31 +92,31 @@ public final class ASTDumper extends ASTDumperBase {
     protected void visit(Statement.IfStatement statement, Void context) {
         this.outputStatementNode(statement);
 
-        this.outputOwningEdgeAndVisit(statement, statement.getCondition());
-        this.outputOwningEdgeAndVisit(statement, statement.getStatementIfTrue());
-        this.outputOwningEdgeAndVisit(statement, statement.getStatementIfFalse().orElse(null));
+        this.outputOwningEdgeAndVisit(statement, statement.getCondition(), "condition");
+        this.outputOwningEdgeAndVisit(statement, statement.getStatementIfTrue(), "true");
+        this.outputOwningEdgeAndVisit(statement, statement.getStatementIfFalse().orElse(null), "false");
     }
 
     @Override
     protected void visit(Statement.WhileStatement statement, Void context) {
         this.outputStatementNode(statement);
 
-        this.outputOwningEdgeAndVisit(statement, statement.getCondition());
-        this.outputOwningEdgeAndVisit(statement, statement.getStatementWhileTrue());
+        this.outputOwningEdgeAndVisit(statement, statement.getCondition(), "condition");
+        this.outputOwningEdgeAndVisit(statement, statement.getStatementWhileTrue(), "statement");
     }
 
     @Override
     protected void visit(Statement.ExpressionStatement statement, Void context) {
         this.outputStatementNode(statement);
 
-        this.outputOwningEdgeAndVisit(statement, statement.getExpression());
+        this.outputOwningEdgeAndVisit(statement, statement.getExpression(), null);
     }
 
     @Override
     protected void visit(Statement.ReturnStatement statement, Void context) {
         this.outputStatementNode(statement);
 
-        this.outputOwningEdgeAndVisit(statement, statement.getValue().orElse(null));
+        this.outputOwningEdgeAndVisit(statement, statement.getValue().orElse(null), null);
     }
 
     @Override
@@ -127,8 +128,8 @@ public final class ASTDumper extends ASTDumperBase {
     protected void visit(Statement.LocalVariableDeclarationStatement statement, Void context) {
         this.outputVariableDeclarationNode(statement);
 
-        this.outputOwningEdgeAndVisit(statement, statement.getType());
-        this.outputOwningEdgeAndVisit(statement, statement.getValue().orElse(null));
+        this.outputOwningEdgeAndVisit(statement, statement.getType(), "type");
+        this.outputOwningEdgeAndVisit(statement, statement.getValue().orElse(null), "value");
     }
 
     @Override
@@ -136,7 +137,8 @@ public final class ASTDumper extends ASTDumperBase {
         this.outputStatementNode(block);
 
         for (Statement statement : block.getStatements()) {
-            this.outputOwningEdgeAndVisit(block, statement);
+            int index = block.getStatements().indexOf(statement);
+            this.outputOwningEdgeAndVisit(block, statement, "statement #" + index);
         }
     }
 
@@ -144,15 +146,15 @@ public final class ASTDumper extends ASTDumperBase {
     protected void visit(Expression.BinaryOperation expression, Void context) {
         this.outputExpressionNode(expression);
 
-        this.outputOwningEdgeAndVisit(expression, expression.getLeft());
-        this.outputOwningEdgeAndVisit(expression, expression.getRight());
+        this.outputOwningEdgeAndVisit(expression, expression.getLeft(), "left");
+        this.outputOwningEdgeAndVisit(expression, expression.getRight(), "right");
     }
 
     @Override
     protected void visit(Expression.UnaryOperation expression, Void context) {
         this.outputExpressionNode(expression);
 
-        this.outputOwningEdgeAndVisit(expression, expression.getOther());
+        this.outputOwningEdgeAndVisit(expression, expression.getOther(), null);
     }
 
     @Override
@@ -174,11 +176,12 @@ public final class ASTDumper extends ASTDumperBase {
     protected void visit(Expression.MethodInvocation expression, Void context) {
         this.outputExpressionNode(expression);
 
-        this.outputOwningEdgeAndVisit(expression, expression.getContext().orElse(null));
-        this.outputOwningEdgeAndResolve(expression, expression.getMethodReference());
+        this.outputOwningEdgeAndVisit(expression, expression.getContext().orElse(null), "context");
+        this.outputOwningEdgeAndResolve(expression, expression.getMethodReference(), "method");
 
         for (Expression argument : expression.getArguments()) {
-            this.outputOwningEdgeAndVisit(expression, argument);
+            int index = expression.getArguments().indexOf(argument);
+            this.outputOwningEdgeAndVisit(expression, argument, "argument #" + index);
         }
     }
 
@@ -186,23 +189,23 @@ public final class ASTDumper extends ASTDumperBase {
     protected void visit(Expression.ExplicitFieldAccess expression, Void context) {
         this.outputExpressionNode(expression);
 
-        this.outputOwningEdgeAndVisit(expression, expression.getContext());
-        this.outputOwningEdgeAndResolve(expression, expression.getFieldReference());
+        this.outputOwningEdgeAndVisit(expression, expression.getContext(), "context");
+        this.outputOwningEdgeAndResolve(expression, expression.getFieldReference(), "field");
     }
 
     @Override
     protected void visit(Expression.ArrayElementAccess expression, Void context) {
         this.outputExpressionNode(expression);
 
-        this.outputOwningEdgeAndVisit(expression, expression.getContext());
-        this.outputOwningEdgeAndVisit(expression, expression.getIndex());
+        this.outputOwningEdgeAndVisit(expression, expression.getContext(), "context");
+        this.outputOwningEdgeAndVisit(expression, expression.getIndex(), "index");
     }
 
     @Override
     protected void visit(Expression.VariableAccess expression, Void context) {
         this.outputExpressionNode(expression);
 
-        this.outputOwningEdgeAndResolve(expression, expression.getVariableReference());
+        this.outputOwningEdgeAndResolve(expression, expression.getVariableReference(), "variable");
     }
 
     @Override
@@ -214,22 +217,22 @@ public final class ASTDumper extends ASTDumperBase {
     protected void visit(Expression.NewObjectCreation expression, Void context) {
         this.outputExpressionNode(expression);
 
-        this.outputOwningEdgeAndResolve(expression, expression.getClassReference());
+        this.outputOwningEdgeAndResolve(expression, expression.getClassReference(), "class");
     }
 
     @Override
     protected void visit(Expression.NewArrayCreation expression, Void context) {
         this.outputExpressionNode(expression);
 
-        this.outputOwningEdgeAndResolve(expression, expression.getBasicTypeReference());
-        this.outputOwningEdgeAndVisit(expression, expression.getPrimaryDimension());
+        this.outputOwningEdgeAndResolve(expression, expression.getBasicTypeReference(), "type");
+        this.outputOwningEdgeAndVisit(expression, expression.getPrimaryDimension(), "dimension");
     }
 
     @Override
     protected void visit(Expression.SystemOutPrintlnExpression expression, Void context) {
         this.outputSystemCallNode(expression);
 
-        this.outputOwningEdgeAndVisit(expression, expression.getArgument());
+        this.outputOwningEdgeAndVisit(expression, expression.getArgument(), null);
     }
 
     @Override
@@ -241,7 +244,7 @@ public final class ASTDumper extends ASTDumperBase {
     protected void visit(Expression.SystemOutWriteExpression expression, Void context) {
         this.outputSystemCallNode(expression);
 
-        this.outputOwningEdgeAndVisit(expression, expression.getArgument());
+        this.outputOwningEdgeAndVisit(expression, expression.getArgument(), null);
     }
 
     @Override
