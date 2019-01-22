@@ -458,7 +458,12 @@ public class Parser {
         if try self.lookahead([.integer, .minus]) {
             let number = try self.parseInteger()
 
-            return .numbered(number)
+            if number >= 0 {
+                return .regular(number)
+            }
+            else {
+                return .phi(-number)
+            }
         }
         else if try self.lookahead(.dollar) {
             try self.consume(.dollar)

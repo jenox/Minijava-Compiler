@@ -29,8 +29,8 @@ class AssemblerGenerator {
             // 2 slots reserved:
             //  - return address
             //  - old base pointer? (pushq %rbp in prologue)
-            self.table[.numbered(index)] = 16 + 8 * index
-            self.lastWrittenWidth[.numbered(index)] = width
+            self.table[.regular(index)] = 16 + 8 * index
+            self.lastWrittenWidth[.regular(index)] = width
         }
 
         if let width = function.returnValueWidth {
