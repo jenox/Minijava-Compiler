@@ -10,6 +10,7 @@
 		AA067C1821CFFF84009CA48A /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA067C1721CFFF84009CA48A /* main.swift */; };
 		AAD777BB21D128AB001F01A1 /* Lexer.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAD777BA21D128AB001F01A1 /* Lexer.swift */; };
 		AAD777BD21D128C3001F01A1 /* Token.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAD777BC21D128C3001F01A1 /* Token.swift */; };
+		CB47C1EA21F73BA1002E3549 /* FunctionValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB47C1E921F73BA1002E3549 /* FunctionValidator.swift */; };
 		CB73628721D7FE9700A49E17 /* Parser.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB73628621D7FE9700A49E17 /* Parser.swift */; };
 		CB73628921DA89E400A49E17 /* AssemblerGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB73628821DA89E400A49E17 /* AssemblerGenerator.swift */; };
 		CB73628E21E0048E00A49E17 /* TokenType.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB73628D21E0048E00A49E17 /* TokenType.swift */; };
@@ -34,6 +35,7 @@
 		AA067C1721CFFF84009CA48A /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		AAD777BA21D128AB001F01A1 /* Lexer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Lexer.swift; sourceTree = "<group>"; };
 		AAD777BC21D128C3001F01A1 /* Token.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Token.swift; sourceTree = "<group>"; };
+		CB47C1E921F73BA1002E3549 /* FunctionValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FunctionValidator.swift; sourceTree = "<group>"; };
 		CB73628621D7FE9700A49E17 /* Parser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Parser.swift; sourceTree = "<group>"; };
 		CB73628821DA89E400A49E17 /* AssemblerGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssemblerGenerator.swift; sourceTree = "<group>"; };
 		CB73628D21E0048E00A49E17 /* TokenType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenType.swift; sourceTree = "<group>"; };
@@ -90,6 +92,7 @@
 				CB73629F21E02B7800A49E17 /* AST */,
 				CB7362A021E02B7F00A49E17 /* Parser */,
 				CB73628821DA89E400A49E17 /* AssemblerGenerator.swift */,
+				CB47C1E921F73BA1002E3549 /* FunctionValidator.swift */,
 				CB73629A21E01AF100A49E17 /* Misc.swift */,
 			);
 			path = Sources;
@@ -206,6 +209,7 @@
 			files = (
 				CB73629421E006FB00A49E17 /* TokenContext.swift in Sources */,
 				CB73628E21E0048E00A49E17 /* TokenType.swift in Sources */,
+				CB47C1EA21F73BA1002E3549 /* FunctionValidator.swift in Sources */,
 				CBD459AA21E50AEF00AF5F9D /* ParserError.swift in Sources */,
 				CB96B9D821ED1171003D7AEE /* Operands.swift in Sources */,
 				CB73629B21E01AF100A49E17 /* Misc.swift in Sources */,
