@@ -33,8 +33,18 @@ public enum Argument<RegisterType: Register>: CustomStringConvertible {
             if value.register == register {
                 self = .constant(ConstantValue(value: constant, width: value.width))
             }
-        case .memory:
-            break
+        case .memory(let value):
+            switch value.address {
+            case .relative:
+                break
+            case .indexed(base: let base, index: let index, scale: let scale, offset: let offset):
+                if index.register == register {
+                    let address = MemoryAddress.relative(base: base, offset: offset + scale * constant)
+                    let value = MemoryValue(address: address, width: value.width)
+
+                    self = .memory(value)
+                }
+            }
         }
     }
 
