@@ -14,16 +14,35 @@ public protocol InstructionProtocol: CustomStringConvertible {
     var arguments: [Argument<Pseudoregister>] { get }
     var results: [Result<Pseudoregister>] { get }
 
-    var pseudoregisters: Set<Pseudoregister> { get }
+    var pseudoregisters: (read: Set<Pseudoregister>, written: Set<Pseudoregister>) { get }
 }
 
 extension InstructionProtocol {
-    public var pseudoregisters: Set<Pseudoregister> {
-        var pseudoregisters: Set<Pseudoregister> = []
-        pseudoregisters.formUnion(self.arguments.flatMap({ $0.registers }))
-        pseudoregisters.formUnion(self.results.flatMap({ $0.registers }))
+    public var pseudoregisters: (read: Set<Pseudoregister>, written: Set<Pseudoregister>) {
+        var read: Set<Pseudoregister> = []
+        var written: Set<Pseudoregister> = []
 
-        return pseudoregisters
+        for argument in self.arguments {
+            switch argument {
+            case .constant:
+                break
+            case .register(let value):
+                read.insert(value.register)
+            case .memory(let value):
+                read.formUnion(value.registers)
+            }
+        }
+
+        for result in self.results {
+            switch result {
+            case .register(let value):
+                written.insert(value.register)
+            case .memory(let value):
+                read.formUnion(value.registers)
+            }
+        }
+
+        return (read: read, written: written)
     }
 }
 
