@@ -9,14 +9,14 @@
 import Swift
 
 
-public class ConstantFolder {
+public class ConstantPropagator {
     public init(function: Function) {
         self.function = function
     }
 
     private let function: Function
 
-    public func fold() {
+    public func propagate() {
         let writers = self.getInstructionsWritingPseudoregisters()
 
         var substitutionsToBeMade: [Pseudoregister: Int] = [:]

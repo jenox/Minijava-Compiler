@@ -37,7 +37,7 @@ do {
     var lines: [String] = []
 
     for function in try parser.parseFunctions() {
-        ConstantFolder(function: function).fold()
+        ConstantPropagator(function: function).propagate()
 
 //        FunctionValidator(function: function).validate()
 
