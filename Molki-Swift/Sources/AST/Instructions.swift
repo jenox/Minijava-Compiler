@@ -11,11 +11,31 @@ import Swift
 
 
 public protocol InstructionProtocol: CustomStringConvertible {
-    var arguments: [Argument<Pseudoregister>] { get }
-    var results: [Result<Pseudoregister>] { get }
+    func apply(_ closure: (inout Argument<Pseudoregister>) -> Void)
+    func apply(_ closure: (inout Result<Pseudoregister>) -> Void)
 }
 
 extension InstructionProtocol {
+    public var arguments: [Argument<Pseudoregister>] {
+        var arguments: [Argument<Pseudoregister>] = []
+
+        self.apply({ argument in
+            arguments.append(argument)
+        })
+
+        return arguments
+    }
+
+    public var results: [Result<Pseudoregister>] {
+        var results: [Result<Pseudoregister>] = []
+
+        self.apply({ result in
+            results.append(result)
+        })
+
+        return results
+    }
+
     public var pseudoregisters: (read: Set<Pseudoregister>, written: Set<Pseudoregister>) {
         var read: Set<Pseudoregister> = []
         var written: Set<Pseudoregister> = []
@@ -57,12 +77,12 @@ public enum Instruction: InstructionProtocol {
     case numericNegationInstruction(NumericNegationInstruction)
     case logicalNegationInstruction(LogicalNegationInstruction)
 
-    public var arguments: [Argument<Pseudoregister>] {
-        return self.rawInstruction.arguments
+    public func apply(_ closure: (inout Argument<Pseudoregister>) -> Void) {
+        self.rawInstruction.apply(closure)
     }
 
-    public var results: [Result<Pseudoregister>] {
-        return self.rawInstruction.results
+    public func apply(_ closure: (inout Result<Pseudoregister>) -> Void) {
+        self.rawInstruction.apply(closure)
     }
 
     public var description: String {
@@ -107,12 +127,10 @@ public class LabelInstruction: InstructionProtocol {
 
     private(set) public var name: String
 
-    public var arguments: [Argument<Pseudoregister>] {
-        return []
+    public func apply(_ closure: (inout Argument<Pseudoregister>) -> Void) {
     }
 
-    public var results: [Result<Pseudoregister>] {
-        return []
+    public func apply(_ closure: (inout Result<Pseudoregister>) -> Void) {
     }
 
     public var description: String {
@@ -130,12 +148,10 @@ public class JumpInstruction: InstructionProtocol {
     private(set) public var target: String
     private(set) public var condition: JumpCondition
 
-    public var arguments: [Argument<Pseudoregister>] {
-        return []
+    public func apply(_ closure: (inout Argument<Pseudoregister>) -> Void) {
     }
 
-    public var results: [Result<Pseudoregister>] {
-        return []
+    public func apply(_ closure: (inout Result<Pseudoregister>) -> Void) {
     }
 
     public var description: String {
@@ -167,8 +183,16 @@ public class CallInstruction: InstructionProtocol {
     private(set) public var arguments: [Argument<Pseudoregister>]
     private(set) public var result: Result<Pseudoregister>?
 
-    public var results: [Result<Pseudoregister>] {
-        return self.result.flatMap({ [$0] }) ?? []
+    public func apply(_ closure: (inout Argument<Pseudoregister>) -> Void) {
+        for index in self.arguments.indices {
+            closure(&self.arguments[index])
+        }
+    }
+
+    public func apply(_ closure: (inout Result<Pseudoregister>) -> Void) {
+        if self.result != nil {
+            closure(&self.result!)
+        }
     }
 
     public var description: String {
@@ -202,12 +226,12 @@ public class MoveInstruction: InstructionProtocol {
     private(set) public var source: Argument<Pseudoregister>
     private(set) public var target: Result<Pseudoregister>
 
-    public var arguments: [Argument<Pseudoregister>] {
-        return [self.source]
+    public func apply(_ closure: (inout Argument<Pseudoregister>) -> Void) {
+        closure(&self.source)
     }
 
-    public var results: [Result<Pseudoregister>] {
-        return [self.target]
+    public func apply(_ closure: (inout Result<Pseudoregister>) -> Void) {
+        closure(&self.target)
     }
 
     public var description: String {
@@ -233,12 +257,12 @@ public class ComparisonInstruction: InstructionProtocol {
     private(set) public var lhs: Argument<Pseudoregister>
     private(set) public var rhs: Argument<Pseudoregister>
 
-    public var arguments: [Argument<Pseudoregister>] {
-        return [self.lhs, self.rhs]
+    public func apply(_ closure: (inout Argument<Pseudoregister>) -> Void) {
+        closure(&self.lhs)
+        closure(&self.rhs)
     }
 
-    public var results: [Result<Pseudoregister>] {
-        return []
+    public func apply(_ closure: (inout Result<Pseudoregister>) -> Void) {
     }
 
     public var description: String {
@@ -265,12 +289,13 @@ public class AdditionInstruction: InstructionProtocol {
     private(set) public var addend: Argument<Pseudoregister>
     private(set) public var sum: Result<Pseudoregister>
 
-    public var arguments: [Argument<Pseudoregister>] {
-        return [self.augend, self.addend]
+    public func apply(_ closure: (inout Argument<Pseudoregister>) -> Void) {
+        closure(&self.augend)
+        closure(&self.addend)
     }
 
-    public var results: [Result<Pseudoregister>] {
-        return [self.sum]
+    public func apply(_ closure: (inout Result<Pseudoregister>) -> Void) {
+        closure(&self.sum)
     }
 
     public var description: String {
@@ -292,12 +317,13 @@ public class SubtractionInstruction: InstructionProtocol {
     private(set) public var subtrahend: Argument<Pseudoregister>
     private(set) public var difference: Result<Pseudoregister>
 
-    public var arguments: [Argument<Pseudoregister>] {
-        return [self.minuend, self.subtrahend]
+    public func apply(_ closure: (inout Argument<Pseudoregister>) -> Void) {
+        closure(&self.minuend)
+        closure(&self.subtrahend)
     }
 
-    public var results: [Result<Pseudoregister>] {
-        return [self.difference]
+    public func apply(_ closure: (inout Result<Pseudoregister>) -> Void) {
+        closure(&self.difference)
     }
 
     public var description: String {
@@ -319,12 +345,13 @@ public class MultiplicationInstruction: InstructionProtocol {
     private(set) public var multiplier: Argument<Pseudoregister>
     private(set) public var product: Result<Pseudoregister>
 
-    public var arguments: [Argument<Pseudoregister>] {
-        return [self.multiplicand, self.multiplier]
+    public func apply(_ closure: (inout Argument<Pseudoregister>) -> Void) {
+        closure(&self.multiplicand)
+        closure(&self.multiplier)
     }
 
-    public var results: [Result<Pseudoregister>] {
-        return [self.product]
+    public func apply(_ closure: (inout Result<Pseudoregister>) -> Void) {
+        closure(&self.product)
     }
 
     public var description: String {
@@ -349,12 +376,14 @@ public class DivisionInstruction: InstructionProtocol {
     private(set) public var quotient: Result<Pseudoregister>
     private(set) public var remainder: Result<Pseudoregister>
 
-    public var arguments: [Argument<Pseudoregister>] {
-        return [self.dividend, self.divisor]
+    public func apply(_ closure: (inout Argument<Pseudoregister>) -> Void) {
+        closure(&self.dividend)
+        closure(&self.divisor)
     }
 
-    public var results: [Result<Pseudoregister>] {
-        return [self.quotient, self.remainder]
+    public func apply(_ closure: (inout Result<Pseudoregister>) -> Void) {
+        closure(&self.quotient)
+        closure(&self.remainder)
     }
 
     public var description: String {
@@ -378,12 +407,12 @@ public class NumericNegationInstruction: InstructionProtocol {
     private(set) public var source: Argument<Pseudoregister>
     private(set) public var target: Result<Pseudoregister>
 
-    public var arguments: [Argument<Pseudoregister>] {
-        return [self.source]
+    public func apply(_ closure: (inout Argument<Pseudoregister>) -> Void) {
+        closure(&self.source)
     }
 
-    public var results: [Result<Pseudoregister>] {
-        return [self.target]
+    public func apply(_ closure: (inout Result<Pseudoregister>) -> Void) {
+        closure(&self.target)
     }
 
     public var description: String {
@@ -407,12 +436,12 @@ public class LogicalNegationInstruction: InstructionProtocol {
     private(set) public var source: Argument<Pseudoregister>
     private(set) public var target: Result<Pseudoregister>
 
-    public var arguments: [Argument<Pseudoregister>] {
-        return [self.source]
+    public func apply(_ closure: (inout Argument<Pseudoregister>) -> Void) {
+        closure(&self.source)
     }
 
-    public var results: [Result<Pseudoregister>] {
-        return [self.target]
+    public func apply(_ closure: (inout Result<Pseudoregister>) -> Void) {
+        closure(&self.target)
     }
 
     public var description: String {
