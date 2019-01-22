@@ -13,8 +13,6 @@ import Swift
 public protocol InstructionProtocol: CustomStringConvertible {
     var arguments: [Argument<Pseudoregister>] { get }
     var results: [Result<Pseudoregister>] { get }
-
-    var pseudoregisters: (read: Set<Pseudoregister>, written: Set<Pseudoregister>) { get }
 }
 
 extension InstructionProtocol {
@@ -102,8 +100,12 @@ public enum Instruction: InstructionProtocol {
 
 
 
-public struct LabelInstruction: InstructionProtocol {
-    public var name: String
+public class LabelInstruction: InstructionProtocol {
+    public init(name: String) {
+        self.name = name
+    }
+
+    private(set) public var name: String
 
     public var arguments: [Argument<Pseudoregister>] {
         return []
@@ -119,9 +121,14 @@ public struct LabelInstruction: InstructionProtocol {
 }
 
 // jmp, jl, jle, jg, jge, je, jne
-public struct JumpInstruction: InstructionProtocol {
-    public var target: String
-    public var condition: JumpCondition
+public class JumpInstruction: InstructionProtocol {
+    public init(target: String, condition: JumpCondition) {
+        self.target = target
+        self.condition = condition
+    }
+
+    private(set) public var target: String
+    private(set) public var condition: JumpCondition
 
     public var arguments: [Argument<Pseudoregister>] {
         return []
@@ -149,10 +156,16 @@ public enum JumpCondition: String {
 // call
 // Syntax: call f [ a | b | c | ... ] -> z
 // Semantic: z = f(a, b, c, ...)
-public struct CallInstruction: InstructionProtocol {
-    public var target: String
-    public var arguments: [Argument<Pseudoregister>]
-    public var result: Result<Pseudoregister>?
+public class CallInstruction: InstructionProtocol {
+    public init(target: String, arguments: [Argument<Pseudoregister>], result: Result<Pseudoregister>?) {
+        self.target = target
+        self.arguments = arguments
+        self.result = result
+    }
+
+    private(set) public var target: String
+    private(set) public var arguments: [Argument<Pseudoregister>]
+    private(set) public var result: Result<Pseudoregister>?
 
     public var results: [Result<Pseudoregister>] {
         return self.result.flatMap({ [$0] }) ?? []
@@ -178,10 +191,16 @@ public struct CallInstruction: InstructionProtocol {
 // mov
 // Syntax: movx a -> b
 // Semantic: b := a
-public struct MoveInstruction: InstructionProtocol {
-    public var width: RegisterWidth
-    public var source: Argument<Pseudoregister>
-    public var target: Result<Pseudoregister>
+public class MoveInstruction: InstructionProtocol {
+    public init(width: RegisterWidth, source: Argument<Pseudoregister>, target: Result<Pseudoregister>) {
+        self.width = width
+        self.source = source
+        self.target = target
+    }
+
+    private(set) public var width: RegisterWidth
+    private(set) public var source: Argument<Pseudoregister>
+    private(set) public var target: Result<Pseudoregister>
 
     public var arguments: [Argument<Pseudoregister>] {
         return [self.source]
@@ -203,10 +222,16 @@ public struct MoveInstruction: InstructionProtocol {
 
 // Synax: cmpx [ a | b ]
 // Semantic: flags := a ? b
-public struct ComparisonInstruction: InstructionProtocol {
-    public var width: RegisterWidth
-    public var lhs: Argument<Pseudoregister>
-    public var rhs: Argument<Pseudoregister>
+public class ComparisonInstruction: InstructionProtocol {
+    public init(width: RegisterWidth, lhs: Argument<Pseudoregister>, rhs: Argument<Pseudoregister>) {
+        self.width = width
+        self.lhs = lhs
+        self.rhs = rhs
+    }
+
+    private(set) public var width: RegisterWidth
+    private(set) public var lhs: Argument<Pseudoregister>
+    private(set) public var rhs: Argument<Pseudoregister>
 
     public var arguments: [Argument<Pseudoregister>] {
         return [self.lhs, self.rhs]
@@ -229,10 +254,16 @@ public struct ComparisonInstruction: InstructionProtocol {
 // add
 // Syntax: add [ a | b ] -> c
 // Semantic: c := a + b
-public struct AdditionInstruction: InstructionProtocol {
-    public var augend: Argument<Pseudoregister>
-    public var addend: Argument<Pseudoregister>
-    public var sum: Result<Pseudoregister>
+public class AdditionInstruction: InstructionProtocol {
+    public init(augend: Argument<Pseudoregister>, addend: Argument<Pseudoregister>, sum: Result<Pseudoregister>) {
+        self.augend = augend
+        self.addend = addend
+        self.sum = sum
+    }
+
+    private(set) public var augend: Argument<Pseudoregister>
+    private(set) public var addend: Argument<Pseudoregister>
+    private(set) public var sum: Result<Pseudoregister>
 
     public var arguments: [Argument<Pseudoregister>] {
         return [self.augend, self.addend]
@@ -250,10 +281,16 @@ public struct AdditionInstruction: InstructionProtocol {
 // sub
 // Syntax: sub [ a | b ] -> c
 // Semantic: c := a - b
-public struct SubtractionInstruction: InstructionProtocol {
-    public var minuend: Argument<Pseudoregister>
-    public var subtrahend: Argument<Pseudoregister>
-    public var difference: Result<Pseudoregister>
+public class SubtractionInstruction: InstructionProtocol {
+    public init(minuend: Argument<Pseudoregister>, subtrahend: Argument<Pseudoregister>, difference: Result<Pseudoregister>) {
+        self.minuend = minuend
+        self.subtrahend = subtrahend
+        self.difference = difference
+    }
+
+    private(set) public var minuend: Argument<Pseudoregister>
+    private(set) public var subtrahend: Argument<Pseudoregister>
+    private(set) public var difference: Result<Pseudoregister>
 
     public var arguments: [Argument<Pseudoregister>] {
         return [self.minuend, self.subtrahend]
@@ -271,10 +308,16 @@ public struct SubtractionInstruction: InstructionProtocol {
 // imul
 // Syntax: mul [ a | b ] -> c
 // Semantic: c := a * b
-public struct MultiplicationInstruction: InstructionProtocol {
-    public var multiplicand: Argument<Pseudoregister>
-    public var multiplier: Argument<Pseudoregister>
-    public var product: Result<Pseudoregister>
+public class MultiplicationInstruction: InstructionProtocol {
+    public init(multiplicand: Argument<Pseudoregister>, multiplier: Argument<Pseudoregister>, product: Result<Pseudoregister>) {
+        self.multiplicand = multiplicand
+        self.multiplier = multiplier
+        self.product = product
+    }
+
+    private(set) public var multiplicand: Argument<Pseudoregister>
+    private(set) public var multiplier: Argument<Pseudoregister>
+    private(set) public var product: Result<Pseudoregister>
 
     public var arguments: [Argument<Pseudoregister>] {
         return [self.multiplicand, self.multiplier]
@@ -293,11 +336,18 @@ public struct MultiplicationInstruction: InstructionProtocol {
 // Syntax: div [ a | b ] -> [ c | d ]
 // Semantic: c := a / b
 // Semantic: d := a % b
-public struct DivisionInstruction: InstructionProtocol {
-    public var dividend: Argument<Pseudoregister>
-    public var divisor: Argument<Pseudoregister>
-    public var quotient: Result<Pseudoregister>
-    public var remainder: Result<Pseudoregister>
+public class DivisionInstruction: InstructionProtocol {
+    public init(dividend: Argument<Pseudoregister>, divisor: Argument<Pseudoregister>, quotient: Result<Pseudoregister>, remainder: Result<Pseudoregister>) {
+        self.dividend = dividend
+        self.divisor = divisor
+        self.quotient = quotient
+        self.remainder = remainder
+    }
+
+    private(set) public var dividend: Argument<Pseudoregister>
+    private(set) public var divisor: Argument<Pseudoregister>
+    private(set) public var quotient: Result<Pseudoregister>
+    private(set) public var remainder: Result<Pseudoregister>
 
     public var arguments: [Argument<Pseudoregister>] {
         return [self.dividend, self.divisor]
@@ -319,9 +369,14 @@ public struct DivisionInstruction: InstructionProtocol {
 // Syntax: neg a
 // Semantic: a := -a
 // width is assumed to be 32bit
-public struct NumericNegationInstruction: InstructionProtocol {
-    public var source: Argument<Pseudoregister>
-    public var target: Result<Pseudoregister>
+public class NumericNegationInstruction: InstructionProtocol {
+    public init(source: Argument<Pseudoregister>, target: Result<Pseudoregister>) {
+        self.source = source
+        self.target = target
+    }
+
+    private(set) public var source: Argument<Pseudoregister>
+    private(set) public var target: Result<Pseudoregister>
 
     public var arguments: [Argument<Pseudoregister>] {
         return [self.source]
@@ -343,9 +398,14 @@ public struct NumericNegationInstruction: InstructionProtocol {
 // width is assumbed to be 8bit
 // Syntax: not -> a
 // Semantic: a := !a
-public struct LogicalNegationInstruction: InstructionProtocol {
-    public var source: Argument<Pseudoregister>
-    public var target: Result<Pseudoregister>
+public class LogicalNegationInstruction: InstructionProtocol {
+    public init(source: Argument<Pseudoregister>, target: Result<Pseudoregister>) {
+        self.source = source
+        self.target = target
+    }
+
+    private(set) public var source: Argument<Pseudoregister>
+    private(set) public var target: Result<Pseudoregister>
 
     public var arguments: [Argument<Pseudoregister>] {
         return [self.source]
