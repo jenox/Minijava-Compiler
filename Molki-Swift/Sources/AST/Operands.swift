@@ -14,17 +14,6 @@ public enum Argument<RegisterType: Register>: CustomStringConvertible {
     case register(RegisterValue<RegisterType>)
     case memory(MemoryValue<RegisterType>)
 
-    public func matches(_ width: RegisterWidth) -> Bool {
-        switch self {
-        case .constant(_):
-            return true
-        case .register(let value):
-            return value.width == width
-        case .memory(_):
-            return true
-        }
-    }
-
     public var width: RegisterWidth {
         switch self {
         case .constant(let value):
@@ -51,15 +40,6 @@ public enum Argument<RegisterType: Register>: CustomStringConvertible {
 public enum Result<RegisterType: Register>: CustomStringConvertible {
     case register(RegisterValue<RegisterType>)
     case memory(MemoryValue<RegisterType>)
-
-    public func matches(_ width: RegisterWidth) -> Bool {
-        switch self {
-        case .register(let value):
-            return value.width == width
-        case .memory(_):
-            return true
-        }
-    }
 
     public var width: RegisterWidth {
         switch self {
