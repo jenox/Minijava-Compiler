@@ -38,6 +38,7 @@ do {
 
     for function in try parser.parseFunctions() {
         ConstantPropagator(function: function).propagate()
+        DeadCodeEliminator(function: function).eliminateDeadCode()
 
 //        FunctionValidator(function: function).validate()
 

@@ -13,6 +13,8 @@ import Swift
 public protocol InstructionProtocol: CustomStringConvertible {
     func apply(_ closure: (inout Argument<Pseudoregister>) -> Void)
     func apply(_ closure: (inout Result<Pseudoregister>) -> Void)
+
+    var hasEffectsOtherThanWritingPseudoregisters: Bool { get }
 }
 
 extension InstructionProtocol {
@@ -91,6 +93,10 @@ public enum Instruction: InstructionProtocol {
         self.rawInstruction.apply(closure)
     }
 
+    public var hasEffectsOtherThanWritingPseudoregisters: Bool {
+        return self.rawInstruction.hasEffectsOtherThanWritingPseudoregisters
+    }
+
     public var description: String {
         return self.rawInstruction.description
     }
@@ -149,6 +155,10 @@ public class LabelInstruction: InstructionProtocol {
     public func apply(_ closure: (inout Result<Pseudoregister>) -> Void) {
     }
 
+    public var hasEffectsOtherThanWritingPseudoregisters: Bool {
+        return true // can be used as jump target
+    }
+
     public var description: String {
         return "\(self.name):"
     }
@@ -168,6 +178,10 @@ public class JumpInstruction: InstructionProtocol {
     }
 
     public func apply(_ closure: (inout Result<Pseudoregister>) -> Void) {
+    }
+
+    public var hasEffectsOtherThanWritingPseudoregisters: Bool {
+        return true
     }
 
     public var description: String {
@@ -211,6 +225,10 @@ public class CallInstruction: InstructionProtocol {
         }
     }
 
+    public var hasEffectsOtherThanWritingPseudoregisters: Bool {
+        return true
+    }
+
     public var description: String {
         var description = "call \(self.target)"
 
@@ -250,6 +268,15 @@ public class MoveInstruction: InstructionProtocol {
         closure(&self.target)
     }
 
+    public var hasEffectsOtherThanWritingPseudoregisters: Bool {
+        switch self.target {
+        case .register:
+            return false
+        case .memory:
+            return true
+        }
+    }
+
     public var description: String {
         switch self.width {
         case .byte: return "movb \(self.source) -> \(self.target)"
@@ -279,6 +306,10 @@ public class ComparisonInstruction: InstructionProtocol {
     }
 
     public func apply(_ closure: (inout Result<Pseudoregister>) -> Void) {
+    }
+
+    public var hasEffectsOtherThanWritingPseudoregisters: Bool {
+        return true
     }
 
     public var description: String {
@@ -314,6 +345,10 @@ public class AdditionInstruction: InstructionProtocol {
         closure(&self.sum)
     }
 
+    public var hasEffectsOtherThanWritingPseudoregisters: Bool {
+        return true // flags
+    }
+
     public var description: String {
         return "addl [ \(self.augend) | \(self.addend) ] -> \(self.sum)"
     }
@@ -342,6 +377,10 @@ public class SubtractionInstruction: InstructionProtocol {
         closure(&self.difference)
     }
 
+    public var hasEffectsOtherThanWritingPseudoregisters: Bool {
+        return true // flags
+    }
+
     public var description: String {
         return "subl [ \(self.minuend) | \(self.subtrahend) ] -> \(self.difference)"
     }
@@ -368,6 +407,10 @@ public class MultiplicationInstruction: InstructionProtocol {
 
     public func apply(_ closure: (inout Result<Pseudoregister>) -> Void) {
         closure(&self.product)
+    }
+
+    public var hasEffectsOtherThanWritingPseudoregisters: Bool {
+        return true // flags
     }
 
     public var description: String {
@@ -402,6 +445,10 @@ public class DivisionInstruction: InstructionProtocol {
         closure(&self.remainder)
     }
 
+    public var hasEffectsOtherThanWritingPseudoregisters: Bool {
+        return true // flags
+    }
+
     public var description: String {
         return "divl [ \(self.dividend) | \(self.divisor) ] -> [ \(self.quotient) | \(self.remainder) ]"
     }
@@ -431,6 +478,10 @@ public class NumericNegationInstruction: InstructionProtocol {
         closure(&self.target)
     }
 
+    public var hasEffectsOtherThanWritingPseudoregisters: Bool {
+        return true // flags
+    }
+
     public var description: String {
         return "negl \(self.source) -> \(self.target)"
     }
@@ -458,6 +509,10 @@ public class LogicalNegationInstruction: InstructionProtocol {
 
     public func apply(_ closure: (inout Result<Pseudoregister>) -> Void) {
         closure(&self.target)
+    }
+
+    public var hasEffectsOtherThanWritingPseudoregisters: Bool {
+        return false // no flags
     }
 
     public var description: String {
