@@ -37,7 +37,9 @@ do {
     var lines: [String] = []
 
     for function in try parser.parseFunctions() {
-        FunctionValidator(function: function).validate()
+        ConstantFolder(function: function).fold(untilConverged: true)
+
+//        FunctionValidator(function: function).validate()
 
         let generator = AssemblerGenerator(function: function)
         lines.append(contentsOf: generator.lines)

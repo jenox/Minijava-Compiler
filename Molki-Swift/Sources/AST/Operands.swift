@@ -25,6 +25,19 @@ public enum Argument<RegisterType: Register>: CustomStringConvertible {
         }
     }
 
+    public mutating func substitute(_ register: RegisterType, with constant: Int) {
+        switch self {
+        case .constant:
+            break
+        case .register(let value):
+            if value.register == register {
+                self = .constant(ConstantValue(value: constant, width: value.width))
+            }
+        case .memory:
+            break
+        }
+    }
+
     public var description: String {
         switch self {
         case .constant(let value):

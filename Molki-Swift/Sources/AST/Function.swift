@@ -35,9 +35,23 @@ public class BasicBlock {
         self.instructions = instructions
     }
 
-    public let instructions: [Instruction]
+    private(set) public var instructions: [Instruction]
+
+    public func removeInstruction(at index: Int) {
+        self.instructions.remove(at: index)
+    }
 
     public var name: String? {
         return (self.instructions.first?.rawInstruction as? LabelInstruction)?.name
+    }
+}
+
+extension BasicBlock: Equatable, Hashable {
+    public static func == (lhs: BasicBlock, rhs: BasicBlock) -> Bool {
+        return lhs === rhs
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        ObjectIdentifier(self).hash(into: &hasher)
     }
 }

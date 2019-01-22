@@ -62,6 +62,12 @@ extension InstructionProtocol {
 
         return (read: read, written: written)
     }
+
+    public func substitute(_ pseudoregister: Pseudoregister, with constant: Int) {
+        self.apply({ argument in
+            argument.substitute(pseudoregister, with: constant)
+        })
+    }
 }
 
 public enum Instruction: InstructionProtocol {
@@ -89,7 +95,7 @@ public enum Instruction: InstructionProtocol {
         return self.rawInstruction.description
     }
 
-    public var rawInstruction: InstructionProtocol {
+    public var rawInstruction: AnyObject & InstructionProtocol {
         switch self {
         case .labelInstruction(let instruction):
             return instruction
@@ -114,6 +120,16 @@ public enum Instruction: InstructionProtocol {
         case .numericNegationInstruction(let instruction):
             return instruction
         }
+    }
+}
+
+extension Instruction: Equatable, Hashable {
+    public static func == (lhs: Instruction, rhs: Instruction) -> Bool {
+        return lhs.rawInstruction === rhs.rawInstruction
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        ObjectIdentifier(self.rawInstruction).hash(into: &hasher)
     }
 }
 
