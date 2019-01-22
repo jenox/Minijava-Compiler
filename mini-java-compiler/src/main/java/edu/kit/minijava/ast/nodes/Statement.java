@@ -86,6 +86,11 @@ public abstract class Statement implements ASTNode {
                 this.condition = newValue;
             }
         }
+
+        @Override
+        public String toStringForDumpingAST() {
+            return "If";
+        }
     }
 
     public static final class WhileStatement extends Statement {
@@ -135,6 +140,11 @@ public abstract class Statement implements ASTNode {
                 this.condition = newValue;
             }
         }
+
+        @Override
+        public String toStringForDumpingAST() {
+            return "While";
+        }
     }
 
     public static final class ExpressionStatement extends Statement {
@@ -177,6 +187,11 @@ public abstract class Statement implements ASTNode {
             if (this.expression == oldValue) {
                 this.expression = newValue;
             }
+        }
+
+        @Override
+        public String toStringForDumpingAST() {
+            return "Expression";
         }
     }
 
@@ -226,6 +241,11 @@ public abstract class Statement implements ASTNode {
                 this.value = newValue;
             }
         }
+
+        @Override
+        public String toStringForDumpingAST() {
+            return "Return";
+        }
     }
 
     public static final class EmptyStatement extends Statement {
@@ -259,6 +279,11 @@ public abstract class Statement implements ASTNode {
 
         @Override
         public void substituteExpression(Expression oldValue, Expression newValue) {}
+
+        @Override
+        public String toStringForDumpingAST() {
+            return "Empty";
+        }
     }
 
     public static final class Block extends Statement {
@@ -310,6 +335,11 @@ public abstract class Statement implements ASTNode {
 
         @Override
         public void substituteExpression(Expression oldValue, Expression newValue) {}
+
+        @Override
+        public String toStringForDumpingAST() {
+            return "Block";
+        }
     }
 
     public static final class LocalVariableDeclarationStatement extends Statement implements VariableDeclaration {
@@ -394,6 +424,11 @@ public abstract class Statement implements ASTNode {
         @Override
         public String toString() {
             return "local variable '" + this.name + "' at " + this.location;
+        }
+
+        @Override
+        public String toStringForDumpingAST() {
+            return "Local Variable " + this.name + "\n" + this.location;
         }
     }
 }

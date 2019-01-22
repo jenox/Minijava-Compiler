@@ -39,4 +39,15 @@ public enum PrimitiveTypeDeclaration implements BasicTypeDeclaration {
     public boolean canBeReferencedByUser() {
         return this.canBeReferencedByUser;
     }
+
+    @Override
+    public String toStringForDumpingAST() {
+        switch (this) {
+            case INTEGER: return "int";
+            case BOOLEAN: return "boolean";
+            case VOID: return "void";
+            case STRING: return "String";
+            default: throw new AssertionError();
+        }
+    }
 }

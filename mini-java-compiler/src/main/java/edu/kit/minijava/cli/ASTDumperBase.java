@@ -90,12 +90,12 @@ abstract class ASTDumperBase extends ASTVisitor<Void> {
         this.outputNode(node, "#44ccff");
     }
 
-    void outputReferenceNode(Object node) {
+    void outputReferenceNode(ASTDumpable node) {
         this.outputNode(node, "#dddddd");
     }
 
-    private void outputNode(Object node, String color) {
-        String description = node.toString();
+    private void outputNode(ASTDumpable node, String color) {
+        String description = node.toStringForDumpingAST();
 
         this.print("<node id='" + this.getIdentifierForNode(node) + "'>");
         this.print("<data key='d0'>");

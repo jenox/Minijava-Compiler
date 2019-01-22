@@ -2,7 +2,7 @@ package edu.kit.minijava.ast.nodes;
 
 import java.util.*;
 
-public interface BasicTypeDeclaration extends Declaration {
+public interface BasicTypeDeclaration extends Declaration, ASTDumpable {
 
     /** The name of the basic type. */
     String getName();
