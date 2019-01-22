@@ -65,6 +65,20 @@ public enum Pseudoregister: Register, CustomStringConvertible {
             return "retval"
         }
     }
+
+    public enum Kind {
+        case regular
+        case phi
+        case reserved
+    }
+
+    public var kind: Kind {
+        switch self {
+        case .regular: return .regular
+        case .phi: return .phi
+        case .reserved: return .reserved
+        }
+    }
 }
 
 public enum X86Register: Register {
