@@ -25,19 +25,17 @@ public enum Argument<RegisterType: Register>: CustomStringConvertible {
         }
     }
 
-    public mutating func substitute(_ register: RegisterType, with constant: Int) {
+    public mutating func substitute(_ register: RegisterType, with argument: Argument<RegisterType>) {
         switch self {
         case .constant:
             break
         case .register(let value):
             if value.register == register {
-                self = .constant(ConstantValue(value: constant, width: value.width))
+                self = argument
             }
-        case .memory(let value):
-            var address = value.address
-            address.substitute(register, with: constant)
-
-            self = .memory(MemoryValue(address: address, width: value.width))
+        case .memory(var value):
+            value.address.substitute(register, with: argument)
+            self = .memory(value)
         }
     }
 
@@ -66,15 +64,13 @@ public enum Result<RegisterType: Register>: CustomStringConvertible {
         }
     }
 
-    public mutating func substitute(_ register: RegisterType, with constant: Int) {
+    public mutating func substitute(_ register: RegisterType, with argument: Argument<RegisterType>) {
         switch self {
         case .register:
             break
-        case .memory(let value):
-            var address = value.address
-            address.substitute(register, with: constant)
-
-            self = .memory(MemoryValue(address: address, width: value.width))
+        case .memory(var value):
+            value.address.substitute(register, with: argument)
+            self = .memory(value)
         }
     }
 

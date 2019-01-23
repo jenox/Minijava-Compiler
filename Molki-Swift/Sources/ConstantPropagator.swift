@@ -19,7 +19,7 @@ public class ConstantPropagator {
     public func propagate() {
         let writers = self.getInstructionsWritingPseudoregisters()
 
-        var substitutionsToBeMade: [Pseudoregister: Int] = [:]
+        var substitutionsToBeMade: [Pseudoregister: Argument<Pseudoregister>] = [:]
 
         for (pseudoregister, instructions) in writers {
             guard pseudoregister != .reserved else { continue }
@@ -27,9 +27,7 @@ public class ConstantPropagator {
 
             switch instruction {
             case .moveInstruction(let moveInstruction):
-                if case .constant(let constant) = moveInstruction.source {
-                    substitutionsToBeMade[pseudoregister] = constant.value
-                }
+                substitutionsToBeMade[pseudoregister] = moveInstruction.source
             default:
                 break
             }
@@ -43,8 +41,8 @@ public class ConstantPropagator {
             for instruction in block.instructions {
                 let reads = instruction.pseudoregisters.read
 
-                for (pseudoregister, constant) in substitutionsToBeMade where reads.contains(pseudoregister) {
-                    instruction.substitute(pseudoregister, with: constant)
+                for (pseudoregister, argument) in substitutionsToBeMade where reads.contains(pseudoregister) {
+                    instruction.substitute(pseudoregister, with: argument)
                 }
             }
         }
