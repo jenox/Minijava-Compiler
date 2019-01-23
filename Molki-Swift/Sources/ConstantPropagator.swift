@@ -17,6 +17,12 @@ public class ConstantPropagator {
     private let function: Function
 
     public func propagate() {
+        self.propagateOnce()
+        self.propagateOnce()
+        self.propagateOnce()
+    }
+
+    private func propagateOnce() {
         let writers = self.getInstructionsWritingPseudoregisters()
 
         var substitutionsToBeMade: [(Pseudoregister, Argument<Pseudoregister>)] = []
