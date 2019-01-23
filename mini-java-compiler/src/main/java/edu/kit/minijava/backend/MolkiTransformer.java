@@ -289,8 +289,8 @@ public class MolkiTransformer extends Default {
         int targetReg1 = this.node2RegIndex.get(mod);
         int targetReg2 = targetReg1 + 1; // by convention used in PrepVisitor
 
-        this.appendMolkiCode("divl [ " + REG_PREFIX + srcReg1 + "d | " + REG_PREFIX + srcReg2 + "d ]" + " -> [ "
-                + REG_PREFIX + targetReg2 + "d | " + REG_PREFIX + targetReg1 + "d ]");
+        this.appendFourAdressCommand("divl", srcReg1, REG_WIDTH_D, srcReg2, REG_WIDTH_D, targetReg1, REG_WIDTH_D,
+                targetReg2, REG_WIDTH_D);
     }
 
     private void molkify(Mul mul) {
@@ -552,7 +552,13 @@ public class MolkiTransformer extends Default {
     }
 
     /**
-     * append command cmd [ srcReg1 | srcReg2 ] -> targetReg Example add [ %@21d | %@22d ] -> %@23d
+     * append command cmd [ srcReg1 | srcReg2 ] -> targetReg
+     *
+     * <p>
+     * Example<br>
+     * <br>
+     * add [ %@21d | %@22d ] -> %@23d
+     * </p>
      *
      * @param cmd             command
      * @param srcReg1         number of first source register
@@ -644,15 +650,17 @@ public class MolkiTransformer extends Default {
 
     /**
      * <p>
-     * Example<br><br>
+     * Example<br>
+     * <br>
      * movd (%@17) -> %@18d
+     *
      * @param movSuffix
      * @param pointerReg
      * @param targetReg
      * @param suffixTargetReg width of target register
      */
     private void moveWithOffset(String movSuffix, int pointerReg, int targetReg, String suffixTargetReg) {
-        this.appendMolkiCode("mov" + movSuffix + " " + "(" + REG_PREFIX + pointerReg + ") -> " + REG_PREFIX
-                + targetReg + suffixTargetReg);
+        this.appendMolkiCode("mov" + movSuffix + " " + "(" + REG_PREFIX + pointerReg + ") -> " + REG_PREFIX + targetReg
+                + suffixTargetReg);
     }
 }
