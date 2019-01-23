@@ -386,8 +386,8 @@ public class MolkiTransformer extends Default {
 
         String regSuffix = Util.mode2RegSuffix(sub.getMode());
 
-        this.appendMolkiCode("subl" + " [ " + REG_PREFIX + srcReg1 + regSuffix + " | " + REG_PREFIX + srcReg2
-                + regSuffix + " ] -> " + REG_PREFIX + targetReg + regSuffix);
+        this.appendThreeAdressCommand("sub", srcReg1, regSuffix, srcReg2, regSuffix, targetReg, regSuffix);
+
     }
 
     private void molkify(Proj node) {
