@@ -306,9 +306,10 @@ public class MolkiTransformer extends Default {
     }
 
     private void molkify(Not not) {
-        int inputReg = this.node2RegIndex.get(not.getOp());
-        int reg = this.node2RegIndex.get(not);
-        this.appendMolkiCode("notb " + REG_PREFIX + inputReg + "l -> " + REG_PREFIX + reg + "l");
+        int srcReg = this.node2RegIndex.get(not.getOp());
+        int targetReg = this.node2RegIndex.get(not);
+
+        this.appendTwoAdressCommand("notb", srcReg, "l", targetReg, "l");
     }
 
     private void molkify(Return aReturn) {
@@ -316,14 +317,24 @@ public class MolkiTransformer extends Default {
         if (aReturn.getPredCount() == 1 && !aReturn.getPred(0).getMode().equals(Mode.getM())) {
             String regSuffix = Util.mode2RegSuffix(aReturn.getPred(0).getMode());
             String movSuffix = Util.mode2MovSuffix(aReturn.getPred(0).getMode());
-            this.appendMolkiCode("mov" + movSuffix + " %@" + this.node2RegIndex.get(aReturn.getPred(0)) + regSuffix
-                    + " -> %@$" + regSuffix);
+
+            String cmd = "mov" + movSuffix;
+            String src = REG_PREFIX + this.node2RegIndex.get(aReturn.getPred(0));
+            src += regSuffix;
+            String target = "%@$" + regSuffix;
+
+            this.appendTwoAdressCommand(cmd, src, target);
         }
         else if (aReturn.getPredCount() > 1) {
             String regSuffix = Util.mode2RegSuffix(aReturn.getPred(1).getMode());
             String movSuffix = Util.mode2MovSuffix(aReturn.getPred(1).getMode());
-            this.appendMolkiCode("mov" + movSuffix + " %@" + this.node2RegIndex.get(aReturn.getPred(1)) + regSuffix
-                    + " -> %@$" + regSuffix);
+
+            String cmd = "mov" + movSuffix;
+            String src = REG_PREFIX + this.node2RegIndex.get(aReturn.getPred(1));
+            src += regSuffix;
+            String target = "%@$" + regSuffix;
+
+            this.appendTwoAdressCommand(cmd, src, target);
         }
 
         // Select single successor
@@ -568,6 +579,19 @@ public class MolkiTransformer extends Default {
             String suffixTargetReg) {
         this.appendMolkiCode(
                 cmd + " " + REG_PREFIX + srcReg + suffixSrcReg + " -> " + REG_PREFIX + targetReg + suffixTargetReg);
+    }
+
+    /**
+     * create cmd src -> target
+     * <p>Example<br><br>
+     * mov %@8 -> %@$
+     * </p>
+     * @param cmd
+     * @param src
+     * @param target
+     */
+    private void appendTwoAdressCommand(String cmd, String src, String target) {
+        this.appendMolkiCode(cmd + " " + src + " -> " + target);
     }
 
     /**
