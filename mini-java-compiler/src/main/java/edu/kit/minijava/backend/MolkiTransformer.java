@@ -277,10 +277,13 @@ public class MolkiTransformer extends Default {
     }
 
     private void molkify(Minus minus) {
-        int inputReg = this.node2RegIndex.get(minus.getOp());
-        int reg = this.node2RegIndex.get(minus);
-        this.appendMolkiCode("negl " + REG_PREFIX + inputReg + "d -> " + REG_PREFIX + reg + "d");
+        int scrReg = this.node2RegIndex.get(minus.getOp());
+        int targetReg = this.node2RegIndex.get(minus);
+
+        this.appendTwoAdressCommand("negl", scrReg, REG_WIDTH_D, targetReg, REG_WIDTH_D);
     }
+
+
 
     private void molkify(Mod mod) {
         int srcReg1 = this.node2RegIndex.get(mod.getLeft());
@@ -549,6 +552,23 @@ public class MolkiTransformer extends Default {
     private void molkify(Conv node) {
         // Nothing to do here as conversion nodes are only constructed for div and mod
         // operations and conversion of the operands instead should be handled there.
+    }
+
+    /**
+     * <p>Example<br><br>
+     * negl %@17d -> %@18d
+     * </p>
+     *
+     * @param cmd
+     * @param srcReg
+     * @param suffixSrcReg
+     * @param targetReg
+     * @param suffixTargetReg
+     */
+    private void appendTwoAdressCommand(String cmd, int srcReg, String suffixSrcReg, int targetReg,
+            String suffixTargetReg) {
+        this.appendMolkiCode(
+                cmd + " " + REG_PREFIX + srcReg + suffixSrcReg + " -> " + REG_PREFIX + targetReg + suffixTargetReg);
     }
 
     /**
