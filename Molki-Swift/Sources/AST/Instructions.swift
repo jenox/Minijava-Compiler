@@ -66,8 +66,12 @@ extension InstructionProtocol {
     }
 
     public func substitute(_ pseudoregister: Pseudoregister, with constant: Int) {
-        self.apply({ argument in
+        self.apply({ (argument: inout Argument<Pseudoregister>) in
             argument.substitute(pseudoregister, with: constant)
+        })
+
+        self.apply({ (result: inout Result<Pseudoregister>) in
+            result.substitute(pseudoregister, with: constant)
         })
     }
 }

@@ -72,6 +72,17 @@ public enum MemoryAddress<RegisterType: Register>: Equatable, CustomStringConver
         }
     }
 
+    public mutating func substitute(_ register: RegisterType, with constant: Int) {
+        switch self {
+        case .relative:
+            break
+        case .indexed(base: let base, index: let index, scale: let scale, offset: let offset):
+            if index.register == register {
+                self = MemoryAddress.relative(base: base, offset: offset + scale * constant)
+            }
+        }
+    }
+
     public var description: String {
         switch self {
         case .relative(base: let base, offset: let offset):
