@@ -15,7 +15,7 @@ before_script:
 env:
   # SWIFT_VERSION: Version to install with swiftenv
   # TERM: Remove status updates in gradle output that only works with interactive shell
-  - MJ_RUN="./run" MJ_TIMEOUT=60 MJ_BIG_TIMEOUT=0 SWIFT_VERSION="4.1" TERM='dumb'
+  - MJ_RUN="./run" MJ_TIMEOUT=60 MJ_BIG_TIMEOUT=0 SWIFT_VERSION="4.2" TERM='dumb'
 
 jobs:
   include:

@@ -17,13 +17,14 @@ public struct RegisterValue<RegisterType: Register>: Equatable, CustomStringConv
         return RegisterValue(register: self.register, width: width)
     }
 
-    public var registers: Set<RegisterType> {
-        return [self.register]
-    }
-
     public var description: String {
         return self.register.name(for: self.width)
     }
+}
+
+public extension RegisterValue where RegisterType == X86Register {
+    public static let basePointer = X86Register.rbp.with(.quad)
+    public static let stackPointer = X86Register.rsp.with(.quad)
 }
 
 public struct ConstantValue: Equatable, CustomStringConvertible {
@@ -65,9 +66,20 @@ public enum MemoryAddress<RegisterType: Register>: Equatable, CustomStringConver
     public var registers: Set<RegisterType> {
         switch self {
         case .relative(base: let base, offset: _):
-            return base.registers
+            return [base.register]
         case .indexed(base: let base, index: let index, scale: _, offset: _):
-            return base.registers.union(index.registers)
+            return [base.register, index.register]
+        }
+    }
+
+    public mutating func substitute(_ register: RegisterType, with constant: Int) {
+        switch self {
+        case .relative:
+            break
+        case .indexed(base: let base, index: let index, scale: let scale, offset: let offset):
+            if index.register == register {
+                self = MemoryAddress.relative(base: base, offset: offset + scale * constant)
+            }
         }
     }
 

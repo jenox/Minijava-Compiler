@@ -30,8 +30,9 @@ extension Register {
     }
 }
 
-public enum Pseudoregister: Register {
-    case numbered(Int)
+public enum Pseudoregister: Register, CustomStringConvertible {
+    case regular(Int)
+    case phi(Int)
     case reserved
 
     public func name(for width: RegisterWidth) -> String {
@@ -45,10 +46,37 @@ public enum Pseudoregister: Register {
 
     private var basename: String {
         switch self {
-        case .numbered(let number):
+        case .regular(let number):
             return "@\(number)"
+        case .phi(let number):
+            return "@-\(number)"
         case .reserved:
             return "@$"
+        }
+    }
+
+    public var description: String {
+        switch self {
+        case .regular(let number):
+            return "\(number)"
+        case .phi(let number):
+            return "phi(\(number))"
+        case .reserved:
+            return "retval"
+        }
+    }
+
+    public enum Kind {
+        case regular
+        case phi
+        case reserved
+    }
+
+    public var kind: Kind {
+        switch self {
+        case .regular: return .regular
+        case .phi: return .phi
+        case .reserved: return .reserved
         }
     }
 }
