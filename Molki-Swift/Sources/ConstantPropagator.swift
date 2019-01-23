@@ -19,7 +19,7 @@ public class ConstantPropagator {
     public func propagate() {
         let writers = self.getInstructionsWritingPseudoregisters()
 
-        var substitutionsToBeMade: [Pseudoregister: Argument<Pseudoregister>] = [:]
+        var substitutionsToBeMade: [(Pseudoregister, Argument<Pseudoregister>)] = []
 
         for (pseudoregister, instructions) in writers {
             guard pseudoregister != .reserved else { continue }
@@ -27,7 +27,7 @@ public class ConstantPropagator {
 
             switch instruction {
             case .moveInstruction(let moveInstruction):
-                substitutionsToBeMade[pseudoregister] = moveInstruction.source
+                substitutionsToBeMade.append((pseudoregister, moveInstruction.source))
             default:
                 break
             }
