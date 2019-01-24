@@ -9,7 +9,7 @@
 import Swift
 
 
-public struct Function {
+public struct Function: CustomStringConvertible {
     public var name: String
     public var parameterWidths: [RegisterWidth]
     public var returnValueWidth: RegisterWidth?
@@ -17,6 +17,44 @@ public struct Function {
 
     public var instructions: [Instruction] {
         return self.basicBlocks.flatMap({ $0.instructions })
+    }
+
+    public var description: String {
+        var description = ".function \(self.name)"
+
+        if let first = self.parameterWidths.first {
+            description += " [ \(self.description(of: first))"
+
+            for other in self.parameterWidths.dropFirst() {
+                description += " | \(self.description(of: other))"
+            }
+
+            description += " ]"
+        }
+
+        if let returnValueWidth = self.returnValueWidth {
+            description += " -> \(self.description(of: returnValueWidth))"
+        }
+
+        for instruction in self.instructions {
+            if case .labelInstruction = instruction {
+                description += "\n" + instruction.description
+            }
+            else {
+                description += "\n    " + instruction.description
+            }
+        }
+
+        return description + "\n.endfunction"
+    }
+
+    private func description(of width: RegisterWidth) -> String {
+        switch width {
+        case .byte: return "b"
+        case .word: return "w"
+        case .double: return "l"
+        case .quad: return "q"
+        }
     }
 }
 
