@@ -25,7 +25,7 @@ public class PrepVisitor extends Default {
         return this.graph2BlockId;
     }
     public HashMap<Graph, Integer> getGraph2MaxBlockId() {
-        return graph2MaxBlockId;
+        return this.graph2MaxBlockId;
     }
 
     @Override

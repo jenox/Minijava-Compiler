@@ -186,18 +186,25 @@ public class MolkiTransformer extends Default {
             }
         }
 
-        int targetReg;
-
+        boolean isVoid = true;
         for (BackEdges.Edge edge : BackEdges.getOuts(call)) {
             if (edge.node.getMode().equals(Mode.getT())) {
                 for (BackEdges.Edge projEdge : BackEdges.getOuts(edge.node)) {
                     regSuffix = Util.mode2RegSuffix(projEdge.node.getMode());
                 }
+                isVoid = false;
             }
         }
 
-        targetReg = this.node2RegIndex.get(call);
-        this.appendMolkiCode("call " + functionName + " [ " + args + " ] -> %@" + targetReg + regSuffix);
+
+        int targetReg = this.node2RegIndex.get(call);
+
+        if (isVoid) {
+            this.appendMolkiCode("call " + functionName + " [ " + args + " ] ");
+        }
+        else {
+            this.appendMolkiCode("call " + functionName + " [ " + args + " ] -> %@" + targetReg + regSuffix);
+        }
     }
 
     private void molkify(Cmp cmp) {
@@ -449,9 +456,9 @@ public class MolkiTransformer extends Default {
                 int falsePredRegIndex = this.node2RegIndex.get(falsePred);
 
                 Graph graph = phi.getBlock().getGraph();
-                int newMaxBlockId = graph2MaxBlockId.get(graph) + 1;
+                int newMaxBlockId = this.graph2MaxBlockId.get(graph) + 1;
                 int labelNr = newMaxBlockId;
-                graph2MaxBlockId.put(graph, newMaxBlockId);
+                this.graph2MaxBlockId.put(graph, newMaxBlockId);
 
                 if (otherCond.getSelector() instanceof Cmp) {
                     this.appendMolkiCode("mov" + movSuffix + " %@" + truePredRegIndex + regSuffix + " -> %@"
