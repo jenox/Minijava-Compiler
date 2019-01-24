@@ -19,6 +19,7 @@ public class MolkiTransformer extends Default {
 
     // primarily for projections to save their register index
     private HashMap<Node, Integer> node2RegIndex;
+    private HashMap<Graph, Integer> graph2MaxBlockId;
 
     // GETTERS & SETTERS
     public HashMap<Integer, List<String>> getMolkiCode() {
@@ -39,8 +40,9 @@ public class MolkiTransformer extends Default {
         this.molkiCode.get(blockNr).add(INDENT + molkiCode);
     }
 
-    public MolkiTransformer(HashMap<Node, Integer> proj2regIndex) {
+    public MolkiTransformer(HashMap<Node, Integer> proj2regIndex, HashMap<Graph, Integer> graph2MaxBlockId) {
         this.node2RegIndex = proj2regIndex;
+        this.graph2MaxBlockId = graph2MaxBlockId;
     }
 
     public void createValue(int blockNr, Node node) {
@@ -446,9 +448,10 @@ public class MolkiTransformer extends Default {
                 int truePredRegIndex = this.node2RegIndex.get(truePred);
                 int falsePredRegIndex = this.node2RegIndex.get(falsePred);
 
-                // TODO This might lead to conflicts between Phis in the same block, check for those!
-
-                int labelNr = phi.getBlock().getNr() + 3;
+                Graph graph = phi.getBlock().getGraph();
+                int newMaxBlockId = graph2MaxBlockId.get(graph) + 1;
+                int labelNr = newMaxBlockId;
+                graph2MaxBlockId.put(graph, newMaxBlockId);
 
                 if (otherCond.getSelector() instanceof Cmp) {
                     this.appendMolkiCode("mov" + movSuffix + " %@" + truePredRegIndex + regSuffix + " -> %@"

@@ -40,9 +40,6 @@ public class CommandLineInterface {
                 case "--compile-firm":
                     command = new TransformerCommand();
                     break;
-                case "--backend":
-                    command = new BackendCommand();
-                    break;
                 case "--compile":
                     command = new CompileCommand();
                     break;

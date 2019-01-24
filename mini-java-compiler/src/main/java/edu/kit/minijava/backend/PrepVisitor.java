@@ -12,6 +12,7 @@ public class PrepVisitor extends Default {
     private HashMap<Node, Integer> node2regIndex = new HashMap<>();
     private HashMap<Integer, List<Node>> blockId2Nodes = new HashMap<>();
     private HashMap<Graph, List<Integer>> graph2BlockId = new HashMap<>();
+    private HashMap<Graph, Integer> graph2MaxBlockId = new HashMap<>();
 
     // GETTERS
     public HashMap<Node, Integer> getNode2RegIndex() {
@@ -22,6 +23,9 @@ public class PrepVisitor extends Default {
     }
     public HashMap<Graph, List<Integer>> getGraph2BlockId() {
         return this.graph2BlockId;
+    }
+    public HashMap<Graph, Integer> getGraph2MaxBlockId() {
+        return graph2MaxBlockId;
     }
 
     @Override
@@ -46,6 +50,13 @@ public class PrepVisitor extends Default {
 
         if (this.blockId2Nodes.get(block.getNr()) == null) {
             this.blockId2Nodes.put(block.getNr(), new ArrayList<>());
+        }
+
+        if (this.graph2MaxBlockId.get(block.getGraph()) == null) {
+            this.graph2MaxBlockId.put(block.getGraph(), block.getNr());
+        }
+        else if (block.getNr() > this.graph2MaxBlockId.get(block.getGraph())) {
+            this.graph2MaxBlockId.put(block.getGraph(), block.getNr());
         }
     }
 
