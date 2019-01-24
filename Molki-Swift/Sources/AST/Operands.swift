@@ -14,17 +14,6 @@ public enum Argument<RegisterType: Register>: CustomStringConvertible {
     case register(RegisterValue<RegisterType>)
     case memory(MemoryValue<RegisterType>)
 
-    public func matches(_ width: RegisterWidth) -> Bool {
-        switch self {
-        case .constant(_):
-            return true
-        case .register(let value):
-            return value.width == width
-        case .memory(_):
-            return true
-        }
-    }
-
     public var width: RegisterWidth {
         switch self {
         case .constant(let value):
@@ -36,14 +25,17 @@ public enum Argument<RegisterType: Register>: CustomStringConvertible {
         }
     }
 
-    public var registers: Set<RegisterType> {
+    public mutating func substitute(_ register: RegisterType, with argument: Argument<RegisterType>) {
         switch self {
         case .constant:
-            return []
+            break
         case .register(let value):
-            return value.registers
-        case .memory(let value):
-            return value.registers
+            if value.register == register {
+                self = argument
+            }
+        case .memory(var value):
+            value.address.substitute(register, with: argument)
+            self = .memory(value)
         }
     }
 
@@ -63,15 +55,6 @@ public enum Result<RegisterType: Register>: CustomStringConvertible {
     case register(RegisterValue<RegisterType>)
     case memory(MemoryValue<RegisterType>)
 
-    public func matches(_ width: RegisterWidth) -> Bool {
-        switch self {
-        case .register(let value):
-            return value.width == width
-        case .memory(_):
-            return true
-        }
-    }
-
     public var width: RegisterWidth {
         switch self {
         case .register(let value):
@@ -81,12 +64,13 @@ public enum Result<RegisterType: Register>: CustomStringConvertible {
         }
     }
 
-    public var registers: Set<RegisterType> {
+    public mutating func substitute(_ register: RegisterType, with argument: Argument<RegisterType>) {
         switch self {
-        case .register(let value):
-            return value.registers
-        case .memory(let value):
-            return value.registers
+        case .register:
+            break
+        case .memory(var value):
+            value.address.substitute(register, with: argument)
+            self = .memory(value)
         }
     }
 

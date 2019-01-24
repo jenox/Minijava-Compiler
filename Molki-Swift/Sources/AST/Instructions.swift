@@ -11,19 +11,68 @@ import Swift
 
 
 public protocol InstructionProtocol: CustomStringConvertible {
-    var arguments: [Argument<Pseudoregister>] { get }
-    var results: [Result<Pseudoregister>] { get }
+    func apply(_ closure: (inout Argument<Pseudoregister>) -> Void)
+    func apply(_ closure: (inout Result<Pseudoregister>) -> Void)
 
-    var pseudoregisters: Set<Pseudoregister> { get }
+    var hasEffectsOtherThanWritingPseudoregisters: Bool { get }
 }
 
 extension InstructionProtocol {
-    public var pseudoregisters: Set<Pseudoregister> {
-        var pseudoregisters: Set<Pseudoregister> = []
-        pseudoregisters.formUnion(self.arguments.flatMap({ $0.registers }))
-        pseudoregisters.formUnion(self.results.flatMap({ $0.registers }))
+    public var arguments: [Argument<Pseudoregister>] {
+        var arguments: [Argument<Pseudoregister>] = []
 
-        return pseudoregisters
+        self.apply({ argument in
+            arguments.append(argument)
+        })
+
+        return arguments
+    }
+
+    public var results: [Result<Pseudoregister>] {
+        var results: [Result<Pseudoregister>] = []
+
+        self.apply({ result in
+            results.append(result)
+        })
+
+        return results
+    }
+
+    public var pseudoregisters: (read: Set<Pseudoregister>, written: Set<Pseudoregister>) {
+        var read: Set<Pseudoregister> = []
+        var written: Set<Pseudoregister> = []
+
+        for argument in self.arguments {
+            switch argument {
+            case .constant:
+                break
+            case .register(let value):
+                read.insert(value.register)
+            case .memory(let value):
+                read.formUnion(value.registers)
+            }
+        }
+
+        for result in self.results {
+            switch result {
+            case .register(let value):
+                written.insert(value.register)
+            case .memory(let value):
+                read.formUnion(value.registers)
+            }
+        }
+
+        return (read: read, written: written)
+    }
+
+    public func substitute(_ pseudoregister: Pseudoregister, with replacement: Argument<Pseudoregister>) {
+        self.apply({ (argument: inout Argument<Pseudoregister>) in
+            argument.substitute(pseudoregister, with: replacement)
+        })
+
+        self.apply({ (result: inout Result<Pseudoregister>) in
+            result.substitute(pseudoregister, with: replacement)
+        })
     }
 }
 
@@ -40,19 +89,23 @@ public enum Instruction: InstructionProtocol {
     case numericNegationInstruction(NumericNegationInstruction)
     case logicalNegationInstruction(LogicalNegationInstruction)
 
-    public var arguments: [Argument<Pseudoregister>] {
-        return self.instruction.arguments
+    public func apply(_ closure: (inout Argument<Pseudoregister>) -> Void) {
+        self.rawInstruction.apply(closure)
     }
 
-    public var results: [Result<Pseudoregister>] {
-        return self.instruction.results
+    public func apply(_ closure: (inout Result<Pseudoregister>) -> Void) {
+        self.rawInstruction.apply(closure)
+    }
+
+    public var hasEffectsOtherThanWritingPseudoregisters: Bool {
+        return self.rawInstruction.hasEffectsOtherThanWritingPseudoregisters
     }
 
     public var description: String {
-        return self.instruction.description
+        return self.rawInstruction.description
     }
 
-    private var instruction: InstructionProtocol {
+    public var rawInstruction: AnyObject & InstructionProtocol {
         switch self {
         case .labelInstruction(let instruction):
             return instruction
@@ -80,18 +133,34 @@ public enum Instruction: InstructionProtocol {
     }
 }
 
-
-
-
-public struct LabelInstruction: InstructionProtocol {
-    public var name: String
-
-    public var arguments: [Argument<Pseudoregister>] {
-        return []
+extension Instruction: Equatable, Hashable {
+    public static func == (lhs: Instruction, rhs: Instruction) -> Bool {
+        return lhs.rawInstruction === rhs.rawInstruction
     }
 
-    public var results: [Result<Pseudoregister>] {
-        return []
+    public func hash(into hasher: inout Hasher) {
+        ObjectIdentifier(self.rawInstruction).hash(into: &hasher)
+    }
+}
+
+
+
+
+public class LabelInstruction: InstructionProtocol {
+    public init(name: String) {
+        self.name = name
+    }
+
+    private(set) public var name: String
+
+    public func apply(_ closure: (inout Argument<Pseudoregister>) -> Void) {
+    }
+
+    public func apply(_ closure: (inout Result<Pseudoregister>) -> Void) {
+    }
+
+    public var hasEffectsOtherThanWritingPseudoregisters: Bool {
+        return true // can be used as jump target
     }
 
     public var description: String {
@@ -100,16 +169,23 @@ public struct LabelInstruction: InstructionProtocol {
 }
 
 // jmp, jl, jle, jg, jge, je, jne
-public struct JumpInstruction: InstructionProtocol {
-    public var target: String
-    public var condition: JumpCondition
-
-    public var arguments: [Argument<Pseudoregister>] {
-        return []
+public class JumpInstruction: InstructionProtocol {
+    public init(target: String, condition: JumpCondition) {
+        self.target = target
+        self.condition = condition
     }
 
-    public var results: [Result<Pseudoregister>] {
-        return []
+    private(set) public var target: String
+    private(set) public var condition: JumpCondition
+
+    public func apply(_ closure: (inout Argument<Pseudoregister>) -> Void) {
+    }
+
+    public func apply(_ closure: (inout Result<Pseudoregister>) -> Void) {
+    }
+
+    public var hasEffectsOtherThanWritingPseudoregisters: Bool {
+        return true
     }
 
     public var description: String {
@@ -130,13 +206,31 @@ public enum JumpCondition: String {
 // call
 // Syntax: call f [ a | b | c | ... ] -> z
 // Semantic: z = f(a, b, c, ...)
-public struct CallInstruction: InstructionProtocol {
-    public var target: String
-    public var arguments: [Argument<Pseudoregister>]
-    public var result: Result<Pseudoregister>?
+public class CallInstruction: InstructionProtocol {
+    public init(target: String, arguments: [Argument<Pseudoregister>], result: Result<Pseudoregister>?) {
+        self.target = target
+        self.arguments = arguments
+        self.result = result
+    }
 
-    public var results: [Result<Pseudoregister>] {
-        return self.result.flatMap({ [$0] }) ?? []
+    private(set) public var target: String
+    private(set) public var arguments: [Argument<Pseudoregister>]
+    private(set) public var result: Result<Pseudoregister>?
+
+    public func apply(_ closure: (inout Argument<Pseudoregister>) -> Void) {
+        for index in self.arguments.indices {
+            closure(&self.arguments[index])
+        }
+    }
+
+    public func apply(_ closure: (inout Result<Pseudoregister>) -> Void) {
+        if self.result != nil {
+            closure(&self.result!)
+        }
+    }
+
+    public var hasEffectsOtherThanWritingPseudoregisters: Bool {
+        return true
     }
 
     public var description: String {
@@ -159,17 +253,32 @@ public struct CallInstruction: InstructionProtocol {
 // mov
 // Syntax: movx a -> b
 // Semantic: b := a
-public struct MoveInstruction: InstructionProtocol {
-    public var width: RegisterWidth
-    public var source: Argument<Pseudoregister>
-    public var target: Result<Pseudoregister>
-
-    public var arguments: [Argument<Pseudoregister>] {
-        return [self.source]
+public class MoveInstruction: InstructionProtocol {
+    public init(width: RegisterWidth, source: Argument<Pseudoregister>, target: Result<Pseudoregister>) {
+        self.width = width
+        self.source = source
+        self.target = target
     }
 
-    public var results: [Result<Pseudoregister>] {
-        return [self.target]
+    private(set) public var width: RegisterWidth
+    private(set) public var source: Argument<Pseudoregister>
+    private(set) public var target: Result<Pseudoregister>
+
+    public func apply(_ closure: (inout Argument<Pseudoregister>) -> Void) {
+        closure(&self.source)
+    }
+
+    public func apply(_ closure: (inout Result<Pseudoregister>) -> Void) {
+        closure(&self.target)
+    }
+
+    public var hasEffectsOtherThanWritingPseudoregisters: Bool {
+        switch self.target {
+        case .register:
+            return false
+        case .memory:
+            return true
+        }
     }
 
     public var description: String {
@@ -184,17 +293,27 @@ public struct MoveInstruction: InstructionProtocol {
 
 // Synax: cmpx [ a | b ]
 // Semantic: flags := a ? b
-public struct ComparisonInstruction: InstructionProtocol {
-    public var width: RegisterWidth
-    public var lhs: Argument<Pseudoregister>
-    public var rhs: Argument<Pseudoregister>
-
-    public var arguments: [Argument<Pseudoregister>] {
-        return [self.lhs, self.rhs]
+public class ComparisonInstruction: InstructionProtocol {
+    public init(width: RegisterWidth, lhs: Argument<Pseudoregister>, rhs: Argument<Pseudoregister>) {
+        self.width = width
+        self.lhs = lhs
+        self.rhs = rhs
     }
 
-    public var results: [Result<Pseudoregister>] {
-        return []
+    private(set) public var width: RegisterWidth
+    private(set) public var lhs: Argument<Pseudoregister>
+    private(set) public var rhs: Argument<Pseudoregister>
+
+    public func apply(_ closure: (inout Argument<Pseudoregister>) -> Void) {
+        closure(&self.lhs)
+        closure(&self.rhs)
+    }
+
+    public func apply(_ closure: (inout Result<Pseudoregister>) -> Void) {
+    }
+
+    public var hasEffectsOtherThanWritingPseudoregisters: Bool {
+        return true
     }
 
     public var description: String {
@@ -210,17 +329,28 @@ public struct ComparisonInstruction: InstructionProtocol {
 // add
 // Syntax: add [ a | b ] -> c
 // Semantic: c := a + b
-public struct AdditionInstruction: InstructionProtocol {
-    public var augend: Argument<Pseudoregister>
-    public var addend: Argument<Pseudoregister>
-    public var sum: Result<Pseudoregister>
-
-    public var arguments: [Argument<Pseudoregister>] {
-        return [self.augend, self.addend]
+public class AdditionInstruction: InstructionProtocol {
+    public init(augend: Argument<Pseudoregister>, addend: Argument<Pseudoregister>, sum: Result<Pseudoregister>) {
+        self.augend = augend
+        self.addend = addend
+        self.sum = sum
     }
 
-    public var results: [Result<Pseudoregister>] {
-        return [self.sum]
+    private(set) public var augend: Argument<Pseudoregister>
+    private(set) public var addend: Argument<Pseudoregister>
+    private(set) public var sum: Result<Pseudoregister>
+
+    public func apply(_ closure: (inout Argument<Pseudoregister>) -> Void) {
+        closure(&self.augend)
+        closure(&self.addend)
+    }
+
+    public func apply(_ closure: (inout Result<Pseudoregister>) -> Void) {
+        closure(&self.sum)
+    }
+
+    public var hasEffectsOtherThanWritingPseudoregisters: Bool {
+        return true // flags
     }
 
     public var description: String {
@@ -231,17 +361,28 @@ public struct AdditionInstruction: InstructionProtocol {
 // sub
 // Syntax: sub [ a | b ] -> c
 // Semantic: c := a - b
-public struct SubtractionInstruction: InstructionProtocol {
-    public var minuend: Argument<Pseudoregister>
-    public var subtrahend: Argument<Pseudoregister>
-    public var difference: Result<Pseudoregister>
-
-    public var arguments: [Argument<Pseudoregister>] {
-        return [self.minuend, self.subtrahend]
+public class SubtractionInstruction: InstructionProtocol {
+    public init(minuend: Argument<Pseudoregister>, subtrahend: Argument<Pseudoregister>, difference: Result<Pseudoregister>) {
+        self.minuend = minuend
+        self.subtrahend = subtrahend
+        self.difference = difference
     }
 
-    public var results: [Result<Pseudoregister>] {
-        return [self.difference]
+    private(set) public var minuend: Argument<Pseudoregister>
+    private(set) public var subtrahend: Argument<Pseudoregister>
+    private(set) public var difference: Result<Pseudoregister>
+
+    public func apply(_ closure: (inout Argument<Pseudoregister>) -> Void) {
+        closure(&self.minuend)
+        closure(&self.subtrahend)
+    }
+
+    public func apply(_ closure: (inout Result<Pseudoregister>) -> Void) {
+        closure(&self.difference)
+    }
+
+    public var hasEffectsOtherThanWritingPseudoregisters: Bool {
+        return true // flags
     }
 
     public var description: String {
@@ -252,17 +393,28 @@ public struct SubtractionInstruction: InstructionProtocol {
 // imul
 // Syntax: mul [ a | b ] -> c
 // Semantic: c := a * b
-public struct MultiplicationInstruction: InstructionProtocol {
-    public var multiplicand: Argument<Pseudoregister>
-    public var multiplier: Argument<Pseudoregister>
-    public var product: Result<Pseudoregister>
-
-    public var arguments: [Argument<Pseudoregister>] {
-        return [self.multiplicand, self.multiplier]
+public class MultiplicationInstruction: InstructionProtocol {
+    public init(multiplicand: Argument<Pseudoregister>, multiplier: Argument<Pseudoregister>, product: Result<Pseudoregister>) {
+        self.multiplicand = multiplicand
+        self.multiplier = multiplier
+        self.product = product
     }
 
-    public var results: [Result<Pseudoregister>] {
-        return [self.product]
+    private(set) public var multiplicand: Argument<Pseudoregister>
+    private(set) public var multiplier: Argument<Pseudoregister>
+    private(set) public var product: Result<Pseudoregister>
+
+    public func apply(_ closure: (inout Argument<Pseudoregister>) -> Void) {
+        closure(&self.multiplicand)
+        closure(&self.multiplier)
+    }
+
+    public func apply(_ closure: (inout Result<Pseudoregister>) -> Void) {
+        closure(&self.product)
+    }
+
+    public var hasEffectsOtherThanWritingPseudoregisters: Bool {
+        return true // flags
     }
 
     public var description: String {
@@ -274,18 +426,31 @@ public struct MultiplicationInstruction: InstructionProtocol {
 // Syntax: div [ a | b ] -> [ c | d ]
 // Semantic: c := a / b
 // Semantic: d := a % b
-public struct DivisionInstruction: InstructionProtocol {
-    public var dividend: Argument<Pseudoregister>
-    public var divisor: Argument<Pseudoregister>
-    public var quotient: Result<Pseudoregister>
-    public var remainder: Result<Pseudoregister>
-
-    public var arguments: [Argument<Pseudoregister>] {
-        return [self.dividend, self.divisor]
+public class DivisionInstruction: InstructionProtocol {
+    public init(dividend: Argument<Pseudoregister>, divisor: Argument<Pseudoregister>, quotient: Result<Pseudoregister>, remainder: Result<Pseudoregister>) {
+        self.dividend = dividend
+        self.divisor = divisor
+        self.quotient = quotient
+        self.remainder = remainder
     }
 
-    public var results: [Result<Pseudoregister>] {
-        return [self.quotient, self.remainder]
+    private(set) public var dividend: Argument<Pseudoregister>
+    private(set) public var divisor: Argument<Pseudoregister>
+    private(set) public var quotient: Result<Pseudoregister>
+    private(set) public var remainder: Result<Pseudoregister>
+
+    public func apply(_ closure: (inout Argument<Pseudoregister>) -> Void) {
+        closure(&self.dividend)
+        closure(&self.divisor)
+    }
+
+    public func apply(_ closure: (inout Result<Pseudoregister>) -> Void) {
+        closure(&self.quotient)
+        closure(&self.remainder)
+    }
+
+    public var hasEffectsOtherThanWritingPseudoregisters: Bool {
+        return true // flags
     }
 
     public var description: String {
@@ -300,16 +465,25 @@ public struct DivisionInstruction: InstructionProtocol {
 // Syntax: neg a
 // Semantic: a := -a
 // width is assumed to be 32bit
-public struct NumericNegationInstruction: InstructionProtocol {
-    public var source: Argument<Pseudoregister>
-    public var target: Result<Pseudoregister>
-
-    public var arguments: [Argument<Pseudoregister>] {
-        return [self.source]
+public class NumericNegationInstruction: InstructionProtocol {
+    public init(source: Argument<Pseudoregister>, target: Result<Pseudoregister>) {
+        self.source = source
+        self.target = target
     }
 
-    public var results: [Result<Pseudoregister>] {
-        return [self.target]
+    private(set) public var source: Argument<Pseudoregister>
+    private(set) public var target: Result<Pseudoregister>
+
+    public func apply(_ closure: (inout Argument<Pseudoregister>) -> Void) {
+        closure(&self.source)
+    }
+
+    public func apply(_ closure: (inout Result<Pseudoregister>) -> Void) {
+        closure(&self.target)
+    }
+
+    public var hasEffectsOtherThanWritingPseudoregisters: Bool {
+        return true // flags
     }
 
     public var description: String {
@@ -324,16 +498,25 @@ public struct NumericNegationInstruction: InstructionProtocol {
 // width is assumbed to be 8bit
 // Syntax: not -> a
 // Semantic: a := !a
-public struct LogicalNegationInstruction: InstructionProtocol {
-    public var source: Argument<Pseudoregister>
-    public var target: Result<Pseudoregister>
-
-    public var arguments: [Argument<Pseudoregister>] {
-        return [self.source]
+public class LogicalNegationInstruction: InstructionProtocol {
+    public init(source: Argument<Pseudoregister>, target: Result<Pseudoregister>) {
+        self.source = source
+        self.target = target
     }
 
-    public var results: [Result<Pseudoregister>] {
-        return [self.target]
+    private(set) public var source: Argument<Pseudoregister>
+    private(set) public var target: Result<Pseudoregister>
+
+    public func apply(_ closure: (inout Argument<Pseudoregister>) -> Void) {
+        closure(&self.source)
+    }
+
+    public func apply(_ closure: (inout Result<Pseudoregister>) -> Void) {
+        closure(&self.target)
+    }
+
+    public var hasEffectsOtherThanWritingPseudoregisters: Bool {
+        return false // no flags
     }
 
     public var description: String {

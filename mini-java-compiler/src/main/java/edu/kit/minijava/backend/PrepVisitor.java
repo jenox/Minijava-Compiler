@@ -8,7 +8,9 @@ import firm.nodes.NodeVisitor.Default;
 
 public class PrepVisitor extends Default {
     // ATTRIBUTES
-    private int registerIndex = 0;
+    private int numberOfRegularPseudoregisters = 0;
+    private int numberOfPhiPseudoregisters = 0;
+
     private HashMap<Node, Integer> node2regIndex = new HashMap<>();
     private HashMap<Integer, List<Node>> blockId2Nodes = new HashMap<>();
     private HashMap<Graph, List<Integer>> graph2BlockId = new HashMap<>();
@@ -26,7 +28,7 @@ public class PrepVisitor extends Default {
 
     @Override
     public void visit(Add add) {
-        int currentIndex = this.registerIndex++;
+        int currentIndex = this.numberOfRegularPseudoregisters++;
         this.node2regIndex.put(add, currentIndex);
 
         this.addInstrToBlock(null, add);
@@ -52,7 +54,7 @@ public class PrepVisitor extends Default {
     @Override
     public void visit(Call call) {
         // allocate register for call, regardless of whether is is used or not
-        this.node2regIndex.put(call, this.registerIndex++);
+        this.node2regIndex.put(call, this.numberOfRegularPseudoregisters++);
 
         this.addInstrToBlock(null, call);
     }
@@ -64,42 +66,44 @@ public class PrepVisitor extends Default {
 
     @Override
     public void visit(Const aConst) {
-        this.node2regIndex.put(aConst, this.registerIndex++);
+        this.node2regIndex.put(aConst, this.numberOfRegularPseudoregisters++);
 
         this.addInstrToBlock(null, aConst);
     }
 
     @Override
     public void visit(Div div) {
-        // we need two target registers for div. These are registerIndex and registerIndex + 1.
-        // Assignment of registerIndex+1 is not represented explicitly.
-        this.node2regIndex.put(div, this.registerIndex);
+        // we need two target registers for div. These are numberOfRegularPseudoregisters and
+        // numberOfRegularPseudoregisters + 1.
+        // Assignment of numberOfRegularPseudoregisters+1 is not represented explicitly.
+        this.node2regIndex.put(div, this.numberOfRegularPseudoregisters);
 
-        this.registerIndex += 2;
+        this.numberOfRegularPseudoregisters += 2;
 
         this.addInstrToBlock(null, div);
     }
 
     @Override
     public void visit(Mod mod) {
-        // we need two target registers for mod. These are registerIndex and registerIndex + 1.
-        // Assignment of registerIndex+1 is not represented explicitly.
-        this.node2regIndex.put(mod, this.registerIndex);
+        // we need two target registers for mod. These are numberOfRegularPseudoregisters and
+        // numberOfRegularPseudoregisters + 1.
+        // Assignment of numberOfRegularPseudoregisters+1 is not represented explicitly.
+        this.node2regIndex.put(mod, this.numberOfRegularPseudoregisters);
 
-        this.registerIndex += 2;
+        this.numberOfRegularPseudoregisters += 2;
 
         this.addInstrToBlock(null, mod);
     }
 
     @Override
     public void visit(Mul node) {
-        this.node2regIndex.put(node, this.registerIndex++);
+        this.node2regIndex.put(node, this.numberOfRegularPseudoregisters++);
         this.addInstrToBlock(null, node);
     }
 
     @Override
     public void visit(Minus node) {
-        this.node2regIndex.put(node, this.registerIndex++);
+        this.node2regIndex.put(node, this.numberOfRegularPseudoregisters++);
         this.addInstrToBlock(null, node);
     }
 
@@ -107,8 +111,11 @@ public class PrepVisitor extends Default {
     @Override
     public void visit(Phi phi) {
         if (!this.node2regIndex.containsKey(phi)) {
-            this.node2regIndex.put(phi, this.registerIndex++);
+            int index = --this.numberOfPhiPseudoregisters;
+
+            this.node2regIndex.put(phi, index);
         }
+
         this.addInstrToBlock(null, phi);
     }
 
@@ -137,21 +144,21 @@ public class PrepVisitor extends Default {
 
     @Override
     public void visit(Return aReturn) {
-        this.node2regIndex.put(aReturn, this.registerIndex++);
+        this.node2regIndex.put(aReturn, this.numberOfRegularPseudoregisters++);
 
         this.addInstrToBlock(null, aReturn);
     }
 
     @Override
     public void visit(Sel sel) {
-        this.node2regIndex.put(sel, this.registerIndex++);
+        this.node2regIndex.put(sel, this.numberOfRegularPseudoregisters++);
 
         this.addInstrToBlock(null, sel);
     }
 
     @Override
     public void visit(Sub sub) {
-        this.node2regIndex.put(sub, this.registerIndex++);
+        this.node2regIndex.put(sub, this.numberOfRegularPseudoregisters++);
 
         this.addInstrToBlock(null, sub);
     }
@@ -171,7 +178,7 @@ public class PrepVisitor extends Default {
         Integer operandRegisterIndex = this.node2regIndex.get(node.getOp());
 
         if (operandRegisterIndex == null) {
-            operandRegisterIndex = this.registerIndex++;
+            operandRegisterIndex = this.numberOfRegularPseudoregisters++;
             this.node2regIndex.put(node.getOp(), operandRegisterIndex);
         }
 
@@ -195,21 +202,21 @@ public class PrepVisitor extends Default {
 
     @Override
     public void visit(Load node) {
-        this.node2regIndex.put(node, this.registerIndex++);
+        this.node2regIndex.put(node, this.numberOfRegularPseudoregisters++);
 
         this.addInstrToBlock(null, node);
     }
 
     @Override
     public void visit(Not not) {
-        this.node2regIndex.put(not, this.registerIndex++);
+        this.node2regIndex.put(not, this.numberOfRegularPseudoregisters++);
 
         this.addInstrToBlock(null, not);
     }
 
     @Override
     public void visit(Store store) {
-        this.node2regIndex.put(store, this.registerIndex++);
+        this.node2regIndex.put(store, this.numberOfRegularPseudoregisters++);
 
         this.addInstrToBlock(null, store);
     }
@@ -219,8 +226,8 @@ public class PrepVisitor extends Default {
         throw new UnsupportedOperationException("unknown node: " + n + " " + n.getClass() + "\tmode " + n.getMode());
     }
 
-    public void setRegisterIndex(int registerIndex) {
-        this.registerIndex = registerIndex;
+    public void setNumberOfRegularPseudoregisters(int numberOfRegularPseudoregisters) {
+        this.numberOfRegularPseudoregisters = numberOfRegularPseudoregisters;
     }
 
     private void addInstrToBlock(Integer blockNr, Node node) {
