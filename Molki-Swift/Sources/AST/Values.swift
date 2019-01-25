@@ -17,13 +17,27 @@ public struct RegisterValue<RegisterType: Register>: Equatable, CustomStringConv
         return RegisterValue(register: self.register, width: width)
     }
 
-    public var registers: Set<RegisterType> {
-        return [self.register]
+    public mutating func substitute(_ register: RegisterType, with argument: Argument<RegisterType>) {
+        guard self.register == register else { return }
+
+        switch argument {
+        case .constant:
+            break
+        case .register(let value):
+            self.register = value.register
+        case .memory:
+            break
+        }
     }
 
     public var description: String {
         return self.register.name(for: self.width)
     }
+}
+
+public extension RegisterValue where RegisterType == X86Register {
+    public static let basePointer = X86Register.rbp.with(.quad)
+    public static let stackPointer = X86Register.rsp.with(.quad)
 }
 
 public struct ConstantValue: Equatable, CustomStringConvertible {
@@ -65,9 +79,28 @@ public enum MemoryAddress<RegisterType: Register>: Equatable, CustomStringConver
     public var registers: Set<RegisterType> {
         switch self {
         case .relative(base: let base, offset: _):
-            return base.registers
+            return [base.register]
         case .indexed(base: let base, index: let index, scale: _, offset: _):
-            return base.registers.union(index.registers)
+            return [base.register, index.register]
+        }
+    }
+
+    public mutating func substitute(_ register: RegisterType, with argument: Argument<RegisterType>) {
+        switch self {
+        case .relative(base: var base, offset: let offset):
+            base.substitute(register, with: argument)
+
+            self = .relative(base: base, offset: offset)
+        case .indexed(base: var base, index: var index, scale: let scale, offset: let offset):
+            base.substitute(register, with: argument)
+            index.substitute(register, with: argument)
+
+            if index.register == register, case .constant(let value) = argument {
+                self = MemoryAddress.relative(base: base, offset: offset + scale * value.value)
+            }
+            else {
+                self = MemoryAddress.indexed(base: base, index: index, scale: scale, offset: offset)
+            }
         }
     }
 
