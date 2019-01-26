@@ -374,8 +374,7 @@ public class MolkiTransformer extends Default {
             int baseReg = this.node2RegIndex.get(member.getPtr());
             int offset = member.getEntity().getOffset();
 
-            this.appendMolkiCode("mov" + movSuffix + " " + REG_PREFIX + storeReg + regSuffix + " -> " + offset + "("
-                    + REG_PREFIX + baseReg + ")" + regSuffix);
+            this.appendStoreCmd(movSuffix, storeReg, regSuffix, offset, baseReg);
         }
         else {
             int pointerReg = this.node2RegIndex.get(store.getPtr());
@@ -385,8 +384,26 @@ public class MolkiTransformer extends Default {
     }
 
     /**
-     * <p>Example<br><br>
+     * <p>Exmaple<br><br>
+     * movq %@17d -> 8(%@18)d
+     * </p>
+     * @param movSuffix
+     * @param storeReg
+     * @param regSuffix
+     * @param offset
+     * @param baseReg
+     */
+    private void appendStoreCmd(String movSuffix, int storeReg, String regSuffix, int offset, int baseReg) {
+        this.appendMolkiCode("mov" + movSuffix + " " + REG_PREFIX + storeReg + regSuffix + " -> " + offset + "("
+                + REG_PREFIX + baseReg + ")" + regSuffix);
+    }
+
+    /**
+     * <p>
+     * Example<br>
+     * <br>
      * movq %@17d -> (%@18, %@19d, 10)d
+     *</p>
      * @param movSuffix
      * @param regSuffix
      * @param storeReg
