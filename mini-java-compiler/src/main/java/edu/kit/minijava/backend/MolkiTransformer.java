@@ -196,7 +196,6 @@ public class MolkiTransformer extends Default {
             }
         }
 
-
         int targetReg = this.node2RegIndex.get(call);
 
         if (isVoid) {
@@ -292,8 +291,6 @@ public class MolkiTransformer extends Default {
         this.appendTwoAdressCommand("negl", scrReg, REG_WIDTH_D, targetReg, REG_WIDTH_D);
     }
 
-
-
     private void molkify(Mod mod) {
         int srcReg1 = this.node2RegIndex.get(mod.getLeft());
         int srcReg2 = this.node2RegIndex.get(mod.getRight());
@@ -368,9 +365,9 @@ public class MolkiTransformer extends Default {
             Sel sel = (Sel) store.getPred(1);
             int baseReg = this.node2RegIndex.get(sel.getPtr());
             int indexReg = this.node2RegIndex.get(sel.getIndex());
+            int alignment = sel.getType().getAlignment();
 
-            this.appendMolkiCode("mov" + movSuffix + " " + REG_PREFIX + storeReg + regSuffix + " -> (" + REG_PREFIX
-                    + baseReg + ", " + REG_PREFIX + indexReg + "d, " + sel.getType().getAlignment() + ")" + regSuffix);
+            this.appendStoreCmd(movSuffix, regSuffix, storeReg, baseReg, indexReg, alignment);
         }
         else if (store.getPred(1) instanceof Member) {
             Member member = (Member) store.getPred(1);
@@ -385,6 +382,22 @@ public class MolkiTransformer extends Default {
             this.appendMolkiCode("mov" + movSuffix + " " + REG_PREFIX + storeReg + regSuffix + " -> (" + REG_PREFIX
                     + pointerReg + ")" + regSuffix);
         }
+    }
+
+    /**
+     * <p>Example<br><br>
+     * movq %@17d -> (%@18, %@19d, 10)d
+     * @param movSuffix
+     * @param regSuffix
+     * @param storeReg
+     * @param baseReg
+     * @param indexReg
+     * @param alignment
+     */
+    private void appendStoreCmd(String movSuffix, String regSuffix, int storeReg, int baseReg, int indexReg,
+            int alignment) {
+        this.appendMolkiCode("mov" + movSuffix + " " + REG_PREFIX + storeReg + regSuffix + " -> (" + REG_PREFIX
+                + baseReg + ", " + REG_PREFIX + indexReg + REG_WIDTH_D + ", " + alignment + ")");
     }
 
     private void molkify(Sub sub) {
@@ -575,7 +588,9 @@ public class MolkiTransformer extends Default {
     }
 
     /**
-     * <p>Example<br><br>
+     * <p>
+     * Example<br>
+     * <br>
      * negl %@17d -> %@18d
      * </p>
      *
@@ -593,9 +608,12 @@ public class MolkiTransformer extends Default {
 
     /**
      * create cmd src -> target
-     * <p>Example<br><br>
+     * <p>
+     * Example<br>
+     * <br>
      * mov %@8 -> %@$
      * </p>
+     *
      * @param cmd
      * @param src
      * @param target
