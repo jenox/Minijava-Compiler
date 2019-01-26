@@ -414,7 +414,7 @@ public class MolkiTransformer extends Default {
     private void appendStoreCmd(String movSuffix, String regSuffix, int storeReg, int baseReg, int indexReg,
             int alignment) {
         this.appendMolkiCode("mov" + movSuffix + " " + REG_PREFIX + storeReg + regSuffix + " -> (" + REG_PREFIX
-                + baseReg + ", " + REG_PREFIX + indexReg + REG_WIDTH_D + ", " + alignment + ")");
+                + baseReg + ", " + REG_PREFIX + indexReg + REG_WIDTH_D + ", " + alignment + ")" + regSuffix);
     }
 
     private void molkify(Sub sub) {
