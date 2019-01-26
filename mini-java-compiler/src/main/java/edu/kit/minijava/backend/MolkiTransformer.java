@@ -425,7 +425,7 @@ public class MolkiTransformer extends Default {
 
         String regSuffix = Util.mode2RegSuffix(sub.getMode());
 
-        this.appendThreeAdressCommand("sub", srcReg1, regSuffix, srcReg2, regSuffix, targetReg, regSuffix);
+        this.appendThreeAdressCommand("subl", srcReg1, regSuffix, srcReg2, regSuffix, targetReg, regSuffix);
 
     }
 
