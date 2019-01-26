@@ -298,8 +298,9 @@ public class MolkiTransformer extends Default {
         int targetReg1 = this.node2RegIndex.get(mod);
         int targetReg2 = targetReg1 + 1; // by convention used in PrepVisitor
 
-        this.appendFourAdressCommand("divl", srcReg1, REG_WIDTH_D, srcReg2, REG_WIDTH_D, targetReg1, REG_WIDTH_D,
-                targetReg2, REG_WIDTH_D);
+        //targetReg2 before targetReg1 is on purpose
+        this.appendFourAdressCommand("divl", srcReg1, REG_WIDTH_D, srcReg2, REG_WIDTH_D, targetReg2, REG_WIDTH_D,
+                targetReg1, REG_WIDTH_D);
     }
 
     private void molkify(Mul mul) {
@@ -383,7 +384,6 @@ public class MolkiTransformer extends Default {
                     + pointerReg + ")" + regSuffix);
         }
     }
-
 
     private void molkify(Sub sub) {
         int srcReg1 = this.node2RegIndex.get(sub.getLeft());
@@ -652,8 +652,8 @@ public class MolkiTransformer extends Default {
             int targetReg1, String suffixTargetReg1, int targetReg2, String suffixTargetReg2) {
 
         this.appendMolkiCode(cmd + " [ " + REG_PREFIX + srcReg1 + suffixReg1 + " | " + REG_PREFIX + srcReg2 + suffixReg2
-                + " ] -> [ %@" + targetReg1 + suffixTargetReg1 + " | " + REG_PREFIX + targetReg2 + suffixTargetReg2
-                + " ]");
+                + " ] -> [ " + REG_PREFIX + targetReg1 + suffixTargetReg1 + " | " + REG_PREFIX + targetReg2
+                + suffixTargetReg2 + " ]");
     }
 
     /**
@@ -721,9 +721,12 @@ public class MolkiTransformer extends Default {
     }
 
     /**
-     * <p>Exmaple<br><br>
+     * <p>
+     * Exmaple<br>
+     * <br>
      * movq %@17d -> 8(%@18)d
      * </p>
+     *
      * @param movSuffix
      * @param storeReg
      * @param regSuffix
@@ -740,7 +743,8 @@ public class MolkiTransformer extends Default {
      * Example<br>
      * <br>
      * movq %@17d -> (%@18, %@19d, 10)d
-     *</p>
+     * </p>
+     *
      * @param movSuffix
      * @param regSuffix
      * @param storeReg
