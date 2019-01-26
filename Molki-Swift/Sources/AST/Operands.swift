@@ -14,17 +14,6 @@ public enum Argument<RegisterType: Register>: CustomStringConvertible {
     case register(RegisterValue<RegisterType>)
     case memory(MemoryValue<RegisterType>)
 
-    public func matches(_ width: RegisterWidth) -> Bool {
-        switch self {
-        case .constant(_):
-            return true
-        case .register(let value):
-            return value.width == width
-        case .memory(_):
-            return true
-        }
-    }
-
     public var width: RegisterWidth {
         switch self {
         case .constant(let value):
@@ -33,6 +22,20 @@ public enum Argument<RegisterType: Register>: CustomStringConvertible {
             return value.width
         case .memory(let value):
             return value.width
+        }
+    }
+
+    public mutating func substitute(_ register: RegisterType, with argument: Argument<RegisterType>) {
+        switch self {
+        case .constant:
+            break
+        case .register(let value):
+            if value.register == register {
+                self = argument
+            }
+        case .memory(var value):
+            value.address.substitute(register, with: argument)
+            self = .memory(value)
         }
     }
 
@@ -52,21 +55,22 @@ public enum Result<RegisterType: Register>: CustomStringConvertible {
     case register(RegisterValue<RegisterType>)
     case memory(MemoryValue<RegisterType>)
 
-    public func matches(_ width: RegisterWidth) -> Bool {
-        switch self {
-        case .register(let value):
-            return value.width == width
-        case .memory(_):
-            return true
-        }
-    }
-
     public var width: RegisterWidth {
         switch self {
         case .register(let value):
             return value.width
         case .memory(let value):
             return value.width
+        }
+    }
+
+    public mutating func substitute(_ register: RegisterType, with argument: Argument<RegisterType>) {
+        switch self {
+        case .register:
+            break
+        case .memory(var value):
+            value.address.substitute(register, with: argument)
+            self = .memory(value)
         }
     }
 

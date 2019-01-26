@@ -9,48 +9,36 @@
 import Foundation
 
 
-extension Character {
-    public var isAlphanumeric: Bool {
-        return "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_0123456789".contains(self)
-    }
+extension Collection {
+    public func slice(from index: Index, toFirstWhere predicate: (Element) -> Bool) -> SubSequence {
+        let lowerBound = index
+        var upperBound = index
 
-    public var isAlpha: Bool {
-        return self.isAlphanumeric && !self.isNumeric
-    }
+        while upperBound < self.endIndex, !predicate(self[upperBound]) {
+            upperBound = self.index(after: upperBound)
+        }
 
-    public var isNumeric: Bool {
-        return "0123456789".contains(self)
-    }
-
-    public var isWhitespace: Bool {
-        return " \t\n\r\r\n".contains(self)
-    }
-
-    public var isNewline: Bool {
-        return "\n\r\r\n".contains(self)
+        return self[lowerBound..<upperBound]
     }
 }
 
-extension CharacterSet {
-    public func contains(_ character: Character) -> Bool {
-        return character.unicodeScalars.allSatisfy({ self.contains($0) })
-    }
-}
+extension BidirectionalCollection {
+    #if swift(>=4.2)
+    #else
+    public func lastIndex(where predicate: (Element) throws -> Bool) rethrows -> Index? {
+        var index = self.endIndex
 
-extension String {
-    func line(at range: Range<String.Index>) -> Substring {
-        var substring = self[self.lineRange(for: range)]
+        while index != self.startIndex {
+            self.formIndex(before: &index)
 
-        while let first = substring.first, CharacterSet.newlines.contains(first) {
-            substring = substring.dropFirst()
+            if try predicate(self[index]) {
+                return index
+            }
         }
 
-        while let last = substring.last, CharacterSet.newlines.contains(last) {
-            substring = substring.dropLast()
-        }
-
-        return substring
+        return nil
     }
+    #endif
 }
 
 extension Collection where Element: Equatable {

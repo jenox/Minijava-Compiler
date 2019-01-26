@@ -15,21 +15,29 @@ public class Lexer: TokenProvider {
 
     public init(path: String, text: String) {
         self.path = path
-        self.text = text
-        self.currentRange = text.startIndex..<text.startIndex
+        self.characters = Array(text)
+
+        self.currentRange = 0..<0
+
+        self.currentTokenLineStartIndex = 0
+        self.currentTokenLineNumber = 1
     }
 
 
     // MARK: - State
 
     private let path: String
-    private let text: String
+    private let characters: [Character]
 
-    private var currentRange: Range<String.Index>
+    // current token range
+    private var currentRange: Range<Int>
+
+    private var currentTokenLineStartIndex: Int
+    private var currentTokenLineNumber: Int
 
     private var currentCharacter: Character? {
-        if self.text.indices.contains(self.currentRange.upperBound) {
-            return self.text[self.currentRange.upperBound]
+        if self.characters.indices.contains(self.currentRange.upperBound) {
+            return self.characters[self.currentRange.upperBound]
         }
         else {
             return nil
@@ -45,7 +53,7 @@ public class Lexer: TokenProvider {
 
     private func advance() {
         let lowerBound = self.currentRange.lowerBound
-        let upperBound = self.text.index(after: self.currentRange.upperBound)
+        let upperBound = self.characters.index(after: self.currentRange.upperBound)
 
         self.currentRange = lowerBound..<upperBound
     }
@@ -71,12 +79,18 @@ public class Lexer: TokenProvider {
     }
 
     private func flushCurrentRange() {
+        let flushed = self.characters[self.currentRange]
+
+        if let index = flushed.lastIndex(where: { $0.isNewline }) {
+            self.currentTokenLineStartIndex = flushed.index(after: index)
+            self.currentTokenLineNumber += flushed.count(where: { $0.isNewline })
+        }
+
         let lowerBound = self.currentRange.upperBound
         let upperBound = self.currentRange.upperBound
 
         self.currentRange = lowerBound..<upperBound
     }
-
 
 
     // MARK: - Extracting Tokens
@@ -182,15 +196,15 @@ public class Lexer: TokenProvider {
     private func buildToken(_ type: TokenType) -> Token {
         precondition(!self.currentRange.isEmpty)
 
-        let payload = String(self.text[self.currentRange])
+        let payload = String(self.characters[self.currentRange])
 
         let range = self.currentRange
-        let line = self.text.line(at: range)
-        let context = TokenContext(substring: line, range: range)
+        let substring = self.characters.slice(from: self.currentTokenLineStartIndex, toFirstWhere: { $0.isNewline })
+        let context = TokenContext(substring: substring, range: range)
 
-        let row = self.text[..<line.startIndex].count(where: { $0.isNewline })
-        let column = line.distance(from: line.startIndex, to: range.lowerBound)
-        let location = TokenLocation(path: self.path, row: row, column: column)
+        let line = self.currentTokenLineNumber
+        let column = substring.distance(from: substring.startIndex, to: range.lowerBound) + 1
+        let location = TokenLocation(path: self.path, line: line, column: column)
 
         self.flushCurrentRange()
 

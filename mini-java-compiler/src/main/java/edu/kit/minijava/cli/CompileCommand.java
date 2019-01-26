@@ -48,13 +48,14 @@ public class CompileCommand extends Command {
             graphs.forEach(g -> {
                 BackEdges.enable(g);
                 int numArgs = ((MethodType) g.getEntity().getType()).getNParams();
-                prepVisitor.setRegisterIndex(numArgs);
+                prepVisitor.setNumberOfRegularPseudoregisters(numArgs);
                 g.walkTopological(prepVisitor);
             });
 
             HashMap<Integer, List<Node>> blockId2Nodes = prepVisitor.getBlockId2Nodes();
             HashMap<Graph, List<Integer>> graph2BlockId = prepVisitor.getGraph2BlockId();
-            MolkiTransformer molkiTransformer = new MolkiTransformer(prepVisitor.getNode2RegIndex());
+            HashMap<Graph, Integer> graph2MaxBlockId = prepVisitor.getGraph2MaxBlockId();
+            MolkiTransformer molkiTransformer = new MolkiTransformer(prepVisitor.getNode2RegIndex(), graph2MaxBlockId);
             List<String> output = new ArrayList<>();
 
             graphs.forEach(g -> {
