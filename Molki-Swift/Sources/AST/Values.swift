@@ -17,6 +17,19 @@ public struct RegisterValue<RegisterType: Register>: Equatable, CustomStringConv
         return RegisterValue(register: self.register, width: width)
     }
 
+    public mutating func substitute(_ register: RegisterType, with argument: Argument<RegisterType>) {
+        guard self.register == register else { return }
+
+        switch argument {
+        case .constant:
+            break
+        case .register(let value):
+            self.register = value.register
+        case .memory:
+            break
+        }
+    }
+
     public var description: String {
         return self.register.name(for: self.width)
     }
@@ -72,13 +85,21 @@ public enum MemoryAddress<RegisterType: Register>: Equatable, CustomStringConver
         }
     }
 
-    public mutating func substitute(_ register: RegisterType, with constant: Int) {
+    public mutating func substitute(_ register: RegisterType, with argument: Argument<RegisterType>) {
         switch self {
-        case .relative:
-            break
-        case .indexed(base: let base, index: let index, scale: let scale, offset: let offset):
-            if index.register == register {
-                self = MemoryAddress.relative(base: base, offset: offset + scale * constant)
+        case .relative(base: var base, offset: let offset):
+            base.substitute(register, with: argument)
+
+            self = .relative(base: base, offset: offset)
+        case .indexed(base: var base, index: var index, scale: let scale, offset: let offset):
+            base.substitute(register, with: argument)
+            index.substitute(register, with: argument)
+
+            if index.register == register, case .constant(let value) = argument {
+                self = MemoryAddress.relative(base: base, offset: offset + scale * value.value)
+            }
+            else {
+                self = MemoryAddress.indexed(base: base, index: index, scale: scale, offset: offset)
             }
         }
     }
