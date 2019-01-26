@@ -214,6 +214,15 @@ public class MolkiTransformer extends Default {
         String cmpSuffix = Util.mode2MovSuffix(cmp.getLeft().getMode());
 
         this.appendMolkiCode("cmp" + cmpSuffix + " [ %@" + srcReg1 + regSuffix + " | %@" + srcReg2 + regSuffix + " ]");
+
+        String cmd = "cmp" + cmpSuffix;
+        this.appendTwoArgsCommand(cmd, srcReg1, regSuffix, srcReg2, regSuffix);
+    }
+
+    private void appendTwoArgsCommand(String cmd, int srcReg1, String suffixSrcReg1, int srcReg2,
+            String suffixSrcReg2) {
+        this.appendMolkiCode(cmd + "[ " + REG_PREFIX + srcReg1 + suffixSrcReg1 + " | " + REG_PREFIX + srcReg2
+                + suffixSrcReg2 + " ]");
     }
 
     private void molkify(Const aConst) {
@@ -497,13 +506,27 @@ public class MolkiTransformer extends Default {
                     int regIndexOfIthPred = this.node2RegIndex.get(phi.getPred(i));
                     int blockNumOfIthPred = phi.getBlock().getPred(i).getBlock().getNr();
 
-                    this.appendMolkiCode("mov" + movSuffix + " %@" + regIndexOfIthPred + regSuffix + " -> %@"
-                            + regIndexOfPhi + regSuffix, blockNumOfIthPred);
+                    this.appendMolkiCode("mov" + movSuffix + " " + REG_PREFIX + regIndexOfIthPred + regSuffix + " -> "
+                            + REG_PREFIX + regIndexOfPhi + regSuffix, blockNumOfIthPred);
                 }
             }
         }
     }
 
+    //
+    // append commands
+    //
+
+    /**
+     * Example<br>
+     * <br>
+     * movq %@17d -> %@18d
+     *
+     * @param movSuffix
+     * @param regIndex
+     * @param regSuffix
+     * @param regIndexOfPhi
+     */
     private void appendPhiCode(String movSuffix, int regIndex, String regSuffix, int regIndexOfPhi) {
         this.appendMolkiCode("mov" + movSuffix + " " + REG_PREFIX + regIndex + regSuffix + " -> " + REG_PREFIX
                 + regIndexOfPhi + regSuffix);
