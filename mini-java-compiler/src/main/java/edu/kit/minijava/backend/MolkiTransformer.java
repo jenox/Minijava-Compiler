@@ -383,7 +383,6 @@ public class MolkiTransformer extends Default {
         }
     }
 
-
     private void molkify(Sub sub) {
         int srcReg1 = this.node2RegIndex.get(sub.getLeft());
         int srcReg2 = this.node2RegIndex.get(sub.getRight());
@@ -471,15 +470,13 @@ public class MolkiTransformer extends Default {
                 this.graph2MaxBlockId.put(graph, newMaxBlockId);
 
                 if (otherCond.getSelector() instanceof Cmp) {
-                    this.appendMolkiCode("mov" + movSuffix + " %@" + truePredRegIndex + regSuffix + " -> %@"
-                            + regIndexOfPhi + regSuffix);
+                    this.appendPhiCode(movSuffix, truePredRegIndex, regSuffix, regIndexOfPhi);
 
                     Cmp cmp = (Cmp) otherCond.getSelector();
                     String condJmp = Util.relation2Jmp(cmp.getRelation());
                     this.appendMolkiCode("phi_" + condJmp + " L" + labelNr);
 
-                    this.appendMolkiCode("mov" + movSuffix + " %@" + falsePredRegIndex + regSuffix + " -> %@"
-                            + regIndexOfPhi + regSuffix);
+                    this.appendPhiCode(movSuffix, falsePredRegIndex, regSuffix, regIndexOfPhi);
 
                     this.appendMolkiCode("L" + labelNr + ":");
                 }
@@ -488,12 +485,10 @@ public class MolkiTransformer extends Default {
                     boolean isTrue = tempConst.getTarval().equals(TargetValue.getBTrue());
 
                     if (isTrue) {
-                        this.appendMolkiCode("mov" + movSuffix + " %@" + truePredRegIndex + regSuffix + " -> %@"
-                                + regIndexOfPhi + regSuffix);
+                        this.appendPhiCode(movSuffix, truePredRegIndex, regSuffix, regIndexOfPhi);
                     }
                     else {
-                        this.appendMolkiCode("mov" + movSuffix + " %@" + falsePredRegIndex + regSuffix + " -> %@"
-                                + regIndexOfPhi + regSuffix);
+                        this.appendPhiCode(movSuffix, falsePredRegIndex, regSuffix, regIndexOfPhi);
                     }
                 }
             }
@@ -507,6 +502,11 @@ public class MolkiTransformer extends Default {
                 }
             }
         }
+    }
+
+    private void appendPhiCode(String movSuffix, int regIndex, String regSuffix, int regIndexOfPhi) {
+        this.appendMolkiCode("mov" + movSuffix + " " + REG_PREFIX + regIndex + regSuffix + " -> " + REG_PREFIX
+                + regIndexOfPhi + regSuffix);
     }
 
     private void molkify(Cond cond) {
@@ -709,6 +709,7 @@ public class MolkiTransformer extends Default {
      * <br>
      * movd (%@17) -> %@18d
      * </p>
+     *
      * @param movSuffix
      * @param pointerReg
      * @param targetReg
@@ -758,8 +759,10 @@ public class MolkiTransformer extends Default {
     }
 
     /**
-     * Example<br><br>
+     * Example<br>
+     * <br>
      * movq %@17d -> (%@18)d
+     *
      * @param movSuffix
      * @param storeReg
      * @param regSuffix
