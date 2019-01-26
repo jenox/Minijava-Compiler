@@ -365,16 +365,17 @@ public class MolkiTransformer extends Default {
             Sel sel = (Sel) store.getPred(1);
             int baseReg = this.node2RegIndex.get(sel.getPtr());
             int indexReg = this.node2RegIndex.get(sel.getIndex());
-            int alignment = sel.getType().getAlignment();
 
-            this.appendStoreCmd(movSuffix, regSuffix, storeReg, baseReg, indexReg, alignment);
+            this.appendMolkiCode("mov" + movSuffix + " " + REG_PREFIX + storeReg + regSuffix + " -> (" + REG_PREFIX
+                    + baseReg + ", " + REG_PREFIX + indexReg + "d, " + sel.getType().getAlignment() + ")" + regSuffix);
         }
         else if (store.getPred(1) instanceof Member) {
             Member member = (Member) store.getPred(1);
             int baseReg = this.node2RegIndex.get(member.getPtr());
             int offset = member.getEntity().getOffset();
 
-            this.appendStoreCmd(movSuffix, storeReg, regSuffix, offset, baseReg);
+            this.appendMolkiCode("mov" + movSuffix + " " + REG_PREFIX + storeReg + regSuffix + " -> " + offset + "("
+                    + REG_PREFIX + baseReg + ")" + regSuffix);
         }
         else {
             int pointerReg = this.node2RegIndex.get(store.getPtr());
@@ -383,39 +384,6 @@ public class MolkiTransformer extends Default {
         }
     }
 
-    /**
-     * <p>Exmaple<br><br>
-     * movq %@17d -> 8(%@18)d
-     * </p>
-     * @param movSuffix
-     * @param storeReg
-     * @param regSuffix
-     * @param offset
-     * @param baseReg
-     */
-    private void appendStoreCmd(String movSuffix, int storeReg, String regSuffix, int offset, int baseReg) {
-        this.appendMolkiCode("mov" + movSuffix + " " + REG_PREFIX + storeReg + regSuffix + " -> " + offset + "("
-                + REG_PREFIX + baseReg + ")" + regSuffix);
-    }
-
-    /**
-     * <p>
-     * Example<br>
-     * <br>
-     * movq %@17d -> (%@18, %@19d, 10)d
-     *</p>
-     * @param movSuffix
-     * @param regSuffix
-     * @param storeReg
-     * @param baseReg
-     * @param indexReg
-     * @param alignment
-     */
-    private void appendStoreCmd(String movSuffix, String regSuffix, int storeReg, int baseReg, int indexReg,
-            int alignment) {
-        this.appendMolkiCode("mov" + movSuffix + " " + REG_PREFIX + storeReg + regSuffix + " -> (" + REG_PREFIX
-                + baseReg + ", " + REG_PREFIX + indexReg + REG_WIDTH_D + ", " + alignment + ")" + regSuffix);
-    }
 
     private void molkify(Sub sub) {
         int srcReg1 = this.node2RegIndex.get(sub.getLeft());
@@ -751,4 +719,39 @@ public class MolkiTransformer extends Default {
         this.appendMolkiCode("mov" + movSuffix + " " + "(" + REG_PREFIX + pointerReg + ") -> " + REG_PREFIX + targetReg
                 + suffixTargetReg);
     }
+
+    /**
+     * <p>Exmaple<br><br>
+     * movq %@17d -> 8(%@18)d
+     * </p>
+     * @param movSuffix
+     * @param storeReg
+     * @param regSuffix
+     * @param offset
+     * @param baseReg
+     */
+    private void appendStoreCmd(String movSuffix, int storeReg, String regSuffix, int offset, int baseReg) {
+        this.appendMolkiCode("mov" + movSuffix + " " + REG_PREFIX + storeReg + regSuffix + " -> " + offset + "("
+                + REG_PREFIX + baseReg + ")" + regSuffix);
+    }
+
+    /**
+     * <p>
+     * Example<br>
+     * <br>
+     * movq %@17d -> (%@18, %@19d, 10)d
+     *</p>
+     * @param movSuffix
+     * @param regSuffix
+     * @param storeReg
+     * @param baseReg
+     * @param indexReg
+     * @param alignment
+     */
+    private void appendStoreCmd(String movSuffix, String regSuffix, int storeReg, int baseReg, int indexReg,
+            int alignment) {
+        this.appendMolkiCode("mov" + movSuffix + " " + REG_PREFIX + storeReg + regSuffix + " -> (" + REG_PREFIX
+                + baseReg + ", " + REG_PREFIX + indexReg + REG_WIDTH_D + ", " + alignment + ")" + regSuffix);
+    }
+
 }
