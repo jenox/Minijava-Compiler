@@ -1,7 +1,9 @@
 package edu.kit.minijava.backend;
 
+import firm.BackEdges;
 import firm.Mode;
 import firm.Relation;
+import firm.nodes.Phi;
 
 public class Util {
     /*
@@ -65,5 +67,15 @@ public class Util {
                 assert false : "Unknown relation in cond node code generation!";
                 return "";
         }
+    }
+
+    public static boolean isLoopingPhi(Phi phi) {
+        for (BackEdges.Edge edge : BackEdges.getOuts(phi)) {
+            if (edge.node instanceof Phi && edge.node.getNr() < phi.getNr()) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

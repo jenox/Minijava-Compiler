@@ -492,8 +492,48 @@ public class MolkiTransformer extends Default {
                     int regIndexOfIthPred = this.node2RegIndex.get(phi.getPred(i));
                     int blockNumOfIthPred = phi.getBlock().getPred(i).getBlock().getNr();
 
-                    this.appendMolkiCode("mov" + movSuffix + " %@" + regIndexOfIthPred + regSuffix + " -> %@"
-                            + regIndexOfPhi + regSuffix, blockNumOfIthPred);
+                    // variables for dealing with swap problem
+                    boolean hasPhiSucc = false;
+                    boolean isLoopingPhi = Util.isLoopingPhi(phi);
+                    boolean succIsLooping = false;
+                    int maxRegIndex = Collections.max(this.node2RegIndex.values());
+                    int tempIndex = maxRegIndex + regIndexOfPhi + 1; // +1 to prevent getting only to max index
+
+                    for (BackEdges.Edge edge : BackEdges.getOuts(phi)) {
+                        if (edge.node instanceof Phi) {
+                            hasPhiSucc = true;
+                        }
+
+                        if (edge.node instanceof Phi) {
+                            succIsLooping = Util.isLoopingPhi((Phi) edge.node);
+                        }
+                    }
+
+
+                    if (hasPhiSucc && phi.getPred(i) instanceof Phi
+                            && !isLoopingPhi && !(phi.getPred(i) instanceof Const)) {
+                        this.appendMolkiCode("mov" + movSuffix + " %@" + regIndexOfPhi + regSuffix + " -> %@"
+                                + tempIndex + regSuffix, blockNumOfIthPred);
+
+                        int predTempIndex = maxRegIndex + regIndexOfIthPred + 1;
+                        this.appendMolkiCode("mov" + movSuffix + " %@" + predTempIndex + regSuffix + " -> %@"
+                                + regIndexOfPhi + regSuffix, blockNumOfIthPred);
+                    }
+                    else if (hasPhiSucc && !succIsLooping && !(phi.getPred(i) instanceof Const)) {
+                        this.appendMolkiCode("mov" + movSuffix + " %@" + regIndexOfPhi + regSuffix + " -> %@"
+                                + tempIndex + regSuffix, blockNumOfIthPred);
+
+                        this.appendMolkiCode("mov" + movSuffix + " %@" + regIndexOfIthPred + regSuffix + " -> %@"
+                                + regIndexOfPhi + regSuffix, blockNumOfIthPred);
+                    }
+                    else if (phi.getPred(i) instanceof Phi) {
+                        this.appendMolkiCode("mov" + movSuffix + " %@" + tempIndex + regSuffix + " -> %@"
+                                + regIndexOfPhi + regSuffix, blockNumOfIthPred);
+                    }
+                    else {
+                        this.appendMolkiCode("mov" + movSuffix + " %@" + regIndexOfIthPred + regSuffix + " -> %@"
+                                + regIndexOfPhi + regSuffix, blockNumOfIthPred);
+                    }
                 }
             }
         }
