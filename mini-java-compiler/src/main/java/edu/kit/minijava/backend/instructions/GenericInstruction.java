@@ -14,6 +14,6 @@ public class GenericInstruction extends Instruction {
 
     @Override
     public String emitIntermediateInstruction() {
-        return this.getInstructionText();
+        return INDENT + this.getInstructionText();
     }
 }

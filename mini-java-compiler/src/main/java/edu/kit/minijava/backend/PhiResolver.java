@@ -138,7 +138,7 @@ public class PhiResolver {
             String movSuffix = firstMapping.getMoveSuffix();
             String registerSuffix = firstMapping.getRegisterSuffix();
 
-            GenericInstruction tempMove = new GenericInstruction("mov" + movSuffix
+            GenericInstruction tempMove = new GenericInstruction( "mov" + movSuffix
                 + " %@" + firstMapping.getTargetRegister() + registerSuffix + " -> %@"
                 + newPhiRegister + registerSuffix);
             predecessorBlock.appendInstruction(tempMove);

@@ -78,7 +78,7 @@ public class MolkiTransformer extends Default {
 
     private void appendMolkiCode(String molkiCode, int blockNr) {
         BasicBlock block = this.getOrCreateBlock(blockNr);
-        block.appendInstruction(new GenericInstruction(INDENT + molkiCode));
+        block.appendInstruction(new GenericInstruction(molkiCode));
     }
 
     public MolkiTransformer(HashMap<Node, Integer> proj2regIndex, HashMap<Graph, Integer> graph2MaxBlockId) {
@@ -256,7 +256,7 @@ public class MolkiTransformer extends Default {
         String cmpSuffix = Util.mode2MovSuffix(cmp.getLeft().getMode());
 
         BasicBlock block = this.getOrCreateBlock(this.currentBlockNr);
-        GenericInstruction compare = new GenericInstruction(INDENT + "cmp" + cmpSuffix
+        GenericInstruction compare = new GenericInstruction("cmp" + cmpSuffix
             + " [ %@" + srcReg1 + regSuffix
             + " | %@" + srcReg2 + regSuffix + " ]");
 
@@ -512,7 +512,7 @@ public class MolkiTransformer extends Default {
 
                     BasicBlock currentBlock = this.getOrCreateBlock(this.currentBlockNr);
                     GenericInstruction compare
-                        = new GenericInstruction(INDENT + "cmpl" + " [ $-1d | $0d ]");
+                        = new GenericInstruction("cmpl" + " [ $-1d | $0d ]");
                     currentBlock.setCompare(compare);
 
                     condJump = new ConditionalJump("jl", target);
@@ -523,7 +523,7 @@ public class MolkiTransformer extends Default {
 
                     BasicBlock currentBlock = this.getOrCreateBlock(this.currentBlockNr);
                     GenericInstruction compare
-                        = new GenericInstruction(INDENT + "cmpl" + " [ $-1d | $0d ]");
+                        = new GenericInstruction("cmpl" + " [ $-1d | $0d ]");
                     currentBlock.setCompare(compare);
 
                     condJump = new ConditionalJump("jg", target);
