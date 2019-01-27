@@ -471,9 +471,10 @@ public class MolkiTransformer extends Default {
         BasicBlock currentBlock = this.getOrCreateBlock(this.currentBlockNr);
 
         PhiNode phiNode = new PhiNode(currentBlock, phiTargetRegister, phiMappings);
+        currentBlock.addPhiNode(phiNode);
+
 
         // Old handling of Phi nodes
-
 
         String regSuffix = Util.mode2RegSuffix(phi.getMode());
         String movSuffix = Util.mode2MovSuffix(phi.getMode());

@@ -1,6 +1,7 @@
 package edu.kit.minijava.backend;
 
 import edu.kit.minijava.backend.instructions.*;
+import firm.nodes.Cond;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -24,6 +25,7 @@ public class BasicBlock {
 
     private int blockLabel;
     private List<Instruction> instructions = new ArrayList<>();
+    private List<PhiNode> phiNodes = new ArrayList<>();
 
     /**
      * Instructions that have to be emitted at the end of the basis block, irrespective of at which point they are
@@ -71,11 +73,11 @@ public class BasicBlock {
         return Optional.of(this.compareInstruction);
     }
 
-    public Optional<Instruction> getConditionalJump() {
+    public Optional<ConditionalJump> getConditionalJump() {
         return Optional.of(this.conditionalJump);
     }
 
-    public Optional<Instruction> getEndJump() {
+    public Optional<Jump> getEndJump() {
         return Optional.of(this.unconditionalJump);
     }
 
@@ -89,6 +91,25 @@ public class BasicBlock {
 
     public void setEndJump(Jump unconditionalJump) {
         this.unconditionalJump = unconditionalJump;
+    }
+
+    public List<PhiNode> getPhiNodes() {
+        return this.phiNodes;
+    }
+
+    public void addPhiNode(PhiNode phiNode) {
+        this.phiNodes.add(phiNode);
+    }
+
+    public boolean hasBranchingControlFlow() {
+        if (this.compareInstruction != null) {
+            assert this.conditionalJump != null;
+
+            return true;
+        }
+        else {
+            return false;
+        }
     }
 
     /**
