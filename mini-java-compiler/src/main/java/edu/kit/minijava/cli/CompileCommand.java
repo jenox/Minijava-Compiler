@@ -19,7 +19,6 @@ public class CompileCommand extends Command {
 
     private static final String RUNTIME_LIB_ENV_KEY = "MJ_RUNTIME_LIB_PATH_STACK_ARGS";
     private static final String MOLKI_PATH_KEY = "MOLKI_PATH";
-    private Util util = new Util();
 
     @Override
     public int execute(String path) {
@@ -72,7 +71,7 @@ public class CompileCommand extends Command {
 
                 for (int i = 0; i < numArgs; i++) {
                     // this argument is the last
-                    String argSuffix = this.util.mode2MovSuffix(methodType.getParamType(i).getMode());
+                    String argSuffix = Util.mode2MovSuffix(methodType.getParamType(i).getMode());
 
                     // fix suffix, if it's a pointer
                     if (argSuffix.equals("")) {
@@ -93,7 +92,7 @@ public class CompileCommand extends Command {
                 }
 
                 for (int i = 0; i < numResults; i++) {
-                    results += this.util.mode2MovSuffix(methodType.getResType(i).getMode());
+                    results += Util.mode2MovSuffix(methodType.getResType(i).getMode());
                 }
 
                 if (methodName.equals("__minijava_main") || methodName.equals("___minijava_main")) {
@@ -159,7 +158,7 @@ public class CompileCommand extends Command {
 
                     // output asm for the block
                     output.add("L" + block + ":");
-                    molkiCode.get(block).forEach(str -> output.add(str));
+                    output.addAll(molkiCode.get(block));
                 });
 
                 output.add(".endfunction\n");
