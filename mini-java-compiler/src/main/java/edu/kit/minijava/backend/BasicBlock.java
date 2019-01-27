@@ -102,14 +102,7 @@ public class BasicBlock {
     }
 
     public boolean hasBranchingControlFlow() {
-        if (this.compareInstruction != null) {
-            assert this.conditionalJump != null;
-
-            return true;
-        }
-        else {
-            return false;
-        }
+        return this.conditionalJump != null;
     }
 
     /**

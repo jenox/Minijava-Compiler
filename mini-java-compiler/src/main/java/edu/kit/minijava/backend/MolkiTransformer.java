@@ -440,9 +440,6 @@ public class MolkiTransformer extends Default {
 
     private void molkify(Phi phi) {
 
-
-        // New handling of Phi nodes
-
         if (phi.getMode().equals(Mode.getM())) {
             // Ignore Phi nodes with memory mode as these are only important for ordering nodes
             return;
@@ -622,9 +619,24 @@ public class MolkiTransformer extends Default {
                 Const aConst = (Const) selector;
 
                 if (proj.getNum() == Cond.pnTrue && aConst.getTarval().equals(TargetValue.getBTrue())) {
+
+                    BasicBlock currentBlock = this.getOrCreateBlock(this.currentBlockNr);
+                    GenericInstruction compare
+                        = new GenericInstruction(INDENT + "cmpl" + " [ $-1d | $0d ]");
+                    currentBlock.setCompare(compare);
+
+                    condJump = new ConditionalJump("jl", target);
                     uncondJump = new Jump(target);
+
                 }
                 else if (proj.getNum() == Cond.pnFalse && aConst.getTarval().equals(TargetValue.getBFalse())) {
+
+                    BasicBlock currentBlock = this.getOrCreateBlock(this.currentBlockNr);
+                    GenericInstruction compare
+                        = new GenericInstruction(INDENT + "cmpl" + " [ $-1d | $0d ]");
+                    currentBlock.setCompare(compare);
+
+                    condJump = new ConditionalJump("jg", target);
                     uncondJump = new Jump(target);
                 }
             }

@@ -150,29 +150,30 @@ public class PhiResolver {
                 + newPhiRegister + registerSuffix);
             predecessorBlock.appendInstruction(tempMove);
 
-            System.out.println("Saving phi to temporary: " + firstMapping.getTargetRegister() + " -> " + newPhiRegister);
+            // System.out.println("Saving phi to temporary: " + firstMapping.getTargetRegister() + " -> " + newPhiRegister);
 
-            PhiNode.Mapping target = firstMapping;
-            PhiNode.Mapping source = substitutions.remove(target.getTargetRegister());
+            int nextTargetRegister = firstMapping.getTargetRegister();
 
-            while (firstMapping.getTargetRegister() != source.getSourceRegister()) {
+            PhiNode.Mapping nextMapping = substitutions.remove(nextTargetRegister);
+
+            while (firstMapping.getTargetRegister() != nextMapping.getSourceRegister()) {
                 GenericInstruction swapMove = new GenericInstruction("mov" + movSuffix
-                    + " %@" + source.getSourceRegister() + registerSuffix + " -> %@"
-                    + target.getTargetRegister() + registerSuffix);
+                    + " %@" + nextMapping.getSourceRegister() + registerSuffix + " -> %@"
+                    + nextMapping.getTargetRegister() + registerSuffix);
                 predecessorBlock.appendInstruction(swapMove);
 
-                System.out.println("Swapping phis: " + source.getSourceRegister() + " -> " + target.getTargetRegister());
+                // System.out.println("Swapping phis: " + nextMapping.getSourceRegister() + " -> " + nextMapping.getTargetRegister());
 
-                target = source;
-                source = substitutions.remove(target.getTargetRegister());
+                nextTargetRegister = nextMapping.getSourceRegister();
+                nextMapping = substitutions.remove(nextTargetRegister);
             }
 
             // Close the cycle again, using our new register
             GenericInstruction restoreTemp = new GenericInstruction("mov" + movSuffix
                 + " %@" + newPhiRegister + registerSuffix + " -> %@"
-                + target.getTargetRegister() + registerSuffix);
+                + nextMapping.getTargetRegister() + registerSuffix);
 
-            System.out.println("Loading phi from temporary: " + newPhiRegister + " -> " + target.getTargetRegister());
+            // System.out.println("Loading phi from temporary: " + newPhiRegister + " -> " + nextMapping.getTargetRegister());
 
             predecessorBlock.appendInstruction(restoreTemp);
         }
