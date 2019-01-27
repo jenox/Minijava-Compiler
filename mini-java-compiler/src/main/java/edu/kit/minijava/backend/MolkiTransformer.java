@@ -213,8 +213,6 @@ public class MolkiTransformer extends Default {
         String regSuffix = Util.mode2RegSuffix(cmp.getLeft().getMode());
         String cmpSuffix = Util.mode2MovSuffix(cmp.getLeft().getMode());
 
-        this.appendMolkiCode("cmp" + cmpSuffix + " [ %@" + srcReg1 + regSuffix + " | %@" + srcReg2 + regSuffix + " ]");
-
         String cmd = "cmp" + cmpSuffix;
         String arg1 = REG_PREFIX + srcReg1 + regSuffix;
         String arg2 = REG_PREFIX + srcReg2 + regSuffix;
@@ -308,7 +306,8 @@ public class MolkiTransformer extends Default {
         int targetReg1 = this.node2RegIndex.get(mod);
         int targetReg2 = targetReg1 + 1; // by convention used in PrepVisitor
 
-        // targetReg2 before targetReg1 is on purpose
+        // targetReg2 before targetReg1 is on purpose.
+        //Result of mod is second result of divl command and should be stored in the first target register.
         this.appendFourAdressCommand("divl", srcReg1, REG_WIDTH_D, srcReg2, REG_WIDTH_D, targetReg2, REG_WIDTH_D,
                 targetReg1, REG_WIDTH_D);
     }
@@ -601,11 +600,11 @@ public class MolkiTransformer extends Default {
      * negl %@17d -> %@18d
      * </p>
      *
-     * @param cmd
-     * @param srcReg
-     * @param suffixSrcReg
-     * @param targetReg
-     * @param suffixTargetReg
+     * @param cmd name of command
+     * @param srcReg number of source register to use
+     * @param suffixSrcReg width of source register, e.g. 'd'
+     * @param targetReg number of target register to use
+     * @param suffixTargetReg width of target register, e.g. 'd'
      */
     private void appendTwoAdressCommand(String cmd, int srcReg, String suffixSrcReg, int targetReg,
             String suffixTargetReg) {
@@ -614,16 +613,16 @@ public class MolkiTransformer extends Default {
     }
 
     /**
-     * create cmd src -> target
+     * append cmd src -> target
      * <p>
      * Example<br>
      * <br>
      * mov %@8 -> %@$
      * </p>
      *
-     * @param cmd
-     * @param src
-     * @param target
+     * @param cmd name of command
+     * @param src String to use as source, will be included as it is, i.e. REG_PREFIX will not be appended
+     * @param target String to use as target, will be included as it is, i.e REG_PREFIX will not be append
      */
     private void appendTwoAdressCommand(String cmd, String src, String target) {
         this.appendMolkiCode(cmd + " " + src + " -> " + target);
@@ -661,14 +660,14 @@ public class MolkiTransformer extends Default {
      * </p>
      *
      * @param cmd              command
-     * @param srcReg1
-     * @param suffixReg1       width of srcReg1
-     * @param srcReg2
-     * @param suffixReg2       width of srcReg2
-     * @param targetReg1
-     * @param suffixTargetReg1 width of targetReg1
-     * @param targetReg2
-     * @param suffixTargetReg2 width of targetReg2
+     * @param srcReg1          number of first source register to use
+     * @param suffixReg1       width of srcReg1, e.g. 'd'
+     * @param srcReg2          number of second source register to use
+     * @param suffixReg2       width of srcReg2, e.g. 'd'
+     * @param targetReg1       number of first target register to use
+     * @param suffixTargetReg1 width of targetReg1, e.g. 'd'
+     * @param targetReg2       number of second target register to use
+     * @param suffixTargetReg2 width of targetReg2, e.g. 'd'
      */
     private void appendFourAdressCommand(String cmd, int srcReg1, String suffixReg1, int srcReg2, String suffixReg2,
             int targetReg1, String suffixTargetReg1, int targetReg2, String suffixTargetReg2) {
@@ -685,14 +684,14 @@ public class MolkiTransformer extends Default {
      * movd (%@17, %@18d, 10) -> %@19
      * </p>
      *
-     * @param moveSuffix
-     * @param baseReg
-     * @param indexReg
-     * @param suffixIndexReg
-     * @param alignment
-     * @param suffixSrcReg
-     * @param targetReg
-     * @param suffixTargetReg
+     * @param moveSuffix suffix to append to 'mov' command, e.g. 'd'
+     * @param baseReg number of base register
+     * @param indexReg number of index register
+     * @param suffixIndexReg width of index register, e.g. 'd'
+     * @param alignment alignment of object, used to compute offset
+     * @param suffixSrcReg width of source register, e.g. 'd'
+     * @param targetReg number of target register
+     * @param suffixTargetReg width of target register,e.g 'd'
      */
     private void appendMoveWithOffset(String moveSuffix, int baseReg, int indexReg, String suffixIndexReg,
             int alignment, String suffixSrcReg, int targetReg, String suffixTargetReg) {
@@ -714,11 +713,11 @@ public class MolkiTransformer extends Default {
      * movd 7(%@19)d -> %@20d
      * </p>
      *
-     * @param movSuffix
-     * @param offset
-     * @param baseReg
-     * @param targetReg
-     * @param suffixTargetReg width of register
+     * @param movSuffix suffix to append to 'mov' command, e.g. 'd'
+     * @param offset offset added to base
+     * @param baseReg number of base register
+     * @param targetReg number of target register
+     * @param suffixTargetReg width of register, e.g. 'd'
      */
     private void appendMoveWithOffset(String movSuffix, int offset, int baseReg, int targetReg,
             String suffixTargetReg) {
@@ -733,10 +732,10 @@ public class MolkiTransformer extends Default {
      * movd (%@17) -> %@18d
      * </p>
      *
-     * @param movSuffix
-     * @param pointerReg
-     * @param targetReg
-     * @param suffixTargetReg width of target register
+     * @param movSuffix suffix to append to 'mov' command, e.g. 'd'
+     * @param pointerReg number of register containing pointer
+     * @param targetReg number of target register
+     * @param suffixTargetReg width of target register, e.g. 'd'
      */
     private void moveWithOffset(String movSuffix, int pointerReg, int targetReg, String suffixTargetReg) {
         this.appendMolkiCode("mov" + movSuffix + " " + "(" + REG_PREFIX + pointerReg + ") -> " + REG_PREFIX + targetReg
@@ -750,11 +749,11 @@ public class MolkiTransformer extends Default {
      * movq %@17d -> 8(%@18)d
      * </p>
      *
-     * @param movSuffix
-     * @param storeReg
-     * @param regSuffix
-     * @param offset
-     * @param baseReg
+     * @param movSuffix suffix to append to 'mov' command, e.g 'd'
+     * @param storeReg number of register to store
+     * @param regSuffix width of registers, e.g. 'd'
+     * @param offset offset to add to base
+     * @param baseReg number of base register
      */
     private void appendStoreCmd(String movSuffix, int storeReg, String regSuffix, int offset, int baseReg) {
         this.appendMolkiCode("mov" + movSuffix + " " + REG_PREFIX + storeReg + regSuffix + " -> " + offset + "("
@@ -768,12 +767,12 @@ public class MolkiTransformer extends Default {
      * movq %@17d -> (%@18, %@19d, 10)d
      * </p>
      *
-     * @param movSuffix
-     * @param regSuffix
-     * @param storeReg
-     * @param baseReg
-     * @param indexReg
-     * @param alignment
+     * @param movSuffix suffix to add to 'mov' command, e.g. 'd'
+     * @param regSuffix width of registers, e.g. 'd'
+     * @param storeReg number of register to store
+     * @param baseReg number of base register
+     * @param indexReg number of index register
+     * @param alignment alignment of object, used to compute offset
      */
     private void appendStoreCmd(String movSuffix, String regSuffix, int storeReg, int baseReg, int indexReg,
             int alignment) {
@@ -786,10 +785,10 @@ public class MolkiTransformer extends Default {
      * <br>
      * movq %@17d -> (%@18)d
      *
-     * @param movSuffix
-     * @param storeReg
-     * @param regSuffix
-     * @param pointerReg
+     * @param movSuffix suffix to append to 'mov' command
+     * @param storeReg number of register to store
+     * @param regSuffix width of register, e.g. 'd'
+     * @param pointerReg number of register containing pointer
      */
     private void appendStoreCmd(String movSuffix, int storeReg, String regSuffix, int pointerReg) {
         this.appendMolkiCode("mov" + movSuffix + " " + REG_PREFIX + storeReg + regSuffix + " -> (" + REG_PREFIX
@@ -801,9 +800,9 @@ public class MolkiTransformer extends Default {
      * <br>
      * cmpq [ %@17d | %@18d ]
      *
-     * @param cmd
-     * @param arg
-     * @param arg2
+     * @param cmd name of command
+     * @param arg1 first argument, will be used as given, i.e. REG_PREFIX will not be appended
+     * @param arg2 second argument, will be used as given, i.e. REG_PREFIX will not be appended
      */
     private void appendTwoArgsCommand(String cmd, String arg1, String arg2) {
         this.appendMolkiCode(cmd + "[ " + arg1 + " | " + arg2 + " ]");
@@ -813,11 +812,11 @@ public class MolkiTransformer extends Default {
      * Example<br><br>
      * movq %@17d -> %@18d
      *
-     * @param movSuffix
-     * @param regIndexOfIthPred
-     * @param regSuffix
-     * @param regIndexOfPhi
-     * @param blockNumOfIthPred
+     * @param movSuffix suffix of 'mov' command, e.g. 'd'
+     * @param regIndexOfIthPred number of register for ith predecessor
+     * @param regSuffix width of register, e.g. 'd'
+     * @param regIndexOfPhi number of register for phi
+     * @param blockNumOfIthPred block number of ith predecessor
      */
     private void appendPhiCode(String movSuffix, int regIndexOfIthPred, String regSuffix, int regIndexOfPhi,
             int blockNumOfIthPred) {
