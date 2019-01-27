@@ -1,10 +1,39 @@
 package edu.kit.minijava.cli;
 
+import org.apache.commons.cli.*;
+
 public class CommandLineInterface {
+
+    public static final String NAME = "mini-java-compiler";
+
+    // COMMANDS
+    public static final String ECHO_CMD = "echo";
+    public static final String ECHO_DESC = "print input";
+
+    public static final String LEXTEST_CMD = "lextest";
+    public static final String LEXTEST_DESC = "run lexer";
+
+    public static final String PARSERTEST_CMD = "parsetest";
+    public static final String PARSETEST_DESC = "run parser";
+
+    public static final String PRINT_AST_CMD = "printAst"; // TODO: '-' is an invalid character for apache cli,
+                                                           // therefore we cannot use 'print-ast'
+    public static final String PRINT_AST_DESC = "print abstract syntax tree";
+
+    public static final String COMPILE_FIRM_CMD = "transform";
+    public static final String COMPILE_FIRM_ALT_CMD = "compileFirm"; // TODO: same problem as in 'print-ast',
+                                                                 // 'compile-firm' is not permitted
+    public static final String COMPILE_FIRM_DESC = "compile using firm";
+
+    public static final String COMPILE_CMD = "compile";
+    public static final String COMPILE_DESC = "compile input file";
+
     public static void main(String[] arguments) {
 
         final Command command;
         String fileArgument = "";
+
+        Options options = initalizeOptions();
 
         if (arguments.length == 1) {
             // Directly compile the file
@@ -14,7 +43,7 @@ public class CommandLineInterface {
 
         else if (arguments.length != 2) {
             command = new CompileCommand();
-            CommandLineInterface.printErrorAndExit();
+            CommandLineInterface.printErrorAndExit(options);
         }
         else {
 
@@ -44,7 +73,7 @@ public class CommandLineInterface {
                     command = new CompileCommand();
                     break;
                 default:
-                    CommandLineInterface.printErrorAndExit();
+                    CommandLineInterface.printErrorAndExit(options);
                     return;
             }
         }
@@ -73,10 +102,24 @@ public class CommandLineInterface {
         }
     }
 
-    private static void printErrorAndExit() {
+    private static void printErrorAndExit(Options options) {
         System.err.println("error, invalid command and/or number of arguments!");
-        System.err.println("Usage: --echo <path>");
+        // System.err.println("Usage: --echo <path>");
+        HelpFormatter formatter = new HelpFormatter();
+        formatter.printHelp(NAME, options);
 
         System.exit(1);
+    }
+
+    private static Options initalizeOptions() {
+        Options options = new Options();
+        options.addOption(ECHO_CMD, true, ECHO_DESC);
+        options.addOption(LEXTEST_CMD, true, LEXTEST_DESC);
+        options.addOption(PARSERTEST_CMD, true, PARSETEST_DESC);
+        options.addOption(PRINT_AST_CMD, true, PRINT_AST_DESC);
+        options.addOption(COMPILE_FIRM_CMD,COMPILE_FIRM_ALT_CMD, true, COMPILE_FIRM_DESC);
+        options.addOption(COMPILE_CMD, true, COMPILE_DESC);
+
+        return options;
     }
 }
