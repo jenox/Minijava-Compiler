@@ -15,15 +15,49 @@ public class MolkiTransformer extends Default {
     private int currentBlockNr;
 
     // ATTRIBUTES
-    private HashMap<Integer, List<String>> molkiCode = new HashMap<>();
+//    private HashMap<Integer, List<String>> molkiCode = new HashMap<>();
+    private HashMap<Integer, BasicBlock> molkiCode = new HashMap<>();
 
     // primarily for projections to save their register index
     private HashMap<Node, Integer> node2RegIndex;
 
     // GETTERS & SETTERS
-    public HashMap<Integer, List<String>> getMolkiCode() {
+    public HashMap<Integer, BasicBlock> getBlockMap() {
         return this.molkiCode;
     }
+
+    public Map<Integer, List<String>> getMolkiCode() {
+        Map<Integer, List<String>> basicBlocks = new HashMap<>();
+
+        for (Map.Entry<Integer, BasicBlock> element : this.molkiCode.entrySet()) {
+            List<String> instructions = element.getValue().getFullInstructionList();
+            basicBlocks.put(element.getKey(), instructions);
+        }
+
+        return basicBlocks;
+    }
+
+    public void insertBlock(int blockNumber, BasicBlock block) {
+        this.molkiCode.put(blockNumber, block);
+    }
+
+    /**
+     * If a block with the supplied block number exists, return it. Otherwise, create a new block and insert it
+     * into the block map.
+     * @param blockNumber The label/number of the block to query or create.
+     * @return The block with the queried label (either from the block map or a newly inserted one).
+     */
+    private BasicBlock getOrCreateBlock(int blockNumber) {
+        BasicBlock block = this.molkiCode.get(blockNumber);
+
+        if (block == null) {
+            block = new BasicBlock(blockNumber);
+            this.molkiCode.put(blockNumber, block);
+        }
+
+        return block;
+    }
+
 
     /**
      * inserts given string to ouput.
@@ -31,12 +65,21 @@ public class MolkiTransformer extends Default {
      * @param molkiCode string inserted with correct indentation and linebreak at end.
      */
     private void appendMolkiCode(String molkiCode) {
-        this.molkiCode.putIfAbsent(this.currentBlockNr, new ArrayList<>());
-        this.molkiCode.get(this.currentBlockNr).add(INDENT + molkiCode);
+        this.appendMolkiCode(molkiCode, this.currentBlockNr);
     }
 
     private void appendMolkiCode(String molkiCode, int blockNr) {
-        this.molkiCode.get(blockNr).add(INDENT + molkiCode);
+        BasicBlock block = this.getOrCreateBlock(blockNr);
+        block.appendInstruction(INDENT + molkiCode);
+    }
+
+    private void appendBlockEndingMolkiCode(String molkiCode) {
+        this.appendBlockEndingMolkiCode(molkiCode, this.currentBlockNr);
+    }
+
+    private void appendBlockEndingMolkiCode(String molkiCode, int blockNr) {
+        BasicBlock block = this.getOrCreateBlock(blockNr);
+        block.appendBlockEndingInstruction(INDENT + molkiCode);
     }
 
     public MolkiTransformer(HashMap<Node, Integer> proj2regIndex) {
@@ -205,7 +248,7 @@ public class MolkiTransformer extends Default {
         String regSuffix = Util.mode2RegSuffix(cmp.getLeft().getMode());
         String cmpSuffix = Util.mode2MovSuffix(cmp.getLeft().getMode());
 
-        this.appendMolkiCode("cmp" + cmpSuffix + " [ %@" + srcReg1 + regSuffix + " | %@" + srcReg2 + regSuffix + " ]");
+        this.appendBlockEndingMolkiCode("cmp" + cmpSuffix + " [ %@" + srcReg1 + regSuffix + " | %@" + srcReg2 + regSuffix + " ]");
     }
 
     private void molkify(Const aConst) {
@@ -243,7 +286,7 @@ public class MolkiTransformer extends Default {
             assert numberOfSuccessors < 2;
 
             Block block = (Block) edge.node;
-            this.appendMolkiCode("jmp L" + block.getNr());
+            this.appendBlockEndingMolkiCode("jmp L" + block.getNr());
         }
     }
 
@@ -327,7 +370,7 @@ public class MolkiTransformer extends Default {
         // Select single successor
         Block successorBlock = (Block) BackEdges.getOuts(aReturn).iterator().next().node;
 
-        this.appendMolkiCode("jmp " + "L" + successorBlock.getNr());
+        this.appendBlockEndingMolkiCode("jmp " + "L" + successorBlock.getNr());
     }
 
     private void molkify(Sel sel) {
@@ -382,6 +425,42 @@ public class MolkiTransformer extends Default {
     }
 
     private void molkify(Phi phi) {
+
+
+        // New handling of Phi nodes
+
+        if (phi.getMode().equals(Mode.getM())) {
+            // Ignore Phi nodes with memory mode as these are only important for ordering nodes
+            return;
+        }
+
+        String registerSuffix = Util.mode2RegSuffix(phi.getMode());
+        String moveSuffix = Util.mode2MovSuffix(phi.getMode());
+
+        int phiTargetRegister = this.node2RegIndex.get(phi);
+
+        List<PhiNode.Mapping> phiMappings = new ArrayList<>();
+
+        for (int i = 0; i < phi.getPredCount(); i++) {
+            int predRegisterIndex = this.node2RegIndex.get(phi.getPred(i));
+            int predBlockLabel = phi.getBlock().getPred(i).getBlock().getNr();
+
+            this.molkiCode.putIfAbsent(predBlockLabel, new BasicBlock(predBlockLabel));
+
+            BasicBlock predBlock = this.molkiCode.get(predBlockLabel);
+
+            // Add the entry into the Phi node representation
+            phiMappings.add(new PhiNode.Mapping(predBlock, predRegisterIndex, registerSuffix, moveSuffix));
+        }
+
+        // Insert a new PhiNode representation into the current basic block
+        BasicBlock currentBlock = this.getOrCreateBlock(this.currentBlockNr);
+
+        PhiNode phiNode = new PhiNode(currentBlock, phiTargetRegister, phiMappings);
+
+        // Old handling of Phi nodes
+
+
         String regSuffix = Util.mode2RegSuffix(phi.getMode());
         String movSuffix = Util.mode2MovSuffix(phi.getMode());
         int regIndexOfPhi = this.node2RegIndex.get(phi);
@@ -535,10 +614,10 @@ public class MolkiTransformer extends Default {
         }
 
         if (condJump != null) {
-            this.appendMolkiCode(condJump);
+            this.appendBlockEndingMolkiCode(condJump);
         }
         if (uncondJump != null) {
-            this.appendMolkiCode(uncondJump);
+            this.appendBlockEndingMolkiCode(uncondJump);
         }
     }
 

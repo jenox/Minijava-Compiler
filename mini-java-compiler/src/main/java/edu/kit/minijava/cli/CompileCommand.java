@@ -107,12 +107,13 @@ public class CompileCommand extends Command {
                 // for each block, create an arraylist
                 // and for each instruction in that block, transform it into a valid molki string
                 graph2BlockId.get(g).forEach(i -> {
-                    molkiTransformer.getMolkiCode().put(i, new ArrayList<>());
+//                    molkiTransformer.getMolkiCode().put(i, new ArrayList<>());
+                    molkiTransformer.insertBlock(i, new BasicBlock(i));
 
                     blockId2Nodes.get(i).forEach(node -> molkiTransformer.createValue(i, node));
                 });
 
-                HashMap<Integer, List<String>> molkiCode = molkiTransformer.getMolkiCode();
+                Map<Integer, List<String>> molkiCode = molkiTransformer.getMolkiCode();
 
                 // go through all blocks of that graph
 

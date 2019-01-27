@@ -75,7 +75,7 @@ public class BackendCommand extends Command {
                     blockId2Nodes.get(i).forEach(node -> molkiTransformer.createValue(i, node));
                 });
 
-                HashMap<Integer, List<String>> molkiCode = molkiTransformer.getMolkiCode();
+                Map<Integer, List<String>> molkiCode = molkiTransformer.getMolkiCode();
 
                 graph2BlockId.get(g).forEach(i -> {
                     // move jmps to the end of the block
