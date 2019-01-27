@@ -1,7 +1,6 @@
 package edu.kit.minijava.backend;
 
 import edu.kit.minijava.backend.instructions.*;
-import firm.nodes.Cond;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -135,7 +134,8 @@ public class BasicBlock {
 
     @Override
     public String toString() {
-        return "Block " + this.getBlockLabel() + ", " + this.getInstructions().size() + " + " + this.getBlockEndingInstructions().size() + " inst., "
+        return "Block " + this.getBlockLabel() + ", " + this.getInstructions().size()
+            + " + " + this.getBlockEndingInstructions().size() + " inst., "
             + this.phiNodes.size() + " phi nodes";
     }
 }

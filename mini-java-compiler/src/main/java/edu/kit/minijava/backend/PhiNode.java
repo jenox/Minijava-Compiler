@@ -59,7 +59,8 @@ public class PhiNode {
 
         @Override
         public String toString() {
-            return "Block " + this.getBlock().getBlockLabel() + ", " + this.getSourceRegister() + this.getRegisterSuffix()
+            return "Block " + this.getBlock().getBlockLabel()
+                + ", " + this.getSourceRegister() + this.getRegisterSuffix()
                 + " -> " + this.getTargetRegister();
         }
     }
@@ -83,24 +84,6 @@ public class PhiNode {
         this.mappings = new ArrayList<>(mappings);
     }
 
-//    public PhiNode(BasicBlock basicBlock, int targetRegister, List<BasicBlock> sourceBlocks,
-//                   List<Integer> sourceRegisters) {
-//
-//        if (sourceBlocks == null || sourceRegisters == null) {
-//            throw new IllegalArgumentException();
-//        }
-//
-//        if (sourceBlocks.size() != sourceRegisters.size()) {
-//            throw new IllegalArgumentException("Mismatching size for predecessor blocks and value source in Phi!");
-//        }
-//
-//        this.mappings = new ArrayList<>(sourceBlocks.size());
-//
-//        for (int i = 0; i < sourceBlocks.size(); i++) {
-//            this.mappings.add(new Mapping(sourceBlocks.get(i), sourceRegisters.get(i)));
-//        }
-//    }
-
     public BasicBlock getBasicBlock() {
         return this.basicBlock;
     }
@@ -118,9 +101,10 @@ public class PhiNode {
     }
 
     public Set<Integer> getSourceRegisters() {
-        Set<Integer> result = new HashSet<>();
-        result.addAll(this.mappings.stream().map(Mapping::getSourceRegister).collect(Collectors.toList()));
-        return result;
+        return this.mappings
+            .stream()
+            .map(Mapping::getSourceRegister)
+            .collect(Collectors.toSet());
     }
 
     public void modifySourceBlock(int index, BasicBlock newSourceBlock) {
@@ -142,7 +126,12 @@ public class PhiNode {
             sep = ", ";
         }
 
-        sb.append(" -> ").append("BB").append(this.getBasicBlock().getBlockLabel()).append(", ").append(this.getTargetRegister());
+        sb.append(" -> ")
+            .append("BB")
+            .append(this.getBasicBlock().getBlockLabel())
+            .append(", ")
+            .append(this.getTargetRegister());
+
         return sb.toString();
     }
 }

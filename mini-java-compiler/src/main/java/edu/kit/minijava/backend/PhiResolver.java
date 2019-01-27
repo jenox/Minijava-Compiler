@@ -96,14 +96,7 @@ public class PhiResolver {
                 // We found a possible change
                 stable = false;
 
-//                // Find the Mappings that have a target
-//                List<PhiNode.Mapping> nonReadMappings = substitutions
-//                    .stream()
-//                    .filter(mapping -> targetRegisters.contains(mapping.getTargetRegister()))
-//                    .collect(Collectors.toList());
-
-
-                // Resolve all Phi substitutions that are not read from
+                // Resolve all Phi substitutions that are not read from in the substitutions
                 for (Integer targetRegister : targetRegisters) {
 
                     PhiNode.Mapping nonReadTarget = substitutions.get(targetRegister);
@@ -150,8 +143,6 @@ public class PhiResolver {
                 + newPhiRegister + registerSuffix);
             predecessorBlock.appendInstruction(tempMove);
 
-            // System.out.println("Saving phi to temporary: " + firstMapping.getTargetRegister() + " -> " + newPhiRegister);
-
             int nextTargetRegister = firstMapping.getTargetRegister();
 
             PhiNode.Mapping nextMapping = substitutions.remove(nextTargetRegister);
@@ -162,8 +153,6 @@ public class PhiResolver {
                     + nextMapping.getTargetRegister() + registerSuffix);
                 predecessorBlock.appendInstruction(swapMove);
 
-                // System.out.println("Swapping phis: " + nextMapping.getSourceRegister() + " -> " + nextMapping.getTargetRegister());
-
                 nextTargetRegister = nextMapping.getSourceRegister();
                 nextMapping = substitutions.remove(nextTargetRegister);
             }
@@ -172,8 +161,6 @@ public class PhiResolver {
             GenericInstruction restoreTemp = new GenericInstruction("mov" + movSuffix
                 + " %@" + newPhiRegister + registerSuffix + " -> %@"
                 + nextMapping.getTargetRegister() + registerSuffix);
-
-            // System.out.println("Loading phi from temporary: " + newPhiRegister + " -> " + nextMapping.getTargetRegister());
 
             predecessorBlock.appendInstruction(restoreTemp);
         }

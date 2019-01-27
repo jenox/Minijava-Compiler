@@ -77,7 +77,6 @@ public class CriticalEdgeRemover {
         }
 
         // Now handle the unconditional jump which should always be present
-        // TODO: What about the last block in the function?
 
         if (pred.getEndJump().isPresent()) {
 

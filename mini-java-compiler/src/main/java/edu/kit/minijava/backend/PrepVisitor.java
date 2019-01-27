@@ -7,9 +7,6 @@ import firm.nodes.*;
 import firm.nodes.NodeVisitor.Default;
 
 public class PrepVisitor extends Default {
-    // ATTRIBUTES
-//    private int numberOfRegularPseudoregisters = 0;
-//    private int numberOfPhiPseudoregisters = 0;
 
     private HashMap<Node, Integer> node2regIndex = new HashMap<>();
     private HashMap<Integer, List<Node>> blockId2Nodes = new HashMap<>();
