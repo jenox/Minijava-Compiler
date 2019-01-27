@@ -2,6 +2,9 @@ package edu.kit.minijava.backend;
 
 import java.util.*;
 
+import edu.kit.minijava.backend.instructions.ConditionalJump;
+import edu.kit.minijava.backend.instructions.GenericInstruction;
+import edu.kit.minijava.backend.instructions.Jump;
 import firm.*;
 import firm.nodes.*;
 import firm.nodes.NodeVisitor.Default;
@@ -30,7 +33,7 @@ public class MolkiTransformer extends Default {
         Map<Integer, List<String>> basicBlocks = new HashMap<>();
 
         for (Map.Entry<Integer, BasicBlock> element : this.molkiCode.entrySet()) {
-            List<String> instructions = element.getValue().getFullInstructionList();
+            List<String> instructions = element.getValue().getFullInstructionListAsString();
             basicBlocks.put(element.getKey(), instructions);
         }
 
@@ -58,6 +61,10 @@ public class MolkiTransformer extends Default {
         return block;
     }
 
+    private BasicBlock getCurrentBlock() {
+        return this.getOrCreateBlock(this.currentBlockNr);
+    }
+
 
     /**
      * inserts given string to ouput.
@@ -70,16 +77,7 @@ public class MolkiTransformer extends Default {
 
     private void appendMolkiCode(String molkiCode, int blockNr) {
         BasicBlock block = this.getOrCreateBlock(blockNr);
-        block.appendInstruction(INDENT + molkiCode);
-    }
-
-    private void appendBlockEndingMolkiCode(String molkiCode) {
-        this.appendBlockEndingMolkiCode(molkiCode, this.currentBlockNr);
-    }
-
-    private void appendBlockEndingMolkiCode(String molkiCode, int blockNr) {
-        BasicBlock block = this.getOrCreateBlock(blockNr);
-        block.appendBlockEndingInstruction(INDENT + molkiCode);
+        block.appendInstruction(new GenericInstruction(INDENT + molkiCode));
     }
 
     public MolkiTransformer(HashMap<Node, Integer> proj2regIndex) {
@@ -248,7 +246,12 @@ public class MolkiTransformer extends Default {
         String regSuffix = Util.mode2RegSuffix(cmp.getLeft().getMode());
         String cmpSuffix = Util.mode2MovSuffix(cmp.getLeft().getMode());
 
-        this.appendBlockEndingMolkiCode("cmp" + cmpSuffix + " [ %@" + srcReg1 + regSuffix + " | %@" + srcReg2 + regSuffix + " ]");
+        BasicBlock block = this.getOrCreateBlock(this.currentBlockNr);
+        GenericInstruction compare = new GenericInstruction("cmp" + cmpSuffix
+            + " [ %@" + srcReg1 + regSuffix
+            + " | %@" + srcReg2 + regSuffix + " ]");
+
+        block.setCompare(compare);
     }
 
     private void molkify(Const aConst) {
@@ -286,7 +289,9 @@ public class MolkiTransformer extends Default {
             assert numberOfSuccessors < 2;
 
             Block block = (Block) edge.node;
-            this.appendBlockEndingMolkiCode("jmp L" + block.getNr());
+
+            BasicBlock basicBlock = this.getOrCreateBlock(this.currentBlockNr);
+            basicBlock.setEndJump(new Jump(this.getOrCreateBlock(block.getNr())));
         }
     }
 
@@ -370,7 +375,7 @@ public class MolkiTransformer extends Default {
         // Select single successor
         Block successorBlock = (Block) BackEdges.getOuts(aReturn).iterator().next().node;
 
-        this.appendBlockEndingMolkiCode("jmp " + "L" + successorBlock.getNr());
+        this.getCurrentBlock().setEndJump(new Jump(this.getOrCreateBlock(successorBlock.getNr())));
     }
 
     private void molkify(Sel sel) {
@@ -571,8 +576,8 @@ public class MolkiTransformer extends Default {
     private void molkify(Cond cond) {
         Node selector = cond.getSelector();
 
-        String condJump = null;
-        String uncondJump = null;
+        ConditionalJump condJump = null;
+        Jump uncondJump = null;
 
         for (BackEdges.Edge edge : BackEdges.getOuts(cond)) {
 
@@ -583,6 +588,8 @@ public class MolkiTransformer extends Default {
             // iterator().next() always yields the first entry in the iteration
             Block block = (Block) BackEdges.getOuts(proj).iterator().next().node;
 
+            BasicBlock target = this.getOrCreateBlock(block.getNr());
+
             if (selector instanceof Cmp) {
 
                 Cmp cmp = (Cmp) selector;
@@ -591,13 +598,11 @@ public class MolkiTransformer extends Default {
                 // Only generate a conditional jump for the true part, otherwise generate an unconditional jump
                 if (proj.getNum() == Cond.pnTrue) {
 
-                    // TODO Allow conditions to be inverted.
-                    condJump = Util.relation2Jmp(relation);
-
-                    condJump += " " + "L" + block.getNr();
+                    String mnemonic = Util.relation2Jmp(relation);
+                    condJump = new ConditionalJump(mnemonic, target);
                 }
                 else {
-                    uncondJump = "jmp " + "L" + block.getNr();
+                    uncondJump = new Jump(target);
                 }
             }
             else {
@@ -605,19 +610,21 @@ public class MolkiTransformer extends Default {
                 Const aConst = (Const) selector;
 
                 if (proj.getNum() == Cond.pnTrue && aConst.getTarval().equals(TargetValue.getBTrue())) {
-                    uncondJump = "jmp L" + block.getNr();
+                    uncondJump = new Jump(target);
                 }
                 else if (proj.getNum() == Cond.pnFalse && aConst.getTarval().equals(TargetValue.getBFalse())) {
-                    uncondJump = "jmp L" + block.getNr();
+                    uncondJump = new Jump(target);
                 }
             }
         }
 
+        BasicBlock currentBlock = this.getCurrentBlock();
+
         if (condJump != null) {
-            this.appendBlockEndingMolkiCode(condJump);
+            currentBlock.setConditionalJump(condJump);
         }
         if (uncondJump != null) {
-            this.appendBlockEndingMolkiCode(uncondJump);
+            currentBlock.setEndJump(uncondJump);
         }
     }
 

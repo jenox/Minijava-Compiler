@@ -1,33 +1,92 @@
 package edu.kit.minijava.backend;
 
+import edu.kit.minijava.backend.instructions.*;
+
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class BasicBlock {
 
+    private static int minFreeBlockNumber = 0;
+    private static Set<Integer> allocatedBlockNumbers = new HashSet<>();
+
+    private static int getUniqueBlockLabel() {
+        while (allocatedBlockNumbers.contains(minFreeBlockNumber)) {
+            minFreeBlockNumber++;
+        }
+
+        return minFreeBlockNumber;
+    }
+
+    public static boolean isBlockNumberAllocated(int number) {
+        return allocatedBlockNumbers.contains(number);
+    }
+
     private int blockLabel;
-    private List<String> instructions = new ArrayList<>();
+    private List<Instruction> instructions = new ArrayList<>();
 
     /**
      * Instructions that have to be emitted at the end of the basis block, irrespective of at which point they are
-     * inserted into the block. This for example includes Phi node handling and control flow (Compare and Jump
+     * inserted into the block. This for example includes control flow handling (Compare and Jump
      * instructions).
      */
-    private List<String> blockEndingInstructions = new ArrayList<>();
+    private Instruction compareInstruction;
+    private ConditionalJump conditionalJump;
+    private Jump unconditionalJump;
 
     public BasicBlock(int blockLabel) {
         this.blockLabel = blockLabel;
+
+        allocatedBlockNumbers.add(blockLabel);
+    }
+
+    /**
+     * Create a new block with a new, not yet allocated block number.
+     */
+    public BasicBlock() {
+        int newBlockLabel = getUniqueBlockLabel();
+        allocatedBlockNumbers.add(newBlockLabel);
+
+        this.blockLabel = newBlockLabel;
     }
 
     public int getBlockLabel() {
         return this.blockLabel;
     }
 
-    public List<String> getInstructions() {
+    public List<Instruction> getInstructions() {
         return this.instructions;
     }
 
-    public List<String> getBlockEndingInstructions() {
-        return this.blockEndingInstructions;
+    public List<Instruction> getBlockEndingInstructions() {
+        List<Instruction> result = new ArrayList<>(3);
+
+        if (this.compareInstruction != null) result.add(this.compareInstruction);
+        if (this.conditionalJump != null) result.add(this.conditionalJump);
+        if (this.unconditionalJump != null) result.add(this.unconditionalJump);
+        return result;
+    }
+
+    public Optional<Instruction> getCompare() {
+        return Optional.of(this.compareInstruction);
+    }
+
+    public Optional<Instruction> getConditionalJump() {
+        return Optional.of(this.conditionalJump);
+    }
+
+    public Optional<Instruction> getEndJump() {
+        return Optional.of(this.unconditionalJump);
+    }
+
+    public void setCompare(Instruction compareInstruction) {
+        this.compareInstruction = compareInstruction;
+    }
+    public void setConditionalJump(ConditionalJump conditionalJump) {
+        this.conditionalJump = conditionalJump;
+    }
+    public void setEndJump(Jump unconditionalJump) {
+        this.unconditionalJump = unconditionalJump;
     }
 
     /**
@@ -35,18 +94,26 @@ public class BasicBlock {
      * the end of the block.
      * @return A list of the normal and instructions marked as ending the block included in this block.
      */
-    public List<String> getFullInstructionList() {
-        List<String> instructions = new ArrayList<>(this.instructions);
-        instructions.addAll(this.blockEndingInstructions);
+    public List<Instruction> getFullInstructionList() {
+        List<Instruction> instructions = new ArrayList<>(this.instructions);
+        instructions.addAll(this.getBlockEndingInstructions());
 
         return instructions;
     }
 
-    public void appendInstruction(String instruction) {
+    public List<String> getFullInstructionListAsString() {
+        return this.getFullInstructionList()
+            .stream()
+            .map(Instruction::emitInstruction)
+            .collect(Collectors.toList());
+    }
+
+    public void appendInstruction(Instruction instruction) {
         this.instructions.add(instruction);
     }
 
-    public void appendBlockEndingInstruction(String instruction) {
-        this.blockEndingInstructions.add(instruction);
+    public String formatBlockLabel() {
+        // TODO Correctly set this for all platforms.
+        return "L" + this.getBlockLabel();
     }
 }
