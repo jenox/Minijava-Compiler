@@ -9,7 +9,7 @@ public class CriticalEdgeRemover {
     public CriticalEdgeRemover() {}
 
     public static Map<Integer, BasicBlock> removeCriticalEdges(Map<Integer, BasicBlock> blockMap) {
-        Map<Integer, BasicBlock> result = new HashMap<>();
+        Map<Integer, BasicBlock> newBlocks = new HashMap<>();
 
         // Iterate through all blocks and remove critical edges for each of them
 
@@ -32,6 +32,7 @@ public class CriticalEdgeRemover {
                     }
 
                     BasicBlock connectingBlock = createNewConnectionBlock(pred, currentBlock);
+                    newBlocks.put(connectingBlock.getBlockLabel(), connectingBlock);
 
                     for (PhiNode phiNode : phiNodeList) {
                         phiNode.modifySourceBlock(i, connectingBlock);
@@ -40,7 +41,7 @@ public class CriticalEdgeRemover {
             }
         }
 
-        return result;
+        return newBlocks;
     }
 
     public static BasicBlock createNewConnectionBlock(BasicBlock pred, BasicBlock target) {

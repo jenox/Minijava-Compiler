@@ -113,7 +113,29 @@ public class CompileCommand extends Command {
                     blockId2Nodes.get(i).forEach(node -> molkiTransformer.createValue(i, node));
                 });
 
-                Map<Integer, List<String>> molkiCode = molkiTransformer.getMolkiCode();
+//                Map<Integer, List<String>> molkiCode = molkiTransformer.getMolkiCode();
+
+
+                Map<Integer, BasicBlock> blockMap = molkiTransformer.getBlockMap();
+
+
+                // Remove critical edges
+
+                Map<Integer, BasicBlock> additionalBlocks = CriticalEdgeRemover.removeCriticalEdges(blockMap);
+
+                // TODO Also check here that no labels have been assigned multiple times
+
+                blockMap.putAll(additionalBlocks);
+
+                blockMap.forEach((blockNumber, block) -> {
+
+                    output.add(block.formatBlockLabel() + ":");
+
+                    List<String> blockInstructions = block.getFullInstructionListAsString();
+                    output.addAll(blockInstructions);
+                });
+
+
 
                 // go through all blocks of that graph
 
@@ -121,46 +143,46 @@ public class CompileCommand extends Command {
                 // e.g. by generating compare and jump instructions in a separate list which is later appended
                 // to the instructions from the basic block.
 
-                graph2BlockId.get(g).forEach(block -> {
-
-                    // Move all the jump and compare instructions to the end
-
-                    // TODO Can we move all cmp instructions to the end as well without the risk of
-                    // breaking any semantics?
-
-                    List<String> instructions = molkiCode.get(block);
-                    List<String> jmpInstructions = new ArrayList<>();
-                    for (int i = 0; i < instructions.size(); i++) {
-                        String str = instructions.get(i);
-
-                        if (str.startsWith(Util.INDENT + "phi_")) {
-                            instructions.remove(i);
-
-                            String temp = str.substring(Util.INDENT.length() + 4);
-                            instructions.add(i, Util.INDENT + temp);
-                        }
-                        if (Util.containsJmp(str)) {
-                            instructions.remove(i);
-                            i--;
-
-                            jmpInstructions.add(str);
-                        }
-                        else if (str.contains(Util.INDENT + "cmp")) {
-                            // if (i+1 < instructions.size() && Util.containsJmp(instructions.get(i+1))) {
-                            instructions.remove(i);
-                            i--;
-
-                            jmpInstructions.add(str);
-                            // }
-                        }
-                    }
-
-                    instructions.addAll(jmpInstructions);
-
-                    // output asm for the block
-                    output.add("L" + block + ":");
-                    output.addAll(molkiCode.get(block));
-                });
+//                graph2BlockId.get(g).forEach(block -> {
+////
+////                    // Move all the jump and compare instructions to the end
+////
+////                    // TODO Can we move all cmp instructions to the end as well without the risk of
+////                    // breaking any semantics?
+////
+////                    List<String> instructions = molkiCode.get(block);
+////                    List<String> jmpInstructions = new ArrayList<>();
+////                    for (int i = 0; i < instructions.size(); i++) {
+////                        String str = instructions.get(i);
+////
+////                        if (str.startsWith(Util.INDENT + "phi_")) {
+////                            instructions.remove(i);
+////
+////                            String temp = str.substring(Util.INDENT.length() + 4);
+////                            instructions.add(i, Util.INDENT + temp);
+////                        }
+////                        if (Util.containsJmp(str)) {
+////                            instructions.remove(i);
+////                            i--;
+////
+////                            jmpInstructions.add(str);
+////                        }
+////                        else if (str.contains(Util.INDENT + "cmp")) {
+////                            // if (i+1 < instructions.size() && Util.containsJmp(instructions.get(i+1))) {
+////                            instructions.remove(i);
+////                            i--;
+////
+////                            jmpInstructions.add(str);
+////                            // }
+////                        }
+////                    }
+////
+////                    instructions.addAll(jmpInstructions);
+//
+//                    // output asm for the block
+//                    output.add("L" + block + ":");
+//                    output.addAll(molkiCode.get(block));
+//                });
 
                 output.add(".endfunction\n");
             });

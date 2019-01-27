@@ -1,6 +1,7 @@
 package edu.kit.minijava.backend;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class PhiNode {
 
@@ -8,13 +9,16 @@ public class PhiNode {
 
         private BasicBlock sourceBlock;
         private int sourceRegister;
+        private int targetRegister;
 
         private String registerSuffix;
         private String moveSuffix;
 
-        public Mapping(BasicBlock sourceBlock, int sourceRegister, String registerSuffix, String moveSuffix) {
+        public Mapping(BasicBlock sourceBlock, int sourceRegister, int targetRegister,
+                       String registerSuffix, String moveSuffix) {
             this.sourceBlock = sourceBlock;
             this.sourceRegister = sourceRegister;
+            this.targetRegister = targetRegister;
 
             this.registerSuffix = registerSuffix;
             this.moveSuffix = moveSuffix;
@@ -24,8 +28,12 @@ public class PhiNode {
             return this.sourceBlock;
         }
 
-        public int getReg() {
+        public int getSourceRegister() {
             return this.sourceRegister;
+        }
+
+        public int getTargetRegister() {
+            return this.targetRegister;
         }
 
         public String getRegisterSuffix() {
@@ -40,13 +48,18 @@ public class PhiNode {
             this.sourceBlock = sourceBlock;
         }
 
-        public void setReg(int sourceRegister) {
+        public void setSourceRegister(int sourceRegister) {
             this.sourceRegister = sourceRegister;
         }
 
+        public void setTargetRegister(int targetRegister) {
+            this.targetRegister = targetRegister;
+        }
+
+
         @Override
         public String toString() {
-            return "(BB" + this.getBlock() + ", " + this.getReg() + this.getRegisterSuffix() + ")";
+            return "(BB" + this.getBlock() + ", " + this.getSourceRegister() + this.getRegisterSuffix() + ")";
         }
     }
 
@@ -97,6 +110,16 @@ public class PhiNode {
 
     public List<Mapping> getMappings() {
         return this.mappings;
+    }
+
+    public int getMappingCount() {
+        return this.mappings.size();
+    }
+
+    public Set<Integer> getSourceRegisters() {
+        Set<Integer> result = new HashSet<>();
+        result.addAll(this.mappings.stream().map(Mapping::getSourceRegister).collect(Collectors.toList()));
+        return result;
     }
 
     public void modifySourceBlock(int index, BasicBlock newSourceBlock) {
