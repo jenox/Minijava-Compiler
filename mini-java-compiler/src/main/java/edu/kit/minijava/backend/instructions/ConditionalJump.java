@@ -15,7 +15,7 @@ public class ConditionalJump extends Jump {
     }
 
     @Override
-    public String emitInstruction() {
+    public String emitIntermediateInstruction() {
         return INDENT + opcodeMnemonic + " " + this.getTargetBlock().formatBlockLabel();
     }
 }

@@ -106,7 +106,7 @@ public class BasicBlock {
     public List<String> getFullInstructionListAsString() {
         return this.getFullInstructionList()
             .stream()
-            .map(Instruction::emitInstruction)
+            .map(Instruction::emitIntermediateInstruction)
             .collect(Collectors.toList());
     }
 

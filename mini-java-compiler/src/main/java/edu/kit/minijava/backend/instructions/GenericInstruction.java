@@ -13,7 +13,7 @@ public class GenericInstruction extends Instruction {
     }
 
     @Override
-    public String emitInstruction() {
+    public String emitIntermediateInstruction() {
         return this.getInstructionText();
     }
 }

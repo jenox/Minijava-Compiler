@@ -4,5 +4,5 @@ public abstract class Instruction {
 
     protected static final String INDENT = "    ";
 
-    public abstract String emitInstruction();
+    public abstract String emitIntermediateInstruction();
 }

@@ -19,7 +19,7 @@ public class Jump extends Instruction {
     }
 
     @Override
-    public String emitInstruction() {
+    public String emitIntermediateInstruction() {
         return INDENT + "jmp " + this.getTargetBlock().formatBlockLabel();
     }
 }
