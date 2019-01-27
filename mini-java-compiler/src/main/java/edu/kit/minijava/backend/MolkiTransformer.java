@@ -494,13 +494,15 @@ public class MolkiTransformer extends Default {
 
                     // variables for dealing with swap problem
                     boolean hasPhiSucc = false;
+                    boolean hasPhiPred = phi.getPred(i) instanceof Phi;
+                    boolean predInSameBlock = phi.getBlock().equals(phi.getPred(i).getBlock());
                     boolean isLoopingPhi = Util.isLoopingPhi(phi);
                     boolean succIsLooping = false;
                     int maxRegIndex = Collections.max(this.node2RegIndex.values());
                     int tempIndex = maxRegIndex + regIndexOfPhi + 1; // +1 to prevent getting only to max index
 
                     for (BackEdges.Edge edge : BackEdges.getOuts(phi)) {
-                        if (edge.node instanceof Phi) {
+                        if (edge.node instanceof Phi && phi.getBlock().equals(edge.node.getBlock())) {
                             hasPhiSucc = true;
                         }
 
@@ -510,25 +512,26 @@ public class MolkiTransformer extends Default {
                     }
 
 
-                    if (hasPhiSucc && phi.getPred(i) instanceof Phi
-                            && !isLoopingPhi && !(phi.getPred(i) instanceof Const)) {
-                        this.appendMolkiCode("mov" + movSuffix + " %@" + regIndexOfPhi + regSuffix + " -> %@"
-                                + tempIndex + regSuffix, blockNumOfIthPred);
+                    if (hasPhiSucc && hasPhiPred && predInSameBlock) {
+                        if (!isLoopingPhi) {
+                            this.appendMolkiCode("mov" + movSuffix + " %@" + regIndexOfPhi + regSuffix + " -> %@"
+                                    + tempIndex + regSuffix, blockNumOfIthPred);
 
-                        int predTempIndex = maxRegIndex + regIndexOfIthPred + 1;
-                        this.appendMolkiCode("mov" + movSuffix + " %@" + predTempIndex + regSuffix + " -> %@"
-                                + regIndexOfPhi + regSuffix, blockNumOfIthPred);
-                    }
-                    else if (hasPhiSucc && !succIsLooping && !(phi.getPred(i) instanceof Const)) {
-                        this.appendMolkiCode("mov" + movSuffix + " %@" + regIndexOfPhi + regSuffix + " -> %@"
-                                + tempIndex + regSuffix, blockNumOfIthPred);
+                            int predTempIndex = maxRegIndex + regIndexOfIthPred + 1;
+                            this.appendMolkiCode("mov" + movSuffix + " %@" + predTempIndex + regSuffix + " -> %@"
+                                    + regIndexOfPhi + regSuffix, blockNumOfIthPred);
+                        }
+                        else if (!succIsLooping) {
+                            this.appendMolkiCode("mov" + movSuffix + " %@" + regIndexOfPhi + regSuffix + " -> %@"
+                                    + tempIndex + regSuffix, blockNumOfIthPred);
 
-                        this.appendMolkiCode("mov" + movSuffix + " %@" + regIndexOfIthPred + regSuffix + " -> %@"
-                                + regIndexOfPhi + regSuffix, blockNumOfIthPred);
-                    }
-                    else if (phi.getPred(i) instanceof Phi) {
-                        this.appendMolkiCode("mov" + movSuffix + " %@" + tempIndex + regSuffix + " -> %@"
-                                + regIndexOfPhi + regSuffix, blockNumOfIthPred);
+                            this.appendMolkiCode("mov" + movSuffix + " %@" + regIndexOfIthPred + regSuffix + " -> %@"
+                                    + regIndexOfPhi + regSuffix, blockNumOfIthPred);
+                        }
+                        else {
+                            this.appendMolkiCode("mov" + movSuffix + " %@" + tempIndex + regSuffix + " -> %@"
+                                    + regIndexOfPhi + regSuffix, blockNumOfIthPred);
+                        }
                     }
                     else {
                         this.appendMolkiCode("mov" + movSuffix + " %@" + regIndexOfIthPred + regSuffix + " -> %@"
