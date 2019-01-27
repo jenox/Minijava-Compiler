@@ -2,7 +2,7 @@ package edu.kit.minijava.backend.instructions;
 
 public class GenericInstruction extends Instruction {
 
-    protected String instructionText;
+    private String instructionText;
 
     public GenericInstruction(String instructionText) {
         this.instructionText = instructionText;
@@ -16,5 +16,4 @@ public class GenericInstruction extends Instruction {
     public String emitInstruction() {
         return this.getInstructionText();
     }
-
 }

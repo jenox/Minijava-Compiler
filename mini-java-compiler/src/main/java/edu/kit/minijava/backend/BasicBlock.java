@@ -82,9 +82,11 @@ public class BasicBlock {
     public void setCompare(Instruction compareInstruction) {
         this.compareInstruction = compareInstruction;
     }
+
     public void setConditionalJump(ConditionalJump conditionalJump) {
         this.conditionalJump = conditionalJump;
     }
+
     public void setEndJump(Jump unconditionalJump) {
         this.unconditionalJump = unconditionalJump;
     }
