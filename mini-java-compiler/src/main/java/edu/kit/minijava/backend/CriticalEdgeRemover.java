@@ -8,12 +8,15 @@ public class CriticalEdgeRemover {
 
     public CriticalEdgeRemover() {}
 
-    public static Map<Integer, BasicBlock> removeCriticalEdges(Map<Integer, BasicBlock> blockMap) {
-        Map<Integer, BasicBlock> newBlocks = new HashMap<>();
+    public static List<BasicBlock> removeCriticalEdges(List<BasicBlock> basicBlocks) {
+        List<BasicBlock> result = new ArrayList<>();
 
         // Iterate through all blocks and remove critical edges for each of them
 
-        for (BasicBlock currentBlock : blockMap.values()) {
+        for (BasicBlock currentBlock : basicBlocks) {
+
+            result.add(currentBlock);
+
             List<PhiNode> phiNodeList = currentBlock.getPhiNodes();
 
             if (phiNodeList.size() > 0) {
@@ -32,7 +35,7 @@ public class CriticalEdgeRemover {
                     }
 
                     BasicBlock connectingBlock = createNewConnectionBlock(pred, currentBlock);
-                    newBlocks.put(connectingBlock.getBlockLabel(), connectingBlock);
+                    result.add(connectingBlock);
 
                     for (PhiNode phiNode : phiNodeList) {
                         phiNode.modifySourceBlock(i, connectingBlock);
@@ -41,7 +44,7 @@ public class CriticalEdgeRemover {
             }
         }
 
-        return newBlocks;
+        return result;
     }
 
     public static BasicBlock createNewConnectionBlock(BasicBlock pred, BasicBlock target) {
@@ -60,12 +63,14 @@ public class CriticalEdgeRemover {
                 // and connect the connecting block with the target block
 
                 ConditionalJump newConditionalJump
-                    = new ConditionalJump(pred.getConditionalJump().get().getOpcodeMnemonic(), targetBlock);
+                    = new ConditionalJump(pred.getConditionalJump().get().getOpcodeMnemonic(), connectingBlock);
                 pred.setConditionalJump(newConditionalJump);
 
                 // Connect the new block to the original target of the jump
                 Jump connectingJump = new Jump(target);
                 connectingBlock.setEndJump(connectingJump);
+
+                return connectingBlock;
             }
 
             // Simply retain all other jumps
@@ -76,7 +81,7 @@ public class CriticalEdgeRemover {
 
         if (pred.getEndJump().isPresent()) {
 
-            BasicBlock targetBlock = pred.getConditionalJump().get().getTargetBlock();
+            BasicBlock targetBlock = pred.getEndJump().get().getTargetBlock();
             int targetBlockNumber = targetBlock.getBlockLabel();
 
             if (targetBlockNumber == target.getBlockLabel()) {
@@ -86,6 +91,8 @@ public class CriticalEdgeRemover {
 
                 Jump secondConnectingJump = new Jump(target);
                 connectingBlock.setEndJump(secondConnectingJump);
+
+                return connectingBlock;
             }
         }
 

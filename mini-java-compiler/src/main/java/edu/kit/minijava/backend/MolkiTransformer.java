@@ -256,7 +256,7 @@ public class MolkiTransformer extends Default {
         String cmpSuffix = Util.mode2MovSuffix(cmp.getLeft().getMode());
 
         BasicBlock block = this.getOrCreateBlock(this.currentBlockNr);
-        GenericInstruction compare = new GenericInstruction("cmp" + cmpSuffix
+        GenericInstruction compare = new GenericInstruction(INDENT + "cmp" + cmpSuffix
             + " [ %@" + srcReg1 + regSuffix
             + " | %@" + srcReg2 + regSuffix + " ]");
 

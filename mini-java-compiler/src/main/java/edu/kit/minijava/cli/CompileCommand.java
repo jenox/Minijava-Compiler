@@ -115,25 +115,58 @@ public class CompileCommand extends Command {
 
 //                Map<Integer, List<String>> molkiCode = molkiTransformer.getMolkiCode();
 
-
                 Map<Integer, BasicBlock> blockMap = molkiTransformer.getBlockMap();
+                List<BasicBlock> blockList = new ArrayList<>();
 
+                graph2BlockId.get(g).forEach(block -> {
+                    blockList.add(blockMap.get(block));
+                });
 
                 // Remove critical edges
 
-                Map<Integer, BasicBlock> additionalBlocks = CriticalEdgeRemover.removeCriticalEdges(blockMap);
+                List<BasicBlock> criticalEdgeFreeBlocks = CriticalEdgeRemover.removeCriticalEdges(blockList);
 
                 // TODO Also check here that no labels have been assigned multiple times
 
-                blockMap.putAll(additionalBlocks);
+                // blockMap.putAll(additionalBlocks);
 
-                blockMap.forEach((blockNumber, block) -> {
+//                List<BasicBlock> blocks = new ArrayList<>();
+//
+//                for (BasicBlock block : additionalBlocks.values()) {
+//                    blocks.add(block);
+////                    output.add(block.formatBlockLabel() + ":");
+//
+////                    List<String> blockInstructions = block.getFullInstructionListAsString();
+////                    output.addAll(blockInstructions);
+//                }
+//
+//                graph2BlockId.get(g).forEach(block -> {
+//                    blocks.add(blockMap.get(block));
+//                    // output asm for the block
+////                    output.add("L" + block + ":");
+////                    output.addAll(blockMap.get(block).getFullInstructionListAsString());
+//                });
+//
 
+                // Resolve Phi nodes
+                for (BasicBlock basicBlock : criticalEdgeFreeBlocks) {
+                    PhiResolver.resolvePhiNodes(basicBlock);
+                }
+
+
+                for (BasicBlock block : criticalEdgeFreeBlocks) {
                     output.add(block.formatBlockLabel() + ":");
+                    output.addAll(block.getFullInstructionListAsString());
+                }
 
-                    List<String> blockInstructions = block.getFullInstructionListAsString();
-                    output.addAll(blockInstructions);
-                });
+
+//                blockMap.forEach((blockNumber, block) -> {
+//
+//                    output.add(block.formatBlockLabel() + ":");
+//
+//                    List<String> blockInstructions = block.getFullInstructionListAsString();
+//                    output.addAll(blockInstructions);
+//                });
 
 
 

@@ -139,4 +139,10 @@ public class BasicBlock {
         // TODO Correctly set this for all platforms.
         return "L" + this.getBlockLabel();
     }
+
+    @Override
+    public String toString() {
+        return "Block " + this.getBlockLabel() + ", " + this.getInstructions().size() + " + " + this.getBlockEndingInstructions().size() + " inst., "
+            + this.phiNodes.size() + " phi nodes";
+    }
 }

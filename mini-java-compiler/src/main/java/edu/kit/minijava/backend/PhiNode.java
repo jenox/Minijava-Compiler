@@ -59,7 +59,8 @@ public class PhiNode {
 
         @Override
         public String toString() {
-            return "(BB" + this.getBlock() + ", " + this.getSourceRegister() + this.getRegisterSuffix() + ")";
+            return "Block " + this.getBlock().getBlockLabel() + ", " + this.getSourceRegister() + this.getRegisterSuffix()
+                + " -> " + this.getTargetRegister();
         }
     }
 
@@ -141,7 +142,7 @@ public class PhiNode {
             sep = ", ";
         }
 
-        sb.append(" -> ").append("BB").append(this.getBasicBlock()).append(", ").append(this.getTargetRegister());
+        sb.append(" -> ").append("BB").append(this.getBasicBlock().getBlockLabel()).append(", ").append(this.getTargetRegister());
         return sb.toString();
     }
 }
