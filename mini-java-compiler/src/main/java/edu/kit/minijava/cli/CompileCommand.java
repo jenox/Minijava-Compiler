@@ -19,7 +19,6 @@ public class CompileCommand extends Command {
 
     private static final String RUNTIME_LIB_ENV_KEY = "MJ_RUNTIME_LIB_PATH_STACK_ARGS";
     private static final String MOLKI_PATH_KEY = "MOLKI_PATH";
-    private Util util = new Util();
 
     @Override
     public int execute(String path) {
@@ -73,7 +72,7 @@ public class CompileCommand extends Command {
 
                 for (int i = 0; i < numArgs; i++) {
                     // this argument is the last
-                    String argSuffix = this.util.mode2MovSuffix(methodType.getParamType(i).getMode());
+                    String argSuffix = Util.mode2MovSuffix(methodType.getParamType(i).getMode());
 
                     // fix suffix, if it's a pointer
                     if (argSuffix.equals("")) {
@@ -94,7 +93,7 @@ public class CompileCommand extends Command {
                 }
 
                 for (int i = 0; i < numResults; i++) {
-                    results += this.util.mode2MovSuffix(methodType.getResType(i).getMode());
+                    results += Util.mode2MovSuffix(methodType.getResType(i).getMode());
                 }
 
                 if (methodName.equals("__minijava_main") || methodName.equals("___minijava_main")) {
@@ -108,59 +107,33 @@ public class CompileCommand extends Command {
                 // for each block, create an arraylist
                 // and for each instruction in that block, transform it into a valid molki string
                 graph2BlockId.get(g).forEach(i -> {
-                    molkiTransformer.getMolkiCode().put(i, new ArrayList<>());
+//                    molkiTransformer.getMolkiCode().put(i, new ArrayList<>());
+                    molkiTransformer.insertBlock(i, new BasicBlock(i));
 
                     blockId2Nodes.get(i).forEach(node -> molkiTransformer.createValue(i, node));
                 });
 
-                HashMap<Integer, List<String>> molkiCode = molkiTransformer.getMolkiCode();
 
-                // go through all blocks of that graph
-
-                // TODO This should not be handled at this point, but instead directly when generating code,
-                // e.g. by generating compare and jump instructions in a separate list which is later appended
-                // to the instructions from the basic block.
+                Map<Integer, BasicBlock> blockMap = molkiTransformer.getBlockMap();
+                List<BasicBlock> blockList = new ArrayList<>();
 
                 graph2BlockId.get(g).forEach(block -> {
-
-                    // Move all the jump and compare instructions to the end
-
-                    // TODO Can we move all cmp instructions to the end as well without the risk of
-                    // breaking any semantics?
-
-                    List<String> instructions = molkiCode.get(block);
-                    List<String> jmpInstructions = new ArrayList<>();
-                    for (int i = 0; i < instructions.size(); i++) {
-                        String str = instructions.get(i);
-
-                        if (str.startsWith(Util.INDENT + "phi_")) {
-                            instructions.remove(i);
-
-                            String temp = str.substring(Util.INDENT.length() + 4);
-                            instructions.add(i, Util.INDENT + temp);
-                        }
-                        if (Util.containsJmp(str)) {
-                            instructions.remove(i);
-                            i--;
-
-                            jmpInstructions.add(str);
-                        }
-                        else if (str.contains(Util.INDENT + "cmp")) {
-                            // if (i+1 < instructions.size() && Util.containsJmp(instructions.get(i+1))) {
-                            instructions.remove(i);
-                            i--;
-
-                            jmpInstructions.add(str);
-                            // }
-                        }
-                    }
-
-                    instructions.addAll(jmpInstructions);
-
-                    // output asm for the block
-                    output.add("L" + block + ":");
-                    molkiCode.get(block).forEach(str -> output.add(str));
+                    blockList.add(blockMap.get(block));
                 });
+
+                // Remove critical edges
+                List<BasicBlock> criticalEdgeFreeBlocks = CriticalEdgeRemover.removeCriticalEdges(blockList);
+
+                // Resolve Phi nodes
+                for (BasicBlock basicBlock : criticalEdgeFreeBlocks) {
+                    PhiResolver.resolvePhiNodes(basicBlock);
+                }
+
+
+                for (BasicBlock block : criticalEdgeFreeBlocks) {
+                    output.add(block.formatBlockLabel() + ":");
+                    output.addAll(block.getFullInstructionListAsString());
+                }
 
                 output.add(".endfunction\n");
             });
