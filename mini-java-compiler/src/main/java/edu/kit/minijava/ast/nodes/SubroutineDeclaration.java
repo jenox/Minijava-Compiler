@@ -2,7 +2,7 @@ package edu.kit.minijava.ast.nodes;
 
 import java.util.*;
 
-public interface SubroutineDeclaration extends Declaration {
+public interface SubroutineDeclaration extends Declaration, ASTDumpable {
 
     /** The name of the subroutine. */
     String getName();

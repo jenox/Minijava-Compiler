@@ -63,4 +63,9 @@ public final class ClassDeclaration implements BasicTypeDeclaration, ASTNode {
     public String toString() {
         return "class '" + this.name + "' at " + this.location;
     }
+
+    @Override
+    public String toStringForDumpingAST() {
+        return "Class " + this.name + "\n" + this.location;
+    }
 }

@@ -24,4 +24,9 @@ public final class Program implements ASTNode {
 
     @Override
     public void substituteExpression(Expression oldValue, Expression newValue) {}
+
+    @Override
+    public String toStringForDumpingAST() {
+        throw new UnsupportedOperationException();
+    }
 }
