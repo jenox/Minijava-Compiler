@@ -16,13 +16,11 @@ public class CommandLineInterface {
     public static final String PARSERTEST_CMD = "parsetest";
     public static final String PARSETEST_DESC = "run parser";
 
-    public static final String PRINT_AST_CMD = "printAst"; // TODO: '-' is an invalid character for apache cli,
-                                                           // therefore we cannot use 'print-ast'
+    public static final String PRINT_AST_CMD = "print-ast";
     public static final String PRINT_AST_DESC = "print abstract syntax tree";
 
     public static final String COMPILE_FIRM_CMD = "transform";
-    public static final String COMPILE_FIRM_ALT_CMD = "compileFirm"; // TODO: same problem as in 'print-ast',
-                                                                 // 'compile-firm' is not permitted
+    public static final String COMPILE_FIRM_ALT_CMD = "compile-firm";
     public static final String COMPILE_FIRM_DESC = "compile using firm";
 
     public static final String COMPILE_CMD = "compile";
@@ -34,6 +32,9 @@ public class CommandLineInterface {
         String fileArgument = "";
 
         Options options = initalizeOptions();
+        CommandLine cmdLine = generateCommandLine(options, arguments);
+
+
 
         if (arguments.length == 1) {
             // Directly compile the file
@@ -47,7 +48,7 @@ public class CommandLineInterface {
         }
         else {
 
-            fileArgument = arguments[1];
+            fileArgument = arguments[arguments.length - 1];
 
             switch (arguments[0]) {
                 case "--echo":
@@ -112,14 +113,37 @@ public class CommandLineInterface {
     }
 
     private static Options initalizeOptions() {
+        Option echoOption = Option.builder().hasArg().longOpt(ECHO_CMD)
+                .desc(ECHO_DESC).build();
+        Option lexOption = Option.builder().hasArg().longOpt(LEXTEST_CMD).build();
+        Option parserOption = Option.builder().hasArg().longOpt(PARSERTEST_CMD).build();
+        Option printAstOption = Option.builder().hasArg().longOpt(PRINT_AST_CMD).build();
+        Option compileFirmOption = Option.builder().hasArg().longOpt(COMPILE_FIRM_CMD).build();
+        Option compileOption = Option.builder().hasArg().longOpt(COMPILE_CMD).build();
+
         Options options = new Options();
-        options.addOption(ECHO_CMD, true, ECHO_DESC);
-        options.addOption(LEXTEST_CMD, true, LEXTEST_DESC);
-        options.addOption(PARSERTEST_CMD, true, PARSETEST_DESC);
-        options.addOption(PRINT_AST_CMD, true, PRINT_AST_DESC);
-        options.addOption(COMPILE_FIRM_CMD,COMPILE_FIRM_ALT_CMD, true, COMPILE_FIRM_DESC);
-        options.addOption(COMPILE_CMD, true, COMPILE_DESC);
+        options.addOption(echoOption);
+        options.addOption(lexOption);
+        options.addOption(parserOption);
+        options.addOption(printAstOption);
+        options.addOption(compileFirmOption);
+        options.addOption(compileOption);
+
 
         return options;
+    }
+
+    private static CommandLine generateCommandLine(Options options, String[] args) {
+        CommandLineParser cmdLineParser = new DefaultParser();
+        CommandLine cmdLine = null;
+        try {
+            cmdLine = cmdLineParser.parse(options, args);
+        }
+        catch (ParseException e) {
+            e.printStackTrace();
+            printErrorAndExit(options);
+        }
+
+        return cmdLine;
     }
 }
