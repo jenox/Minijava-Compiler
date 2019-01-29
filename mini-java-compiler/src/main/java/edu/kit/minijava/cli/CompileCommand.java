@@ -115,7 +115,11 @@ public class CompileCommand extends Command {
                 List<BasicBlock> blockList = new ArrayList<>();
 
                 for (int blockNumber : graph2BlockId.get(g)) {
-                    blockList.add(blockMap.get(blockNumber));
+                    BasicBlock currentBlock = blockMap.get(blockNumber);
+
+                    if (currentBlock != null) {
+                        blockList.add(blockMap.get(blockNumber));
+                    }
                 }
 
                 // Remove critical edges
