@@ -8,6 +8,7 @@ import edu.kit.minijava.ast.nodes.Expression.*;
 import edu.kit.minijava.ast.nodes.Program;
 import edu.kit.minijava.ast.nodes.Statement.*;
 import edu.kit.minijava.ast.references.TypeOfExpression;
+import edu.kit.minijava.cli.CommandLineInterface;
 import firm.*;
 import firm.bindings.binding_ircons;
 import firm.nodes.*;
@@ -43,9 +44,12 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
         program.accept(this, new EntityContext());
 
         // Check created graphs
-        for (Graph g : firm.Program.getGraphs()) {
-            ConstantFolder folder = new ConstantFolder(g);
-            g.check();
+        if (CommandLineInterface.isConstantFoldingActivated()) {
+            for (Graph g : firm.Program.getGraphs()) {
+                ConstantFolder folder = new ConstantFolder(g);
+                g.check();
+            }
+
         }
 
         Lower.fixNames();
@@ -67,12 +71,18 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
         program.accept(this, new EntityContext());
 
         // Check and dump created graphs - can be viewed with ycomp
-        for (Graph g : firm.Program.getGraphs()) {
-            ConstantFolder folder = new ConstantFolder(g);
-            g.check();
-            Dump.dumpGraph(g, "");
+        if (CommandLineInterface.isConstantFoldingActivated()) {
+            for (Graph g : firm.Program.getGraphs()) {
+                ConstantFolder folder = new ConstantFolder(g);
+                g.check();
+            }
         }
 
+        if (CommandLineInterface.shouldGraphsBeDumped()) {
+            for (Graph g : firm.Program.getGraphs()) {
+                Dump.dumpGraph(g, "");
+            }
+        }
         Lower.lower();
 
         Backend.lowerForTarget();
@@ -196,7 +206,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
         // create entity for method
         Entity fieldEntity = new Entity(context.getClassType(), this.getUniqueMemberName(fieldDeclaration.getName()),
-                        context.getType());
+                context.getType());
         this.entities.put(fieldDeclaration, fieldEntity);
     }
 
@@ -274,7 +284,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
             // CREATE ENTITY FOR METHOD
             MethodType methodType = new MethodType(parameterTypes, resultType);
             Entity methodEntity = new Entity(this.globalType, this.getUniqueMemberName(methodDeclaration.getName()),
-                            methodType);
+                    methodType);
             this.entities.put(methodDeclaration, methodEntity);
 
             // COUNT LOCAL VARIABLES
@@ -680,34 +690,34 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
                     break;
                 case LESS_THAN:
                     result = new ExpressionResult.Condition(construction,
-                                    context.getConstruction().newCmp(left, right, Relation.Less));
+                            context.getConstruction().newCmp(left, right, Relation.Less));
                     break;
                 case LESS_THAN_OR_EQUAL_TO:
                     result = new ExpressionResult.Condition(construction,
-                                    context.getConstruction().newCmp(left, right, Relation.LessEqual));
+                            context.getConstruction().newCmp(left, right, Relation.LessEqual));
                     break;
                 case GREATER_THAN:
                     result = new ExpressionResult.Condition(construction,
-                                    context.getConstruction().newCmp(left, right, Relation.Greater));
+                            context.getConstruction().newCmp(left, right, Relation.Greater));
                     break;
                 case GREATER_THAN_OR_EQUAL_TO:
                     result = new ExpressionResult.Condition(construction,
-                                    context.getConstruction().newCmp(left, right, Relation.GreaterEqual));
+                            context.getConstruction().newCmp(left, right, Relation.GreaterEqual));
                     break;
                 case EQUAL_TO:
                     result = new ExpressionResult.Condition(construction,
-                                    context.getConstruction().newCmp(left, right, Relation.Equal));
+                            context.getConstruction().newCmp(left, right, Relation.Equal));
                     break;
                 case NOT_EQUAL_TO:
                     result = new ExpressionResult.Condition(construction,
-                                    context.getConstruction().newCmp(left, right, Relation.Equal.negated()));
+                            context.getConstruction().newCmp(left, right, Relation.Equal.negated()));
                     break;
                 case DIVISION:
                     Node mem = context.getConstruction().getCurrentMem();
                     Node left64 = construction.newConv(left, Mode.getLs());
                     Node right64 = construction.newConv(right, Mode.getLs());
                     Node div = context.getConstruction().newDiv(mem, left64, right64,
-                                    binding_ircons.op_pin_state.op_pin_state_floats);
+                            binding_ircons.op_pin_state.op_pin_state_floats);
                     Node res = context.getConstruction().newProj(div, Mode.getLs(), Div.pnRes);
                     Node resInt = construction.newConv(res, Mode.getIs());
 
@@ -721,7 +731,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
                     left64 = construction.newConv(left, Mode.getLs());
                     right64 = construction.newConv(right, Mode.getLs());
                     Node mod = context.getConstruction().newMod(mem_, left64, right64,
-                                    binding_ircons.op_pin_state.op_pin_state_floats);
+                            binding_ircons.op_pin_state.op_pin_state_floats);
                     res = context.getConstruction().newProj(mod, Mode.getLs(), Mod.pnRes);
                     resInt = construction.newConv(res, Mode.getIs());
 
@@ -873,7 +883,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
             }
 
             ExpressionResult.FieldLValue result = new ExpressionResult.FieldLValue(context.getConstruction(), member,
-                            mode);
+                    mode);
 
             context.setResult(result);
         }
@@ -901,7 +911,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
             Sel sel = (Sel) context.getConstruction().newSel(arrayPointer, index, type);
 
             ExpressionResult.ArrayLValue result = new ExpressionResult.ArrayLValue(context.getConstruction(), sel,
-                            elementType);
+                    elementType);
 
             context.setResult(result);
         }
@@ -924,8 +934,8 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
                 // TODO Use mode instead of type here?
                 Mode mode = Optional.ofNullable(type.getMode()).orElse(Mode.getP());
 
-                ExpressionResult.LocalVariableLValue result = new ExpressionResult.LocalVariableLValue(context
-                                .getConstruction(), n, type);
+                ExpressionResult.LocalVariableLValue result = new ExpressionResult.LocalVariableLValue(
+                        context.getConstruction(), n, type);
 
                 context.setResult(result);
             }
@@ -937,7 +947,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
                 Mode mode = Optional.ofNullable(this.types.get(decl).getMode()).orElse(Mode.getP());
 
                 ExpressionResult.FieldLValue result = new ExpressionResult.FieldLValue(context.getConstruction(),
-                                member, mode);
+                        member, mode);
 
                 context.setResult(result);
             }
@@ -974,8 +984,8 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
             Node functionAddress = construction.newAddress(functionEntity);
 
             Node mem = construction.getCurrentMem();
-            Node call = construction.newCall(mem, functionAddress, new Node[] { oneConst, size }, functionEntity
-                            .getType());
+            Node call = construction.newCall(mem, functionAddress, new Node[] { oneConst, size },
+                    functionEntity.getType());
 
             Node newMem = construction.newProj(call, Mode.getM(), Call.pnM);
             construction.setCurrentMem(newMem);
@@ -1022,8 +1032,8 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
             Node functionAddress = construction.newAddress(functionEntity);
 
             Node mem = construction.getCurrentMem();
-            Node call = construction.newCall(mem, functionAddress,
-                            new Node[] { elementCount, elementSize }, functionEntity.getType());
+            Node call = construction.newCall(mem, functionAddress, new Node[] { elementCount, elementSize },
+                    functionEntity.getType());
 
             Node newMem = construction.newProj(call, Mode.getM(), Call.pnM);
             construction.setCurrentMem(newMem);
@@ -1147,8 +1157,8 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
         blockEitherFalse.mature();
 
-        ExpressionResult.Condition result = new ExpressionResult.Condition(construction, left.getBlock(), right
-                        .getIfTrue(), eitherFalseJmp);
+        ExpressionResult.Condition result = new ExpressionResult.Condition(construction, left.getBlock(),
+                right.getIfTrue(), eitherFalseJmp);
 
         return result;
     }
@@ -1178,7 +1188,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
         blockEitherTrue.mature();
 
         ExpressionResult.Condition result = new ExpressionResult.Condition(construction, left.getBlock(),
-                        eitherTrueJump, right.getIfFalse());
+                eitherTrueJump, right.getIfFalse());
 
         return result;
     }
