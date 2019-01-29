@@ -81,7 +81,7 @@ public class PhiNode {
             throw new IllegalArgumentException();
         }
 
-        this.mappings = new ArrayList<>(mappings);
+        this.mappings = mappings;
     }
 
     public BasicBlock getBasicBlock() {
