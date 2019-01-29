@@ -490,25 +490,6 @@ public class MolkiTransformer extends Default {
         currentBlock.addPhiNode(phiNode);
     }
 
-    //
-    // append commands
-    //
-
-    /**
-     * Example<br>
-     * <br>
-     * movq %@17d -> %@18d
-     *
-     * @param movSuffix
-     * @param regIndex
-     * @param regSuffix
-     * @param regIndexOfPhi
-     */
-    private void appendPhiCode(String movSuffix, int regIndex, String regSuffix, int regIndexOfPhi) {
-        this.appendMolkiCode("mov" + movSuffix + " " + REG_PREFIX + regIndex + regSuffix + " -> " + REG_PREFIX
-                + regIndexOfPhi + regSuffix);
-    }
-
     private void molkify(Cond cond) {
         Node selector = cond.getSelector();
 
@@ -587,6 +568,12 @@ public class MolkiTransformer extends Default {
         // Nothing to do here as conversion nodes are only constructed for div and mod
         // operations and conversion of the operands instead should be handled there.
     }
+
+
+    //
+    // append commands
+    //
+
 
     /**
      * <p>
