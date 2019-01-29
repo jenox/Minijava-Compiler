@@ -57,7 +57,7 @@ public class CompileCommand extends Command {
             MolkiTransformer molkiTransformer = new MolkiTransformer(prepVisitor.getNode2RegIndex(), graph2MaxBlockId);
             List<String> output = new ArrayList<>();
 
-            graphs.forEach(g -> {
+            for (Graph g : graphs) {
                 String methodName = g.getEntity().getLdName();
                 MethodType methodType = (MethodType) g.getEntity().getType();
                 // non-main methods have additional `this` parameter
@@ -104,22 +104,19 @@ public class CompileCommand extends Command {
                     output.add(".function " + methodName + " " + args + results);
                 }
 
-                // for each block, create an arraylist
-                // and for each instruction in that block, transform it into a valid molki string
-                graph2BlockId.get(g).forEach(i -> {
-//                    molkiTransformer.getMolkiCode().put(i, new ArrayList<>());
-                    molkiTransformer.insertBlock(i, new BasicBlock(i));
-
-                    blockId2Nodes.get(i).forEach(node -> molkiTransformer.createValue(i, node));
-                });
-
+                // Transform each node in each block into a intermediate representation instruction
+                for (int i : graph2BlockId.get(g)) {
+                    for (Node node : blockId2Nodes.get(i)) {
+                        molkiTransformer.createValue(i, node);
+                    }
+                }
 
                 Map<Integer, BasicBlock> blockMap = molkiTransformer.getBlockMap();
                 List<BasicBlock> blockList = new ArrayList<>();
 
-                graph2BlockId.get(g).forEach(block -> {
-                    blockList.add(blockMap.get(block));
-                });
+                for (int blockNumber : graph2BlockId.get(g)) {
+                    blockList.add(blockMap.get(blockNumber));
+                }
 
                 // Remove critical edges
                 List<BasicBlock> criticalEdgeFreeBlocks = CriticalEdgeRemover.removeCriticalEdges(blockList);
@@ -129,14 +126,13 @@ public class CompileCommand extends Command {
                     PhiResolver.resolvePhiNodes(basicBlock);
                 }
 
-
                 for (BasicBlock block : criticalEdgeFreeBlocks) {
                     output.add(block.formatBlockLabel() + ":");
                     output.addAll(block.getFullInstructionListAsString());
                 }
 
                 output.add(".endfunction\n");
-            });
+            }
 
             Path file = Paths.get(asmOutputFilenameMolki);
             Files.write(file, output, StandardCharsets.UTF_8);
