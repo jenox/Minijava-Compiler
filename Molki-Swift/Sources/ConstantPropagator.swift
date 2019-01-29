@@ -42,8 +42,6 @@ public class ConstantPropagator {
             }
         }
 
-        let before = self.function.description
-
         guard !substitutionsToBeMade.isEmpty else {
             return
         }
