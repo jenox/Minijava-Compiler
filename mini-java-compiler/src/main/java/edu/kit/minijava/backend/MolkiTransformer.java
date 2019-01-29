@@ -2,6 +2,9 @@ package edu.kit.minijava.backend;
 
 import java.util.*;
 
+import edu.kit.minijava.backend.instructions.ConditionalJump;
+import edu.kit.minijava.backend.instructions.GenericInstruction;
+import edu.kit.minijava.backend.instructions.Jump;
 import firm.*;
 import firm.nodes.*;
 import firm.nodes.NodeVisitor.Default;
@@ -15,16 +18,54 @@ public class MolkiTransformer extends Default {
     private int currentBlockNr;
 
     // ATTRIBUTES
-    private HashMap<Integer, List<String>> molkiCode = new HashMap<>();
+//    private HashMap<Integer, List<String>> molkiCode = new HashMap<>();
+    private HashMap<Integer, BasicBlock> molkiCode = new HashMap<>();
 
     // primarily for projections to save their register index
     private HashMap<Node, Integer> node2RegIndex;
     private HashMap<Graph, Integer> graph2MaxBlockId;
 
     // GETTERS & SETTERS
-    public HashMap<Integer, List<String>> getMolkiCode() {
+    public HashMap<Integer, BasicBlock> getBlockMap() {
         return this.molkiCode;
     }
+
+    public Map<Integer, List<String>> getMolkiCode() {
+        Map<Integer, List<String>> basicBlocks = new HashMap<>();
+
+        for (Map.Entry<Integer, BasicBlock> element : this.molkiCode.entrySet()) {
+            List<String> instructions = element.getValue().getFullInstructionListAsString();
+            basicBlocks.put(element.getKey(), instructions);
+        }
+
+        return basicBlocks;
+    }
+
+    public void insertBlock(int blockNumber, BasicBlock block) {
+        this.molkiCode.put(blockNumber, block);
+    }
+
+    /**
+     * If a block with the supplied block number exists, return it. Otherwise, create a new block and insert it
+     * into the block map.
+     * @param blockNumber The label/number of the block to query or create.
+     * @return The block with the queried label (either from the block map or a newly inserted one).
+     */
+    private BasicBlock getOrCreateBlock(int blockNumber) {
+        BasicBlock block = this.molkiCode.get(blockNumber);
+
+        if (block == null) {
+            block = new BasicBlock(blockNumber);
+            this.molkiCode.put(blockNumber, block);
+        }
+
+        return block;
+    }
+
+    private BasicBlock getCurrentBlock() {
+        return this.getOrCreateBlock(this.currentBlockNr);
+    }
+
 
     /**
      * inserts given string to ouput.
@@ -32,12 +73,12 @@ public class MolkiTransformer extends Default {
      * @param molkiCode string inserted with correct indentation and linebreak at end.
      */
     private void appendMolkiCode(String molkiCode) {
-        this.molkiCode.putIfAbsent(this.currentBlockNr, new ArrayList<>());
-        this.molkiCode.get(this.currentBlockNr).add(INDENT + molkiCode);
+        this.appendMolkiCode(molkiCode, this.currentBlockNr);
     }
 
     private void appendMolkiCode(String molkiCode, int blockNr) {
-        this.molkiCode.get(blockNr).add(INDENT + molkiCode);
+        BasicBlock block = this.getOrCreateBlock(blockNr);
+        block.appendInstruction(new GenericInstruction(molkiCode));
     }
 
     public MolkiTransformer(HashMap<Node, Integer> proj2regIndex, HashMap<Graph, Integer> graph2MaxBlockId) {
@@ -217,7 +258,12 @@ public class MolkiTransformer extends Default {
         String arg1 = REG_PREFIX + srcReg1 + regSuffix;
         String arg2 = REG_PREFIX + srcReg2 + regSuffix;
 
-        this.appendTwoArgsCommand(cmd, arg1, arg2);
+        BasicBlock block = this.getOrCreateBlock(this.currentBlockNr);
+
+        GenericInstruction compare
+            = new GenericInstruction(cmd + " [ " + arg1 + " | " + arg2 + " ]");
+
+        block.setCompare(compare);
     }
 
     private void molkify(Const aConst) {
@@ -259,7 +305,9 @@ public class MolkiTransformer extends Default {
             assert numberOfSuccessors < 2;
 
             Block block = (Block) edge.node;
-            this.appendMolkiCode("jmp L" + block.getNr());
+
+            BasicBlock basicBlock = this.getOrCreateBlock(this.currentBlockNr);
+            basicBlock.setEndJump(new Jump(this.getOrCreateBlock(block.getNr())));
         }
     }
 
@@ -356,7 +404,7 @@ public class MolkiTransformer extends Default {
         // Select single successor
         Block successorBlock = (Block) BackEdges.getOuts(aReturn).iterator().next().node;
 
-        this.appendMolkiCode("jmp " + "L" + successorBlock.getNr());
+        this.getCurrentBlock().setEndJump(new Jump(this.getOrCreateBlock(successorBlock.getNr())));
     }
 
     private void molkify(Sel sel) {
@@ -409,107 +457,37 @@ public class MolkiTransformer extends Default {
     }
 
     private void molkify(Phi phi) {
-        String regSuffix = Util.mode2RegSuffix(phi.getMode());
-        String movSuffix = Util.mode2MovSuffix(phi.getMode());
-        int regIndexOfPhi = this.node2RegIndex.get(phi);
 
-        if (!phi.getMode().equals(Mode.getM())) {
-            // check if condition pred leads in both cases to this block
-            int blockNr = phi.getBlock().getNr();
-            boolean phiBlockIsOnlySuccessor = true;
-
-            if (phi.getBlock().getPred(0) instanceof Proj) {
-                Proj projNode = (Proj) phi.getBlock().getPred(0);
-                Cond cond = (Cond) projNode.getPred();
-
-                for (BackEdges.Edge edge : BackEdges.getOuts(cond)) {
-                    Block block = (Block) BackEdges.getOuts(edge.node).iterator().next().node;
-
-                    if (block.getNr() != blockNr) {
-                        phiBlockIsOnlySuccessor = false;
-                    }
-                }
-            }
-
-            if (phiBlockIsOnlySuccessor && phi.getBlock().getPred(0) instanceof Proj) {
-                Proj firstPredProj = (Proj) phi.getBlock().getPred(0);
-                Proj secondPredProj = (Proj) phi.getBlock().getPred(1);
-
-                Cond otherCond = (Cond) firstPredProj.getPred();
-
-                List<Node> phiPreds = new ArrayList<>();
-                phi.getPreds().forEach(phiPreds::add);
-
-                assert phiPreds.size() == 2 : "Incorrect number of phi predecessors: " + phiPreds.size();
-
-                Node firstPred = phiPreds.get(0);
-                Node secondPred = phiPreds.get(1);
-
-                Node truePred = null;
-                Node falsePred = null;
-
-                if (firstPredProj.getNum() == Cond.pnTrue) {
-                    truePred = firstPred;
-                }
-                else if (firstPredProj.getNum() == Cond.pnFalse) {
-                    falsePred = firstPred;
-                }
-                else {
-                    assert false : "Unknown predecessor for phi!" + phi.toString();
-                }
-
-                if (secondPredProj.getNum() == Cond.pnTrue) {
-                    truePred = secondPred;
-                }
-                else if (secondPredProj.getNum() == Cond.pnFalse) {
-                    falsePred = secondPred;
-                }
-                else {
-                    assert false : "Unknown predecessor for phi!" + phi.toString();
-                }
-
-                assert truePred != null && falsePred != null;
-
-                int truePredRegIndex = this.node2RegIndex.get(truePred);
-                int falsePredRegIndex = this.node2RegIndex.get(falsePred);
-
-                Graph graph = phi.getBlock().getGraph();
-                int newMaxBlockId = this.graph2MaxBlockId.get(graph) + 1;
-                int labelNr = newMaxBlockId;
-                this.graph2MaxBlockId.put(graph, newMaxBlockId);
-
-                if (otherCond.getSelector() instanceof Cmp) {
-                    this.appendPhiCode(movSuffix, truePredRegIndex, regSuffix, regIndexOfPhi);
-
-                    Cmp cmp = (Cmp) otherCond.getSelector();
-                    String condJmp = Util.relation2Jmp(cmp.getRelation());
-                    this.appendMolkiCode("phi_" + condJmp + " L" + labelNr);
-
-                    this.appendPhiCode(movSuffix, falsePredRegIndex, regSuffix, regIndexOfPhi);
-
-                    this.appendMolkiCode("L" + labelNr + ":");
-                }
-                else if (otherCond.getSelector() instanceof Const) {
-                    Const tempConst = (Const) otherCond.getSelector();
-                    boolean isTrue = tempConst.getTarval().equals(TargetValue.getBTrue());
-
-                    if (isTrue) {
-                        this.appendPhiCode(movSuffix, truePredRegIndex, regSuffix, regIndexOfPhi);
-                    }
-                    else {
-                        this.appendPhiCode(movSuffix, falsePredRegIndex, regSuffix, regIndexOfPhi);
-                    }
-                }
-            }
-            else {
-                for (int i = 0; i < phi.getPredCount(); i++) {
-                    int regIndexOfIthPred = this.node2RegIndex.get(phi.getPred(i));
-                    int blockNumOfIthPred = phi.getBlock().getPred(i).getBlock().getNr();
-
-                    this.appendPhiCode(movSuffix, regIndexOfIthPred, regSuffix, regIndexOfPhi, blockNumOfIthPred);
-                }
-            }
+        if (phi.getMode().equals(Mode.getM())) {
+            // Ignore Phi nodes with memory mode as these are only important for ordering nodes
+            return;
         }
+
+        String registerSuffix = Util.mode2RegSuffix(phi.getMode());
+        String moveSuffix = Util.mode2MovSuffix(phi.getMode());
+
+        int phiTargetRegister = this.node2RegIndex.get(phi);
+
+        List<PhiNode.Mapping> phiMappings = new ArrayList<>();
+
+        for (int i = 0; i < phi.getPredCount(); i++) {
+            int predRegisterIndex = this.node2RegIndex.get(phi.getPred(i));
+            int predBlockLabel = phi.getBlock().getPred(i).getBlock().getNr();
+
+            this.molkiCode.putIfAbsent(predBlockLabel, new BasicBlock(predBlockLabel));
+
+            BasicBlock predBlock = this.molkiCode.get(predBlockLabel);
+
+            // Add the entry into the Phi node representation
+            phiMappings.add(new PhiNode.Mapping(predBlock, predRegisterIndex, phiTargetRegister,
+                registerSuffix, moveSuffix));
+        }
+
+        // Insert a new PhiNode representation into the current basic block
+        BasicBlock currentBlock = this.getOrCreateBlock(this.currentBlockNr);
+
+        PhiNode phiNode = new PhiNode(currentBlock, phiTargetRegister, phiMappings);
+        currentBlock.addPhiNode(phiNode);
     }
 
     //
@@ -534,8 +512,8 @@ public class MolkiTransformer extends Default {
     private void molkify(Cond cond) {
         Node selector = cond.getSelector();
 
-        String condJump = null;
-        String uncondJump = null;
+        ConditionalJump condJump = null;
+        Jump uncondJump = null;
 
         for (BackEdges.Edge edge : BackEdges.getOuts(cond)) {
 
@@ -546,6 +524,8 @@ public class MolkiTransformer extends Default {
             // iterator().next() always yields the first entry in the iteration
             Block block = (Block) BackEdges.getOuts(proj).iterator().next().node;
 
+            BasicBlock target = this.getOrCreateBlock(block.getNr());
+
             if (selector instanceof Cmp) {
 
                 Cmp cmp = (Cmp) selector;
@@ -554,13 +534,11 @@ public class MolkiTransformer extends Default {
                 // Only generate a conditional jump for the true part, otherwise generate an unconditional jump
                 if (proj.getNum() == Cond.pnTrue) {
 
-                    // TODO Allow conditions to be inverted.
-                    condJump = Util.relation2Jmp(relation);
-
-                    condJump += " " + "L" + block.getNr();
+                    String mnemonic = Util.relation2Jmp(relation);
+                    condJump = new ConditionalJump(mnemonic, target);
                 }
                 else {
-                    uncondJump = "jmp " + "L" + block.getNr();
+                    uncondJump = new Jump(target);
                 }
             }
             else {
@@ -568,19 +546,36 @@ public class MolkiTransformer extends Default {
                 Const aConst = (Const) selector;
 
                 if (proj.getNum() == Cond.pnTrue && aConst.getTarval().equals(TargetValue.getBTrue())) {
-                    uncondJump = "jmp L" + block.getNr();
+
+                    BasicBlock currentBlock = this.getOrCreateBlock(this.currentBlockNr);
+                    GenericInstruction compare
+                        = new GenericInstruction("cmpl" + " [ $-1d | $0d ]");
+                    currentBlock.setCompare(compare);
+
+                    condJump = new ConditionalJump("jl", target);
+                    uncondJump = new Jump(target);
+
                 }
                 else if (proj.getNum() == Cond.pnFalse && aConst.getTarval().equals(TargetValue.getBFalse())) {
-                    uncondJump = "jmp L" + block.getNr();
+
+                    BasicBlock currentBlock = this.getOrCreateBlock(this.currentBlockNr);
+                    GenericInstruction compare
+                        = new GenericInstruction("cmpl" + " [ $-1d | $0d ]");
+                    currentBlock.setCompare(compare);
+
+                    condJump = new ConditionalJump("jg", target);
+                    uncondJump = new Jump(target);
                 }
             }
         }
 
+        BasicBlock currentBlock = this.getCurrentBlock();
+
         if (condJump != null) {
-            this.appendMolkiCode(condJump);
+            currentBlock.setConditionalJump(condJump);
         }
         if (uncondJump != null) {
-            this.appendMolkiCode(uncondJump);
+            currentBlock.setEndJump(uncondJump);
         }
     }
 
@@ -807,21 +802,4 @@ public class MolkiTransformer extends Default {
     private void appendTwoArgsCommand(String cmd, String arg1, String arg2) {
         this.appendMolkiCode(cmd + "[ " + arg1 + " | " + arg2 + " ]");
     }
-
-    /**
-     * Example<br><br>
-     * movq %@17d -> %@18d
-     *
-     * @param movSuffix suffix of 'mov' command, e.g. 'd'
-     * @param regIndexOfIthPred number of register for ith predecessor
-     * @param regSuffix width of register, e.g. 'd'
-     * @param regIndexOfPhi number of register for phi
-     * @param blockNumOfIthPred block number of ith predecessor
-     */
-    private void appendPhiCode(String movSuffix, int regIndexOfIthPred, String regSuffix, int regIndexOfPhi,
-            int blockNumOfIthPred) {
-        this.appendMolkiCode("mov" + movSuffix + " " + REG_PREFIX + regIndexOfIthPred + regSuffix + " -> " + REG_PREFIX
-                + regIndexOfPhi + regSuffix, blockNumOfIthPred);
-    }
-
 }

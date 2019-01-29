@@ -47,4 +47,9 @@ public class ExplicitReference<DeclarationType extends Declaration> extends Refe
     public String toString() {
         return this.name + " at " + this.location;
     }
+
+    @Override
+    public String toStringForDumpingAST() {
+        return "Reference " + this.name + "\n" + this.location;
+    }
 }

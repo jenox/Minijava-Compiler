@@ -1,6 +1,7 @@
 package edu.kit.minijava.transformation;
 
 import firm.*;
+import firm.bindings.binding_irnode;
 import firm.nodes.*;
 
 import java.util.*;
@@ -249,9 +250,23 @@ public abstract class ExpressionResult {
             return this.valueMode;
         }
 
+        /**
+         * Convert this local variable to a value (an output represented by a single node). This also forces
+         * uninitialized values to use a default value.
+         *
+         * @return The node associated with this l-value.
+         */
         @Override
         public Value convertToValue() {
             Node value = this.getConstruction().getVariable(this.getVariableIndex(), this.getValueType().getMode());
+
+            // Catch uninitialized access and return a correct zero TargetValue
+
+            if (value.getOpCode() == binding_irnode.ir_opcode.iro_Unknown) {
+                TargetValue tarval = new TargetValue(0, this.getValueType().getMode());
+                value = this.getConstruction().newConst(tarval);
+            }
+
             return new Value(this.getConstruction(), value);
         }
 

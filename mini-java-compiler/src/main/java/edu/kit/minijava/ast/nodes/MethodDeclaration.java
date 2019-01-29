@@ -62,4 +62,9 @@ public final class MethodDeclaration implements SubroutineDeclaration, MemberDec
     public String toString() {
         return "instance method '" + this.name + "' at " + this.location;
     }
+
+    @Override
+    public String toStringForDumpingAST() {
+        return "Method " + this.name + "\n" + this.location;
+    }
 }

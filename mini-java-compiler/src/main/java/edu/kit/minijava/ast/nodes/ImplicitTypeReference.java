@@ -35,4 +35,9 @@ public class ImplicitTypeReference implements TypeReference {
     public String toString() {
         return this.basicTypeReference.toString();
     }
+
+    @Override
+    public String toStringForDumpingAST() {
+        return this.basicTypeReference.toStringForDumpingAST();
+    }
 }

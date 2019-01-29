@@ -66,4 +66,9 @@ public final class ParameterDeclaration implements VariableDeclaration, ASTNode 
     public String toString() {
         return "parameter '" + this.name + "' at " + this.location;
     }
+
+    @Override
+    public String toStringForDumpingAST() {
+        return "Parameter " + this.name + "\n" + this.location;
+    }
 }
