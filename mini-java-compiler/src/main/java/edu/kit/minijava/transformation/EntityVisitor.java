@@ -388,7 +388,6 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
         }
 
         elementType.finishLayout();
-        this.types.put(reference.getBasicTypeReference().getDeclaration(), elementType);
 
         if (reference.getNumberOfDimensions() > 0) {
             // We have an array type, wrap in pointers according to number of dimensions
