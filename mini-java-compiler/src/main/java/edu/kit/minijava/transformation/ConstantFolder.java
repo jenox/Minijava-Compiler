@@ -1,6 +1,7 @@
 package edu.kit.minijava.transformation;
 
 import firm.*;
+import firm.bindings.binding_irgraph;
 import firm.nodes.*;
 
 import java.util.*;
@@ -14,6 +15,7 @@ public class ConstantFolder extends ConstantFolderBase {
         BackEdges.disable(graph);
 
         this.debugLog();
+
 
         for (Node node : this.getTopologicalOrdering()) {
             TargetValue value = this.getValueForNode(node);
@@ -32,6 +34,95 @@ public class ConstantFolder extends ConstantFolderBase {
                 this.hasModifiedGraph = true;
             }
         }
+
+        // Fold control flow for Cond nodes with constant predecessor
+
+        Construction construction = new Construction(graph);
+        graph.addConstraints(binding_irgraph.ir_graph_constraints_t.IR_GRAPH_CONSTRAINT_CONSTRUCTION);
+
+        for (Node node : this.getTopologicalOrdering()) {
+
+            if (node instanceof Cond) {
+                assert node.getPredCount() == 1;
+
+                construction.setCurrentBlock((Block) node.getBlock());
+
+                if (node.getPred(0) instanceof Const) {
+                    Const condition = (Const) node.getPred(0);
+
+                    List<Node> successors = getSuccessorsOf(node);
+                    assert successors.size() == 2;
+
+                    Proj firstProjection = (Proj) successors.get(0);
+                    Proj secondProjection = (Proj) successors.get(1);
+
+                    Proj trueProj = null;
+                    Proj falseProj = null;
+
+                    if (firstProjection.getNum() == Cond.pnTrue) trueProj = firstProjection;
+                    else if (firstProjection.getNum() == Cond.pnFalse) falseProj = firstProjection;
+                    else {
+                        assert false : "Unknown proj for Cond node!";
+                    }
+
+                    if (secondProjection.getNum() == Cond.pnTrue) trueProj = secondProjection;
+                    else if (secondProjection.getNum() == Cond.pnFalse) falseProj = secondProjection;
+                    else {
+                        assert false : "Unknown proj for Cond node!";
+                    }
+
+                    assert trueProj != null && falseProj != null;
+
+                    Block trueBlock = (Block) getSuccessorsOf(trueProj).get(0);
+                    Block falseBlock = (Block) getSuccessorsOf(falseProj).get(0);
+
+                    Node badNode = graph.newBad(Mode.getX());
+
+                    if (condition.getTarval().equals(TargetValue.getBTrue())) {
+                        Node jump = construction.newJmp();
+                        Graph.exchange(node, jump);
+
+                        for (int i = 0; i < trueBlock.getPredCount(); i++) {
+                            if (trueBlock.getPred(i).equals(trueProj)) {
+                                trueBlock.setPred(i, jump);
+                            }
+                        }
+
+                        for (int i = 0; i < falseBlock.getPredCount(); i++) {
+                            if (falseBlock.getPred(i).equals(falseProj)) {
+                                falseBlock.setPred(i, badNode);
+                            }
+                        }
+                    }
+                    else if (condition.getTarval().equals(TargetValue.getBFalse())) {
+                        Node jump = construction.newJmp();
+                        Graph.exchange(node, jump);
+
+                        for (int i = 0; i < trueBlock.getPredCount(); i++) {
+                            if (trueBlock.getPred(i).equals(trueProj)) {
+                                trueBlock.setPred(i, badNode);
+                            }
+                        }
+
+                        for (int i = 0; i < falseBlock.getPredCount(); i++) {
+                            if (falseBlock.getPred(i).equals(falseProj)) {
+                                falseBlock.setPred(i, jump);
+                            }
+                        }
+                    }
+                    // Else: control flow is not constant
+                }
+            }
+        }
+
+        construction.finish();
+
+        firm.bindings.binding_irgopt.remove_bads(graph.ptr);
+
+        // This creates more bad nodes, so we need to remove them again
+        firm.bindings.binding_irgopt.remove_unreachable_code(graph.ptr);
+
+        firm.bindings.binding_irgopt.remove_bads(graph.ptr);
     }
 
     private TargetValue resultOfLastVisitedNode = null;

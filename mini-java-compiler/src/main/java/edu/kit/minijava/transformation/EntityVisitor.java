@@ -536,6 +536,10 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
             if (!loopEndsOnJumpNode) {
                 Node jmp2 = construction.newJmp();
                 loopHeader.addPred(jmp2);
+
+                // Required for endless loops according to Firm docs:
+                // https://pp.ipd.kit.edu/firm/Endless_Loops.html
+                construction.getGraph().keepAlive(loopHeader);
             }
 
             // after-loop block

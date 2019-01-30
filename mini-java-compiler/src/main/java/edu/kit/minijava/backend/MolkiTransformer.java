@@ -2,6 +2,9 @@ package edu.kit.minijava.backend;
 
 import java.util.*;
 
+import edu.kit.minijava.backend.instructions.ConditionalJump;
+import edu.kit.minijava.backend.instructions.GenericInstruction;
+import edu.kit.minijava.backend.instructions.Jump;
 import firm.*;
 import firm.nodes.*;
 import firm.nodes.NodeVisitor.Default;
@@ -15,16 +18,54 @@ public class MolkiTransformer extends Default {
     private int currentBlockNr;
 
     // ATTRIBUTES
-    private HashMap<Integer, List<String>> molkiCode = new HashMap<>();
+//    private HashMap<Integer, List<String>> molkiCode = new HashMap<>();
+    private HashMap<Integer, BasicBlock> molkiCode = new HashMap<>();
 
     // primarily for projections to save their register index
     private HashMap<Node, Integer> node2RegIndex;
     private HashMap<Graph, Integer> graph2MaxBlockId;
 
     // GETTERS & SETTERS
-    public HashMap<Integer, List<String>> getMolkiCode() {
+    public HashMap<Integer, BasicBlock> getBlockMap() {
         return this.molkiCode;
     }
+
+    public Map<Integer, List<String>> getMolkiCode() {
+        Map<Integer, List<String>> basicBlocks = new HashMap<>();
+
+        for (Map.Entry<Integer, BasicBlock> element : this.molkiCode.entrySet()) {
+            List<String> instructions = element.getValue().getFullInstructionListAsString();
+            basicBlocks.put(element.getKey(), instructions);
+        }
+
+        return basicBlocks;
+    }
+
+    public void insertBlock(int blockNumber, BasicBlock block) {
+        this.molkiCode.put(blockNumber, block);
+    }
+
+    /**
+     * If a block with the supplied block number exists, return it. Otherwise, create a new block and insert it
+     * into the block map.
+     * @param blockNumber The label/number of the block to query or create.
+     * @return The block with the queried label (either from the block map or a newly inserted one).
+     */
+    private BasicBlock getOrCreateBlock(int blockNumber) {
+        BasicBlock block = this.molkiCode.get(blockNumber);
+
+        if (block == null) {
+            block = new BasicBlock(blockNumber);
+            this.molkiCode.put(blockNumber, block);
+        }
+
+        return block;
+    }
+
+    private BasicBlock getCurrentBlock() {
+        return this.getOrCreateBlock(this.currentBlockNr);
+    }
+
 
     /**
      * inserts given string to ouput.
@@ -32,12 +73,12 @@ public class MolkiTransformer extends Default {
      * @param molkiCode string inserted with correct indentation and linebreak at end.
      */
     private void appendMolkiCode(String molkiCode) {
-        this.molkiCode.putIfAbsent(this.currentBlockNr, new ArrayList<>());
-        this.molkiCode.get(this.currentBlockNr).add(INDENT + molkiCode);
+        this.appendMolkiCode(molkiCode, this.currentBlockNr);
     }
 
     private void appendMolkiCode(String molkiCode, int blockNr) {
-        this.molkiCode.get(blockNr).add(INDENT + molkiCode);
+        BasicBlock block = this.getOrCreateBlock(blockNr);
+        block.appendInstruction(new GenericInstruction(molkiCode));
     }
 
     public MolkiTransformer(HashMap<Node, Integer> proj2regIndex, HashMap<Graph, Integer> graph2MaxBlockId) {
@@ -196,7 +237,6 @@ public class MolkiTransformer extends Default {
             }
         }
 
-
         int targetReg = this.node2RegIndex.get(call);
 
         if (isVoid) {
@@ -214,7 +254,16 @@ public class MolkiTransformer extends Default {
         String regSuffix = Util.mode2RegSuffix(cmp.getLeft().getMode());
         String cmpSuffix = Util.mode2MovSuffix(cmp.getLeft().getMode());
 
-        this.appendMolkiCode("cmp" + cmpSuffix + " [ %@" + srcReg1 + regSuffix + " | %@" + srcReg2 + regSuffix + " ]");
+        String cmd = "cmp" + cmpSuffix;
+        String arg1 = REG_PREFIX + srcReg1 + regSuffix;
+        String arg2 = REG_PREFIX + srcReg2 + regSuffix;
+
+        BasicBlock block = this.getOrCreateBlock(this.currentBlockNr);
+
+        GenericInstruction compare
+            = new GenericInstruction(cmd + " [ " + arg1 + " | " + arg2 + " ]");
+
+        block.setCompare(compare);
     }
 
     private void molkify(Const aConst) {
@@ -224,7 +273,11 @@ public class MolkiTransformer extends Default {
             String regSuffix = Util.mode2RegSuffix(aConst.getMode());
             String movSuffix = Util.mode2MovSuffix(aConst.getMode());
 
-            this.appendMolkiCode("mov" + movSuffix + " " + constant + regSuffix + " -> %@" + targetReg + regSuffix);
+            String cmd = "mov" + movSuffix;
+            String arg1 = constant + regSuffix;
+            String arg2 = REG_PREFIX + targetReg + regSuffix;
+
+            this.appendTwoAdressCommand(cmd, arg1, arg2);
         }
     }
 
@@ -252,7 +305,9 @@ public class MolkiTransformer extends Default {
             assert numberOfSuccessors < 2;
 
             Block block = (Block) edge.node;
-            this.appendMolkiCode("jmp L" + block.getNr());
+
+            BasicBlock basicBlock = this.getOrCreateBlock(this.currentBlockNr);
+            basicBlock.setEndJump(new Jump(this.getOrCreateBlock(block.getNr())));
         }
     }
 
@@ -286,9 +341,10 @@ public class MolkiTransformer extends Default {
     }
 
     private void molkify(Minus minus) {
-        int inputReg = this.node2RegIndex.get(minus.getOp());
-        int reg = this.node2RegIndex.get(minus);
-        this.appendMolkiCode("negl " + REG_PREFIX + inputReg + "d -> " + REG_PREFIX + reg + "d");
+        int scrReg = this.node2RegIndex.get(minus.getOp());
+        int targetReg = this.node2RegIndex.get(minus);
+
+        this.appendTwoAdressCommand("negl", scrReg, REG_WIDTH_D, targetReg, REG_WIDTH_D);
     }
 
     private void molkify(Mod mod) {
@@ -298,8 +354,10 @@ public class MolkiTransformer extends Default {
         int targetReg1 = this.node2RegIndex.get(mod);
         int targetReg2 = targetReg1 + 1; // by convention used in PrepVisitor
 
-        this.appendMolkiCode("divl [ " + REG_PREFIX + srcReg1 + "d | " + REG_PREFIX + srcReg2 + "d ]" + " -> [ "
-                + REG_PREFIX + targetReg2 + "d | " + REG_PREFIX + targetReg1 + "d ]");
+        // targetReg2 before targetReg1 is on purpose.
+        //Result of mod is second result of divl command and should be stored in the first target register.
+        this.appendFourAdressCommand("divl", srcReg1, REG_WIDTH_D, srcReg2, REG_WIDTH_D, targetReg2, REG_WIDTH_D,
+                targetReg1, REG_WIDTH_D);
     }
 
     private void molkify(Mul mul) {
@@ -308,14 +366,14 @@ public class MolkiTransformer extends Default {
 
         int targetReg = this.node2RegIndex.get(mul);
 
-        this.appendMolkiCode("mull [ " + REG_PREFIX + srcReg1 + "d | " + REG_PREFIX + srcReg2 + "d ]" + " -> "
-                + REG_PREFIX + targetReg + "d ");
+        this.appendThreeAdressCommand("mull", srcReg1, REG_WIDTH_D, srcReg2, REG_WIDTH_D, targetReg, REG_WIDTH_D);
     }
 
     private void molkify(Not not) {
-        int inputReg = this.node2RegIndex.get(not.getOp());
-        int reg = this.node2RegIndex.get(not);
-        this.appendMolkiCode("notb " + REG_PREFIX + inputReg + "l -> " + REG_PREFIX + reg + "l");
+        int srcReg = this.node2RegIndex.get(not.getOp());
+        int targetReg = this.node2RegIndex.get(not);
+
+        this.appendTwoAdressCommand("notb", srcReg, "l", targetReg, "l");
     }
 
     private void molkify(Return aReturn) {
@@ -323,20 +381,30 @@ public class MolkiTransformer extends Default {
         if (aReturn.getPredCount() == 1 && !aReturn.getPred(0).getMode().equals(Mode.getM())) {
             String regSuffix = Util.mode2RegSuffix(aReturn.getPred(0).getMode());
             String movSuffix = Util.mode2MovSuffix(aReturn.getPred(0).getMode());
-            this.appendMolkiCode("mov" + movSuffix + " %@" + this.node2RegIndex.get(aReturn.getPred(0)) + regSuffix
-                    + " -> %@$" + regSuffix);
+
+            String cmd = "mov" + movSuffix;
+            String src = REG_PREFIX + this.node2RegIndex.get(aReturn.getPred(0));
+            src += regSuffix;
+            String target = "%@$" + regSuffix;
+
+            this.appendTwoAdressCommand(cmd, src, target);
         }
         else if (aReturn.getPredCount() > 1) {
             String regSuffix = Util.mode2RegSuffix(aReturn.getPred(1).getMode());
             String movSuffix = Util.mode2MovSuffix(aReturn.getPred(1).getMode());
-            this.appendMolkiCode("mov" + movSuffix + " %@" + this.node2RegIndex.get(aReturn.getPred(1)) + regSuffix
-                    + " -> %@$" + regSuffix);
+
+            String cmd = "mov" + movSuffix;
+            String src = REG_PREFIX + this.node2RegIndex.get(aReturn.getPred(1));
+            src += regSuffix;
+            String target = "%@$" + regSuffix;
+
+            this.appendTwoAdressCommand(cmd, src, target);
         }
 
         // Select single successor
         Block successorBlock = (Block) BackEdges.getOuts(aReturn).iterator().next().node;
 
-        this.appendMolkiCode("jmp " + "L" + successorBlock.getNr());
+        this.getCurrentBlock().setEndJump(new Jump(this.getOrCreateBlock(successorBlock.getNr())));
     }
 
     private void molkify(Sel sel) {
@@ -355,22 +423,20 @@ public class MolkiTransformer extends Default {
             Sel sel = (Sel) store.getPred(1);
             int baseReg = this.node2RegIndex.get(sel.getPtr());
             int indexReg = this.node2RegIndex.get(sel.getIndex());
+            int alignment = sel.getType().getAlignment();
 
-            this.appendMolkiCode("mov" + movSuffix + " " + REG_PREFIX + storeReg + regSuffix + " -> (" + REG_PREFIX
-                    + baseReg + ", " + REG_PREFIX + indexReg + "d, " + sel.getType().getAlignment() + ")" + regSuffix);
+            this.appendStoreCmd(movSuffix, regSuffix, storeReg, baseReg, indexReg, alignment);
         }
         else if (store.getPred(1) instanceof Member) {
             Member member = (Member) store.getPred(1);
             int baseReg = this.node2RegIndex.get(member.getPtr());
             int offset = member.getEntity().getOffset();
 
-            this.appendMolkiCode("mov" + movSuffix + " " + REG_PREFIX + storeReg + regSuffix + " -> " + offset + "("
-                    + REG_PREFIX + baseReg + ")" + regSuffix);
+            this.appendStoreCmd(movSuffix, storeReg, regSuffix, offset, baseReg);
         }
         else {
             int pointerReg = this.node2RegIndex.get(store.getPtr());
-            this.appendMolkiCode("mov" + movSuffix + " " + REG_PREFIX + storeReg + regSuffix + " -> (" + REG_PREFIX
-                    + pointerReg + ")" + regSuffix);
+            this.appendStoreCmd(movSuffix, storeReg, regSuffix, pointerReg);
         }
     }
 
@@ -382,8 +448,8 @@ public class MolkiTransformer extends Default {
 
         String regSuffix = Util.mode2RegSuffix(sub.getMode());
 
-        this.appendMolkiCode("subl" + " [ " + REG_PREFIX + srcReg1 + regSuffix + " | " + REG_PREFIX + srcReg2
-                + regSuffix + " ] -> " + REG_PREFIX + targetReg + regSuffix);
+        this.appendThreeAdressCommand("subl", srcReg1, regSuffix, srcReg2, regSuffix, targetReg, regSuffix);
+
     }
 
     private void molkify(Proj node) {
@@ -391,119 +457,44 @@ public class MolkiTransformer extends Default {
     }
 
     private void molkify(Phi phi) {
-        String regSuffix = Util.mode2RegSuffix(phi.getMode());
-        String movSuffix = Util.mode2MovSuffix(phi.getMode());
-        int regIndexOfPhi = this.node2RegIndex.get(phi);
 
-        if (!phi.getMode().equals(Mode.getM())) {
-            // check if condition pred leads in both cases to this block
-            int blockNr = phi.getBlock().getNr();
-            boolean phiBlockIsOnlySuccessor = true;
-
-            if (phi.getBlock().getPred(0) instanceof Proj) {
-                Proj projNode = (Proj) phi.getBlock().getPred(0);
-                Cond cond = (Cond) projNode.getPred();
-
-                for (BackEdges.Edge edge : BackEdges.getOuts(cond)) {
-                    Block block = (Block) BackEdges.getOuts(edge.node).iterator().next().node;
-
-                    if (block.getNr() != blockNr) {
-                        phiBlockIsOnlySuccessor = false;
-                    }
-                }
-            }
-
-            if (phiBlockIsOnlySuccessor && phi.getBlock().getPred(0) instanceof Proj) {
-                Proj firstPredProj = (Proj) phi.getBlock().getPred(0);
-                Proj secondPredProj = (Proj) phi.getBlock().getPred(1);
-
-                Cond otherCond = (Cond) firstPredProj.getPred();
-
-                List<Node> phiPreds = new ArrayList<>();
-                phi.getPreds().forEach(phiPreds::add);
-
-                assert phiPreds.size() == 2 : "Incorrect number of phi predecessors: " + phiPreds.size();
-
-                Node firstPred = phiPreds.get(0);
-                Node secondPred = phiPreds.get(1);
-
-                Node truePred = null;
-                Node falsePred = null;
-
-                if (firstPredProj.getNum() == Cond.pnTrue) {
-                    truePred = firstPred;
-                }
-                else if (firstPredProj.getNum() == Cond.pnFalse) {
-                    falsePred = firstPred;
-                }
-                else {
-                    assert false : "Unknown predecessor for phi!" + phi.toString();
-                }
-
-                if (secondPredProj.getNum() == Cond.pnTrue) {
-                    truePred = secondPred;
-                }
-                else if (secondPredProj.getNum() == Cond.pnFalse) {
-                    falsePred = secondPred;
-                }
-                else {
-                    assert false : "Unknown predecessor for phi!" + phi.toString();
-                }
-
-                assert truePred != null && falsePred != null;
-
-                int truePredRegIndex = this.node2RegIndex.get(truePred);
-                int falsePredRegIndex = this.node2RegIndex.get(falsePred);
-
-                Graph graph = phi.getBlock().getGraph();
-                int newMaxBlockId = this.graph2MaxBlockId.get(graph) + 1;
-                int labelNr = newMaxBlockId;
-                this.graph2MaxBlockId.put(graph, newMaxBlockId);
-
-                if (otherCond.getSelector() instanceof Cmp) {
-                    this.appendMolkiCode("mov" + movSuffix + " %@" + truePredRegIndex + regSuffix + " -> %@"
-                            + regIndexOfPhi + regSuffix);
-
-                    Cmp cmp = (Cmp) otherCond.getSelector();
-                    String condJmp = Util.relation2Jmp(cmp.getRelation());
-                    this.appendMolkiCode("phi_" + condJmp + " L" + labelNr);
-
-                    this.appendMolkiCode("mov" + movSuffix + " %@" + falsePredRegIndex + regSuffix + " -> %@"
-                            + regIndexOfPhi + regSuffix);
-
-                    this.appendMolkiCode("L" + labelNr + ":");
-                }
-                else if (otherCond.getSelector() instanceof Const) {
-                    Const tempConst = (Const) otherCond.getSelector();
-                    boolean isTrue = tempConst.getTarval().equals(TargetValue.getBTrue());
-
-                    if (isTrue) {
-                        this.appendMolkiCode("mov" + movSuffix + " %@" + truePredRegIndex + regSuffix + " -> %@"
-                                + regIndexOfPhi + regSuffix);
-                    }
-                    else {
-                        this.appendMolkiCode("mov" + movSuffix + " %@" + falsePredRegIndex + regSuffix + " -> %@"
-                                + regIndexOfPhi + regSuffix);
-                    }
-                }
-            }
-            else {
-                for (int i = 0; i < phi.getPredCount(); i++) {
-                    int regIndexOfIthPred = this.node2RegIndex.get(phi.getPred(i));
-                    int blockNumOfIthPred = phi.getBlock().getPred(i).getBlock().getNr();
-
-                    this.appendMolkiCode("mov" + movSuffix + " %@" + regIndexOfIthPred + regSuffix + " -> %@"
-                            + regIndexOfPhi + regSuffix, blockNumOfIthPred);
-                }
-            }
+        if (phi.getMode().equals(Mode.getM())) {
+            // Ignore Phi nodes with memory mode as these are only important for ordering nodes
+            return;
         }
+
+        String registerSuffix = Util.mode2RegSuffix(phi.getMode());
+        String moveSuffix = Util.mode2MovSuffix(phi.getMode());
+
+        int phiTargetRegister = this.node2RegIndex.get(phi);
+
+        List<PhiNode.Mapping> phiMappings = new ArrayList<>();
+
+        for (int i = 0; i < phi.getPredCount(); i++) {
+            int predRegisterIndex = this.node2RegIndex.get(phi.getPred(i));
+            int predBlockLabel = phi.getBlock().getPred(i).getBlock().getNr();
+
+            this.molkiCode.putIfAbsent(predBlockLabel, new BasicBlock(predBlockLabel));
+
+            BasicBlock predBlock = this.molkiCode.get(predBlockLabel);
+
+            // Add the entry into the Phi node representation
+            phiMappings.add(new PhiNode.Mapping(predBlock, predRegisterIndex, phiTargetRegister,
+                registerSuffix, moveSuffix));
+        }
+
+        // Insert a new PhiNode representation into the current basic block
+        BasicBlock currentBlock = this.getOrCreateBlock(this.currentBlockNr);
+
+        PhiNode phiNode = new PhiNode(currentBlock, phiTargetRegister, phiMappings);
+        currentBlock.addPhiNode(phiNode);
     }
 
     private void molkify(Cond cond) {
         Node selector = cond.getSelector();
 
-        String condJump = null;
-        String uncondJump = null;
+        ConditionalJump condJump = null;
+        Jump uncondJump = null;
 
         for (BackEdges.Edge edge : BackEdges.getOuts(cond)) {
 
@@ -514,6 +505,8 @@ public class MolkiTransformer extends Default {
             // iterator().next() always yields the first entry in the iteration
             Block block = (Block) BackEdges.getOuts(proj).iterator().next().node;
 
+            BasicBlock target = this.getOrCreateBlock(block.getNr());
+
             if (selector instanceof Cmp) {
 
                 Cmp cmp = (Cmp) selector;
@@ -522,13 +515,11 @@ public class MolkiTransformer extends Default {
                 // Only generate a conditional jump for the true part, otherwise generate an unconditional jump
                 if (proj.getNum() == Cond.pnTrue) {
 
-                    // TODO Allow conditions to be inverted.
-                    condJump = Util.relation2Jmp(relation);
-
-                    condJump += " " + "L" + block.getNr();
+                    String mnemonic = Util.relation2Jmp(relation);
+                    condJump = new ConditionalJump(mnemonic, target);
                 }
                 else {
-                    uncondJump = "jmp " + "L" + block.getNr();
+                    uncondJump = new Jump(target);
                 }
             }
             else {
@@ -536,19 +527,36 @@ public class MolkiTransformer extends Default {
                 Const aConst = (Const) selector;
 
                 if (proj.getNum() == Cond.pnTrue && aConst.getTarval().equals(TargetValue.getBTrue())) {
-                    uncondJump = "jmp L" + block.getNr();
+
+                    BasicBlock currentBlock = this.getOrCreateBlock(this.currentBlockNr);
+                    GenericInstruction compare
+                        = new GenericInstruction("cmpl" + " [ $-1d | $0d ]");
+                    currentBlock.setCompare(compare);
+
+                    condJump = new ConditionalJump("jl", target);
+                    uncondJump = new Jump(target);
+
                 }
                 else if (proj.getNum() == Cond.pnFalse && aConst.getTarval().equals(TargetValue.getBFalse())) {
-                    uncondJump = "jmp L" + block.getNr();
+
+                    BasicBlock currentBlock = this.getOrCreateBlock(this.currentBlockNr);
+                    GenericInstruction compare
+                        = new GenericInstruction("cmpl" + " [ $-1d | $0d ]");
+                    currentBlock.setCompare(compare);
+
+                    condJump = new ConditionalJump("jg", target);
+                    uncondJump = new Jump(target);
                 }
             }
         }
 
+        BasicBlock currentBlock = this.getCurrentBlock();
+
         if (condJump != null) {
-            this.appendMolkiCode(condJump);
+            currentBlock.setConditionalJump(condJump);
         }
         if (uncondJump != null) {
-            this.appendMolkiCode(uncondJump);
+            currentBlock.setEndJump(uncondJump);
         }
     }
 
@@ -561,8 +569,55 @@ public class MolkiTransformer extends Default {
         // operations and conversion of the operands instead should be handled there.
     }
 
+
+    //
+    // append commands
+    //
+
+
     /**
-     * append command cmd [ srcReg1 | srcReg2 ] -> targetReg Example add [ %@21d | %@22d ] -> %@23d
+     * <p>
+     * Example<br>
+     * <br>
+     * negl %@17d -> %@18d
+     * </p>
+     *
+     * @param cmd name of command
+     * @param srcReg number of source register to use
+     * @param suffixSrcReg width of source register, e.g. 'd'
+     * @param targetReg number of target register to use
+     * @param suffixTargetReg width of target register, e.g. 'd'
+     */
+    private void appendTwoAdressCommand(String cmd, int srcReg, String suffixSrcReg, int targetReg,
+            String suffixTargetReg) {
+        this.appendMolkiCode(
+                cmd + " " + REG_PREFIX + srcReg + suffixSrcReg + " -> " + REG_PREFIX + targetReg + suffixTargetReg);
+    }
+
+    /**
+     * append cmd src -> target
+     * <p>
+     * Example<br>
+     * <br>
+     * mov %@8 -> %@$
+     * </p>
+     *
+     * @param cmd name of command
+     * @param src String to use as source, will be included as it is, i.e. REG_PREFIX will not be appended
+     * @param target String to use as target, will be included as it is, i.e REG_PREFIX will not be append
+     */
+    private void appendTwoAdressCommand(String cmd, String src, String target) {
+        this.appendMolkiCode(cmd + " " + src + " -> " + target);
+    }
+
+    /**
+     * append command cmd [ srcReg1 | srcReg2 ] -> targetReg
+     *
+     * <p>
+     * Example<br>
+     * <br>
+     * add [ %@21d | %@22d ] -> %@23d
+     * </p>
      *
      * @param cmd             command
      * @param srcReg1         number of first source register
@@ -587,21 +642,21 @@ public class MolkiTransformer extends Default {
      * </p>
      *
      * @param cmd              command
-     * @param srcReg1
-     * @param suffixReg1       width of srcReg1
-     * @param srcReg2
-     * @param suffixReg2       width of srcReg2
-     * @param targetReg1
-     * @param suffixTargetReg1 width of targetReg1
-     * @param targetReg2
-     * @param suffixTargetReg2 width of targetReg2
+     * @param srcReg1          number of first source register to use
+     * @param suffixReg1       width of srcReg1, e.g. 'd'
+     * @param srcReg2          number of second source register to use
+     * @param suffixReg2       width of srcReg2, e.g. 'd'
+     * @param targetReg1       number of first target register to use
+     * @param suffixTargetReg1 width of targetReg1, e.g. 'd'
+     * @param targetReg2       number of second target register to use
+     * @param suffixTargetReg2 width of targetReg2, e.g. 'd'
      */
     private void appendFourAdressCommand(String cmd, int srcReg1, String suffixReg1, int srcReg2, String suffixReg2,
             int targetReg1, String suffixTargetReg1, int targetReg2, String suffixTargetReg2) {
 
         this.appendMolkiCode(cmd + " [ " + REG_PREFIX + srcReg1 + suffixReg1 + " | " + REG_PREFIX + srcReg2 + suffixReg2
-                + " ] -> [ %@" + targetReg1 + suffixTargetReg1 + " | " + REG_PREFIX + targetReg2 + suffixTargetReg2
-                + " ]");
+                + " ] -> [ " + REG_PREFIX + targetReg1 + suffixTargetReg1 + " | " + REG_PREFIX + targetReg2
+                + suffixTargetReg2 + " ]");
     }
 
     /**
@@ -611,14 +666,14 @@ public class MolkiTransformer extends Default {
      * movd (%@17, %@18d, 10) -> %@19
      * </p>
      *
-     * @param moveSuffix
-     * @param baseReg
-     * @param indexReg
-     * @param suffixIndexReg
-     * @param alignment
-     * @param suffixSrcReg
-     * @param targetReg
-     * @param suffixTargetReg
+     * @param moveSuffix suffix to append to 'mov' command, e.g. 'd'
+     * @param baseReg number of base register
+     * @param indexReg number of index register
+     * @param suffixIndexReg width of index register, e.g. 'd'
+     * @param alignment alignment of object, used to compute offset
+     * @param suffixSrcReg width of source register, e.g. 'd'
+     * @param targetReg number of target register
+     * @param suffixTargetReg width of target register,e.g 'd'
      */
     private void appendMoveWithOffset(String moveSuffix, int baseReg, int indexReg, String suffixIndexReg,
             int alignment, String suffixSrcReg, int targetReg, String suffixTargetReg) {
@@ -640,11 +695,11 @@ public class MolkiTransformer extends Default {
      * movd 7(%@19)d -> %@20d
      * </p>
      *
-     * @param movSuffix
-     * @param offset
-     * @param baseReg
-     * @param targetReg
-     * @param suffixTargetReg width of register
+     * @param movSuffix suffix to append to 'mov' command, e.g. 'd'
+     * @param offset offset added to base
+     * @param baseReg number of base register
+     * @param targetReg number of target register
+     * @param suffixTargetReg width of register, e.g. 'd'
      */
     private void appendMoveWithOffset(String movSuffix, int offset, int baseReg, int targetReg,
             String suffixTargetReg) {
@@ -654,15 +709,84 @@ public class MolkiTransformer extends Default {
 
     /**
      * <p>
-     * Example<br><br>
+     * Example<br>
+     * <br>
      * movd (%@17) -> %@18d
-     * @param movSuffix
-     * @param pointerReg
-     * @param targetReg
-     * @param suffixTargetReg width of target register
+     * </p>
+     *
+     * @param movSuffix suffix to append to 'mov' command, e.g. 'd'
+     * @param pointerReg number of register containing pointer
+     * @param targetReg number of target register
+     * @param suffixTargetReg width of target register, e.g. 'd'
      */
     private void moveWithOffset(String movSuffix, int pointerReg, int targetReg, String suffixTargetReg) {
-        this.appendMolkiCode("mov" + movSuffix + " " + "(" + REG_PREFIX + pointerReg + ") -> " + REG_PREFIX
-                + targetReg + suffixTargetReg);
+        this.appendMolkiCode("mov" + movSuffix + " " + "(" + REG_PREFIX + pointerReg + ") -> " + REG_PREFIX + targetReg
+                + suffixTargetReg);
+    }
+
+    /**
+     * <p>
+     * Exmaple<br>
+     * <br>
+     * movq %@17d -> 8(%@18)d
+     * </p>
+     *
+     * @param movSuffix suffix to append to 'mov' command, e.g 'd'
+     * @param storeReg number of register to store
+     * @param regSuffix width of registers, e.g. 'd'
+     * @param offset offset to add to base
+     * @param baseReg number of base register
+     */
+    private void appendStoreCmd(String movSuffix, int storeReg, String regSuffix, int offset, int baseReg) {
+        this.appendMolkiCode("mov" + movSuffix + " " + REG_PREFIX + storeReg + regSuffix + " -> " + offset + "("
+                + REG_PREFIX + baseReg + ")" + regSuffix);
+    }
+
+    /**
+     * <p>
+     * Example<br>
+     * <br>
+     * movq %@17d -> (%@18, %@19d, 10)d
+     * </p>
+     *
+     * @param movSuffix suffix to add to 'mov' command, e.g. 'd'
+     * @param regSuffix width of registers, e.g. 'd'
+     * @param storeReg number of register to store
+     * @param baseReg number of base register
+     * @param indexReg number of index register
+     * @param alignment alignment of object, used to compute offset
+     */
+    private void appendStoreCmd(String movSuffix, String regSuffix, int storeReg, int baseReg, int indexReg,
+            int alignment) {
+        this.appendMolkiCode("mov" + movSuffix + " " + REG_PREFIX + storeReg + regSuffix + " -> (" + REG_PREFIX
+                + baseReg + ", " + REG_PREFIX + indexReg + REG_WIDTH_D + ", " + alignment + ")" + regSuffix);
+    }
+
+    /**
+     * Example<br>
+     * <br>
+     * movq %@17d -> (%@18)d
+     *
+     * @param movSuffix suffix to append to 'mov' command
+     * @param storeReg number of register to store
+     * @param regSuffix width of register, e.g. 'd'
+     * @param pointerReg number of register containing pointer
+     */
+    private void appendStoreCmd(String movSuffix, int storeReg, String regSuffix, int pointerReg) {
+        this.appendMolkiCode("mov" + movSuffix + " " + REG_PREFIX + storeReg + regSuffix + " -> (" + REG_PREFIX
+                + pointerReg + ")" + regSuffix);
+    }
+
+    /**
+     * Example<br>
+     * <br>
+     * cmpq [ %@17d | %@18d ]
+     *
+     * @param cmd name of command
+     * @param arg1 first argument, will be used as given, i.e. REG_PREFIX will not be appended
+     * @param arg2 second argument, will be used as given, i.e. REG_PREFIX will not be appended
+     */
+    private void appendTwoArgsCommand(String cmd, String arg1, String arg2) {
+        this.appendMolkiCode(cmd + "[ " + arg1 + " | " + arg2 + " ]");
     }
 }

@@ -67,4 +67,9 @@ public final class MainMethodDeclaration implements SubroutineDeclaration, Membe
     public String toString() {
         return "main method '" + this.name + "' at " + this.location;
     }
+
+    @Override
+    public String toStringForDumpingAST() {
+        return "Main Method " + this.name + "\n" + this.location;
+    }
 }

@@ -26,4 +26,9 @@ public class ImplicitReference<DeclarationType extends Declaration> extends Refe
     public String toString() {
         return "#implicit";
     }
+
+    @Override
+    public String toStringForDumpingAST() {
+        return "Implicit Reference";
+    }
 }

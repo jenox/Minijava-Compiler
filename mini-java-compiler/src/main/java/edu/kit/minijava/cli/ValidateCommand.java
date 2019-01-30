@@ -25,6 +25,9 @@ public class ValidateCommand extends Command {
 
             new ReferenceAndExpressionTypeResolver(program);
 
+            ASTDumper dumper = new ASTDumper(program);
+            dumper.dump("ast.graphml");
+
 //            for (TypeReference reference : new Collector(program).instancesOfClass(TypeReference.class)) {
 //                if (reference.getBasicTypeReference().isResolved()) {
 //                    Declaration declaration = reference.getBasicTypeReference().getDeclaration();

@@ -88,6 +88,27 @@ public abstract class Expression implements ASTNode {
                 this.right = newValue;
             }
         }
+
+        @Override
+        public String toStringForDumpingAST() {
+            switch (this.operationType) {
+                case MULTIPLICATION: return "×";
+                case DIVISION: return "÷";
+                case MODULO: return "mod";
+                case ADDITION: return "+";
+                case SUBTRACTION: return "−";
+                case LESS_THAN: return "<";
+                case LESS_THAN_OR_EQUAL_TO: return "≤";
+                case GREATER_THAN: return ">";
+                case GREATER_THAN_OR_EQUAL_TO: return "≥";
+                case EQUAL_TO: return "=";
+                case NOT_EQUAL_TO: return "≠";
+                case LOGICAL_AND: return "∧";
+                case LOGICAL_OR: return "∨";
+                case ASSIGNMENT: return "≔";
+                default: throw new AssertionError();
+            }
+        }
     }
 
     public static final class UnaryOperation extends Expression {
@@ -134,6 +155,15 @@ public abstract class Expression implements ASTNode {
                 this.other = newValue;
             }
         }
+
+        @Override
+        public String toStringForDumpingAST() {
+            switch (this.operationType) {
+                case NUMERIC_NEGATION: return "±";
+                case LOGICAL_NEGATION: return "¬";
+                default: throw new AssertionError();
+            }
+        }
     }
 
     public static final class NullLiteral extends Expression {
@@ -164,6 +194,11 @@ public abstract class Expression implements ASTNode {
 
         @Override
         public void substituteExpression(Expression oldValue, Expression newValue) {}
+
+        @Override
+        public String toStringForDumpingAST() {
+            return "null";
+        }
     }
 
     public static final class BooleanLiteral extends Expression {
@@ -200,6 +235,11 @@ public abstract class Expression implements ASTNode {
 
         @Override
         public void substituteExpression(Expression oldValue, Expression newValue) {}
+
+        @Override
+        public String toStringForDumpingAST() {
+            return this.value ? "true" : "false";
+        }
     }
 
     public static final class IntegerLiteral extends Expression {
@@ -236,6 +276,11 @@ public abstract class Expression implements ASTNode {
 
         @Override
         public void substituteExpression(Expression oldValue, Expression newValue) {}
+
+        @Override
+        public String toStringForDumpingAST() {
+            return this.value;
+        }
     }
 
     public static final class MethodInvocation extends Expression {
@@ -308,6 +353,11 @@ public abstract class Expression implements ASTNode {
                 }
             }
         }
+
+        @Override
+        public String toStringForDumpingAST() {
+            return "Method Invocation";
+        }
     }
 
     public static final class ExplicitFieldAccess extends Expression {
@@ -353,6 +403,11 @@ public abstract class Expression implements ASTNode {
             if (this.context == oldValue) {
                 this.context = newValue;
             }
+        }
+
+        @Override
+        public String toStringForDumpingAST() {
+            return "Field Access";
         }
     }
 
@@ -404,6 +459,11 @@ public abstract class Expression implements ASTNode {
                 this.index = newValue;
             }
         }
+
+        @Override
+        public String toStringForDumpingAST() {
+            return "Array Access";
+        }
     }
 
     public static final class VariableAccess extends Expression {
@@ -440,6 +500,11 @@ public abstract class Expression implements ASTNode {
 
         @Override
         public void substituteExpression(Expression oldValue, Expression newValue) {}
+
+        @Override
+        public String toStringForDumpingAST() {
+            return "Variable Access";
+        }
     }
 
     public static final class CurrentContextAccess extends Expression {
@@ -470,6 +535,11 @@ public abstract class Expression implements ASTNode {
 
         @Override
         public void substituteExpression(Expression oldValue, Expression newValue) {}
+
+        @Override
+        public String toStringForDumpingAST() {
+            return "this";
+        }
     }
 
     public static final class NewObjectCreation extends Expression {
@@ -506,6 +576,11 @@ public abstract class Expression implements ASTNode {
 
         @Override
         public void substituteExpression(Expression oldValue, Expression newValue) {}
+
+        @Override
+        public String toStringForDumpingAST() {
+            return "Object Creation";
+        }
     }
 
     public static final class NewArrayCreation extends Expression {
@@ -559,6 +634,11 @@ public abstract class Expression implements ASTNode {
                 this.primaryDimension = newValue;
             }
         }
+
+        @Override
+        public String toStringForDumpingAST() {
+            return "Array Creation";
+        }
     }
 
     public static final class SystemOutPrintlnExpression extends Expression {
@@ -597,6 +677,11 @@ public abstract class Expression implements ASTNode {
                 this.argument = newValue;
             }
         }
+
+        @Override
+        public String toStringForDumpingAST() {
+            return "println";
+        }
     }
 
     public static final class SystemOutFlushExpression extends Expression {
@@ -625,6 +710,11 @@ public abstract class Expression implements ASTNode {
 
         @Override
         public void substituteExpression(Expression oldValue, Expression newValue) {}
+
+        @Override
+        public String toStringForDumpingAST() {
+            return "flush";
+        }
     }
 
     public static final class SystemOutWriteExpression extends Expression {
@@ -663,6 +753,11 @@ public abstract class Expression implements ASTNode {
                 this.argument = newValue;
             }
         }
+
+        @Override
+        public String toStringForDumpingAST() {
+            return "write";
+        }
     }
 
     public static final class SystemInReadExpression extends Expression {
@@ -691,5 +786,10 @@ public abstract class Expression implements ASTNode {
 
         @Override
         public void substituteExpression(Expression oldValue, Expression newValue) {}
+
+        @Override
+        public String toStringForDumpingAST() {
+            return "read";
+        }
     }
 }

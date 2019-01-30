@@ -59,4 +59,9 @@ public final class FieldDeclaration implements VariableDeclaration, MemberDeclar
     public String toString() {
         return "field '" + this.name + "' at " + this.location;
     }
+
+    @Override
+    public String toStringForDumpingAST() {
+        return "Field " + this.name + "\n" + this.location;
+    }
 }
