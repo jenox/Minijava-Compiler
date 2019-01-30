@@ -168,13 +168,16 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
         this.currentClassName = classDeclaration.getName();
         this.currentClassDeclaration = classDeclaration;
         this.types.put(classDeclaration, structType);
-        this.classSizes.put(classDeclaration, 0);
 
         for (FieldDeclaration fieldDeclaration : classDeclaration.getFieldDeclarations()) {
             fieldDeclaration.accept(this, context);
-            Type type = this.types.get(fieldDeclaration);
-            this.classSizes.put(classDeclaration, this.classSizes.get(classDeclaration) + type.getSize());
         }
+
+        // Layout class
+        structType.layoutFields();
+        structType.finishLayout();
+
+        this.classSizes.put(classDeclaration, structType.getSize());
 
         for (MethodDeclaration methodDecl : classDeclaration.getMethodDeclarations()) {
             methodDecl.accept(this, context);
@@ -183,10 +186,6 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
         for (MainMethodDeclaration mainMethodDeclaration : classDeclaration.getMainMethodDeclarations()) {
             mainMethodDeclaration.accept(this, context);
         }
-
-        // Layout class
-        structType.layoutFields();
-        structType.finishLayout();
     }
 
     @Override
