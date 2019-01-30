@@ -40,3 +40,6 @@ jobs:
     - name: MJ Compilation Tests
       install: eval "$(curl -sL https://swiftenv.fuller.li/install.sh)"
       script: ./build && ./molki__build_run_check.py
+    - name: Big Tests
+      install: eval "$(curl -sL https://swiftenv.fuller.li/install.sh)"
+      script: ./build && ./molki__build_run_check-BigTests.py
