@@ -44,7 +44,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
         program.accept(this, new EntityContext());
 
         // Check created graphs
-        if (CommandLineInterface.isConstantFoldingActivated()) {
+        if (CommandLineInterface.areOptimizationsActivated()) {
             for (Graph g : firm.Program.getGraphs()) {
                 ConstantFolder folder = new ConstantFolder(g);
                 g.check();
@@ -71,7 +71,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
         program.accept(this, new EntityContext());
 
         // Check and dump created graphs - can be viewed with ycomp
-        if (CommandLineInterface.isConstantFoldingActivated()) {
+        if (CommandLineInterface.areOptimizationsActivated()) {
             for (Graph g : firm.Program.getGraphs()) {
                 ConstantFolder folder = new ConstantFolder(g);
                 g.check();
