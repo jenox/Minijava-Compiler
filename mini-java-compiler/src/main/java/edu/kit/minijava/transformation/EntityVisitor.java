@@ -24,7 +24,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
     private HashMap<Declaration, Integer> variableNums = new HashMap<>();
     private HashMap<Declaration, Entity> entities = new HashMap<>();
     private HashMap<Declaration, Type> types = new HashMap<>();
-    private HashMap<Declaration, Integer> classSizes = new HashMap<>();
+    private HashMap<ClassDeclaration, Integer> classSizes = new HashMap<>();
 
     private boolean isVariableCounting = false;
     private ClassDeclaration currentClassDeclaration;
@@ -162,22 +162,31 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
     @Override
     protected void visit(ClassDeclaration classDeclaration, EntityContext context) {
-        StructType structType = new StructType(classDeclaration.getName());
-        context.setClassType(structType);
+        if (this.isVariableCounting) {
+            StructType structType = new StructType(classDeclaration.getName());
+            context.setClassType(structType);
+
+            this.types.put(classDeclaration, structType);
+        }
 
         this.currentClassName = classDeclaration.getName();
         this.currentClassDeclaration = classDeclaration;
-        this.types.put(classDeclaration, structType);
 
         for (FieldDeclaration fieldDeclaration : classDeclaration.getFieldDeclarations()) {
             fieldDeclaration.accept(this, context);
         }
 
-        // Layout class
-        structType.layoutFields();
-        structType.finishLayout();
+        if (this.isVariableCounting) {
+            assert this.classSizes.get(classDeclaration) == null;
 
-        this.classSizes.put(classDeclaration, structType.getSize());
+            StructType structType = (StructType)this.types.get(classDeclaration);
+
+            // Layout class
+            structType.layoutFields();
+            structType.finishLayout();
+
+            this.classSizes.put(classDeclaration, structType.getSize());
+        }
 
         for (MethodDeclaration methodDecl : classDeclaration.getMethodDeclarations()) {
             methodDecl.accept(this, context);
@@ -193,10 +202,12 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
         fieldDeclaration.getType().accept(this, context);
         this.types.put(fieldDeclaration, context.getType());
 
-        // create entity for method
-        Entity fieldEntity = new Entity(context.getClassType(), this.getUniqueMemberName(fieldDeclaration.getName()),
-                        context.getType());
-        this.entities.put(fieldDeclaration, fieldEntity);
+        if (this.isVariableCounting) {
+            // create entity for method
+            String name = this.getUniqueMemberName(fieldDeclaration.getName());
+            Entity fieldEntity = new Entity(context.getClassType(), name, context.getType());
+            this.entities.put(fieldDeclaration, fieldEntity);
+        }
     }
 
     @Override
