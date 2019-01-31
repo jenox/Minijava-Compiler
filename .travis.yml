@@ -39,6 +39,9 @@ jobs:
     - name: Compilation Tests
       install: eval "$(curl -sL https://swiftenv.fuller.li/install.sh)"
       script: ./build && ./mjtest/mjt.py compile --ci_testing --parallel
+    - name: No Optimization Tests
+      install: eval "$(curl -sL https://swiftenv.fuller.li/install.sh)"
+      script: ./build && ./mjtest/mjt.py no-optimization --ci_testing --parallel
     - name: MJ Compilation Tests
       install: eval "$(curl -sL https://swiftenv.fuller.li/install.sh)"
       script: ./build && ./molki__build_run_check.py
