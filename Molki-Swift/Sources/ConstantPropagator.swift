@@ -19,7 +19,7 @@ public class ConstantPropagator {
     public func propagate() {
         let writers = self.getInstructionsWritingPseudoregisters()
 
-        var substitutionsToBeMade: [Pseudoregister: Int] = [:]
+        var substitutionsToBeMade: [(Pseudoregister, Argument<Pseudoregister>)] = []
 
         for (pseudoregister, instructions) in writers {
             guard pseudoregister != .reserved else { continue }
@@ -27,8 +27,15 @@ public class ConstantPropagator {
 
             switch instruction {
             case .moveInstruction(let moveInstruction):
-                if case .constant(let constant) = moveInstruction.source {
-                    substitutionsToBeMade[pseudoregister] = constant.value
+                if case .constant = moveInstruction.source {
+                    substitutionsToBeMade.append((pseudoregister, moveInstruction.source))
+                }
+                else {
+                    // We cannot safely substitute register or memory values,
+                    // even if the target register is written only once, as the
+                    // source (another register or a memory value) could change
+                    // in between the original write and the instruction we'd
+                    // want to substitute.
                 }
             default:
                 break
@@ -43,8 +50,8 @@ public class ConstantPropagator {
             for instruction in block.instructions {
                 let reads = instruction.pseudoregisters.read
 
-                for (pseudoregister, constant) in substitutionsToBeMade where reads.contains(pseudoregister) {
-                    instruction.substitute(pseudoregister, with: constant)
+                for (pseudoregister, argument) in substitutionsToBeMade where reads.contains(pseudoregister) {
+                    instruction.substitute(pseudoregister, with: argument)
                 }
             }
         }
