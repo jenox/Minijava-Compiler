@@ -1,3 +1,7 @@
+os:
+  - linux
+  - osx
+
 language: java
 sudo: required
 dist: trusty
@@ -13,7 +17,9 @@ before_script:
   - source ~/virtualenv/python3.6/bin/activate
 
 env:
-  - MJ_RUN="./run" MJ_TIMEOUT=60 SWIFT_VERSION="4.2"
+  # SWIFT_VERSION: Version to install with swiftenv
+  # TERM: Remove status updates in gradle output that only works with interactive shell
+  - MJ_RUN="./run" MJ_TIMEOUT=60 MJ_BIG_TIMEOUT=0 SWIFT_VERSION="4.2" TERM='dumb'
 
 jobs:
   include:
@@ -21,22 +27,28 @@ jobs:
       name: Build
       install: eval "$(curl -sL https://swiftenv.fuller.li/install.sh)"
       script: ./build
-    - stage: test
-      name: Style Check
-      script: ./mini-java-compiler/gradlew -b ./mini-java-compiler/build.gradle checkstyleMain checkstyleTest
-    - name: Lexer Tests
-      script: ./build --no-swift && ./mjtest/mjt.py lexer --ci_testing --parallel
-    - name: Parser Tests
-      script: ./build --no-swift && ./mjtest/mjt.py syntax --ci_testing --parallel
-    - name: AST Tests
-      script: ./build --no-swift && ./mjtest/mjt.py ast --ci_testing --parallel
-    - name: Semantic Tests
-      script: ./build --no-swift && ./mjtest/mjt.py semantic --ci_testing --parallel
-    - name: Firm Compilation Tests
-      script: ./build --no-swift && ./mjtest/mjt.py compile-firm --ci_testing --parallel
-    - name: Compilation Tests
-      install: eval "$(curl -sL https://swiftenv.fuller.li/install.sh)"
-      script: ./build && ./mjtest/mjt.py compile --ci_testing --parallel
-    - name: MJ Compilation Tests
-      install: eval "$(curl -sL https://swiftenv.fuller.li/install.sh)"
-      script: ./build && ./molki__build_run_check.py
+      #   - stage: test
+      #name: Style Check
+      #script: ./mini-java-compiler/gradlew -b ./mini-java-compiler/build.gradle checkstyleMain checkstyleTest
+      #- name: Lexer Tests
+      #script: ./build --no-swift && ./mjtest/mjt.py lexer --ci_testing --parallel
+      #- name: Parser Tests
+      #script: ./build --no-swift && ./mjtest/mjt.py syntax --ci_testing --parallel
+      #- name: AST Tests
+      #script: ./build --no-swift && ./mjtest/mjt.py ast --ci_testing --parallel
+      #- name: Semantic Tests
+      # script: ./build --no-swift && ./mjtest/mjt.py semantic --ci_testing --parallel
+      #- name: Firm Compilation Tests
+      #script: ./build --no-swift && ./mjtest/mjt.py compile-firm --ci_testing --parallel
+      #- name: Compilation Tests
+      #install: eval "$(curl -sL https://swiftenv.fuller.li/install.sh)"
+      #script: ./build && ./mjtest/mjt.py compile --ci_testing --parallel
+      #- name: No Optimization Tests
+      #install: eval "$(curl -sL https://swiftenv.fuller.li/install.sh)"
+      #script: ./build && ./mjtest/mjt.py no-optimization --ci_testing --parallel
+      #- name: MJ Compilation Tests
+      #install: eval "$(curl -sL https://swiftenv.fuller.li/install.sh)"
+      #script: ./build && ./molki__build_run_check.py
+      #- name: Big Tests
+      #install: eval "$(curl -sL https://swiftenv.fuller.li/install.sh)"
+      #script: ./build && ./molki__build_run_check-BigTests.py
