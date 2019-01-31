@@ -4,9 +4,6 @@ os:
 
 language: java
 
-jdk:
-  - oraclejdk8
-
 matrix:
   include:
     - os: linux
@@ -34,9 +31,9 @@ jobs:
       name: Build
       install: eval "$(curl -sL https://swiftenv.fuller.li/install.sh)"
       script: ./build
-      #   - stage: test
-      #name: Style Check
-      #script: ./mini-java-compiler/gradlew -b ./mini-java-compiler/build.gradle checkstyleMain checkstyleTest
+    - stage: test
+      name: Style Check
+      script: ./mini-java-compiler/gradlew -b ./mini-java-compiler/build.gradle checkstyleMain checkstyleTest
       #- name: Lexer Tests
       #script: ./build --no-swift && ./mjtest/mjt.py lexer --ci_testing --parallel
       #- name: Parser Tests
