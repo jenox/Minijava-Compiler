@@ -126,6 +126,10 @@ public class MolkiTransformer extends Default {
                 Const aConst = (Const) node;
                 this.molkify(aConst);
                 break;
+            case iro_Unknown:
+                Unknown unknownNode = (Unknown) node;
+                this.molkify(unknownNode);
+                break;
             case iro_End:
                 End aEnd = (End) node;
                 this.molkify(aEnd);
@@ -279,6 +283,27 @@ public class MolkiTransformer extends Default {
 
             this.appendTwoAdressCommand(cmd, arg1, arg2);
         }
+    }
+
+    private void molkify(Unknown node) {
+
+        // Assert that we only have Unknown nodes of value types
+        Mode nodeMode = node.getMode();
+        assert (nodeMode.equals(Mode.getBs()) || nodeMode.equals(Mode.getP())
+                || nodeMode.equals(Mode.getIs()) || nodeMode.equals(Mode.getIu()))
+                : "Can only handle unknown value nodes.";
+
+        int targetReg = this.node2RegIndex.get(node);
+
+        String constant = CONST_PREFIX + "0";
+        String regSuffix = Util.mode2RegSuffix(nodeMode);
+        String movSuffix = Util.mode2MovSuffix(nodeMode);
+
+        String cmd = "mov" + movSuffix;
+        String arg1 = constant + regSuffix;
+        String arg2 = REG_PREFIX + targetReg + regSuffix;
+
+        this.appendTwoAdressCommand(cmd, arg1, arg2);
     }
 
     private void molkify(Div div) {
