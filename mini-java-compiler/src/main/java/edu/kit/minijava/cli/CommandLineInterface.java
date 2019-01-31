@@ -30,7 +30,7 @@ public class CommandLineInterface {
     public static final String COMPILE_DESC = "compile input file";
 
     // OPTIONs
-    public static final String NO_CONST_FOLDING = "no-const-folding";
+    public static final String NO_OPTIMIZATION = "no-optimization";
     public static final String DUMP_GRAPHS = "dump-graphs";
 
     private static CommandLine cmdLine;
@@ -47,11 +47,6 @@ public class CommandLineInterface {
             // Directly compile the file
             fileArgument = arguments[0];
             command = new CompileCommand();
-        }
-
-        else if (arguments.length != 2) {
-            command = new CompileCommand();
-            CommandLineInterface.printErrorAndExit(options);
         }
         else {
 
@@ -130,13 +125,14 @@ public class CommandLineInterface {
 
     private static Options initalizeOptions() {
         Option echoOption = Option.builder().hasArg().longOpt(ECHO_CMD).desc(ECHO_DESC).build();
-        Option lexOption = Option.builder().hasArg().longOpt(LEXTEST_CMD).build();
-        Option parserOption = Option.builder().hasArg().longOpt(PARSERTEST_CMD).build();
-        Option printAstOption = Option.builder().hasArg().longOpt(PRINT_AST_CMD).build();
-        Option compileFirmOption = Option.builder().hasArg().longOpt(COMPILE_FIRM_CMD).build();
-        Option compileOption = Option.builder().hasArg().longOpt(COMPILE_CMD).build();
+        Option lexOption = Option.builder().hasArg().longOpt(LEXTEST_CMD).desc(LEXTEST_DESC).build();
+        Option parserOption = Option.builder().hasArg().longOpt(PARSERTEST_CMD).desc(PARSETEST_DESC).build();
+        Option printAstOption = Option.builder().hasArg().longOpt(PRINT_AST_CMD).desc(PRINT_AST_DESC).build();
+        Option compileFirmOption = Option.builder().hasArg().longOpt(COMPILE_FIRM_CMD).desc(COMPILE_FIRM_DESC).build();
+        Option compileOption = Option.builder().hasArg().longOpt(COMPILE_CMD).desc(COMPILE_DESC).build();
+        Option checkOption = Option.builder().hasArg().longOpt(CHECK_CMD).desc(CHECK_DESC).build();
 
-        Option noConstFoldingOption = Option.builder().longOpt(NO_CONST_FOLDING).build();
+        Option noOptimizationOption = Option.builder().longOpt(NO_OPTIMIZATION).build();
         Option dumpGraphsOption = Option.builder().longOpt(DUMP_GRAPHS).build();
 
         Options options = new Options();
@@ -146,8 +142,9 @@ public class CommandLineInterface {
         options.addOption(printAstOption);
         options.addOption(compileFirmOption);
         options.addOption(compileOption);
+        options.addOption(checkOption);
 
-        options.addOption(noConstFoldingOption);
+        options.addOption(noOptimizationOption);
         options.addOption(dumpGraphsOption);
 
         return options;
@@ -167,8 +164,8 @@ public class CommandLineInterface {
         return cmdLine;
     }
 
-    public static boolean isConstantFoldingActivated() {
-        return !cmdLine.hasOption(NO_CONST_FOLDING); //if option is set return false
+    public static boolean areOptimizationsActivated() {
+        return !cmdLine.hasOption(NO_OPTIMIZATION); //if option is set return false
     }
 
     public static boolean shouldGraphsBeDumped() {
