@@ -38,8 +38,7 @@ jobs:
       script: ./build --no-swift && ./mjtest/mjt.py compile-firm --ci_testing --parallel
     - name: Compilation Tests
       install: eval "$(curl -sL https://swiftenv.fuller.li/install.sh)"
-      # --all_exec_tests option also executes test cases marked as big
-      script: ./build && ./mjtest/mjt.py compile --ci_testing --parallel --all_exec_tests
+      script: ./build && ./mjtest/mjt.py compile --ci_testing --parallel
     - name: MJ Compilation Tests
       install: eval "$(curl -sL https://swiftenv.fuller.li/install.sh)"
       script: ./build && ./molki__build_run_check.py
