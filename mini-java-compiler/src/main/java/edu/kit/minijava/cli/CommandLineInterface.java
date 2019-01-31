@@ -130,6 +130,7 @@ public class CommandLineInterface {
         Option printAstOption = Option.builder().hasArg().longOpt(PRINT_AST_CMD).desc(PRINT_AST_DESC).build();
         Option compileFirmOption = Option.builder().hasArg().longOpt(COMPILE_FIRM_CMD).desc(COMPILE_FIRM_DESC).build();
         Option compileOption = Option.builder().hasArg().longOpt(COMPILE_CMD).desc(COMPILE_DESC).build();
+        Option checkOption = Option.builder().hasArg().longOpt(CHECK_CMD).desc(CHECK_DESC).build();
 
         Option noOptimizationOption = Option.builder().longOpt(NO_OPTIMIZATION).build();
         Option dumpGraphsOption = Option.builder().longOpt(DUMP_GRAPHS).build();
@@ -141,6 +142,7 @@ public class CommandLineInterface {
         options.addOption(printAstOption);
         options.addOption(compileFirmOption);
         options.addOption(compileOption);
+        options.addOption(checkOption);
 
         options.addOption(noOptimizationOption);
         options.addOption(dumpGraphsOption);
