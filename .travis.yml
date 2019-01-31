@@ -1,13 +1,16 @@
-os:
-  - linux
-  - osx
-
 language: java
-sudo: required
-dist: trusty
 
 jdk:
   - oraclejdk8
+
+matrix:
+  include:
+    - os: linux
+      sudo: required
+      dist: trusty
+      jdk: oraclejdk8
+    - os: osx
+      osx_image: xcode10.1
 
 # Due to the time required to run the Swift installation, the install script
 # > eval "$(curl -sL https://swiftenv.fuller.li/install.sh)"
