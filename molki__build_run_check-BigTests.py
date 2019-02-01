@@ -2,6 +2,7 @@
 
 import os
 import sys
+import subprocess
 from os import walk
 from subprocess import *
 
@@ -29,12 +30,27 @@ for file_name in test_files:
         or file_name.startswith(".mj")
         or file_name.endswith(".input.java.out")):
 
+        print("current testcase: " + file_name)
         # build + run backend + molki
         run([ "./run"
             , "--compile"
             , test_dir + "/" + file_name ])
-        temp, _ = Popen([ "./a.out" ], stdout=PIPE).communicate()
-        tempStr = str(temp.decode()).strip()
+        
+        
+        if file_name.endswith(".input.java"):
+            input_file_name = test_dir + "/" + file_name.replace(".input.java", ".0.inputc") 
+            print("input: " + input_file_name)
+           # cmd = shlex.split("./a.out < " + input_file_name)
+           # print("cmd: " + cmd)
+            #temp, _ = Popen(["./a.out", "<", input_file_name , stdout=PIPE).communicate()
+            temp = subprocess.check_output(["./a.out", "<", input_file_name])
+            tempStr = str(temp.decode()).strip()
+            
+        else: 
+            print("no input")
+            temp, _ = Popen([ "./a.out" ], stdout=PIPE).communicate()
+            tempStr = str(temp.decode()).strip()
+
 
         if os.path.isfile(test_dir + "/" + file_name + ".out"):
             file = open(test_dir + "/" + file_name + ".out", "r")
