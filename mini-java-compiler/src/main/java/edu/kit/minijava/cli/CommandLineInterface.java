@@ -85,7 +85,7 @@ public class CommandLineInterface {
                 command = new CompileCommand();
             }
             else {
-                command = null; //has to be initalized
+                command = null; // has to be initalized
                 printErrorAndExit(options);
             }
         }
@@ -129,6 +129,8 @@ public class CommandLineInterface {
         Option parserOption = Option.builder().hasArg().longOpt(PARSERTEST_CMD).desc(PARSETEST_DESC).build();
         Option printAstOption = Option.builder().hasArg().longOpt(PRINT_AST_CMD).desc(PRINT_AST_DESC).build();
         Option compileFirmOption = Option.builder().hasArg().longOpt(COMPILE_FIRM_CMD).desc(COMPILE_FIRM_DESC).build();
+        Option compileFirmAltOption = Option.builder().hasArg().longOpt(COMPILE_FIRM_ALT_CMD).desc(COMPILE_FIRM_DESC)
+                        .build();
         Option compileOption = Option.builder().hasArg().longOpt(COMPILE_CMD).desc(COMPILE_DESC).build();
         Option checkOption = Option.builder().hasArg().longOpt(CHECK_CMD).desc(CHECK_DESC).build();
 
@@ -143,6 +145,7 @@ public class CommandLineInterface {
         options.addOption(compileFirmOption);
         options.addOption(compileOption);
         options.addOption(checkOption);
+        options.addOption(compileFirmAltOption);
 
         options.addOption(noOptimizationOption);
         options.addOption(dumpGraphsOption);
@@ -165,7 +168,7 @@ public class CommandLineInterface {
     }
 
     public static boolean areOptimizationsActivated() {
-        return !cmdLine.hasOption(NO_OPTIMIZATION); //if option is set return false
+        return !cmdLine.hasOption(NO_OPTIMIZATION); // if option is set return false
     }
 
     public static boolean shouldGraphsBeDumped() {
