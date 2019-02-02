@@ -46,7 +46,21 @@ matrix:
   #  - source ~/virtualenv/python3.6/bin/activate
 
 
-# install:
+install:
+  # Install Swift
+  - case "$TESTTYPE" in
+      frontend)
+        ;;
+      backend)
+        if [[ "$TRAVIS_OS_NAME" != "osx" ]]; then \\
+          eval "$(curl -sL https://swiftenv.fuller.li/install.sh)" \\
+        fi ;
+        ;;
+      *)
+        echo "Unknown test type! Quitting ..." ;
+        return 1;
+        ;;
+    esac
 
 script:
   - case "$TESTTYPE" in
