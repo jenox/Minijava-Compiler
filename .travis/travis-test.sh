@@ -20,7 +20,7 @@ case "$TESTTYPE" in
   backend)
     ./build && \
     echo "" && echo "" && echo "#### COMPILATION TESTS" &&
-    ./mjtest/mjt.py compile --ci_testing --parallel && \
+    ./mjtest/mjt.py compile --ci_testing --parallel
     # echo "" && echo "" && echo "#### COMPILATION TESTS (BIG TEST CASES)" &&
     # ./molki__build_run_check-BigTests.py &&
     # echo "" && echo "" && echo "#### COMPILATION TESTS (NO OPTIMIZATIONS)" &&
