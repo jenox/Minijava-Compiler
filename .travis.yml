@@ -7,13 +7,13 @@ language: java
 matrix:
   include:
     - os: linux
-      name: "Frontend and Firm Compilation Tests"
+      name: "Frontend and Firm Tests"
       sudo: required
       dist: trusty
       jdk: oraclejdk8
       env: TESTTYPE=frontend
     - os: linux
-      name: "Compilation Tests with Custom Backend"
+      name: "Compilation Tests with Own Backend"
       sudo: required
       dist: trusty
       jdk: oraclejdk8
@@ -23,7 +23,7 @@ matrix:
       osx_image: xcode10.1
       env: TESTTYPE=frontend
     - os: osx
-      name: "Compilation Tests with Custom Backend"
+      name: "Compilation Tests with Own Backend"
       osx_image: xcode10.1
       env: TESTTYPE=backend
 
@@ -35,28 +35,16 @@ matrix:
   #  - source ~/virtualenv/python3.6/bin/activate
 
 env:
-  #global:
-  ## Remove interactive status updates in Gradle output
-  - MJ_RUN="./run" MJ_TIMEOUT=60 MJ_BIG_TIMEOUT=0 TERM='dumb' SWIFT_VERSION="4.2"
-      # Version to install with swiftenv
+  # SWIFT_VERSION: Version to install with swiftenv
+  # TERM: Remove status updates in gradle output that only works with interactive shell
+  - MJ_RUN="./run" MJ_TIMEOUT=60 MJ_BIG_TIMEOUT=0 SWIFT_VERSION="4.2" TERM='dumb'
 
-      #install:
-      #- case "$TESTTYPE" in
-      #frontend)
-      #  ;;
-      #backend)
-      #  eval "$(curl -sL https://swiftenv.fuller.li/install.sh)"
-      #  ;;
-      #*)
-      #  echo "Unknown test type: $TESTTYPE! Quitting ..." ;
-      #  return 1;
-      #  ;;
-      #esac
+# install:
 
 script:
   - case "$TESTTYPE" in
       frontend)
-        ./build --no-swift && \
+        ./build && \
         ./mjtest/mjt.py lexer --ci_testing --parallel && \
         ./mjtest/mjt.py syntax --ci_testing --parallel && \
         ./mjtest/mjt.py ast --ci_testing --parallel && \
@@ -73,12 +61,10 @@ script:
         ./mjtest/mjt.py no-optimization --ci_testing --parallel ;
         ;;
       *)
-        echo "Unknown test type: $TESTTYPE! Quitting ..." ;
+        echo "Unknown test type! Quitting ..." ;
         return 1;
         ;;
     esac
-
-
     #jobs:
     #include:
     #- stage: build
