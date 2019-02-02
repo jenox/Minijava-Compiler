@@ -51,7 +51,7 @@ matrix:
 script:
   - case "$TESTTYPE" in
       frontend)
-        ./build && \
+        ./build --no-swift && \
         ./mjtest/mjt.py lexer --ci_testing --parallel && \
         ./mjtest/mjt.py syntax --ci_testing --parallel && \
         ./mjtest/mjt.py ast --ci_testing --parallel && \
