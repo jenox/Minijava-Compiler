@@ -11,25 +11,25 @@ env:
 matrix:
   include:
     - os: linux
+      name: "Frontend and Firm Tests"
+      jdk: oraclejdk8
+      env: TESTTYPE=frontend
+    - os: linux
+      name: "Compilation Tests with Own Backend"
+      jdk: oraclejdk8
+      env: TESTTYPE=backend
+    - os: osx
+      name: "Frontend and Firm Tests"
+      osx_image: xcode10.1
+      env: TESTTYPE=frontend
+    - os: osx
+      name: "Compilation Tests with Own Backend"
+      osx_image: xcode10.1
+      env: TESTTYPE=backend
+    - os: linux
       name: "Checkstyle"
       jdk: oraclejdk8
       env: TESTTYPE=checkstyle
-    - os: linux
-      name: "Frontend and Firm Tests"
-      jdk: oraclejdk8
-      env: TESTTYPE=frontend
-    - os: linux
-      name: "Compilation Tests with Own Backend"
-      jdk: oraclejdk8
-      env: TESTTYPE=backend
-    - os: osx
-      name: "Frontend and Firm Tests"
-      osx_image: xcode10.1
-      env: TESTTYPE=frontend
-    - os: osx
-      name: "Compilation Tests with Own Backend"
-      osx_image: xcode10.1
-      env: TESTTYPE=backend
 
 install:
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then source ~/virtualenv/python3.6/bin/activate ; fi
