@@ -35,12 +35,10 @@ matrix:
   #  - source ~/virtualenv/python3.6/bin/activate
 
 env:
-  global:
-    - MJ_RUN="./run"
-    - MJ_TIMEOUT=60
-    - MJ_BIG_TIMEOUT=0
-    - TERM='dumb' # Remove interactive status updates in Gradle output
-    - SWIFT_VERSION="4.2" # Version to install with swiftenv
+  #global:
+  ## Remove interactive status updates in Gradle output
+  - MJ_RUN="./run" MJ_TIMEOUT=60 MJ_BIG_TIMEOUT=0 TERM='dumb' SWIFT_VERSION="4.2"
+      # Version to install with swiftenv
 
       #install:
       #- case "$TESTTYPE" in
