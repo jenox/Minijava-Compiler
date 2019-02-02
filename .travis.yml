@@ -61,24 +61,24 @@ script: |
         ;;
       frontend)
         ./build --no-swift && \
-        echo "" && echo "" && "#### LEXER TESTS" && \
+        echo "" && echo "" && echo "#### LEXER TESTS" && \
         ./mjtest/mjt.py lexer --ci_testing --parallel && \
-        echo "#### PARSER TESTS" && \
+        echo "" && echo "" && echo "#### PARSER TESTS" && \
         ./mjtest/mjt.py syntax --ci_testing --parallel && \
-        echo "#### AST GENERATION TESTS" && \
+        echo "" && echo "" && echo "#### AST GENERATION TESTS" && \
         ./mjtest/mjt.py ast --ci_testing --parallel && \
-        echo "#### SEMANTIC TESTS" && \
+        echo "" && echo "" && echo "#### SEMANTIC TESTS" && \
         ./mjtest/mjt.py semantic --ci_testing --parallel && \
-        echo "#### FIRM COMPILATION TESTS" && \
+        echo "" && echo "" && echo "#### FIRM COMPILATION TESTS" && \
         ./mjtest/mjt.py compile-firm --ci_testing --parallel
         ;;
       backend)
         ./build && \
-        echo "#### COMPILATION TESTS" &&
+        echo "" && echo "" && echo "#### COMPILATION TESTS" &&
         ./mjtest/mjt.py compile --ci_testing --parallel && \
-        echo "#### COMPILATION TESTS (BIG TEST CASES)" &&
+        echo "" && echo "" && echo "#### COMPILATION TESTS (BIG TEST CASES)" &&
         ./molki__build_run_check-BigTests.py &&
-        echo "#### COMPILATION TESTS (NO OPTIMIZATIONS)" &&
+        echo "" && echo "" && echo "#### COMPILATION TESTS (NO OPTIMIZATIONS)" &&
         ./mjtest/mjt.py no-optimization --ci_testing --parallel
         ;;
       *)
