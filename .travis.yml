@@ -47,32 +47,32 @@ matrix:
 
 
 install:
-  - python --version
+  - python3 --version
   - source ~/virtualenv/python3.6/bin/activate
-  - python --version
+  - python3 --version
   - case "$TESTTYPE" in
       frontend)
         ;;
       backend)
-        if [[ "$TRAVIS_OS_NAME" != "osx" ]]; then \\
-          eval "$(curl -sL https://swiftenv.fuller.li/install.sh)" \\
-        fi ;
+        if [[ "$TRAVIS_OS_NAME" != "osx" ]]; then \
+          eval "$(curl -sL https://swiftenv.fuller.li/install.sh)" \
+        fi
         ;;
       *)
-        echo "Unknown test type! Quitting ..." ;
-        return 1;
+        echo "Unknown test type! Quitting ..."
+        return 1
         ;;
     esac
 
-script:
-  - case "$TESTTYPE" in
+script: |
+  case "$TESTTYPE" in
       frontend)
         ./build --no-swift && \
         ./mjtest/mjt.py lexer --ci_testing --parallel && \
         ./mjtest/mjt.py syntax --ci_testing --parallel && \
         ./mjtest/mjt.py ast --ci_testing --parallel && \
         ./mjtest/mjt.py semantic --ci_testing --parallel && \
-        ./mjtest/mjt.py compile-firm --ci_testing --parallel ;
+        ./mjtest/mjt.py compile-firm --ci_testing --parallel
         ;;
       backend)
         ./build && \
@@ -81,11 +81,11 @@ script:
         echo "#### Compilation Tests for Big Tests" &&
         ./molki__build_run_check-BigTests.py &&
         echo "#### Compilation Tests without Optimizations" &&
-        ./mjtest/mjt.py no-optimization --ci_testing --parallel ;
+        ./mjtest/mjt.py no-optimization --ci_testing --parallel
         ;;
       *)
-        echo "Unknown test type! Quitting ..." ;
-        return 1;
+        echo "Unknown test type! Quitting ..."
+        return 1
         ;;
     esac
     #jobs:
