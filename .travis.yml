@@ -1,17 +1,31 @@
-os:
-  - linux
-  - osx
+#os:
+#  - linux
+#  - osx
 
 language: java
 
 matrix:
   include:
     - os: linux
+      name: "Frontend and Firm Tests"
       sudo: required
       dist: trusty
       jdk: oraclejdk8
+      env: TESTTYPE=frontend
+    - os: linux
+      name: "Compilation Tests with Own Backend"
+      sudo: required
+      dist: trusty
+      jdk: oraclejdk8
+      env: TESTTYPE=backend
     - os: osx
+      name: "Frontend and Firm Tests"
       osx_image: xcode10.1
+      env: TESTTYPE=frontend
+    - os: osx
+      name: "Compilation Tests with Own Backend"
+      osx_image: xcode10.1
+      env: TESTTYPE=backend
 
 # Due to the time required to run the Swift installation, the install script
 # > eval "$(curl -sL https://swiftenv.fuller.li/install.sh)"
@@ -23,17 +37,8 @@ matrix:
 env:
   # SWIFT_VERSION: Version to install with swiftenv
   # TERM: Remove status updates in gradle output that only works with interactive shell
-  - MJ_RUN="./run" \
-    MJ_TIMEOUT=60 \
-    MJ_BIG_TIMEOUT=0 \
-    SWIFT_VERSION="4.2" \
-    TERM='dumb'
+  - MJ_RUN="./run" MJ_TIMEOUT=60 MJ_BIG_TIMEOUT=0 SWIFT_VERSION="4.2" TERM='dumb'
 
-maxtrix:
-  include:
-    env:
-      - TESTTYPE=frontend
-      - TESTTYPE=backend
 # install:
 
 script:
@@ -54,6 +59,10 @@ script:
         ./molki__build_run_check-BigTests.py &&
         echo "#### Compilation Tests without Optimizations" &&
         ./mjtest/mjt.py no-optimization --ci_testing --parallel ;
+        ;;
+      *)
+        echo "Unknown test type! Quitting ..." ;
+        return 1;
         ;;
     esac
     #jobs:
