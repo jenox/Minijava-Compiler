@@ -32,8 +32,7 @@ matrix:
       env: TESTTYPE=backend
 
 install:
-  - python3 --version
-  - source ~/virtualenv/python3.6/bin/activate
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then source ~/virtualenv/python3.6/bin/activate ; fi
   - python3 --version
   - |
     if [ "$TESTTYPE" == "backend" ] && [ "$TRAVIS_OS_NAME" != "osx" ]; then
