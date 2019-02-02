@@ -47,7 +47,7 @@ matrix:
 
 
 install:
-  # Install Swift
+  - python --version
   - case "$TESTTYPE" in
       frontend)
         ;;
