@@ -48,6 +48,8 @@ matrix:
 
 install:
   - python --version
+  - source ~/virtualenv/python3.6/bin/activate
+  - python --version
   - case "$TESTTYPE" in
       frontend)
         ;;
