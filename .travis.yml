@@ -4,6 +4,17 @@
 
 language: java
 
+env:
+  # SWIFT_VERSION: Version to install with swiftenv
+  # TERM: Remove status updates in gradle output that only works with interactive shell
+  # - MJ_RUN="./run" MJ_TIMEOUT=60 MJ_BIG_TIMEOUT=0 SWIFT_VERSION="4.2" TERM='dumb'
+  global:
+    - MJ_RUN="./run"
+    - MJ_TIMEOUT=60
+    - MJ_BIG_TIMEOUT=0
+    - SWIFT_VERSION="4.2"
+    - TERM="dumb"
+
 matrix:
   include:
     - os: linux
@@ -34,10 +45,6 @@ matrix:
       # before_script:
   #  - source ~/virtualenv/python3.6/bin/activate
 
-env:
-  # SWIFT_VERSION: Version to install with swiftenv
-  # TERM: Remove status updates in gradle output that only works with interactive shell
-  - MJ_RUN="./run" MJ_TIMEOUT=60 MJ_BIG_TIMEOUT=0 SWIFT_VERSION="4.2" TERM='dumb'
 
 # install:
 
