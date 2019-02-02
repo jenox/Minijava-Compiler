@@ -41,4 +41,4 @@ install:
     fi
 
 script:
-  - ./scripts/travis-test.sh
+  - ./.travis/travis-test.sh
