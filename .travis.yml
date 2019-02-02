@@ -36,7 +36,7 @@ install:
   - source ~/virtualenv/python3.6/bin/activate
   - python3 --version
   - |
-    if [ "$TESTTYPE" = "backend" ] && [ "$TRAVIS_OS_NAME" -ne "osx" ]; then
+    if [ "$TESTTYPE" == "backend" ] && [ "$TRAVIS_OS_NAME" != "osx" ]; then
       eval "$(curl -sL https://swiftenv.fuller.li/install.sh)" ;
     fi
 
