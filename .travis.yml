@@ -17,23 +17,47 @@ matrix:
 # > eval "$(curl -sL https://swiftenv.fuller.li/install.sh)"
 # should only be present in jobs that actually need Swift installed.
 
-before_script:
-  - source ~/virtualenv/python3.6/bin/activate
+      # before_script:
+  #  - source ~/virtualenv/python3.6/bin/activate
 
 env:
   # SWIFT_VERSION: Version to install with swiftenv
   # TERM: Remove status updates in gradle output that only works with interactive shell
-  - MJ_RUN="./run" MJ_TIMEOUT=60 MJ_BIG_TIMEOUT=0 SWIFT_VERSION="4.2" TERM='dumb'
+  - MJ_RUN="./run" \
+    MJ_TIMEOUT=60 \
+    MJ_BIG_TIMEOUT=0 \
+    SWIFT_VERSION="4.2" \
+    TERM='dumb'
 
-jobs:
-  include:
-    - stage: build
-      name: Build
-      install: eval "$(curl -sL https://swiftenv.fuller.li/install.sh)"
-      script: ./build
-    - stage: test
-      name: Style Check
-      script: ./mini-java-compiler/gradlew -b ./mini-java-compiler/build.gradle checkstyleMain checkstyleTest
+# install:
+
+script:
+  - case "$TESTTYPE" in
+      frontend)
+        ./build && \
+        ./mjtest/mjt.py lexer --ci_testing --parallel && \
+        ./mjtest/mjt.py syntax --ci_testing --parallel && \
+        ./mjtest/mjt.py ast --ci_testing --parallel && \
+        ./mjtest/mjt.py semantic --ci_testing --parallel && \
+        ./mjtest/mjt.py compile-firm --ci_testing --parallel && \
+      backend)
+        ./build && \
+        echo "\n\n#### Compilation Tests" &&
+        ./mjtest/mjt.py compile --ci_testing --parallel && \
+        echo "\n\n#### Compilation Tests for Big Tests" &&
+        ./molki__build_run_check-BigTests.py
+        echo "\n\n#### Compilation Tests without Optimizations" &&
+        ./mjtest/mjt.py no-optimization --ci_testing --parallel && \
+    esac
+    #jobs:
+    #include:
+    #- stage: build
+    #  name: Build
+    #  install: eval "$(curl -sL https://swiftenv.fuller.li/install.sh)"
+    #  script: ./build
+    #- stage: test
+    #  name: Style Check
+    #  script: ./mini-java-compiler/gradlew -b ./mini-java-compiler/build.gradle checkstyleMain checkstyleTest
       #- name: Lexer Tests
       #script: ./build --no-swift && ./mjtest/mjt.py lexer --ci_testing --parallel
       #- name: Parser Tests
