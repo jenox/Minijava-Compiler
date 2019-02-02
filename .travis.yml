@@ -56,8 +56,7 @@ install:
   - python3 --version
   - source ~/virtualenv/python3.6/bin/activate
   - python3 --version
-  - |
-    case "$TESTTYPE" in
+  - case "$TESTTYPE" in
       checkstyle)
         ;;
       frontend)
@@ -72,7 +71,7 @@ install:
         ;;
     esac
 
-script: |
+script: #|
   case "$TESTTYPE" in
       checkstyle)
         ./mini-java-compiler/gradlew -b ./mini-java-compiler/build.gradle \
@@ -80,15 +79,15 @@ script: |
         ;;
       frontend)
         ./build --no-swift && \
-        echo "\n\n#### LEXER TESTS\n" && \
+        echo "#### LEXER TESTS" && \
         ./mjtest/mjt.py lexer --ci_testing --parallel && \
-        echo "\n\n#### PARSER TESTS\n" && \
+        echo "#### PARSER TESTS" && \
         ./mjtest/mjt.py syntax --ci_testing --parallel && \
-        echo "\n\n#### AST GENERATION TESTS\n" && \
+        echo "#### AST GENERATION TESTS" && \
         ./mjtest/mjt.py ast --ci_testing --parallel && \
-        echo "\n\n#### SEMANTIC TESTS\n" && \
+        echo "#### SEMANTIC TESTS" && \
         ./mjtest/mjt.py semantic --ci_testing --parallel && \
-        echo "\n\n#### FIRM COMPILATION TESTS\n" && \
+        echo "#### FIRM COMPILATION TESTS" && \
         ./mjtest/mjt.py compile-firm --ci_testing --parallel
         ;;
       backend)
