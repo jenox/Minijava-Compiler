@@ -8,6 +8,7 @@ import edu.kit.minijava.lexer.Lexer;
 import edu.kit.minijava.parser.*;
 import edu.kit.minijava.semantic.*;
 import edu.kit.minijava.transformation.EntityVisitor;
+import edu.kit.minijava.transformation.GraphGenerator;
 
 public class TransformerCommand extends Command {
 
@@ -31,7 +32,15 @@ public class TransformerCommand extends Command {
             String executableFilename = "a.out";
 
             EntityVisitor visitor = new EntityVisitor();
-            visitor.transform(program, asmOutputFilename);
+            visitor.startVisit(program);
+
+            GraphGenerator generator = new GraphGenerator(visitor.getRuntimeEntities()
+                                                        , visitor.getEntities()
+                                                        , visitor.getTypes()
+                                                        , visitor.getMethod2VariableNums()
+                                                        , visitor.getMethod2ParamTypes()
+                                                        , visitor.getClassSizes());
+            generator.transform(program, asmOutputFilename);
 
             // Retrieve runtime path from environment variable
             Map<String, String> env = System.getenv();
