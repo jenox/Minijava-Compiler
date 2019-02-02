@@ -1,19 +1,12 @@
-#os:
-#  - linux
-#  - osx
-
 language: java
 
 env:
-  # SWIFT_VERSION: Version to install with swiftenv
-  # TERM: Remove status updates in gradle output that only works with interactive shell
-  # - MJ_RUN="./run" MJ_TIMEOUT=60 MJ_BIG_TIMEOUT=0 SWIFT_VERSION="4.2" TERM='dumb'
   global:
     - MJ_RUN="./run"
     - MJ_TIMEOUT=60
     - MJ_BIG_TIMEOUT=0
-    - SWIFT_VERSION="4.2"
-    - TERM="dumb"
+    - SWIFT_VERSION="4.2" # Version to install with swiftenv
+    - TERM="dumb" # Remove interactive status updates in Gradle output
 
 matrix:
   include:
@@ -44,16 +37,7 @@ matrix:
       osx_image: xcode10.1
       env: TESTTYPE=backend
 
-# Due to the time required to run the Swift installation, the install script
-# > eval "$(curl -sL https://swiftenv.fuller.li/install.sh)"
-# should only be present in jobs that actually need Swift installed.
-
-      # before_script:
-  #  - source ~/virtualenv/python3.6/bin/activate
-
-
 install:
-  - python3 --version
   - source ~/virtualenv/python3.6/bin/activate
   - python3 --version
   - |
@@ -61,6 +45,8 @@ install:
       checkstyle) ;;
       frontend) ;;
       backend)
+        # Due to the time required to run the Swift installation, the install script
+        # should only be present in jobs that actually need Swift installed.
         if [[ "$TRAVIS_OS_NAME" != "osx" ]]; then \
           eval "$(curl -sL https://swiftenv.fuller.li/install.sh)" ;
         fi ;;
