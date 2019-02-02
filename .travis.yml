@@ -11,19 +11,19 @@ env:
 matrix:
   include:
     - os: linux
-      name: "Frontend and Firm Tests"
+      name: "Frontend and Firm Compilation Tests"
       jdk: oraclejdk8
       env: TESTTYPE=frontend
     - os: linux
-      name: "Compilation Tests with Own Backend"
+      name: "Compilation Tests with Custom Backend"
       jdk: oraclejdk8
       env: TESTTYPE=backend
     - os: osx
-      name: "Frontend and Firm Tests"
+      name: "Frontend and Firm Compilation Tests"
       osx_image: xcode10.1
       env: TESTTYPE=frontend
     - os: osx
-      name: "Compilation Tests with Own Backend"
+      name: "Compilation Tests with Custom Backend"
       osx_image: xcode10.1
       env: TESTTYPE=backend
     - os: linux
