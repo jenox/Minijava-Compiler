@@ -29,6 +29,11 @@ env:
     SWIFT_VERSION="4.2" \
     TERM='dumb'
 
+maxtrix:
+  include:
+    env:
+      - TESTTYPE=frontend
+      - TESTTYPE=backend
 # install:
 
 script:
@@ -39,15 +44,17 @@ script:
         ./mjtest/mjt.py syntax --ci_testing --parallel && \
         ./mjtest/mjt.py ast --ci_testing --parallel && \
         ./mjtest/mjt.py semantic --ci_testing --parallel && \
-        ./mjtest/mjt.py compile-firm --ci_testing --parallel && \
+        ./mjtest/mjt.py compile-firm --ci_testing --parallel ;
+        ;;
       backend)
         ./build && \
-        echo "\n\n#### Compilation Tests" &&
+        echo "#### Compilation Tests" &&
         ./mjtest/mjt.py compile --ci_testing --parallel && \
-        echo "\n\n#### Compilation Tests for Big Tests" &&
-        ./molki__build_run_check-BigTests.py
-        echo "\n\n#### Compilation Tests without Optimizations" &&
-        ./mjtest/mjt.py no-optimization --ci_testing --parallel && \
+        echo "#### Compilation Tests for Big Tests" &&
+        ./molki__build_run_check-BigTests.py &&
+        echo "#### Compilation Tests without Optimizations" &&
+        ./mjtest/mjt.py no-optimization --ci_testing --parallel ;
+        ;;
     esac
     #jobs:
     #include:
