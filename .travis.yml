@@ -1,42 +1,43 @@
 language: java
-sudo: required
-dist: trusty
-
-jdk:
-  - oraclejdk8
-
-# Due to the time required to run the Swift installation, the install script
-# > eval "$(curl -sL https://swiftenv.fuller.li/install.sh)"
-# should only be present in jobs that actually need Swift installed.
-
-before_script:
-  - source ~/virtualenv/python3.6/bin/activate
 
 env:
-  - MJ_RUN="./run" MJ_TIMEOUT=60 SWIFT_VERSION="4.2"
+  global:
+    - MJ_RUN="./run"        # Compiler run script used by mjtest
+    - MJ_TIMEOUT=60         # Timeout for normal test cases
+    - MJ_BIG_TIMEOUT=0      # Timeout for test cases marked as big
+    - SWIFT_VERSION="4.2"   # Version to install with swiftenv
+    - TERM="dumb"           # Remove interactive status updates in Gradle output
 
-jobs:
+matrix:
   include:
-    - stage: build
-      name: Build
-      install: eval "$(curl -sL https://swiftenv.fuller.li/install.sh)"
-      script: ./build
-    - stage: test
-      name: Style Check
-      script: ./mini-java-compiler/gradlew -b ./mini-java-compiler/build.gradle checkstyleMain checkstyleTest
-    - name: Lexer Tests
-      script: ./build --no-swift && ./mjtest/mjt.py lexer --ci_testing --parallel
-    - name: Parser Tests
-      script: ./build --no-swift && ./mjtest/mjt.py syntax --ci_testing --parallel
-    - name: AST Tests
-      script: ./build --no-swift && ./mjtest/mjt.py ast --ci_testing --parallel
-    - name: Semantic Tests
-      script: ./build --no-swift && ./mjtest/mjt.py semantic --ci_testing --parallel
-    - name: Firm Compilation Tests
-      script: ./build --no-swift && ./mjtest/mjt.py compile-firm --ci_testing --parallel
-    - name: Compilation Tests
-      install: eval "$(curl -sL https://swiftenv.fuller.li/install.sh)"
-      script: ./build && ./mjtest/mjt.py compile --ci_testing --parallel
-    - name: MJ Compilation Tests
-      install: eval "$(curl -sL https://swiftenv.fuller.li/install.sh)"
-      script: ./build && ./molki__build_run_check.py
+    - os: linux
+      name: "Frontend and Firm Compilation Tests"
+      jdk: oraclejdk8
+      env: TESTTYPE=frontend
+    - os: linux
+      name: "Compilation Tests with Custom Backend"
+      jdk: oraclejdk8
+      env: TESTTYPE=backend
+    - os: osx
+      name: "Frontend and Firm Compilation Tests"
+      osx_image: xcode10.1
+      env: TESTTYPE=frontend
+    - os: osx
+      name: "Compilation Tests with Custom Backend"
+      osx_image: xcode10.1
+      env: TESTTYPE=backend
+    - os: linux
+      name: "Checkstyle"
+      jdk: oraclejdk8
+      env: TESTTYPE=checkstyle
+
+install:
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then source ~/virtualenv/python3.6/bin/activate ; fi
+  - python3 --version
+  - |
+    if [ "$TESTTYPE" == "backend" ] && [ "$TRAVIS_OS_NAME" != "osx" ]; then
+      eval "$(curl -sL https://swiftenv.fuller.li/install.sh)" ;
+    fi
+
+script:
+  - ./scripts/travis-test.sh
