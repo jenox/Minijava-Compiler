@@ -80,6 +80,12 @@ public class PrepVisitor extends Default {
     }
 
     @Override
+    public void visit(Unknown node) {
+        this.node2regIndex.put(node, Pseudoregister.getPseudoRegisterNumber());
+        this.addInstrToBlock(null, node);
+    }
+
+    @Override
     public void visit(Div div) {
         // we need two target registers for div. These are numberOfRegularPseudoregisters and
         // numberOfRegularPseudoregisters + 1.
