@@ -38,8 +38,7 @@ public class TransformerCommand extends Command {
                                                         , visitor.getEntities()
                                                         , visitor.getTypes()
                                                         , visitor.getMethod2VariableNums()
-                                                        , visitor.getMethod2ParamTypes()
-                                                        , visitor.getClassSizes());
+                                                        , visitor.getMethod2ParamTypes());
             generator.transform(program, asmOutputFilename);
 
             // Retrieve runtime path from environment variable

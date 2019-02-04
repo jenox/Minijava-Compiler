@@ -46,8 +46,7 @@ public class CompileCommand extends Command {
                                                         , visitor.getEntities()
                                                         , visitor.getTypes()
                                                         , visitor.getMethod2VariableNums()
-                                                        , visitor.getMethod2ParamTypes()
-                                                        , visitor.getClassSizes());
+                                                        , visitor.getMethod2ParamTypes());
             Iterable<Graph> graphs = generator.molkiTransform(program);
 
             // MOLKI TRANSFORMATION

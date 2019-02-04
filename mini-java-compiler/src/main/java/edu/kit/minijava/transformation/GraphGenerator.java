@@ -21,21 +21,18 @@ public class GraphGenerator extends ASTVisitor<GraphContext> {
     private HashMap<Declaration, HashMap<Declaration, Integer>> method2VariableNums;
     private HashMap<MethodDeclaration, Type[]> method2ParamTypes;
     private HashMap<Declaration, Integer> variableNums;
-    private HashMap<ClassDeclaration, Integer> classSizes;
 
 
     public GraphGenerator(Map<String, Entity> runtimeEntities
                         , HashMap<Declaration, Entity> entities
                         , HashMap<Declaration, Type> types
                         , HashMap<Declaration, HashMap<Declaration, Integer>> method2VariableNums
-                        , HashMap<MethodDeclaration, Type[]> method2ParamTypes
-                        , HashMap<ClassDeclaration, Integer> classSizes) {
+                        , HashMap<MethodDeclaration, Type[]> method2ParamTypes) {
         this.runtimeEntities = runtimeEntities;
         this.entities = entities;
         this.types = types;
         this.method2VariableNums = method2VariableNums;
         this.method2ParamTypes = method2ParamTypes;
-        this.classSizes = classSizes;
     }
 
     public Iterable<Graph> molkiTransform(Program program) throws IOException {
@@ -694,7 +691,7 @@ public class GraphGenerator extends ASTVisitor<GraphContext> {
         Construction construction = context.getConstruction();
 
         // Calculate size and alignment
-        int classSize = this.classSizes.get(expression.getClassReference().getDeclaration());
+        int classSize = this.types.get(expression.getClassReference().getDeclaration()).getSize();
         Node size = construction.newConst(classSize, Mode.getIs());
 
         Node oneConst = construction.newConst(1, Mode.getIs());
