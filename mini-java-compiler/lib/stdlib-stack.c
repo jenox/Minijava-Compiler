@@ -53,7 +53,8 @@ void* alloc_mem(void)
     asm("movl 24(%%rbp), %0\n\t" : "=r" (size));
     asm("movl 16(%%rbp), %0\n\t" : "=r" (count));
 
-    uint32_t bytes = count * size;
+    // This needs to be size_t as a width larger than 32 Bit is possibly required.
+    size_t bytes = (size_t)count * (size_t)size;
 
     // allocate some multiple of quadwords (8 bytes)
     bytes = (bytes + 8 - 1) / 8 * 8;
