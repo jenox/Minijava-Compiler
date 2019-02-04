@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <inttypes.h>
 
 int __minijava_main(void);
 
@@ -24,7 +25,7 @@ void system_out_flush() {
     fflush(stdout);
 }
 
-void* alloc_mem(int num, int size) {
+void* alloc_mem(uint32_t num, uint32_t size) {
     void* pointer = calloc(num, size);
 
     // Catch null pointer on zero-sized or failed allocation
