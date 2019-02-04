@@ -37,7 +37,13 @@ do {
     var lines: [String] = []
 
     for function in try parser.parseFunctions() {
-        ConstantPropagator(function: function).propagate()
+
+        // TODO: Temporary fix!
+
+        // Disable constant propagation to test for behavior with operands that include offsets
+        // which overflow 32 bit signed integers
+        // ConstantPropagator(function: function).propagate()
+
         DeadCodeEliminator(function: function).eliminateDeadCode()
 
 //        FunctionValidator(function: function).validate()
