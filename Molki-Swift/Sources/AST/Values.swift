@@ -95,8 +95,8 @@ public enum MemoryAddress<RegisterType: Register>: Equatable, CustomStringConver
             base.substitute(register, with: argument)
             index.substitute(register, with: argument)
 
-            if index.register == register, case .constant(let value) = argument {
-                self = MemoryAddress.relative(base: base, offset: offset + scale * value.value)
+            if index.register == register, case .constant(let value) = argument, let offset = Int32(exactly: offset + scale * value.value) {
+                self = MemoryAddress.relative(base: base, offset: Int(offset))
             }
             else {
                 self = MemoryAddress.indexed(base: base, index: index, scale: scale, offset: offset)
