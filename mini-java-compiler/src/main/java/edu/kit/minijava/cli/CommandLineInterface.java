@@ -160,7 +160,6 @@ public class CommandLineInterface {
             cmdLine = cmdLineParser.parse(options, args);
         }
         catch (ParseException e) {
-            e.printStackTrace();
             printErrorAndExit(options);
         }
 
