@@ -1,26 +1,13 @@
 package edu.kit.minijava.transformation;
 
-import firm.Construction;
 import firm.StructType;
 import firm.Type;
 
 public class EntityContext {
-
     private Type type;
     private int numberOfLocalVars;
-    private ExpressionResult result = null;
-    private Construction construction;
     private StructType classType;
-    private boolean isCalledFromMain;
-    private boolean endsOnJumpNode;
 
-    public boolean isCalledFromMain() {
-        return this.isCalledFromMain;
-    }
-
-    public void setCalledFromMain(boolean calledFromMain) {
-        this.isCalledFromMain = calledFromMain;
-    }
 
     public void setNumberOfLocalVars(int numberOfLocalVars) {
         this.numberOfLocalVars = numberOfLocalVars;
@@ -34,30 +21,11 @@ public class EntityContext {
         this.classType = classType;
     }
 
-    public void setConstruction(Construction construction) {
-        this.construction = construction;
-    }
-
-    public ExpressionResult getResult() {
-        return this.result;
-    }
-
-    public void setResult(ExpressionResult result) {
-        this.result = result;
-    }
-
-    public Construction getConstruction() {
-        return this.construction;
-    }
 
     public EntityContext() {
         this.numberOfLocalVars = 0;
     }
 
-    public EntityContext(Construction construction) {
-        this.numberOfLocalVars = 0;
-        this.construction = construction;
-    }
 
     public Type getType() {
         return this.type;
@@ -74,13 +42,4 @@ public class EntityContext {
     public int getNumberOfLocalVars() {
         return this.numberOfLocalVars;
     }
-
-    public void setEndsOnJumpNode(boolean endsOnJumpNode) {
-        this.endsOnJumpNode = endsOnJumpNode;
-    }
-
-    public boolean endsOnJumpNode() {
-        return this.endsOnJumpNode;
-    }
-
 }

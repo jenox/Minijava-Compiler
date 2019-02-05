@@ -12,6 +12,7 @@ import edu.kit.minijava.lexer.Lexer;
 import edu.kit.minijava.parser.*;
 import edu.kit.minijava.semantic.*;
 import edu.kit.minijava.transformation.EntityVisitor;
+import edu.kit.minijava.transformation.GraphGenerator;
 import firm.*;
 import firm.nodes.Node;
 
@@ -39,7 +40,14 @@ public class CompileCommand extends Command {
             String executableFilename = "a.out";
 
             EntityVisitor visitor = new EntityVisitor();
-            Iterable<Graph> graphs = visitor.molkiTransform(program);
+            visitor.startVisit(program);
+
+            GraphGenerator generator = new GraphGenerator(visitor.getRuntimeEntities()
+                                                        , visitor.getEntities()
+                                                        , visitor.getTypes()
+                                                        , visitor.getMethod2VariableNums()
+                                                        , visitor.getMethod2ParamTypes());
+            Iterable<Graph> graphs = generator.molkiTransform(program);
 
             // MOLKI TRANSFORMATION
             PrepVisitor prepVisitor = new PrepVisitor();

@@ -39,7 +39,8 @@ for file_name in test_files:
         if os.path.isfile(test_dir + "/" + file_name + ".out"):
             file = open(test_dir + "/" + file_name + ".out", "r")
         else:
-            assert file_name.endswith(".mj") and os.path.isfile(test_dir + "/" + file_name[:-3] + ".out"), "file is not an mj file or output file is missing"
+            msg = "file is not an mj file or output file is missing"
+            assert file_name.endswith(".mj") and os.path.isfile(test_dir + "/" + file_name[:-3] + ".out"), msg
             file = open(test_dir + "/" + file_name[:-3] + ".out", "r")
 
         temp2 = file.read().strip()
