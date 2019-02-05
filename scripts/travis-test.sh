@@ -15,16 +15,16 @@ case "$TESTTYPE" in
     echo "" && echo "" && echo "#### SEMANTIC TESTS" && \
     ./mjtest/mjt.py semantic --ci_testing --parallel && \
     echo "" && echo "" && echo "#### FIRM COMPILATION TESTS" && \
-    ./mjtest/mjt.py compile-firm --ci_testing --parallel
+    ./mjtest/mjt.py compile-firm --ci_testing --parallel --all_exec_tests
     ;;
   backend)
     ./build && \
     echo "" && echo "" && echo "#### COMPILATION TESTS" &&
-    ./mjtest/mjt.py compile --ci_testing --parallel
+    ./mjtest/mjt.py compile --ci_testing --parallel --all_exec_tests
     # echo "" && echo "" && echo "#### COMPILATION TESTS (BIG TEST CASES)" &&
     # ./molki__build_run_check-BigTests.py &&
-    # echo "" && echo "" && echo "#### COMPILATION TESTS (NO OPTIMIZATIONS)" &&
-    # ./mjtest/mjt.py no-optimization --ci_testing --parallel
+    echo "" && echo "" && echo "#### COMPILATION TESTS (NO OPTIMIZATIONS)" &&
+    ./mjtest/mjt.py no-optimization --ci_testing --parallel --all_exec_tests
     ;;
   *)
     echo "Unknown test type! Quitting ..."; return 1
