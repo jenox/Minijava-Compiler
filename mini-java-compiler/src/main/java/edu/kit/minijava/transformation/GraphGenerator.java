@@ -8,6 +8,7 @@ import edu.kit.minijava.ast.nodes.Expression.*;
 import edu.kit.minijava.ast.nodes.Program;
 import edu.kit.minijava.ast.nodes.Statement.*;
 import edu.kit.minijava.ast.references.TypeOfExpression;
+import edu.kit.minijava.cli.CommandLineInterface;
 import firm.*;
 import firm.bindings.binding_ircons;
 import firm.nodes.*;
@@ -40,8 +41,15 @@ public class GraphGenerator extends ASTVisitor<GraphContext> {
 
         // Check created graphs
         for (Graph g : firm.Program.getGraphs()) {
-            ConstantFolder folder = new ConstantFolder(g);
             g.check();
+        }
+
+        if (CommandLineInterface.areOptimizationsActivated()) {
+            for (Graph g : firm.Program.getGraphs()) {
+                ConstantFolder folder = new ConstantFolder(g);
+                g.check();
+            }
+
         }
 
         Lower.fixNames();

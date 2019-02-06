@@ -65,7 +65,6 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
         // Create entities for the runtime library calls
         this.createRuntimeEntities();
 
-
         program.accept(this, new EntityContext());
     }
 
