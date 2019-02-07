@@ -13,13 +13,13 @@ public class CodeGenerator extends Default {
     private static final String REG_WIDTH_D = "d";
     private int currentBlockNr;
 
-    private HashMap<Integer, BasicBlock> molkiCode = new HashMap<>();
+    private HashMap<Integer, BasicBlock> intermediateCode = new HashMap<>();
 
     // Contains the register index the result of each node should be written to
     private HashMap<Node, Integer> node2RegIndex;
 
     public HashMap<Integer, BasicBlock> getBlockMap() {
-        return this.molkiCode;
+        return this.intermediateCode;
     }
 
     /**
@@ -29,11 +29,11 @@ public class CodeGenerator extends Default {
      * @return The block with the queried label (either from the block map or a newly inserted one).
      */
     private BasicBlock getOrCreateBlock(int blockNumber) {
-        BasicBlock block = this.molkiCode.get(blockNumber);
+        BasicBlock block = this.intermediateCode.get(blockNumber);
 
         if (block == null) {
             block = new BasicBlock(blockNumber);
-            this.molkiCode.put(blockNumber, block);
+            this.intermediateCode.put(blockNumber, block);
         }
 
         return block;
@@ -43,13 +43,13 @@ public class CodeGenerator extends Default {
         return this.getOrCreateBlock(this.currentBlockNr);
     }
 
-    private void appendIntermediateInstruction(String molkiCode) {
-        this.appendIntermediateInstruction(molkiCode, this.currentBlockNr);
+    private void appendIntermediateInstruction(String instruction) {
+        this.appendIntermediateInstruction(instruction, this.currentBlockNr);
     }
 
-    private void appendIntermediateInstruction(String molkiCode, int blockNr) {
+    private void appendIntermediateInstruction(String instruction, int blockNr) {
         BasicBlock block = this.getOrCreateBlock(blockNr);
-        block.appendInstruction(new GenericInstruction(molkiCode));
+        block.appendInstruction(new GenericInstruction(instruction));
     }
 
     public CodeGenerator(HashMap<Node, Integer> proj2regIndex) {
@@ -468,9 +468,9 @@ public class CodeGenerator extends Default {
             int predRegisterIndex = this.node2RegIndex.get(phi.getPred(i));
             int predBlockLabel = phi.getBlock().getPred(i).getBlock().getNr();
 
-            this.molkiCode.putIfAbsent(predBlockLabel, new BasicBlock(predBlockLabel));
+            this.intermediateCode.putIfAbsent(predBlockLabel, new BasicBlock(predBlockLabel));
 
-            BasicBlock predBlock = this.molkiCode.get(predBlockLabel);
+            BasicBlock predBlock = this.intermediateCode.get(predBlockLabel);
 
             // Add the entry into the Phi node representation
             phiMappings.add(new PhiNode.Mapping(predBlock, predRegisterIndex, phiTargetRegister,

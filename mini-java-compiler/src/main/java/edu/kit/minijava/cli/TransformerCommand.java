@@ -40,7 +40,7 @@ public class TransformerCommand extends Command {
                                                         , visitor.getTypes()
                                                         , visitor.getMethod2VariableNums()
                                                         , visitor.getMethod2ParamTypes());
-            generator.transform(program, asmOutputFilename);
+            generator.transformUsingLibfirmBackend(program, asmOutputFilename);
 
             // Retrieve runtime path from environment variable
             Map<String, String> env = System.getenv();

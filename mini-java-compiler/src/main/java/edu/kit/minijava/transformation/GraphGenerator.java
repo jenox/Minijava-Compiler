@@ -35,7 +35,7 @@ public class GraphGenerator extends ASTVisitor<GraphContext> {
         this.method2ParamTypes = method2ParamTypes;
     }
 
-    public Iterable<Graph> molkiTransform(Program program) {
+    public Iterable<Graph> transform(Program program) {
         program.accept(this, new GraphContext());
 
         // Check created graphs
@@ -56,7 +56,7 @@ public class GraphGenerator extends ASTVisitor<GraphContext> {
         return firm.Program.getGraphs();
     }
 
-    public void transform(Program program, String outputFilename) throws IOException {
+    public void transformUsingLibfirmBackend(Program program, String outputFilename) throws IOException {
         program.accept(this, new GraphContext());
 
         // Check and dump created graphs - can be viewed with ycomp

@@ -19,7 +19,7 @@ import firm.nodes.Node;
 public class CompileCommand extends Command {
 
     private static final String RUNTIME_LIB_ENV_KEY = "MJ_RUNTIME_LIB_PATH_STACK_ARGS";
-    private static final String MOLKI_PATH_KEY = "MOLKI_PATH";
+    private static final String REGISTER_ALLOCATION_KEY = "REGISTER_ALLOCATOR_PATH";
 
     @Override
     public int execute(String path) {
@@ -35,8 +35,9 @@ public class CompileCommand extends Command {
 
             new ReferenceAndExpressionTypeResolver(program);
 
-            String asmOutputFilenameMolki = "a.molki.s";
+            String asmIntermediateFilename = "a.molki.s";
             String asmOutputFileName = "a.out.s";
+
             String executableFilename = "a.out";
 
             EntityVisitor visitor = new EntityVisitor();
@@ -47,9 +48,11 @@ public class CompileCommand extends Command {
                                                         , visitor.getTypes()
                                                         , visitor.getMethod2VariableNums()
                                                         , visitor.getMethod2ParamTypes());
-            Iterable<Graph> graphs = generator.molkiTransform(program);
+            Iterable<Graph> graphs = generator.transform(program);
 
-            // MOLKI TRANSFORMATION
+
+            // Transformation to intermediate representation used by register allocator
+
             PrepVisitor prepVisitor = new PrepVisitor();
 
             graphs.forEach(g -> {
@@ -67,11 +70,12 @@ public class CompileCommand extends Command {
             for (Graph g : graphs) {
                 String methodName = g.getEntity().getLdName();
                 MethodType methodType = (MethodType) g.getEntity().getType();
-                // non-main methods have additional `this` parameter
+
+                // Non-main methods have additional `this` parameter
                 int numArgs = Math.max(0, methodType.getNParams());
                 int numResults = methodType.getNRess();
 
-                // replace '.' with '_' for correct molki syntax
+                // Replace '.' with '_' for correct assembly syntax
                 methodName = methodName.replace('.', '_');
 
                 String args = " [ ";
@@ -145,43 +149,47 @@ public class CompileCommand extends Command {
                 output.add(".endfunction\n");
             }
 
-            Path file = Paths.get(asmOutputFilenameMolki);
+            Path file = Paths.get(asmIntermediateFilename);
             Files.write(file, output, StandardCharsets.UTF_8);
 
             // Retrieve runtime path from environment variable
             Map<String, String> env = System.getenv();
             String runtimeLibPath = env.get(RUNTIME_LIB_ENV_KEY);
-            String molkiPath = env.get(MOLKI_PATH_KEY);
+            String registerAllocatorPath = env.get(REGISTER_ALLOCATION_KEY);
 
             if (runtimeLibPath == null) {
                 System.err.println("error: Environment variable " + RUNTIME_LIB_ENV_KEY + " not set!");
                 return 1;
             }
 
-            if (molkiPath == null) {
-                System.err.println("error: Environment variable " + MOLKI_PATH_KEY + " not set!");
+            if (registerAllocatorPath == null) {
+                System.err.println("error: Environment variable " + REGISTER_ALLOCATION_KEY + " not set!");
                 return 1;
             }
 
-            int molki_result;
-
+            int registerAllocatorResult;
             try {
-                molki_result = this.exec(molkiPath + " " + asmOutputFilenameMolki + " " + asmOutputFileName);
+                registerAllocatorResult = this.exec(registerAllocatorPath + " "
+                    + asmIntermediateFilename + " "
+                    + asmOutputFileName);
             }
             catch (Throwable throwable) {
-                molki_result = -1;
+                registerAllocatorResult = -1;
             }
 
-            if (molki_result != 0) {
-                System.err.println("error: molki script failed");
+            if (registerAllocatorResult != 0) {
+                System.err.println("error: Register allocation failed!");
                 return 1;
             }
 
             // Assemble and link runtime and code
-            int result = 0;
+
+            int result;
             try {
-                result = this.exec("gcc" + " " + asmOutputFileName + " " + runtimeLibPath + " -o " +
-                                executableFilename);
+                result = this.exec("gcc" + " "
+                    + asmOutputFileName + " "
+                    + runtimeLibPath
+                    + " -o " + executableFilename);
             }
             catch (Throwable throwable) {
                 result = -1;
@@ -212,7 +220,7 @@ public class CompileCommand extends Command {
     }
 
     private int exec(String command) throws Throwable {
-        System.out.println("Executing command “" + command + "”");
+        System.out.println("Executing command \"" + command + "\"");
 
         Process process = Runtime.getRuntime().exec(command);
         int result = process.waitFor();

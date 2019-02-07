@@ -22,7 +22,7 @@ public class CommandLineInterface {
     public static final String CHECK_CMD = "check";
     public static final String CHECK_DESC = "run semantic analysis";
 
-    public static final String COMPILE_FIRM_CMD = "transform";
+    public static final String COMPILE_FIRM_CMD = "transformUsingLibfirmBackend";
     public static final String COMPILE_FIRM_ALT_CMD = "compile-firm";
     public static final String COMPILE_FIRM_DESC = "compile using firm";
 
