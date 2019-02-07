@@ -10,39 +10,18 @@ import firm.nodes.*;
 import firm.nodes.NodeVisitor.Default;
 
 public class MolkiTransformer extends Default {
-    // CONSTANTS
-    private static final String INDENT = "    "; // 4 spaces
     private static final String REG_PREFIX = "%@";
     private static final String CONST_PREFIX = "$";
     private static final String REG_WIDTH_D = "d";
     private int currentBlockNr;
 
-    // ATTRIBUTES
-//    private HashMap<Integer, List<String>> molkiCode = new HashMap<>();
     private HashMap<Integer, BasicBlock> molkiCode = new HashMap<>();
 
-    // primarily for projections to save their register index
+    // Contains the register index the result of each node should be written to
     private HashMap<Node, Integer> node2RegIndex;
-    private HashMap<Graph, Integer> graph2MaxBlockId;
 
-    // GETTERS & SETTERS
     public HashMap<Integer, BasicBlock> getBlockMap() {
         return this.molkiCode;
-    }
-
-    public Map<Integer, List<String>> getMolkiCode() {
-        Map<Integer, List<String>> basicBlocks = new HashMap<>();
-
-        for (Map.Entry<Integer, BasicBlock> element : this.molkiCode.entrySet()) {
-            List<String> instructions = element.getValue().getFullInstructionListAsString();
-            basicBlocks.put(element.getKey(), instructions);
-        }
-
-        return basicBlocks;
-    }
-
-    public void insertBlock(int blockNumber, BasicBlock block) {
-        this.molkiCode.put(blockNumber, block);
     }
 
     /**
@@ -66,12 +45,6 @@ public class MolkiTransformer extends Default {
         return this.getOrCreateBlock(this.currentBlockNr);
     }
 
-
-    /**
-     * inserts given string to ouput.
-     *
-     * @param molkiCode string inserted with correct indentation and linebreak at end.
-     */
     private void appendMolkiCode(String molkiCode) {
         this.appendMolkiCode(molkiCode, this.currentBlockNr);
     }
@@ -81,9 +54,8 @@ public class MolkiTransformer extends Default {
         block.appendInstruction(new GenericInstruction(molkiCode));
     }
 
-    public MolkiTransformer(HashMap<Node, Integer> proj2regIndex, HashMap<Graph, Integer> graph2MaxBlockId) {
+    public MolkiTransformer(HashMap<Node, Integer> proj2regIndex) {
         this.node2RegIndex = proj2regIndex;
-        this.graph2MaxBlockId = graph2MaxBlockId;
     }
 
     public void createValue(int blockNr, Node node) {
@@ -203,10 +175,6 @@ public class MolkiTransformer extends Default {
         // nothing to do
     }
 
-    private void molkify(Block block) {
-        // nothing to do here
-    }
-
     private void molkify(Call call) {
 
         Address address = (Address) call.getPred(1);
@@ -311,7 +279,7 @@ public class MolkiTransformer extends Default {
         int right = this.node2RegIndex.get(div.getRight());
 
         int targetReg1 = this.node2RegIndex.get(div);
-        int targetReg2 = targetReg1 + 1; // by convention used in PrepVisitor
+        int targetReg2 = targetReg1 + 1; // by convention used in preparation
 
         this.appendFourAdressCommand("divl", left, REG_WIDTH_D, right, REG_WIDTH_D, targetReg1, REG_WIDTH_D, targetReg2,
                 REG_WIDTH_D);
@@ -377,7 +345,7 @@ public class MolkiTransformer extends Default {
         int srcReg2 = this.node2RegIndex.get(mod.getRight());
 
         int targetReg1 = this.node2RegIndex.get(mod);
-        int targetReg2 = targetReg1 + 1; // by convention used in PrepVisitor
+        int targetReg2 = targetReg1 + 1; // by convention used in preparation
 
         // targetReg2 before targetReg1 is on purpose.
         //Result of mod is second result of divl command and should be stored in the first target register.
@@ -484,6 +452,7 @@ public class MolkiTransformer extends Default {
     private void molkify(Phi phi) {
 
         if (phi.getMode().equals(Mode.getM())) {
+
             // Ignore Phi nodes with memory mode as these are only important for ordering nodes
             return;
         }
@@ -548,6 +517,9 @@ public class MolkiTransformer extends Default {
                 }
             }
             else {
+                // The input for the Cond node is a constant, which may result from constant folding.
+                // In this case, generate constant compare instructions.
+
                 assert selector instanceof Const && selector.getMode().equals(Mode.getb());
                 Const aConst = (Const) selector;
 
@@ -593,11 +565,6 @@ public class MolkiTransformer extends Default {
         // Nothing to do here as conversion nodes are only constructed for div and mod
         // operations and conversion of the operands instead should be handled there.
     }
-
-
-    //
-    // append commands
-    //
 
 
     /**
@@ -800,18 +767,5 @@ public class MolkiTransformer extends Default {
     private void appendStoreCmd(String movSuffix, int storeReg, String regSuffix, int pointerReg) {
         this.appendMolkiCode("mov" + movSuffix + " " + REG_PREFIX + storeReg + regSuffix + " -> (" + REG_PREFIX
                 + pointerReg + ")" + regSuffix);
-    }
-
-    /**
-     * Example<br>
-     * <br>
-     * cmpq [ %@17d | %@18d ]
-     *
-     * @param cmd name of command
-     * @param arg1 first argument, will be used as given, i.e. REG_PREFIX will not be appended
-     * @param arg2 second argument, will be used as given, i.e. REG_PREFIX will not be appended
-     */
-    private void appendTwoArgsCommand(String cmd, String arg1, String arg2) {
-        this.appendMolkiCode(cmd + "[ " + arg1 + " | " + arg2 + " ]");
     }
 }

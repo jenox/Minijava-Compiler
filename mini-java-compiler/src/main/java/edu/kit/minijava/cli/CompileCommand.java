@@ -61,8 +61,7 @@ public class CompileCommand extends Command {
 
             HashMap<Integer, List<Node>> blockId2Nodes = prepVisitor.getBlockId2Nodes();
             HashMap<Graph, List<Integer>> graph2BlockId = prepVisitor.getGraph2BlockId();
-            HashMap<Graph, Integer> graph2MaxBlockId = prepVisitor.getGraph2MaxBlockId();
-            MolkiTransformer molkiTransformer = new MolkiTransformer(prepVisitor.getNode2RegIndex(), graph2MaxBlockId);
+            MolkiTransformer molkiTransformer = new MolkiTransformer(prepVisitor.getNode2RegIndex());
             List<String> output = new ArrayList<>();
 
             for (Graph g : graphs) {
