@@ -23,7 +23,6 @@ public class GraphGenerator extends ASTVisitor<GraphContext> {
     private HashMap<MethodDeclaration, Type[]> method2ParamTypes;
     private HashMap<Declaration, Integer> variableNums;
 
-
     public GraphGenerator(Map<String, Entity> runtimeEntities
                         , HashMap<Declaration, Entity> entities
                         , HashMap<Declaration, Type> types
@@ -36,7 +35,7 @@ public class GraphGenerator extends ASTVisitor<GraphContext> {
         this.method2ParamTypes = method2ParamTypes;
     }
 
-    public Iterable<Graph> molkiTransform(Program program) throws IOException {
+    public Iterable<Graph> molkiTransform(Program program) {
         program.accept(this, new GraphContext());
 
         // Check created graphs

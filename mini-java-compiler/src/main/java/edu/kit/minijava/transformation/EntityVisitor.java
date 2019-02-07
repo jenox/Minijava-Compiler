@@ -46,7 +46,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
     }
 
 
-    public void startVisit(Program program) throws IOException {
+    public void startVisit(Program program) {
         String[] targetOptions = { "pic=1" };
 
         // A null target triple causes Firm to choose the host machine triple
