@@ -3,13 +3,14 @@ package edu.kit.minijava.cli;
 import edu.kit.minijava.lexer.*;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 
 class LextestCommand extends Command {
     @Override
     public int execute(String path) {
         try {
             FileInputStream stream = new FileInputStream(path);
-            InputStreamReader reader = new InputStreamReader(stream, "US-ASCII");
+            InputStreamReader reader = new InputStreamReader(stream, StandardCharsets.US_ASCII);
 
             Lexer lexer = new Lexer(reader);
 

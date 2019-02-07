@@ -1,6 +1,7 @@
 package edu.kit.minijava.cli;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import edu.kit.minijava.ast.nodes.Program;
@@ -19,7 +20,7 @@ public class TransformerCommand extends Command {
 
         try {
             FileInputStream stream = new FileInputStream(path);
-            InputStreamReader reader = new InputStreamReader(stream, "US-ASCII");
+            InputStreamReader reader = new InputStreamReader(stream, StandardCharsets.US_ASCII);
 
             Lexer lexer = new Lexer(reader);
             Parser parser = new Parser(lexer);

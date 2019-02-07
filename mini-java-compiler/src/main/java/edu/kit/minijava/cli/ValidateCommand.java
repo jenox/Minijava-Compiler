@@ -7,6 +7,7 @@ import edu.kit.minijava.ast.references.*;
 import edu.kit.minijava.semantic.*;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 
 public class ValidateCommand extends Command {
 
@@ -17,7 +18,7 @@ public class ValidateCommand extends Command {
     public int execute(String path) {
         try {
             FileInputStream stream = new FileInputStream(path);
-            InputStreamReader reader = new InputStreamReader(stream, "US-ASCII");
+            InputStreamReader reader = new InputStreamReader(stream, StandardCharsets.US_ASCII);
 
             Lexer lexer = new Lexer(reader);
             Parser parser = new Parser(lexer);
