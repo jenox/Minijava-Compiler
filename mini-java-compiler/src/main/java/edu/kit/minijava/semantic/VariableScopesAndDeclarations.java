@@ -27,9 +27,9 @@ public class VariableScopesAndDeclarations {
     }
 
     /**
-     * Add another declaration
-     * @param varDecl
-     * @param scope
+     * Add a new variable declaration into a numbered scope
+     * @param varDecl the variable declaration to enter into the scope provided as parameter
+     * @param scope the scope number to enter the declaration into
      */
     public void addVariableDeclaration(VariableDeclaration varDecl, int scope) {
         int maxScope = this.scopes.get(this.scopes.size() - 1);
