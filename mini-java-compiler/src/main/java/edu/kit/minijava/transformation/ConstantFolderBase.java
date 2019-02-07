@@ -112,7 +112,6 @@ abstract class ConstantFolderBase extends NodeVisitor.Default {
         }
     }
 
-    // TODO: Unit tests!
     static TargetValue join(TargetValue left, TargetValue right) {
         if (left == NOT_A_CONSTANT || right == NOT_A_CONSTANT) {
             return NOT_A_CONSTANT;

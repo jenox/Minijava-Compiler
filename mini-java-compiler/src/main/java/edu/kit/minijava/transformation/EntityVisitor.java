@@ -118,7 +118,8 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
         this.runtimeEntities.put(printlnName, printlnEntity);
 
-        // TODO Should this take unsigned integers instead?
+        // As MiniJava only supports signed integers, we also use these for the allocation
+        // standard library function.
 
         /* Memory allocation */
         String allocName = "alloc_mem";

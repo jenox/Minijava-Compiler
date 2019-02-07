@@ -71,7 +71,9 @@ public class GraphGenerator extends ASTVisitor<GraphContext> {
 
         Backend.lowerForTarget();
 
-        // TODO What is the compilation unit name for?
+        // As we only support single-file programs, we do not need to set a correct compilation unit name.
+
+        // Generate and write the assembly to the output file
         Backend.createAssembler(outputFilename, "<builtin>");
     }
 

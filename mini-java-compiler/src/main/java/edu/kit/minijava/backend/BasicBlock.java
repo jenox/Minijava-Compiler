@@ -128,7 +128,6 @@ public class BasicBlock {
     }
 
     public String formatBlockLabel() {
-        // TODO Correctly set this for all platforms.
         return "L" + this.getBlockLabel();
     }
 

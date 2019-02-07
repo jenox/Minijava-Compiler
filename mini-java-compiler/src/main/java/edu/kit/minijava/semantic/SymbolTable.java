@@ -4,7 +4,6 @@ import java.util.*;
 
 import edu.kit.minijava.ast.nodes.VariableDeclaration;
 
-// TODO: Put this logic straight into SemanticAnalysisBase?
 class SymbolTable {
 
     private final HashMap<String, VariableScopesAndDeclarations> nameToDeclarations = new HashMap<>();
