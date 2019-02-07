@@ -2,9 +2,7 @@ package edu.kit.minijava.backend;
 
 import java.util.*;
 
-import edu.kit.minijava.backend.instructions.ConditionalJump;
-import edu.kit.minijava.backend.instructions.GenericInstruction;
-import edu.kit.minijava.backend.instructions.Jump;
+import edu.kit.minijava.backend.instructions.*;
 import firm.*;
 import firm.nodes.*;
 import firm.nodes.NodeVisitor.Default;
