@@ -15,7 +15,6 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
     private CompoundType globalType;
     private String currentClassName;
 
-
     private Map<String, Entity> runtimeEntities = new HashMap<>();
     private HashMap<Declaration, Entity> entities = new HashMap<>();
     private HashMap<Declaration, Type> types = new HashMap<>();
@@ -24,10 +23,7 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
     private HashMap<Declaration, Integer> variableNums = new HashMap<>();
     private HashMap<MethodDeclaration, Type[]> method2ParamTypes = new HashMap<>();
 
-    private HashMap<ClassDeclaration, Integer> classSizes = new HashMap<>();
     private ClassDeclaration currentClassDeclaration;
-
-
 
     public Map<String, Entity> getRuntimeEntities() {
         return this.runtimeEntities;
@@ -47,10 +43,6 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
 
     public HashMap<MethodDeclaration, Type[]> getMethod2ParamTypes() {
         return this.method2ParamTypes;
-    }
-
-    public HashMap<ClassDeclaration, Integer> getClassSizes() {
-        return this.classSizes;
     }
 
 
@@ -154,13 +146,9 @@ public class EntityVisitor extends ASTVisitor<EntityContext> {
             fieldDeclaration.accept(this, context);
         }
 
-        assert this.classSizes.get(classDeclaration) == null;
-
         // Layout class
         structType.layoutFields();
         structType.finishLayout();
-
-        this.classSizes.put(classDeclaration, structType.getSize());
 
         for (MethodDeclaration methodDecl : classDeclaration.getMethodDeclarations()) {
             methodDecl.accept(this, context);
