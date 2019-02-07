@@ -26,6 +26,7 @@ The compiler needs the following dependencies:
 
 - A recent Java SE version (at least JDK 8 is required)
 - Swift 4.2 (if you do not already have this, we recommend using [swiftenv](https://swiftenv.fuller.li/en/latest/) to install it)
+- gcc to assemble and link the MiniJava binaries
 
 ## Built With
 
