@@ -126,7 +126,7 @@ public class PhiResolver {
     }
 
     private static void resolvePhiCycles(BasicBlock predecessorBlock, Map<Integer, PhiNode.Mapping> substitutions) {
-        int newPhiRegister = Pseudoregister.getPhiRegisterNumber();
+        int newPhiRegister = PseudoregisterCounter.getPhiRegisterNumber();
 
         if (substitutions == null) {
             return;
