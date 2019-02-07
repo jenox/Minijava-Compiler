@@ -50,7 +50,9 @@ public class CommandLineInterface {
         }
         else {
 
-            fileArgument = arguments[arguments.length - 1];
+            if (arguments.length > 0) {
+                fileArgument = arguments[arguments.length - 1];
+            }
 
             if (cmdLine.hasOption(ECHO_CMD)) {
                 fileArgument = cmdLine.getOptionValue(ECHO_CMD);
