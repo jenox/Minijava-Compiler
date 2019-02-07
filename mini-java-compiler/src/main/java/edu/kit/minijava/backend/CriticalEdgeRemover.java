@@ -20,8 +20,9 @@ public class CriticalEdgeRemover {
             List<PhiNode> phiNodeList = currentBlock.getPhiNodes();
 
             if (phiNodeList.size() > 0) {
-                // Iterate through all predecessor of the phis (which should be the same number for all Phi nodes).
-                // TODO Maybe also explicitly check this here.
+
+                // Iterate through all predecessor of the phis.
+                // This should be the same number for all Phi nodes in a sane graph.
 
                 for (int i = 0; i < phiNodeList.get(0).getMappings().size(); i++) {
                     PhiNode.Mapping mapping = phiNodeList.get(0).getMappings().get(i);

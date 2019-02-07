@@ -2,6 +2,9 @@ package edu.kit.minijava.backend.instructions;
 
 import edu.kit.minijava.backend.*;
 
+/**
+ * A jump instruction that jumps to another basic block and is predicated on a condition.
+ */
 public class ConditionalJump extends Jump {
     private String opcodeMnemonic;
 
