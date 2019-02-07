@@ -61,7 +61,7 @@ public class CompileCommand extends Command {
 
             HashMap<Integer, List<Node>> blockId2Nodes = prepVisitor.getBlockId2Nodes();
             HashMap<Graph, List<Integer>> graph2BlockId = prepVisitor.getGraph2BlockId();
-            MolkiTransformer molkiTransformer = new MolkiTransformer(prepVisitor.getNode2RegIndex());
+            CodeGenerator codeGenerator = new CodeGenerator(prepVisitor.getNode2RegIndex());
             List<String> output = new ArrayList<>();
 
             for (Graph g : graphs) {
@@ -114,11 +114,11 @@ public class CompileCommand extends Command {
                 // Transform each node in each block into a intermediate representation instruction
                 for (int i : graph2BlockId.get(g)) {
                     for (Node node : blockId2Nodes.get(i)) {
-                        molkiTransformer.createValue(i, node);
+                        codeGenerator.createValue(i, node);
                     }
                 }
 
-                Map<Integer, BasicBlock> blockMap = molkiTransformer.getBlockMap();
+                Map<Integer, BasicBlock> blockMap = codeGenerator.getBlockMap();
                 List<BasicBlock> blockList = new ArrayList<>();
 
                 for (int blockNumber : graph2BlockId.get(g)) {
