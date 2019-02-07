@@ -31,7 +31,7 @@ sudo apt install -y openjdk-8-jdk
 
 ## Authors
 
-* **Christian Schnorr** - *Lexer, Parser* - [jenox](https://github.com/Jenox)
-* **Maximilian Stemmer-Grabow** - *Deployment, CI, Testing* - [mxsg](https://github.com/mxsg)
-* **Maik Wiesner** - *Testing, Style Guide* - [uheai](https://github.com/uheai)
-* **Daniel Krueger** - *CLI* - [dnlkrgr](https://github.com/dnlkrgr)
+* **Christian Schnorr** - [jenox](https://github.com/Jenox)
+* **Maximilian Stemmer-Grabow** - [mxsg](https://github.com/mxsg)
+* **Maik Wiesner** - [uheai](https://github.com/uheai)
+* **Daniel Krueger** - [dnlkrgr](https://github.com/dnlkrgr)
