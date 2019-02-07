@@ -6,10 +6,7 @@ import edu.kit.minijava.ast.nodes.Program;
 import edu.kit.minijava.ast.nodes.Statement.*;
 import firm.*;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 public class EntityVisitor extends ASTVisitor<EntityContext> {
     private CompoundType globalType;
