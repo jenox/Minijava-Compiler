@@ -7,8 +7,10 @@ import firm.nodes.*;
 import java.util.*;
 
 public class ConstantFolder extends ConstantFolderBase {
-    ConstantFolder(Graph graph) {
+    ConstantFolder(Graph graph, boolean beVerbose) {
         super(graph);
+
+        this.beVerbose = beVerbose;
 
         BackEdges.enable(graph);
         this.iterate();
@@ -124,6 +126,12 @@ public class ConstantFolder extends ConstantFolderBase {
 
         firm.bindings.binding_irgopt.remove_bads(graph.ptr);
     }
+
+    ConstantFolder(Graph graph) {
+        this(graph, false);
+    }
+
+    private boolean beVerbose;
 
     private TargetValue resultOfLastVisitedNode = null;
     private boolean hasModifiedGraph = false;
@@ -335,11 +343,16 @@ public class ConstantFolder extends ConstantFolderBase {
     }
 
     private void print(String operator, TargetValue lhs, TargetValue rhs) {
-        //System.out.println(describe(lhs) + " " + operator + " " + describe(rhs) + " = " +
-        //        describe(this.resultOfLastVisitedNode));
+
+        if (this.beVerbose) {
+            System.out.println(describe(lhs) + " " + operator + " " + describe(rhs) + " = " +
+                    describe(this.resultOfLastVisitedNode));
+        }
     }
 
     private void print(String operator, TargetValue value) {
-        //System.out.println(operator + describe(value) + " = " + describe(this.resultOfLastVisitedNode));
+        if (this.beVerbose) {
+            System.out.println(operator + describe(value) + " = " + describe(this.resultOfLastVisitedNode));
+        }
     }
 }

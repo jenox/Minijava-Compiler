@@ -11,7 +11,8 @@ import java.nio.charset.StandardCharsets;
 
 public class ValidateCommand extends Command {
 
-    ValidateCommand() {
+    ValidateCommand(CompilerFlags flags) {
+        super(flags);
     }
 
     @Override
@@ -26,31 +27,37 @@ public class ValidateCommand extends Command {
 
             new ReferenceAndExpressionTypeResolver(program);
 
-            ASTDumper dumper = new ASTDumper(program);
-            dumper.dump("ast.graphml");
+            if (this.getFlags().dumpIntermediates()) {
+                ASTDumper dumper = new ASTDumper(program);
+                dumper.dump("ast.graphml");
+            }
 
-//            for (TypeReference reference : new Collector(program).instancesOfClass(TypeReference.class)) {
-//                if (reference.getBasicTypeReference().isResolved()) {
-//                    Declaration declaration = reference.getBasicTypeReference().getDeclaration();
-//                    System.out.println("Reference " + reference + ": " + declaration);
-//                }
-//                else {
-//                    System.out.println("Unresolved reference " + reference);
-//                }
-//            }
-//
-//            for (Reference reference : new Collector(program).instancesOfClass(Reference.class)) {
-//                if (reference.isResolved()) {
-//                    System.out.println("Reference " + reference + ": " + reference.getDeclaration());
-//                }
-//                else {
-//                    System.out.println("Unresolved reference " + reference);
-//                }
-//            }
-//
-//            for (Expression expression : new Collector(program).instancesOfClass(Expression.class)) {
-//                System.out.println(expression + ": " + expression.getType());
-//            }
+            // Only print all references when it is explicitly activated
+            if (this.getFlags().beVerbose()) {
+
+                for (TypeReference reference : new Collector(program).instancesOfClass(TypeReference.class)) {
+                    if (reference.getBasicTypeReference().isResolved()) {
+                        Declaration declaration = reference.getBasicTypeReference().getDeclaration();
+                        System.out.println("Reference " + reference + ": " + declaration);
+                    }
+                    else {
+                        System.out.println("Unresolved reference " + reference);
+                    }
+                }
+
+                for (Reference reference : new Collector(program).instancesOfClass(Reference.class)) {
+                    if (reference.isResolved()) {
+                        System.out.println("Reference " + reference + ": " + reference.getDeclaration());
+                    }
+                    else {
+                        System.out.println("Unresolved reference " + reference);
+                    }
+                }
+
+                for (Expression expression : new Collector(program).instancesOfClass(Expression.class)) {
+                    System.out.println(expression + ": " + expression.getType());
+                }
+            }
 
             return 0;
         }

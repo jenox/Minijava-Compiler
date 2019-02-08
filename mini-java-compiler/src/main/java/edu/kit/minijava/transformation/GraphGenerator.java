@@ -8,7 +8,6 @@ import edu.kit.minijava.ast.nodes.Expression.*;
 import edu.kit.minijava.ast.nodes.Program;
 import edu.kit.minijava.ast.nodes.Statement.*;
 import edu.kit.minijava.ast.references.TypeOfExpression;
-import edu.kit.minijava.cli.CommandLineInterface;
 import firm.*;
 import firm.bindings.binding_ircons;
 import firm.nodes.*;
@@ -23,33 +22,40 @@ public class GraphGenerator extends ASTVisitor<GraphContext> {
     private HashMap<MethodDeclaration, Type[]> method2ParamTypes;
     private HashMap<Declaration, Integer> variableNums;
 
-    public GraphGenerator(Map<String, Entity> runtimeEntities
-                        , HashMap<Declaration, Entity> entities
-                        , HashMap<Declaration, Type> types
-                        , HashMap<Declaration, HashMap<Declaration, Integer>> method2VariableNums
-                        , HashMap<MethodDeclaration, Type[]> method2ParamTypes) {
+    private boolean optimize;
+    private boolean dumpIntermediates;
+    private boolean beVerbose;
+
+    public GraphGenerator(Map<String, Entity> runtimeEntities,
+                          HashMap<Declaration, Entity> entities,
+                          HashMap<Declaration, Type> types,
+                          HashMap<Declaration, HashMap<Declaration, Integer>> method2VariableNums,
+                          HashMap<MethodDeclaration, Type[]> method2ParamTypes,
+                          boolean optimize,
+                          boolean dumpIntermediates,
+                          boolean beVerbose) {
         this.runtimeEntities = runtimeEntities;
         this.entities = entities;
         this.types = types;
         this.method2VariableNums = method2VariableNums;
         this.method2ParamTypes = method2ParamTypes;
+
+        this.optimize = optimize;
+        this.dumpIntermediates = dumpIntermediates;
+        this.beVerbose = beVerbose;
+    }
+
+    public GraphGenerator(Map<String, Entity> runtimeEntities,
+                          HashMap<Declaration, Entity> entities,
+                          HashMap<Declaration, Type> types,
+                          HashMap<Declaration, HashMap<Declaration, Integer>> method2VariableNums,
+                          HashMap<MethodDeclaration, Type[]> method2ParamTypes) {
+        this(runtimeEntities, entities, types, method2VariableNums, method2ParamTypes,
+            true, false, false);
     }
 
     public Iterable<Graph> transform(Program program) {
-        program.accept(this, new GraphContext());
-
-        // Check created graphs
-        for (Graph g : firm.Program.getGraphs()) {
-            g.check();
-        }
-
-        if (CommandLineInterface.areOptimizationsActivated()) {
-            for (Graph g : firm.Program.getGraphs()) {
-                ConstantFolder folder = new ConstantFolder(g);
-                g.check();
-            }
-
-        }
+        this.createGraphs(program);
 
         Lower.fixNames();
 
@@ -57,23 +63,45 @@ public class GraphGenerator extends ASTVisitor<GraphContext> {
     }
 
     public void transformUsingLibfirmBackend(Program program, String outputFilename) throws IOException {
-        program.accept(this, new GraphContext());
-
-        // Check and dump created graphs - can be viewed with ycomp
-        for (Graph g : firm.Program.getGraphs()) {
-            ConstantFolder folder = new ConstantFolder(g);
-            g.check();
-            Dump.dumpGraph(g, "");
-        }
+        this.createGraphs(program);
 
         Lower.lower();
 
         Backend.lowerForTarget();
 
-        // As we only support single-file programs, we do not need to set a correct compilation unit name.
+        // As we only support single-file programs, we do not need to set a specific compilation unit name.
 
         // Generate and write the assembly to the output file
         Backend.createAssembler(outputFilename, "<builtin>");
+    }
+
+    private void createGraphs(Program program) {
+        program.accept(this, new GraphContext());
+
+        // Check created graphs
+        for (Graph g : firm.Program.getGraphs()) {
+            g.check();
+        }
+
+        if (this.dumpIntermediates) {
+            for (Graph g : firm.Program.getGraphs()) {
+                Dump.dumpGraph(g, "");
+            }
+        }
+
+        // Only execute the constant folder when optimizing the code
+        if (this.optimize) {
+            for (Graph g : firm.Program.getGraphs()) {
+                ConstantFolder folder = new ConstantFolder(g, this.beVerbose);
+                g.check();
+            }
+        }
+
+        if (this.dumpIntermediates) {
+            for (Graph g : firm.Program.getGraphs()) {
+                Dump.dumpGraph(g, "optimized");
+            }
+        }
     }
 
     @Override

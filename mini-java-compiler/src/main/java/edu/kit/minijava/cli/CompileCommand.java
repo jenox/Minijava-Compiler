@@ -21,6 +21,10 @@ public class CompileCommand extends Command {
     private static final String RUNTIME_LIB_ENV_KEY = "MJ_RUNTIME_LIB_PATH_STACK_ARGS";
     private static final String REGISTER_ALLOCATION_KEY = "REGISTER_ALLOCATOR_PATH";
 
+    CompileCommand(CompilerFlags flags) {
+        super(flags);
+    }
+
     @Override
     public int execute(String path) {
 
@@ -43,11 +47,14 @@ public class CompileCommand extends Command {
             EntityVisitor visitor = new EntityVisitor();
             visitor.startVisit(program);
 
-            GraphGenerator generator = new GraphGenerator(visitor.getRuntimeEntities()
-                                                        , visitor.getEntities()
-                                                        , visitor.getTypes()
-                                                        , visitor.getMethod2VariableNums()
-                                                        , visitor.getMethod2ParamTypes());
+            GraphGenerator generator = new GraphGenerator(visitor.getRuntimeEntities(),
+                                                          visitor.getEntities(),
+                                                          visitor.getTypes(),
+                                                          visitor.getMethod2VariableNums(),
+                                                          visitor.getMethod2ParamTypes(),
+                                                          this.getFlags().optimize(),
+                                                          this.getFlags().dumpIntermediates(),
+                                                          this.getFlags().beVerbose());
             Iterable<Graph> graphs = generator.transform(program);
 
 

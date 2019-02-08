@@ -11,7 +11,7 @@ public final class PrettyPrinter extends ASTVisitor<PrettyPrinter.Options> {
 
     public enum Options {
         DO_NOT_PRINT_NEWLINE_AFTER_BLOCK,
-        DO_NOT_PRINT_PARENTHESES_AROUND_EXPRESSION;
+        DO_NOT_PRINT_PARENTHESES_AROUND_EXPRESSION
     }
 
 

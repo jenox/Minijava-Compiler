@@ -5,6 +5,10 @@ import java.nio.charset.StandardCharsets;
 
 class EchoCommand extends Command {
 
+    EchoCommand(CompilerFlags flags) {
+        super(flags);
+    }
+
     @Override
     public int execute(String path) {
         try {

@@ -6,6 +6,11 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 
 class LextestCommand extends Command {
+
+    LextestCommand(CompilerFlags flags) {
+        super(flags);
+    }
+
     @Override
     public int execute(String path) {
         try {

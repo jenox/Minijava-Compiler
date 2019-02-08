@@ -9,7 +9,8 @@ import java.nio.charset.StandardCharsets;
 
 public class ParserCommand extends Command {
 
-    ParserCommand(boolean printAST) {
+    ParserCommand(CompilerFlags flags, boolean printAST) {
+        super(flags);
         this.printAST = printAST;
     }
 
@@ -24,10 +25,6 @@ public class ParserCommand extends Command {
             Lexer lexer = new Lexer(reader);
             Parser parser = new Parser(lexer);
             Program program = parser.parseProgram();
-
-            if (program == null) {
-                throw new AssertionError();
-            }
 
             if (this.printAST) {
                 PrettyPrinter printer = new PrettyPrinter();

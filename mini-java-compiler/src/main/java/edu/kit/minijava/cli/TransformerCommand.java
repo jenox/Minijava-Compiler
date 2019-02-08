@@ -13,7 +13,11 @@ import edu.kit.minijava.transformation.GraphGenerator;
 
 public class TransformerCommand extends Command {
 
-    public static final String RUNTIME_LIB_ENV_KEY = "MJ_RUNTIME_LIB_PATH";
+    private static final String RUNTIME_LIB_ENV_KEY = "MJ_RUNTIME_LIB_PATH";
+
+    TransformerCommand(CompilerFlags flags) {
+        super(flags);
+    }
 
     @Override
     public int execute(String path) {
@@ -35,11 +39,15 @@ public class TransformerCommand extends Command {
             EntityVisitor visitor = new EntityVisitor();
             visitor.startVisit(program);
 
-            GraphGenerator generator = new GraphGenerator(visitor.getRuntimeEntities()
-                                                        , visitor.getEntities()
-                                                        , visitor.getTypes()
-                                                        , visitor.getMethod2VariableNums()
-                                                        , visitor.getMethod2ParamTypes());
+            GraphGenerator generator = new GraphGenerator(visitor.getRuntimeEntities(),
+                                                          visitor.getEntities(),
+                                                          visitor.getTypes(),
+                                                          visitor.getMethod2VariableNums(),
+                                                          visitor.getMethod2ParamTypes(),
+                                                          this.getFlags().optimize(),
+                                                          this.getFlags().dumpIntermediates(),
+                                                          this.getFlags().beVerbose());
+
             generator.transformUsingLibfirmBackend(program, asmOutputFilename);
 
             // Retrieve runtime path from environment variable
