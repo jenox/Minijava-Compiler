@@ -1,7 +1,6 @@
 package edu.kit.minijava.backend;
 
-import firm.Mode;
-import firm.Relation;
+import firm.*;
 
 /**
  * Utility functions for code generation.
