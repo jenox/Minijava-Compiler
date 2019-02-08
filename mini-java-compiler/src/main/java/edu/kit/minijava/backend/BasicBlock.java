@@ -18,10 +18,6 @@ public class BasicBlock {
         return minFreeBlockNumber;
     }
 
-    public static boolean isBlockNumberAllocated(int number) {
-        return allocatedBlockNumbers.contains(number);
-    }
-
     private int blockLabel;
     private List<Instruction> instructions = new ArrayList<>();
     private List<PhiNode> phiNodes = new ArrayList<>();
