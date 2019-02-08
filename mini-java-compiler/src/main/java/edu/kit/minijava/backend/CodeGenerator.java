@@ -621,8 +621,10 @@ public class CodeGenerator extends Default {
      */
     private void appendThreeAdressCommand(String cmd, int srcReg1, String suffixReg1, int srcReg2, String suffixReg2,
             int targetReg, String suffixTargetReg) {
-        this.appendIntermediateInstruction(cmd + " [ %@" + srcReg1 + suffixReg1 + " | %@" + srcReg2 + suffixReg2 + " ] -> %@"
-                + targetReg + suffixTargetReg);
+        this.appendIntermediateInstruction(cmd
+                + " [ " + REG_PREFIX + srcReg1 + suffixReg1
+                + " | " + REG_PREFIX + srcReg2 + suffixReg2 + " ] "
+                + "-> " + REG_PREFIX + targetReg + suffixTargetReg);
     }
 
     /**
@@ -646,9 +648,10 @@ public class CodeGenerator extends Default {
     private void appendFourAdressCommand(String cmd, int srcReg1, String suffixReg1, int srcReg2, String suffixReg2,
             int targetReg1, String suffixTargetReg1, int targetReg2, String suffixTargetReg2) {
 
-        this.appendIntermediateInstruction(cmd + " [ " + REG_PREFIX + srcReg1 + suffixReg1 + " | " + REG_PREFIX + srcReg2 + suffixReg2
-                + " ] -> [ " + REG_PREFIX + targetReg1 + suffixTargetReg1 + " | " + REG_PREFIX + targetReg2
-                + suffixTargetReg2 + " ]");
+        this.appendIntermediateInstruction(cmd + " [ " + REG_PREFIX + srcReg1 + suffixReg1
+                + " | " + REG_PREFIX + srcReg2 + suffixReg2
+                + " ] -> [ " + REG_PREFIX + targetReg1 + suffixTargetReg1
+                + " | " + REG_PREFIX + targetReg2 + suffixTargetReg2 + " ]");
     }
 
     /**
@@ -695,7 +698,8 @@ public class CodeGenerator extends Default {
      */
     private void appendMoveWithOffset(String movSuffix, int offset, int baseReg, int targetReg,
             String suffixTargetReg) {
-        this.appendIntermediateInstruction("mov" + movSuffix + " " + offset + "(" + REG_PREFIX + baseReg + ")" + suffixTargetReg
+        this.appendIntermediateInstruction("mov" + movSuffix + " "
+                + offset + "(" + REG_PREFIX + baseReg + ")" + suffixTargetReg
                 + " -> " + REG_PREFIX + targetReg + suffixTargetReg);
     }
 
@@ -712,8 +716,8 @@ public class CodeGenerator extends Default {
      * @param suffixTargetReg width of target register, e.g. 'd'
      */
     private void moveWithOffset(String movSuffix, int pointerReg, int targetReg, String suffixTargetReg) {
-        this.appendIntermediateInstruction("mov" + movSuffix + " " + "(" + REG_PREFIX + pointerReg + ") -> " + REG_PREFIX + targetReg
-                + suffixTargetReg);
+        this.appendIntermediateInstruction("mov" + movSuffix + " "
+                + "(" + REG_PREFIX + pointerReg + ") -> " + REG_PREFIX + targetReg + suffixTargetReg);
     }
 
     /**
@@ -730,7 +734,8 @@ public class CodeGenerator extends Default {
      * @param baseReg number of base register
      */
     private void appendStoreCmd(String movSuffix, int storeReg, String regSuffix, int offset, int baseReg) {
-        this.appendIntermediateInstruction("mov" + movSuffix + " " + REG_PREFIX + storeReg + regSuffix + " -> " + offset + "("
+        this.appendIntermediateInstruction("mov" + movSuffix + " "
+                + REG_PREFIX + storeReg + regSuffix + " -> " + offset + "("
                 + REG_PREFIX + baseReg + ")" + regSuffix);
     }
 
@@ -750,7 +755,8 @@ public class CodeGenerator extends Default {
      */
     private void appendStoreCmd(String movSuffix, String regSuffix, int storeReg, int baseReg, int indexReg,
             int alignment) {
-        this.appendIntermediateInstruction("mov" + movSuffix + " " + REG_PREFIX + storeReg + regSuffix + " -> (" + REG_PREFIX
+        this.appendIntermediateInstruction("mov" + movSuffix + " "
+                + REG_PREFIX + storeReg + regSuffix + " -> (" + REG_PREFIX
                 + baseReg + ", " + REG_PREFIX + indexReg + REG_WIDTH_D + ", " + alignment + ")" + regSuffix);
     }
 
@@ -765,7 +771,8 @@ public class CodeGenerator extends Default {
      * @param pointerReg number of register containing pointer
      */
     private void appendStoreCmd(String movSuffix, int storeReg, String regSuffix, int pointerReg) {
-        this.appendIntermediateInstruction("mov" + movSuffix + " " + REG_PREFIX + storeReg + regSuffix + " -> (" + REG_PREFIX
+        this.appendIntermediateInstruction("mov" + movSuffix + " "
+                + REG_PREFIX + storeReg + regSuffix + " -> (" + REG_PREFIX
                 + pointerReg + ")" + regSuffix);
     }
 }
