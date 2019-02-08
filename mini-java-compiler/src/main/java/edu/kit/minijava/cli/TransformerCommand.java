@@ -1,6 +1,7 @@
 package edu.kit.minijava.cli;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import edu.kit.minijava.ast.nodes.Program;
@@ -12,14 +13,18 @@ import edu.kit.minijava.transformation.GraphGenerator;
 
 public class TransformerCommand extends Command {
 
-    public static final String RUNTIME_LIB_ENV_KEY = "MJ_RUNTIME_LIB_PATH";
+    private static final String RUNTIME_LIB_ENV_KEY = "MJ_RUNTIME_LIB_PATH";
+
+    TransformerCommand(CompilerFlags flags) {
+        super(flags);
+    }
 
     @Override
     public int execute(String path) {
 
         try {
             FileInputStream stream = new FileInputStream(path);
-            InputStreamReader reader = new InputStreamReader(stream, "US-ASCII");
+            InputStreamReader reader = new InputStreamReader(stream, StandardCharsets.US_ASCII);
 
             Lexer lexer = new Lexer(reader);
             Parser parser = new Parser(lexer);
@@ -34,12 +39,16 @@ public class TransformerCommand extends Command {
             EntityVisitor visitor = new EntityVisitor();
             visitor.startVisit(program);
 
-            GraphGenerator generator = new GraphGenerator(visitor.getRuntimeEntities()
-                                                        , visitor.getEntities()
-                                                        , visitor.getTypes()
-                                                        , visitor.getMethod2VariableNums()
-                                                        , visitor.getMethod2ParamTypes());
-            generator.transform(program, asmOutputFilename);
+            GraphGenerator generator = new GraphGenerator(visitor.getRuntimeEntities(),
+                                                          visitor.getEntities(),
+                                                          visitor.getTypes(),
+                                                          visitor.getMethod2VariableNums(),
+                                                          visitor.getMethod2ParamTypes(),
+                                                          this.getFlags().optimize(),
+                                                          this.getFlags().dumpIntermediates(),
+                                                          this.getFlags().beVerbose());
+
+            generator.transformUsingLibfirmBackend(program, asmOutputFilename);
 
             // Retrieve runtime path from environment variable
             Map<String, String> env = System.getenv();

@@ -19,11 +19,9 @@ public class Lower {
 
         // Main has already received its special name during construction of the Firm graph
 
-        /* C linker doesn't allow all possible ascii chars for identifiers,
-         * filter some out */
         name = name.replaceAll("[()\\[\\];]", "_");
         Ident identifier = Ident.mangleGlobal(name);
-        entity.setLdIdent(identifier); //TODO: Problem bei Aufruf, Testcase: legitimate_call_to_main.java
+        entity.setLdIdent(identifier);
     }
 
     private void fixEntityNames() {
@@ -45,31 +43,11 @@ public class Lower {
                 continue;
             }
 
-            // TODO This might not be needed here at all.
-            // For now, move the entity to be sure.
-            // Maybe we should put methods into the classes first, then move them in this lowering step.
-            /* methods get implemented outside the class, move the entity */
+            // Move class members outside the class
             member.setOwner(Program.getGlobalType());
         }
 
         cls.layoutFields();
-    }
-
-    private void layoutTypes() {
-
-        for (Type type : Program.getTypes()) {
-
-//            if (type instanceof ClassType) {
-//                this.layoutClass((ClassType) type);
-//            }
-
-//            if (type instanceof StructType) {
-//                ((StructType) type).layoutFields();
-//            }
-
-//            System.out.println(type.toString() + " with name:" + type.getSize());
-            // type.finishLayout();
-        }
     }
 
     /**
@@ -78,7 +56,6 @@ public class Lower {
      */
     public static void lower() {
         Lower instance = new Lower();
-        instance.layoutTypes();
         instance.fixEntityNames();
         Util.lowerSels();
     }

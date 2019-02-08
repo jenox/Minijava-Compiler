@@ -1,14 +1,17 @@
 package edu.kit.minijava.backend;
 
-import firm.Mode;
-import firm.Relation;
+import firm.*;
 
+/**
+ * Utility functions for code generation.
+ */
 public class Util {
-    /*
-     * UTILITY FUNCTIONS
-     */
 
-    public static final String INDENT = "    "; // 4 spaces
+    /**
+     * Static utility class should not be instantiated.
+     */
+    private Util() {
+    }
 
     public static String mode2RegSuffix(Mode mode) {
         if (mode.equals(Mode.getIs()) || mode.equals(Mode.getLs())) {
@@ -33,16 +36,6 @@ public class Util {
         }
 
         return "";
-    }
-
-    public static boolean containsJmp(String str) {
-        return str.contains(Util.INDENT + "jmp ")
-                        || str.contains(Util.INDENT + "jle ")
-                        || str.contains(Util.INDENT + "jl ")
-                        || str.contains(Util.INDENT + "jge ")
-                        || str.contains(Util.INDENT + "jg ")
-                        || str.contains(Util.INDENT + "jne ")
-                        || str.contains(Util.INDENT + "je ");
     }
 
     public static String relation2Jmp(Relation relation) {

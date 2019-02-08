@@ -16,8 +16,9 @@ public class PhiResolver {
         }
 
         for (int i = 0; i < phiNodeList.get(0).getMappings().size(); i++) {
+
             // If we select one predecessor index, all predecessor blocks for the Phi nodes should be the same
-            // TODO Maybe alidate this here as well
+            // in a correctly generated graph.
 
             PhiNode firstPhi = phiNodeList.get(0);
 
@@ -125,7 +126,7 @@ public class PhiResolver {
     }
 
     private static void resolvePhiCycles(BasicBlock predecessorBlock, Map<Integer, PhiNode.Mapping> substitutions) {
-        int newPhiRegister = Pseudoregister.getPhiRegisterNumber();
+        int newPhiRegister = PseudoregisterCounter.getPhiRegisterNumber();
 
         if (substitutions == null) {
             return;

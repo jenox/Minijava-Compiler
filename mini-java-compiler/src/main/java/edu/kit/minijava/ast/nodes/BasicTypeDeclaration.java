@@ -14,7 +14,7 @@ public interface BasicTypeDeclaration extends Declaration, ASTDumpable {
     List<FieldDeclaration> getFieldDeclarations();
 
     /**
-     * is this an instance of {@link ClassDeclaration}.
+     * Return whether this is an instance of {@link ClassDeclaration}.
      * @return true iff this is an {@link ClassDeclaration} object
      */
     public boolean isClassDeclaration();

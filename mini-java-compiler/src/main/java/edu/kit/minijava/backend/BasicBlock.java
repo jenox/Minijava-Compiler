@@ -18,10 +18,6 @@ public class BasicBlock {
         return minFreeBlockNumber;
     }
 
-    public static boolean isBlockNumberAllocated(int number) {
-        return allocatedBlockNumbers.contains(number);
-    }
-
     private int blockLabel;
     private List<Instruction> instructions = new ArrayList<>();
     private List<PhiNode> phiNodes = new ArrayList<>();
@@ -128,7 +124,6 @@ public class BasicBlock {
     }
 
     public String formatBlockLabel() {
-        // TODO Correctly set this for all platforms.
         return "L" + this.getBlockLabel();
     }
 

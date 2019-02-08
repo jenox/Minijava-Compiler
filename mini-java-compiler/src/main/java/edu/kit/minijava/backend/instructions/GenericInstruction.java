@@ -1,5 +1,8 @@
 package edu.kit.minijava.backend.instructions;
 
+/**
+ * A generic instruction represented by its GAS assembly syntax.
+ */
 public class GenericInstruction extends Instruction {
 
     private String instructionText;

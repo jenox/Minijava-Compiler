@@ -1,11 +1,18 @@
 package edu.kit.minijava.backend;
 
-public class Pseudoregister {
+public class PseudoregisterCounter {
 
     private static int regularPseudoRegisterCount = 0;
     private static int phiPseudoRegisterCount = -1;
 
-    public static int getPseudoRegisterNumber() {
+    /**
+     * Prohibite construction of static utility class
+     */
+    private PseudoregisterCounter() {
+
+    }
+
+    public static int getPseudoregisterNumber() {
         return regularPseudoRegisterCount++;
     }
 
@@ -13,7 +20,7 @@ public class Pseudoregister {
         return phiPseudoRegisterCount--;
     }
 
-    public static void setNumberOfPseudoRegisters(int number) {
+    public static void setNumberOfPseudoregisters(int number) {
         regularPseudoRegisterCount = number;
     }
 

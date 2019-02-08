@@ -2,47 +2,24 @@ package edu.kit.minijava.backend;
 
 import java.util.*;
 
-import edu.kit.minijava.backend.instructions.ConditionalJump;
-import edu.kit.minijava.backend.instructions.GenericInstruction;
-import edu.kit.minijava.backend.instructions.Jump;
+import edu.kit.minijava.backend.instructions.*;
 import firm.*;
 import firm.nodes.*;
 import firm.nodes.NodeVisitor.Default;
 
-public class MolkiTransformer extends Default {
-    // CONSTANTS
-    private static final String INDENT = "    "; // 4 spaces
+public class CodeGenerator extends Default {
     private static final String REG_PREFIX = "%@";
     private static final String CONST_PREFIX = "$";
     private static final String REG_WIDTH_D = "d";
     private int currentBlockNr;
 
-    // ATTRIBUTES
-//    private HashMap<Integer, List<String>> molkiCode = new HashMap<>();
-    private HashMap<Integer, BasicBlock> molkiCode = new HashMap<>();
+    private HashMap<Integer, BasicBlock> intermediateCode = new HashMap<>();
 
-    // primarily for projections to save their register index
+    // Contains the register index the result of each node should be written to
     private HashMap<Node, Integer> node2RegIndex;
-    private HashMap<Graph, Integer> graph2MaxBlockId;
 
-    // GETTERS & SETTERS
     public HashMap<Integer, BasicBlock> getBlockMap() {
-        return this.molkiCode;
-    }
-
-    public Map<Integer, List<String>> getMolkiCode() {
-        Map<Integer, List<String>> basicBlocks = new HashMap<>();
-
-        for (Map.Entry<Integer, BasicBlock> element : this.molkiCode.entrySet()) {
-            List<String> instructions = element.getValue().getFullInstructionListAsString();
-            basicBlocks.put(element.getKey(), instructions);
-        }
-
-        return basicBlocks;
-    }
-
-    public void insertBlock(int blockNumber, BasicBlock block) {
-        this.molkiCode.put(blockNumber, block);
+        return this.intermediateCode;
     }
 
     /**
@@ -52,11 +29,11 @@ public class MolkiTransformer extends Default {
      * @return The block with the queried label (either from the block map or a newly inserted one).
      */
     private BasicBlock getOrCreateBlock(int blockNumber) {
-        BasicBlock block = this.molkiCode.get(blockNumber);
+        BasicBlock block = this.intermediateCode.get(blockNumber);
 
         if (block == null) {
             block = new BasicBlock(blockNumber);
-            this.molkiCode.put(blockNumber, block);
+            this.intermediateCode.put(blockNumber, block);
         }
 
         return block;
@@ -66,24 +43,17 @@ public class MolkiTransformer extends Default {
         return this.getOrCreateBlock(this.currentBlockNr);
     }
 
-
-    /**
-     * inserts given string to ouput.
-     *
-     * @param molkiCode string inserted with correct indentation and linebreak at end.
-     */
-    private void appendMolkiCode(String molkiCode) {
-        this.appendMolkiCode(molkiCode, this.currentBlockNr);
+    private void appendIntermediateInstruction(String instruction) {
+        this.appendIntermediateInstruction(instruction, this.currentBlockNr);
     }
 
-    private void appendMolkiCode(String molkiCode, int blockNr) {
+    private void appendIntermediateInstruction(String instruction, int blockNr) {
         BasicBlock block = this.getOrCreateBlock(blockNr);
-        block.appendInstruction(new GenericInstruction(molkiCode));
+        block.appendInstruction(new GenericInstruction(instruction));
     }
 
-    public MolkiTransformer(HashMap<Node, Integer> proj2regIndex, HashMap<Graph, Integer> graph2MaxBlockId) {
+    public CodeGenerator(HashMap<Node, Integer> proj2regIndex) {
         this.node2RegIndex = proj2regIndex;
-        this.graph2MaxBlockId = graph2MaxBlockId;
     }
 
     public void createValue(int blockNr, Node node) {
@@ -92,106 +62,106 @@ public class MolkiTransformer extends Default {
         switch (node.getOpCode()) {
             case iro_Add:
                 Add add = (Add) node;
-                this.molkify(add);
+                this.generate(add);
                 break;
             case iro_Sub:
                 Sub sub = (Sub) node;
-                this.molkify(sub);
+                this.generate(sub);
                 break;
             case iro_Mul:
                 Mul mul = (Mul) node;
-                this.molkify(mul);
+                this.generate(mul);
                 break;
             case iro_Div:
                 Div div = (Div) node;
-                this.molkify(div);
+                this.generate(div);
                 break;
             case iro_Mod:
                 Mod mod = (Mod) node;
-                this.molkify(mod);
+                this.generate(mod);
                 break;
             case iro_Address:
                 Address address = (Address) node;
-                this.molkify(address);
+                this.generate(address);
                 break;
             case iro_Call:
                 Call call = (Call) node;
-                this.molkify(call);
+                this.generate(call);
                 break;
             case iro_Cmp:
                 Cmp cmp = (Cmp) node;
-                this.molkify(cmp);
+                this.generate(cmp);
                 break;
             case iro_Const:
                 Const aConst = (Const) node;
-                this.molkify(aConst);
+                this.generate(aConst);
                 break;
             case iro_Unknown:
                 Unknown unknownNode = (Unknown) node;
-                this.molkify(unknownNode);
+                this.generate(unknownNode);
                 break;
             case iro_End:
                 End aEnd = (End) node;
-                this.molkify(aEnd);
+                this.generate(aEnd);
                 break;
             case iro_Jmp:
                 Jmp aJmp = (Jmp) node;
-                this.molkify(aJmp);
+                this.generate(aJmp);
                 break;
             case iro_Load:
                 Load aLoad = (Load) node;
-                this.molkify(aLoad);
+                this.generate(aLoad);
                 break;
             case iro_Minus:
                 Minus aMinus = (Minus) node;
-                this.molkify(aMinus);
+                this.generate(aMinus);
                 break;
             case iro_Not:
                 Not aNot = (Not) node;
-                this.molkify(aNot);
+                this.generate(aNot);
                 break;
             case iro_Phi:
                 Phi aPhi = (Phi) node;
-                this.molkify(aPhi);
+                this.generate(aPhi);
                 break;
             case iro_Return:
                 Return aReturn = (Return) node;
-                this.molkify(aReturn);
+                this.generate(aReturn);
                 break;
             case iro_Sel:
                 Sel aSel = (Sel) node;
-                this.molkify(aSel);
+                this.generate(aSel);
                 break;
             case iro_Start:
                 Start aStart = (Start) node;
-                this.molkify(aStart);
+                this.generate(aStart);
                 break;
             case iro_Store:
                 Store aStore = (Store) node;
-                this.molkify(aStore);
+                this.generate(aStore);
                 break;
             case iro_Proj:
                 Proj aProj = (Proj) node;
-                this.molkify(aProj);
+                this.generate(aProj);
                 break;
             case iro_Cond:
                 Cond aCond = (Cond) node;
-                this.molkify(aCond);
+                this.generate(aCond);
                 break;
             case iro_Member:
                 Member aMember = (Member) node;
-                this.molkify(aMember);
+                this.generate(aMember);
                 break;
             case iro_Conv:
                 Conv aConv = (Conv) node;
-                this.molkify(aConv);
+                this.generate(aConv);
                 break;
             default:
                 throw new UnsupportedOperationException("unknown node " + node.getClass());
         }
     }
 
-    private void molkify(Add add) {
+    private void generate(Add add) {
         int srcReg1 = this.node2RegIndex.get(add.getLeft());
         int srcReg2 = this.node2RegIndex.get(add.getRight());
         int targetReg = this.node2RegIndex.get(add);
@@ -199,15 +169,11 @@ public class MolkiTransformer extends Default {
         this.appendThreeAdressCommand("addl", srcReg1, REG_WIDTH_D, srcReg2, REG_WIDTH_D, targetReg, REG_WIDTH_D);
     }
 
-    private void molkify(Address address) {
+    private void generate(Address address) {
         // nothing to do
     }
 
-    private void molkify(Block block) {
-        // nothing to do here
-    }
-
-    private void molkify(Call call) {
+    private void generate(Call call) {
 
         Address address = (Address) call.getPred(1);
         String functionName = address.getEntity().getLdName();
@@ -244,14 +210,16 @@ public class MolkiTransformer extends Default {
         int targetReg = this.node2RegIndex.get(call);
 
         if (isVoid) {
-            this.appendMolkiCode("call " + functionName + " [ " + args + " ] ");
+            this.appendIntermediateInstruction("call " + functionName
+                + " [ " + args + " ] ");
         }
         else {
-            this.appendMolkiCode("call " + functionName + " [ " + args + " ] -> %@" + targetReg + regSuffix);
+            this.appendIntermediateInstruction("call " + functionName
+                + " [ " + args + " ] -> %@" + targetReg + regSuffix);
         }
     }
 
-    private void molkify(Cmp cmp) {
+    private void generate(Cmp cmp) {
         int srcReg1 = this.node2RegIndex.get(cmp.getLeft());
         int srcReg2 = this.node2RegIndex.get(cmp.getRight());
 
@@ -270,7 +238,7 @@ public class MolkiTransformer extends Default {
         block.setCompare(compare);
     }
 
-    private void molkify(Const aConst) {
+    private void generate(Const aConst) {
         if (!aConst.getMode().equals(Mode.getb())) {
             String constant = CONST_PREFIX + String.valueOf(aConst.getTarval().asInt());
             int targetReg = this.node2RegIndex.get(aConst);
@@ -285,7 +253,7 @@ public class MolkiTransformer extends Default {
         }
     }
 
-    private void molkify(Unknown node) {
+    private void generate(Unknown node) {
 
         // Assert that we only have Unknown nodes of value types
         Mode nodeMode = node.getMode();
@@ -306,22 +274,22 @@ public class MolkiTransformer extends Default {
         this.appendTwoAdressCommand(cmd, arg1, arg2);
     }
 
-    private void molkify(Div div) {
+    private void generate(Div div) {
         int left = this.node2RegIndex.get(div.getLeft());
         int right = this.node2RegIndex.get(div.getRight());
 
         int targetReg1 = this.node2RegIndex.get(div);
-        int targetReg2 = targetReg1 + 1; // by convention used in PrepVisitor
+        int targetReg2 = targetReg1 + 1; // by convention used in preparation
 
         this.appendFourAdressCommand("divl", left, REG_WIDTH_D, right, REG_WIDTH_D, targetReg1, REG_WIDTH_D, targetReg2,
                 REG_WIDTH_D);
     }
 
-    private void molkify(End end) {
+    private void generate(End end) {
         // nothing to do
     }
 
-    private void molkify(Jmp jmp) {
+    private void generate(Jmp jmp) {
         int numberOfSuccessors = 0;
 
         for (BackEdges.Edge edge : BackEdges.getOuts(jmp)) {
@@ -336,7 +304,7 @@ public class MolkiTransformer extends Default {
         }
     }
 
-    private void molkify(Load load) {
+    private void generate(Load load) {
         int targetReg = this.node2RegIndex.get(load);
         String regSuffix = Util.mode2RegSuffix(load.getLoadMode());
         String movSuffix = Util.mode2MovSuffix(load.getLoadMode());
@@ -365,19 +333,19 @@ public class MolkiTransformer extends Default {
         }
     }
 
-    private void molkify(Minus minus) {
+    private void generate(Minus minus) {
         int scrReg = this.node2RegIndex.get(minus.getOp());
         int targetReg = this.node2RegIndex.get(minus);
 
         this.appendTwoAdressCommand("negl", scrReg, REG_WIDTH_D, targetReg, REG_WIDTH_D);
     }
 
-    private void molkify(Mod mod) {
+    private void generate(Mod mod) {
         int srcReg1 = this.node2RegIndex.get(mod.getLeft());
         int srcReg2 = this.node2RegIndex.get(mod.getRight());
 
         int targetReg1 = this.node2RegIndex.get(mod);
-        int targetReg2 = targetReg1 + 1; // by convention used in PrepVisitor
+        int targetReg2 = targetReg1 + 1; // by convention used in preparation
 
         // targetReg2 before targetReg1 is on purpose.
         //Result of mod is second result of divl command and should be stored in the first target register.
@@ -385,7 +353,7 @@ public class MolkiTransformer extends Default {
                 targetReg1, REG_WIDTH_D);
     }
 
-    private void molkify(Mul mul) {
+    private void generate(Mul mul) {
         int srcReg1 = this.node2RegIndex.get(mul.getLeft());
         int srcReg2 = this.node2RegIndex.get(mul.getRight());
 
@@ -394,14 +362,14 @@ public class MolkiTransformer extends Default {
         this.appendThreeAdressCommand("mull", srcReg1, REG_WIDTH_D, srcReg2, REG_WIDTH_D, targetReg, REG_WIDTH_D);
     }
 
-    private void molkify(Not not) {
+    private void generate(Not not) {
         int srcReg = this.node2RegIndex.get(not.getOp());
         int targetReg = this.node2RegIndex.get(not);
 
         this.appendTwoAdressCommand("notb", srcReg, "l", targetReg, "l");
     }
 
-    private void molkify(Return aReturn) {
+    private void generate(Return aReturn) {
 
         if (aReturn.getPredCount() == 1 && !aReturn.getPred(0).getMode().equals(Mode.getM())) {
             String regSuffix = Util.mode2RegSuffix(aReturn.getPred(0).getMode());
@@ -432,14 +400,14 @@ public class MolkiTransformer extends Default {
         this.getCurrentBlock().setEndJump(new Jump(this.getOrCreateBlock(successorBlock.getNr())));
     }
 
-    private void molkify(Sel sel) {
+    private void generate(Sel sel) {
     }
 
-    private void molkify(Start start) {
+    private void generate(Start start) {
         // nothing to do
     }
 
-    private void molkify(Store store) {
+    private void generate(Store store) {
         int storeReg = this.node2RegIndex.get(store.getValue());
         String regSuffix = Util.mode2RegSuffix(store.getValue().getMode());
         String movSuffix = Util.mode2MovSuffix(store.getValue().getMode());
@@ -465,7 +433,7 @@ public class MolkiTransformer extends Default {
         }
     }
 
-    private void molkify(Sub sub) {
+    private void generate(Sub sub) {
         int srcReg1 = this.node2RegIndex.get(sub.getLeft());
         int srcReg2 = this.node2RegIndex.get(sub.getRight());
 
@@ -477,13 +445,14 @@ public class MolkiTransformer extends Default {
 
     }
 
-    private void molkify(Proj node) {
+    private void generate(Proj node) {
         // nothing to do
     }
 
-    private void molkify(Phi phi) {
+    private void generate(Phi phi) {
 
         if (phi.getMode().equals(Mode.getM())) {
+
             // Ignore Phi nodes with memory mode as these are only important for ordering nodes
             return;
         }
@@ -499,9 +468,9 @@ public class MolkiTransformer extends Default {
             int predRegisterIndex = this.node2RegIndex.get(phi.getPred(i));
             int predBlockLabel = phi.getBlock().getPred(i).getBlock().getNr();
 
-            this.molkiCode.putIfAbsent(predBlockLabel, new BasicBlock(predBlockLabel));
+            this.intermediateCode.putIfAbsent(predBlockLabel, new BasicBlock(predBlockLabel));
 
-            BasicBlock predBlock = this.molkiCode.get(predBlockLabel);
+            BasicBlock predBlock = this.intermediateCode.get(predBlockLabel);
 
             // Add the entry into the Phi node representation
             phiMappings.add(new PhiNode.Mapping(predBlock, predRegisterIndex, phiTargetRegister,
@@ -515,7 +484,7 @@ public class MolkiTransformer extends Default {
         currentBlock.addPhiNode(phiNode);
     }
 
-    private void molkify(Cond cond) {
+    private void generate(Cond cond) {
         Node selector = cond.getSelector();
 
         ConditionalJump condJump = null;
@@ -548,6 +517,9 @@ public class MolkiTransformer extends Default {
                 }
             }
             else {
+                // The input for the Cond node is a constant, which may result from constant folding.
+                // In this case, generate constant compare instructions.
+
                 assert selector instanceof Const && selector.getMode().equals(Mode.getb());
                 Const aConst = (Const) selector;
 
@@ -585,19 +557,14 @@ public class MolkiTransformer extends Default {
         }
     }
 
-    private void molkify(Member node) {
+    private void generate(Member node) {
         // nothing to do
     }
 
-    private void molkify(Conv node) {
+    private void generate(Conv node) {
         // Nothing to do here as conversion nodes are only constructed for div and mod
         // operations and conversion of the operands instead should be handled there.
     }
-
-
-    //
-    // append commands
-    //
 
 
     /**
@@ -615,7 +582,7 @@ public class MolkiTransformer extends Default {
      */
     private void appendTwoAdressCommand(String cmd, int srcReg, String suffixSrcReg, int targetReg,
             String suffixTargetReg) {
-        this.appendMolkiCode(
+        this.appendIntermediateInstruction(
                 cmd + " " + REG_PREFIX + srcReg + suffixSrcReg + " -> " + REG_PREFIX + targetReg + suffixTargetReg);
     }
 
@@ -632,7 +599,7 @@ public class MolkiTransformer extends Default {
      * @param target String to use as target, will be included as it is, i.e REG_PREFIX will not be append
      */
     private void appendTwoAdressCommand(String cmd, String src, String target) {
-        this.appendMolkiCode(cmd + " " + src + " -> " + target);
+        this.appendIntermediateInstruction(cmd + " " + src + " -> " + target);
     }
 
     /**
@@ -654,8 +621,10 @@ public class MolkiTransformer extends Default {
      */
     private void appendThreeAdressCommand(String cmd, int srcReg1, String suffixReg1, int srcReg2, String suffixReg2,
             int targetReg, String suffixTargetReg) {
-        this.appendMolkiCode(cmd + " [ %@" + srcReg1 + suffixReg1 + " | %@" + srcReg2 + suffixReg2 + " ] -> %@"
-                + targetReg + suffixTargetReg);
+        this.appendIntermediateInstruction(cmd
+                + " [ " + REG_PREFIX + srcReg1 + suffixReg1
+                + " | " + REG_PREFIX + srcReg2 + suffixReg2 + " ] "
+                + "-> " + REG_PREFIX + targetReg + suffixTargetReg);
     }
 
     /**
@@ -679,9 +648,10 @@ public class MolkiTransformer extends Default {
     private void appendFourAdressCommand(String cmd, int srcReg1, String suffixReg1, int srcReg2, String suffixReg2,
             int targetReg1, String suffixTargetReg1, int targetReg2, String suffixTargetReg2) {
 
-        this.appendMolkiCode(cmd + " [ " + REG_PREFIX + srcReg1 + suffixReg1 + " | " + REG_PREFIX + srcReg2 + suffixReg2
-                + " ] -> [ " + REG_PREFIX + targetReg1 + suffixTargetReg1 + " | " + REG_PREFIX + targetReg2
-                + suffixTargetReg2 + " ]");
+        this.appendIntermediateInstruction(cmd + " [ " + REG_PREFIX + srcReg1 + suffixReg1
+                + " | " + REG_PREFIX + srcReg2 + suffixReg2
+                + " ] -> [ " + REG_PREFIX + targetReg1 + suffixTargetReg1
+                + " | " + REG_PREFIX + targetReg2 + suffixTargetReg2 + " ]");
     }
 
     /**
@@ -710,7 +680,7 @@ public class MolkiTransformer extends Default {
         sb.append(", ").append(alignment).append(")").append(suffixSrcReg);
         sb.append(" -> ").append(REG_PREFIX).append(targetReg).append(suffixTargetReg);
 
-        this.appendMolkiCode(sb.toString());
+        this.appendIntermediateInstruction(sb.toString());
     }
 
     /**
@@ -728,7 +698,8 @@ public class MolkiTransformer extends Default {
      */
     private void appendMoveWithOffset(String movSuffix, int offset, int baseReg, int targetReg,
             String suffixTargetReg) {
-        this.appendMolkiCode("mov" + movSuffix + " " + offset + "(" + REG_PREFIX + baseReg + ")" + suffixTargetReg
+        this.appendIntermediateInstruction("mov" + movSuffix + " "
+                + offset + "(" + REG_PREFIX + baseReg + ")" + suffixTargetReg
                 + " -> " + REG_PREFIX + targetReg + suffixTargetReg);
     }
 
@@ -745,8 +716,8 @@ public class MolkiTransformer extends Default {
      * @param suffixTargetReg width of target register, e.g. 'd'
      */
     private void moveWithOffset(String movSuffix, int pointerReg, int targetReg, String suffixTargetReg) {
-        this.appendMolkiCode("mov" + movSuffix + " " + "(" + REG_PREFIX + pointerReg + ") -> " + REG_PREFIX + targetReg
-                + suffixTargetReg);
+        this.appendIntermediateInstruction("mov" + movSuffix + " "
+                + "(" + REG_PREFIX + pointerReg + ") -> " + REG_PREFIX + targetReg + suffixTargetReg);
     }
 
     /**
@@ -763,7 +734,8 @@ public class MolkiTransformer extends Default {
      * @param baseReg number of base register
      */
     private void appendStoreCmd(String movSuffix, int storeReg, String regSuffix, int offset, int baseReg) {
-        this.appendMolkiCode("mov" + movSuffix + " " + REG_PREFIX + storeReg + regSuffix + " -> " + offset + "("
+        this.appendIntermediateInstruction("mov" + movSuffix + " "
+                + REG_PREFIX + storeReg + regSuffix + " -> " + offset + "("
                 + REG_PREFIX + baseReg + ")" + regSuffix);
     }
 
@@ -783,7 +755,8 @@ public class MolkiTransformer extends Default {
      */
     private void appendStoreCmd(String movSuffix, String regSuffix, int storeReg, int baseReg, int indexReg,
             int alignment) {
-        this.appendMolkiCode("mov" + movSuffix + " " + REG_PREFIX + storeReg + regSuffix + " -> (" + REG_PREFIX
+        this.appendIntermediateInstruction("mov" + movSuffix + " "
+                + REG_PREFIX + storeReg + regSuffix + " -> (" + REG_PREFIX
                 + baseReg + ", " + REG_PREFIX + indexReg + REG_WIDTH_D + ", " + alignment + ")" + regSuffix);
     }
 
@@ -798,20 +771,8 @@ public class MolkiTransformer extends Default {
      * @param pointerReg number of register containing pointer
      */
     private void appendStoreCmd(String movSuffix, int storeReg, String regSuffix, int pointerReg) {
-        this.appendMolkiCode("mov" + movSuffix + " " + REG_PREFIX + storeReg + regSuffix + " -> (" + REG_PREFIX
+        this.appendIntermediateInstruction("mov" + movSuffix + " "
+                + REG_PREFIX + storeReg + regSuffix + " -> (" + REG_PREFIX
                 + pointerReg + ")" + regSuffix);
-    }
-
-    /**
-     * Example<br>
-     * <br>
-     * cmpq [ %@17d | %@18d ]
-     *
-     * @param cmd name of command
-     * @param arg1 first argument, will be used as given, i.e. REG_PREFIX will not be appended
-     * @param arg2 second argument, will be used as given, i.e. REG_PREFIX will not be appended
-     */
-    private void appendTwoArgsCommand(String cmd, String arg1, String arg2) {
-        this.appendMolkiCode(cmd + "[ " + arg1 + " | " + arg2 + " ]");
     }
 }
