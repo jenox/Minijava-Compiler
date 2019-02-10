@@ -1,0 +1,221 @@
+# MiniJava 3.6
+# Grammar is SLL(3), disregarding dangling else
+# EBNF Syntax: http://www.icosaedro.it/bnf_chk/
+
+
+# Requires lookahead of 1
+# - "}" not in first(ClassMember) -> greedy
+# - "static" not in first(AccessModifiedNonStaticMember) = first(Type)
+# - "throws" not in first(Block)
+
+Program = Program';
+    Program'.in = []
+    Program.node = Program'.node
+Program' = epsilon;
+    Program'.node = new Program(Program'.in)
+Program_1 = ClassDeclaration Program_2;
+    Program_2.in = concat(Program_1.in, ClassDeclaration.node)
+    Program_1.node = Program_2.node
+
+ClassDeclaration  = "class" "IDENTIFIER" "{" ClassDeclaration' "}";
+    ClassDeclaration'.in = []
+    ClassDeclaration.node = ClassDeclaration'.node
+ClassDeclaration' = epsilon;
+    ClassDeclaration'.node = new ClassDeclaration(ClassDeclaration'.in)
+ClassDeclaration'_1 = ClassMember ClassDeclaration'_2;
+    ClassDeclaration'_2.in = concat(ClassDeclaration'_1.in, ClassMember.node)
+    ClassDeclaration'_1.node = ClassDeclaration'_2.node
+
+ClassMember = "public" AccessModifiedClassMember;
+    ClassMember.node = AccessModifiedClassMember.node
+AccessModifiedClassMember = StaticMethodWithMainMethodSignature;
+    AccessModifiedClassMember.node = StaticMethodWithMainMethodSignature.node
+AccessModifiedClassMember = AccessModifiedNonStaticMember;
+    AccessModifiedClassMember.node = AccessModifiedNonStaticMember.node
+AccessModifiedNonStaticMember = Type "IDENTIFIER" MemberRest;
+    MemberRest.in = Type.node
+    AccessModifiedNonStaticMember.node = MemberRest.node
+MemberRest = ";"
+    MemberRest.node = new methodDeclaration(MemberRest.in); 
+MemberRest = "(" Parameters ")" MethodRest Block;
+    Parameters.in = []
+    MemberRest.node = new MethodDeclaration(MemberRest.in, Parameters.params, Block.node); 
+MethodRest = epsilon | "throws" "IDENTIFIER";
+StaticMethodWithMainMethodSignature = "static" "void" "IDENTIFIER" "(" "String" "[" "]" "IDENTIFIER" ")" MethodRest Block;
+
+
+# Requires lookahead of 3, disregarding dangling else.
+# - "IDENTIFIER" "[" in both first(LocalVariableDeclarationStatement) and
+#   first(Statement) (from ExpressionStatement with ArrayAccess postfix op,
+#   but "IDENTIFIER" "[" "]" not in first(ExpressionStatement) -> need k = 3
+# - "if", "while", "return", ";", "{" not in first(Expression)
+# - "}" not in first(BlockStatement) -> greedy
+
+Statement = Block;
+    Statement.node = Block.node;
+Statement = EmptyStatement;
+    Statement.node = EmptyStatement.node;
+Statement = IfStatement;
+    Statement.node = IfStatement.node;
+Statement = ExpressionStatement ;
+    Statement.node = ExpressionStatement.node;
+Statement = WhileStatement;
+    Statement.node = WhileStatement.node;
+Statement = ReturnStatement;
+    Statement.node = ReturnStatement.node;
+Block  = "{" Block' "}";
+    Block'.in = Block.in
+    Block.node = Block'.node
+Block' = epsilon;
+    Block'.node = new Block(Block'.in);
+Block'_1 = BlockStatement Block'_2;
+    Block'_2.in = concat(Block'_1.in, BlockStatement.node)
+BlockStatement = Statement;
+    BlockStatement.node = Statement.node
+BlockStatement = LocalVariableDeclarationStatement;
+    BlockStatement.node = LocalVariableDeclarationStatement.node
+LocalVariableDeclarationStatement = Type "IDENTIFIER" ";" ;
+    LocalVariableDeclarationStatement.node = new LocalVariableDeclarationStatement(Type.node)
+LocalVariableDeclarationStatement = Type "IDENTIFIER" "=" Expression ";";
+    LocalVariableDeclarationStatement.node = new LocalVariableDeclarationStatement(Type.node, Expression.node) 
+EmptyStatement = ";";
+    EmptyStatement.node = new EmptyStatement()
+WhileStatement = "while" "(" Expression ")" Statement;
+    WhileStatement.node = new WhileStatement(Expression.node, Statement.node)
+IfStatement = "if" "(" Expression ")" Statement ;
+    IfStatement.node = new IfStatement(Expression.node, Statement.node)
+IfStatement = "if" "(" Expression ")" Statement_1 "else" Statement_2;
+    IfStatement.node = new IfStatement(Expression.node, Statement_1.node, Statement_2.node)
+ExpressionStatement = Expression ";";
+    ExpressionStatement.node = new ExpressionStatement(Expression.node)
+ReturnStatement = "return" ";" ;
+    ReturnStatement.node = new ReturnStatement()
+ReturnStatement = "return" Expression ";";
+    ReturnStatement.node = new ReturnStatement(Expression.node)
+
+
+# Requires lookahead of 1.
+# - "=" not in follow(AssignmentExpression) -> greedy
+# - "||" not in follow(LogicalOrExpression), etc. -> greedy
+# - "!", "-" not in first(PostfixExpression) -> greedy
+
+Expression = AssignmentExpression;
+    Expression.node = AssignmentExpression.node
+AssignmentExpression = LogicalOrExpression ;
+    AssignmentExpression.node = LogicalOrExpression.node
+AssignmentExpression = LogicalOrExpression_1 "=" LogicalOrExpression_2;
+    AssignmentExpression.node = new BinaryOperation(ASSIGNMENT, LogicalOrExpression_1.node, LogicalOrExpression_2.node)
+
+LogicalOrExpression  = LogicalAndExpression LogicalOrExpression';
+    LogicalOrExpression'.in = LogicalAndExpression.node
+    LogicalOrExpression.node = LogicalOrExpression'.node
+LogicalOrExpression' = epsilon;
+    LogicalOrExpression'.node = LogicalOrExpression'.in
+LogicalOrExpression' = "||" LogicalAndExpression LogicalAndExpression';
+    LogicalAndExpression'.in = new BinaryOperation(LOGICAL_OR, LogicalOrExpression'.in, LogicalAndExpression.node)
+    LogicalOrExpression'.node = LogicalAndExpression'.node
+
+# following rules work with the same pattern as `LogicalOrExpression` above
+LogicalAndExpression  = EqualityExpression LogicalAndExpression';
+LogicalAndExpression' = epsilon | "&&" EqualityExpression LogicalAndExpression';
+EqualityExpression  = RelationalExpression EqualityExpression';
+EqualityExpression' = epsilon | ("==" | "!=") RelationalExpression EqualityExpression';
+RelationalExpression  = AdditiveExpression RelationalExpression';
+RelationalExpression' = epsilon | ("<" | "<=" | ">" | ">=") AdditiveExpression RelationalExpression';
+AdditiveExpression  = MultiplicativeExpression AdditiveExpression';
+AdditiveExpression' = epsilon | ("+" | "-") MultiplicativeExpression AdditiveExpression';
+MultiplicativeExpression  = UnaryExpression MultiplicativeExpression';
+MultiplicativeExpression' = epsilon | ("*" | "/" | "%") UnaryExpression MultiplicativeExpression';
+
+UnaryExpression = UnaryExpression' PostfixExpression;
+    UnaryExpression.node = PostfixExpression.node
+UnaryExpression' = epsilon;
+    UnaryExpression'.node = UnaryExpression'.in
+UnaryExpression'_1 = "!" UnaryExpression'_2;
+    UnaryExpression'_1.node = new UnaryOperation(LOGICAL_NEGATION, UnaryExpression'_2.node)
+UnaryExpression'_1 = "-" UnaryExpression'_2;
+    UnaryExpression'_1.node = new UnaryOperation(NUMERIC_NEGATION, UnaryExpression'_2.node)
+    
+
+# Requires lookahead of 3.
+# - "[" in follow(NewArrayExpression) -> only consume "[" with successor "]"
+# - ".", "[" not in follow(PostfixExpression) -> greedy
+# - first(Expression), "," not in follow(Arguments) -> greedy
+# - "(" not in follow(FieldAccess) -> greedy, but need k = 3
+# - "(" not in follow(PrimaryExpression) -> greedy
+# - "IDENTIFIER" "(" not in first2(BasicType)
+
+PostfixExpression = PrimaryExpression PostfixExpression';
+    PostfixExpression'.in = PrimaryExpression.node
+    PostfixExpression.node = PostfixExpression'.node
+PostfixExpression' = epsilon;
+    PostfixExpression'.node = PostfixExpression'.in
+PostfixExpression'_1 = PostfixOperation PostfixExpression'_2;
+    PostfixOperation'_2.in    = PostfixOperation.node
+    PostfixExpression'_1.node = PostfixExpression'_2.node
+PostfixOperation = MethodInvocation;
+    PostfixOperation.node = MethodInvocation.node
+PostfixOperation = FieldAccess;
+    PostfixOperation.node = FieldAccess.node
+PostfixOperation = ArrayAccess;
+    PostfixOperation.node = ArrayAccess.node
+MethodInvocation = "." "IDENTIFIER" "(" Arguments ")";
+    Arguments.in = []
+    MethodInvocation.node = new MethodInvocation(Arguments.args)
+FieldAccess = "." "IDENTIFIER";
+    FieldAccess.node = new ExplicitFieldAccess()
+ArrayAccess = "[" Expression "]";
+    ArrayAccess.node = new ArrayElementAccess(Expression.node)
+Arguments  = epsilon;
+    Arguments.args = Arguments.in 
+Arguments  = Expression Arguments';
+    Arguments'.in = concat(Arguments.in, Expression.node)
+    Arguments.args = Arguments'.args
+Arguments' = epsilon;
+    Arguments'.args = Arguments'.in
+Arguments'_1 = "," Expression Arguments'_2;
+    Arguments'_2.in = concat(Arguments'_1.in, Expression.node)
+    Arguments'_1.args = Arguments'_2.args
+PrimaryExpression = Literal | "IDENTIFIER" | "IDENTIFIER" "(" Arguments ")" | "this" | "(" Expression ")" | NewObjectExpression | NewArrayExpression;
+Literal = "null";
+    Literal.node = new NullLiteral()
+Literal = "true";
+    Literal.node = new BooleanLiteral(true)
+Literal = "false";
+    Literal.node = new BooleanLiteral(false)
+Literal = "INTEGER_LITERAL";
+    Literal.node = new IntegerLiteral("INTEGER_LITERAL".value)
+NewObjectExpression = "new" "IDENTIFIER" "(" ")";
+    NewObjectExpression.node = new NewObjectCreation()
+NewArrayExpression  = "new" BasicType "[" Expression "]" NewArrayExpression';
+    NewArrayExpression.node = new NewArrayCreation(BasicType.node, Expression.node, NewArrayExpression'.dim)
+NewArrayExpression' = epsilon ;
+    NewArrayExpression'.dim = 1
+NewArrayExpression'_1 = "[" "]" NewArrayExpression'_2;
+    NewArrayExpression'_1.dim = NewArrayExpression'_2.dim + 1
+
+
+# Requires lookahead of 1.
+# - ",", "int", "boolean", "void", "IDENTIFIER" not in follow(Parameters) -> greedy
+# - "[" not in follow(Type) -> greedy
+
+Parameters  = epsilon ;
+    Parameters.params = Parameters.in
+Parameters  = Parameter Parameters';
+    Parameters'.in = concat(Parameters.in, Parameter.node)
+    Parameters.params = Parameters'.params
+Parameters' = epsilon;
+    Parameters'.params = Parameters'.in
+Parameters'_1 = "," Parameter Parameters'_2;
+    Parameters'_2.in = concat(Parameters'_1.in, Parameter.node)
+    Parameters'_1.params = Parameters'_2.params
+Parameter = Type "IDENTIFIER";
+    Parameter.node = new ParameterDeclaration(Type.node)
+Type  = BasicType Type';
+    Type.node = new TypeReference(BasicType.node, Type'.dim)
+Type' = epsilon;
+    Type'.dim = 0
+Type'_1 = "[" "]" Type'_2;
+    Type'_1.dim = Type'_2.dim + 1;
+BasicType = "int" | "boolean" | "void" | "IDENTIFIER";
+    BasicType.node = new BasicTypeReference()

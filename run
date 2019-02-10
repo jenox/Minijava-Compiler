@@ -1,0 +1,12 @@
+#!/bin/bash
+
+SCRIPT_PATH=$(dirname "$0")
+
+export LD_LIBRARY_PATH="$SCRIPT_PATH"/mini-java-compiler/lib:"$LD_LIBRARY_PATH"
+export DYLD_LIBRARY_PATH="$SCRIPT_PATH"/mini-java-compiler/lib:"$DYLD_LIBRARY_PATH"
+
+export MJ_RUNTIME_LIB_PATH="$SCRIPT_PATH"/mini-java-compiler/build/libs/stdlib.o
+export MJ_RUNTIME_LIB_PATH_STACK_ARGS="$SCRIPT_PATH"/mini-java-compiler/build/libs/stdlib-stack.o
+export REGISTER_ALLOCATOR_PATH="$SCRIPT_PATH"/swift.out
+
+java -jar -ea -Djna.library.path="$SCRIPT_PATH"/mini-java-compiler/lib "$SCRIPT_PATH"/mini-java-compiler/build/libs/mini-java-compiler-1.0-SNAPSHOT.jar "$@"

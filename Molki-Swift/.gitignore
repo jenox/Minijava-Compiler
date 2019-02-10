@@ -1,0 +1,6 @@
+.DS_Store
+xcuserdata/
+playground.xcworkspace
+timeline.xctimeline
+!*.s
+!*.out

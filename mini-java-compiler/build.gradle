@@ -1,0 +1,53 @@
+plugins {
+    id 'java'
+}
+
+group 'edu.kit.ipd.pp'
+version '1.0-SNAPSHOT'
+
+sourceCompatibility = 1.8
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile group: 'org.jetbrains', name: 'annotations', version: '15.0'
+    compile group: 'commons-cli', name: 'commons-cli', version: '1.4'
+    compile fileTree(dir: 'lib', include: ['*.jar'])
+	testCompile group: 'junit', name: 'junit', version: '4.12'
+}
+
+sourceSets {
+     test {
+         java {
+             srcDirs = ["src/test"]
+         }
+     }
+}
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'edu.kit.minijava.cli.CommandLineInterface'
+    }
+
+    from configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+}
+
+apply plugin: 'application'
+mainClassName = 'edu.kit.minijava.cli.CommandLineInterface'
+applicationDefaultJvmArgs = ['-ea']
+
+apply plugin: 'checkstyle'
+
+checkstyle {
+    configFile = rootProject.file('../checkstyle.xml')
+    toolVersion '8.11'
+    sourceSets = []
+    maxWarnings = 0
+}
+
