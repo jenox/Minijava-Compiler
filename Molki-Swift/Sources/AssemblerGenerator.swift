@@ -10,17 +10,11 @@ import Foundation
 
 
 // https://cs.brown.edu/courses/cs033/docs/guides/x64_cheatsheet.pdf
-class AssemblerGenerator {
+public class AssemblerGenerator {
 
-    // load constant into reg
-    // load pseudoreg into reg
-    // load memory into reg
+    // MARK: - Initialization
 
-    // to keep track of which pseudoreg is loaded into which reg
-    // remember to nil out when loading constant/mem
-    //    var map: [String: Register] = [:]
-
-    init(function: Function) {
+    public init(function: Function) {
         self.function = function
 
         // caller pushes arguments on stack, their offset is fixed
@@ -29,7 +23,7 @@ class AssemblerGenerator {
             // 2 slots reserved:
             //  - return address
             //  - old base pointer? (pushq %rbp in prologue)
-            self.table[.regular(index)] = 16 + 8 * index
+            self.offsetFromBasePointer[.regular(index)] = 16 + 8 * index
             self.lastWrittenWidth[.regular(index)] = width
         }
 
@@ -49,7 +43,7 @@ class AssemblerGenerator {
             lines.append(text)
         }
 
-        let size = (abs(self.currentOffset) - 8).ceiled(toMultipleOf: 16) + 8
+        let size = (abs(self.currentOffsetFromBasePointer) - 8).ceiled(toMultipleOf: 16) + 8
 
         print("\n/* prologue of function \(function.name) */")
         #if os(Linux)
@@ -74,13 +68,13 @@ class AssemblerGenerator {
             // cant use loadPseudoregister here cause we are no longer buffering
             switch width {
             case .byte:
-                print("movb \(self.table[.reserved]!)(%rbp), \(reg.name(for: width))")
+                print("movb \(self.offsetFromBasePointer[.reserved]!)(%rbp), \(reg.name(for: width))")
             case .word:
-                print("movw \(self.table[.reserved]!)(%rbp), \(reg.name(for: width))")
+                print("movw \(self.offsetFromBasePointer[.reserved]!)(%rbp), \(reg.name(for: width))")
             case .double:
-                print("movl \(self.table[.reserved]!)(%rbp), \(reg.name(for: width))")
+                print("movl \(self.offsetFromBasePointer[.reserved]!)(%rbp), \(reg.name(for: width))")
             case .quad:
-                print("movq \(self.table[.reserved]!)(%rbp), \(reg.name(for: width))")
+                print("movq \(self.offsetFromBasePointer[.reserved]!)(%rbp), \(reg.name(for: width))")
             }
         }
 
@@ -92,23 +86,17 @@ class AssemblerGenerator {
         self.lines = lines
     }
 
-
     private let function: Function
     private var currentInstruction: Instruction? = nil
     private var currentInstructionIndex: Int = 0
-    private var body: [String] = []
+
+
+    // MARK: - Buffering Output
+
     public var lines: [String] = []
+    private var body: [String] = []
 
-    private func precondition(_ condition: Bool, _ message: @autoclosure () -> String) {
-        if !condition {
-            print("Assertion Error: \(message())")
-            print("Current Function:", self.function.name)
-            print("Current Instruction:", self.currentInstruction!, "(index \(self.currentInstructionIndex + 1))")
-            exit(-1)
-        }
-    }
-
-    func emit(_ assembler: String, comment: String? = nil) {
+    private func emit(_ assembler: String, comment: String? = nil) {
         if let comment = comment {
             self.body.append(assembler + String(repeating: " ", count: max(0, 24 - assembler.count)) + " " + "/* \(comment) */")
         }
@@ -118,7 +106,7 @@ class AssemblerGenerator {
     }
 
 
-
+    // MARK: - Instructions
 
     private func handle(_ instruction: Instruction) {
         switch instruction {
@@ -281,27 +269,23 @@ class AssemblerGenerator {
     }
 
 
+    // MARK: - Offset Management
 
-    // MARK: - Spilling
-
-    /// pseudoregister -> frame offset
-    private var table: [Pseudoregister: Int] = [:]
+    private var offsetFromBasePointer: [Pseudoregister: Int] = [:]
     private var lastWrittenWidth: [Pseudoregister: RegisterWidth] = [:]
-    private var currentOffset = 0
+    private var currentOffsetFromBasePointer = 0
 
     @discardableResult
     private func reserveStackSlot(for pseudoregister: Pseudoregister) -> Int {
-        if let offset = self.table[pseudoregister] {
+        if let offset = self.offsetFromBasePointer[pseudoregister] {
             return offset
         }
         else {
-            self.currentOffset -= 8
-            self.table[pseudoregister] = self.currentOffset
-            return self.currentOffset
+            self.currentOffsetFromBasePointer -= 8
+            self.offsetFromBasePointer[pseudoregister] = self.currentOffsetFromBasePointer
+            return self.currentOffsetFromBasePointer
         }
     }
-
-
 
 
     // MARK: - Pseudomoves
@@ -461,6 +445,18 @@ class AssemblerGenerator {
             self.emit("movl \(source), \(target)", comment: comment)
         case .quad:
             self.emit("movq \(source), \(target)", comment: comment)
+        }
+    }
+
+
+    // MARK: - Other
+
+    private func precondition(_ condition: Bool, _ message: @autoclosure () -> String) {
+        if !condition {
+            print("Assertion Error: \(message())")
+            print("Current Function:", self.function.name)
+            print("Current Instruction:", self.currentInstruction!, "(index \(self.currentInstructionIndex + 1))")
+            exit(-1)
         }
     }
 }
